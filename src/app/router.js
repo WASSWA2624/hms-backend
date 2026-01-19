@@ -77,6 +77,16 @@ const apiV1Router = express.Router();
 // Per module-creation.mdc step 7: Use relative paths to mount modules
 apiV1Router.use('/auth', require('../modules/auth/routes/auth.routes'));
 apiV1Router.use('/user-sessions', require('../modules/user-session/routes/user-session.routes'));
+apiV1Router.use('/tenants', require('../modules/tenant/routes/tenant.routes'));
+apiV1Router.use('/facilities', require('../modules/facility/routes/facility.routes'));
+apiV1Router.use('/branches', require('../modules/branch/routes/branch.routes'));
+apiV1Router.use('/departments', require('../modules/department/routes/department.routes'));
+apiV1Router.use('/units', require('../modules/unit/routes/unit.routes'));
+apiV1Router.use('/rooms', require('../modules/room/routes/room.routes'));
+apiV1Router.use('/wards', require('../modules/ward/routes/ward.routes'));
+apiV1Router.use('/beds', require('../modules/bed/routes/bed.routes'));
+apiV1Router.use('/addresses', require('../modules/address/routes/address.routes'));
+apiV1Router.use('/contacts', require('../modules/contact/routes/contact.routes'));
 
 // Mount API v1 router
 router.use('/api/v1', apiV1Router);
