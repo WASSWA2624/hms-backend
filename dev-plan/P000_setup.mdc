@@ -85,8 +85,9 @@ alwaysApply: true
 
 #### Step 0.3.1: Create root folders
 - Create folder tree per `project-structure.mdc`:
+  - `logs/`
   - `src/`
-  - `src/app/`, `src/prisma/`, `src/modules/`, `src/websockets/`, `src/middlewares/`, `src/lib/`, `src/config/`, `src/tests/`, `src/logs/`
+  - `src/app/`, `src/prisma/`, `src/modules/`, `src/websockets/`, `src/middlewares/`, `src/lib/`, `src/config/`, `src/tests/`
 - **Verification**: All listed directories exist.
 
 #### Step 0.3.2: Create `src/lib/` subfolders
@@ -150,7 +151,7 @@ alwaysApply: true
   - `@middlewares/*` → `src/middlewares/*`
   - `@config/*` → `src/config/*`
   - `@prisma/client` → `src/prisma/client.js`
-  - `@logs/*` → `src/logs/*`
+  - `@logs/*` → `logs/*`
 - **Verification**: `jsconfig.json` exists and contains these paths.
 
 #### Step 0.4.2: Record module-scoped alias limitation (documentation-only)

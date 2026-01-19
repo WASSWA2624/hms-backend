@@ -6,7 +6,7 @@ module.exports = {
     '^@lib/(.*)$': '<rootDir>/src/lib/$1',
     '^@config/(.*)$': '<rootDir>/src/config/$1',
     '^@middlewares/(.*)$': '<rootDir>/src/middlewares/$1',
-    '^@logs/(.*)$': '<rootDir>/src/logs/$1',
+    '^@logs/(.*)$': '<rootDir>/logs/$1',
     '^@websockets/(.*)$': '<rootDir>/src/websockets/$1',
     '^@prisma/client$': '<rootDir>/src/prisma/client.js',
     '^@controllers/([^/]+)/(.*)$': '<rootDir>/src/modules/$1/controllers/$2',

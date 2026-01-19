@@ -24,7 +24,7 @@ moduleAlias.addAliases({
   '@config': path.join(srcRoot, 'config'),
   '@middlewares': path.join(srcRoot, 'middlewares'),
   '@prisma/client': path.join(srcRoot, 'prisma', 'client.js'),
-  '@logs': path.join(srcRoot, 'logs'),
+  '@logs': path.join(process.cwd(), 'logs'),
   '@websockets': path.join(srcRoot, 'websockets')
 });
 

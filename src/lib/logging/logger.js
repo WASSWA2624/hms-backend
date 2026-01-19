@@ -12,8 +12,8 @@ const fs = require('fs');
 const path = require('path');
 const { sanitize } = require('@lib/logging/sanitize');
 
-// Ensure logs directory exists (per project-structure.mdc: src/logs)
-const LOGS_DIR = path.join(process.cwd(), 'src', 'logs');
+// Ensure logs directory exists (per project-structure.mdc: logs/)
+const LOGS_DIR = path.join(process.cwd(), 'logs');
 
 /**
  * Ensure logs directory exists

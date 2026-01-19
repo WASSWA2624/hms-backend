@@ -22,7 +22,7 @@ Enforces mandatory import aliasing for no cross-module relative imports, consist
 | `@config/*`       | `src/config`                            | `require('@config/index')`                           |
 | `@validations/*`  | `src/modules/<module>/schemas`          | `require('@validations/user/user.schema')`           |
 | `@prisma/client`  | `src/prisma/client.js`                  | `require('@prisma/client')`                          |
-| `@logs/*`         | `src/logs`                              | `require('@logs/logger')`                            |
+| `@logs/*`         | `logs`                                  | `require('@logs/logger')`                            |
 
 **Alias Rules:**
 - Module aliases (`@controllers/*`, etc.) require module name (e.g. `@controllers/user/UserController`) → `src/modules/user/controllers/UserController.js`
@@ -45,7 +45,7 @@ Enforces mandatory import aliasing for no cross-module relative imports, consist
       "@middlewares/*": ["src/middlewares/*"],
       "@config/*": ["src/config/*"],
       "@prisma/client": ["src/prisma/client.js"],
-      "@logs/*": ["src/logs/*"]
+      "@logs/*": ["logs/*"]
     }
   }
 }
@@ -61,7 +61,7 @@ require('module-alias').addAliases({
   '@config': path.join(__dirname, 'config'),
   '@middlewares': path.join(__dirname, 'middlewares'),
   '@prisma/client': path.join(__dirname, 'prisma', 'client.js'),
-  '@logs': path.join(__dirname, 'logs')
+  '@logs': path.join(process.cwd(), 'logs')
 });
 // Module-scoped aliases auto-registered via registerAllModuleAliases()
 ```

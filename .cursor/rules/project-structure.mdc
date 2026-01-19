@@ -26,6 +26,8 @@ project-root/
 ├── jest.config.js               # Jest testing configuration
 ├── README.md                    # Project overview, setup, usage
 │
+├── logs/                        # Daily application logs (runtime generated)
+│
 ├── prisma/                      # (Optional) Prisma ORM files
 │   ├── schema.prisma            # Prisma schema (models, enums, relations)
 │   ├── guide.md                 # Contains commands for prisma
@@ -106,7 +108,6 @@ project-root/
     │   ├── setup.js              # Global Jest setup & mocks
     │   └── modules/              # Module-level tests
     │
-    └── logs/                     # Daily application logs (runtime generated)
 ````
 ---
 ## Structure Rules

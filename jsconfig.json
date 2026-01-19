@@ -7,7 +7,7 @@
       "@middlewares/*": ["src/middlewares/*"],
       "@config/*": ["src/config/*"],
       "@prisma/client": ["src/prisma/client.js"],
-      "@logs/*": ["src/logs/*"],
+      "@logs/*": ["logs/*"],
       "@websockets/*": ["src/websockets/*"]
     }
   },

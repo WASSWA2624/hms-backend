@@ -24,7 +24,7 @@ Any violation is **invalid**.
 ---
 
 ## Logging Rules
-- All logs **must** be written to `logs/YYYY-MM-DD.txt`
+- All logs **must** be written to `logs/YYYY-MM-DD.txt` (per `project-structure.mdc`)
 - Log levels: info, warn, error
 - Mandatory logging for:
   - Authentication events
@@ -42,6 +42,10 @@ Any violation is **invalid**.
   "status": number,
   "message": string,
   "data": null,
+  "meta": {
+    "locale": string,
+    "direction": string
+  },
   "errors": array
 }
 ```

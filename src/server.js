@@ -24,7 +24,7 @@ try {
     '@lib': path.join(__dirname, 'lib'),
     '@config': path.join(__dirname, 'config'),
     '@middlewares': path.join(__dirname, 'middlewares'),
-    '@logs': path.join(__dirname, 'logs'),
+    '@logs': path.join(process.cwd(), 'logs'),
     '@websockets': path.join(__dirname, 'websockets'),
     '@prisma/client': path.join(__dirname, 'prisma', 'client.js')
   });
