@@ -1,10 +1,19 @@
-# Biomedical Marketplace Backend API
+# Hospital Management System (HMS) Backend API
 
-A comprehensive backend API for a biomedical marketplace platform built with Node.js, Express.js, and Prisma.
+A comprehensive backend API for a modern, modular Hospital Management System built with Node.js, Express.js, and Prisma.
 
 ## Overview
 
-This backend provides RESTful APIs for managing biomedical products, inventory, orders, subscriptions, compliance, and more. The architecture follows strict MVC patterns with clear separation of concerns.
+This backend provides RESTful APIs for managing clinical, operational, and administrative hospital workflows with a modular, multi-tenant architecture. It supports module-based subscriptions, customization requests, and flexible payments for both local and international deployments, while maintaining strict MVC patterns and clear separation of concerns.
+
+## Core Capabilities
+
+- Modular HMS modules (clinical, diagnostics, pharmacy, inventory, HR, billing)
+- Multi-tenant support for multiple hospitals/branches
+- Role-based access control (RBAC) and audit logging
+- Subscription, per-module billing, and perpetual licensing options
+- Multi-currency payments with local and international providers
+- Customization and integration request workflows
 
 ## Technology Stack
 
@@ -119,7 +128,7 @@ This repo uses runtime aliases (via `module-alias`) like `@lib/*`, `@config/*`, 
 
 ## API Endpoints
 
-All endpoints are prefixed with `/api/v1/`. See `.cursor/rules/api-endpoints.mdc` for complete endpoint documentation.
+All endpoints are prefixed with `/api/v1/`. See `.cursor/rules/api.mdc` for complete endpoint documentation.
 
 ### Health Check Endpoints
 
@@ -155,7 +164,7 @@ This project follows strict architectural and coding standards defined in `.curs
 - **Rate limiting**: Configurable rate limits per endpoint/user
 - **CORS**: Environment-aware CORS configuration
 
-See `.cursor/rules/index.mdc` for the complete list of 22 rule files covering all aspects of the project.
+See `.cursor/rules/index.mdc` for the complete list of 24 rule files covering all aspects of the project.
 
 ## License
 
