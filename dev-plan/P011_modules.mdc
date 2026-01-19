@@ -2,75 +2,100 @@
 alwaysApply: true
 ---
 
-## Phase 10 – Module implementation order
+## Phase 11 – API modules (HMS implementation order)
 
 **Rule:** Every module follows the 8-step pattern in `module-creation.mdc`. This file defines **order only**.
+**Scope:** Use the HMS endpoint map in `P010_api_endpoints.mdc` (sections 0–24) and models in `P009_models.mdc`. The legacy appendix in `P010_api_endpoints.mdc` is out of scope for HMS.
 
-### Module 1: Auth/User
-- Modules: `auth`, `user`
-- Notes: JWT + RBAC required; endpoints per `P010_api_endpoints.mdc`
-
-### Module 2: Company/Addresses
-- Modules: `company`, `address`
-
-### Module 3: Catalog
-- Modules: `category`, `manufacturer`, `department`, `product`
-- Notes: Product search/publish required
-
-### Module 4: Inventory
-- Modules: `warehouse`, `batch-lot`, `inventory`
-- Notes: Inventory adjustment endpoint required
-
-### Module 5: Commerce
-- Modules: `cart`, `quote-request`, `order`, `payment`, `shipment`, `return`
-
-### Module 6: Media Assets
-- Modules: `media-asset`
-- Notes: Must use `StorageService` abstraction
-
-### Module 7: Communication
-- Modules: `notification`, `conversation`, `message`
-
-### Module 8: Shops
-- Modules: `shop`
-
-### Module 9: Subscriptions
-- Modules: `subscription-plan`, `subscription`, `subscription-invoice`, `subscription-payment-method`, `subscription-usage`
-
-### Module 10: Compliance
-- Modules: `data-processing`, `breach-notification`, `phi-access`, `financial-control`, `system-change`, `consent`, `terms-acceptance`, `audit-log`, `price-history`
-- Notes: `audit-log` and `price-history` are read-only
-
-### Module 11: Marketing
-- Modules: `promotion`, `coupon-redemption`, `user-favorite`, `user-social-link`
-
-### Module 12: Reviews & Ratings
-- Modules: `product-review`, `review-media-asset`, `vendor-review-response`, `review-helpful-vote`
-
-### Module 13: Payment Methods
-- Modules: `order-payment-method`, `payment-method-request`, `payment-method-request-upvote`
-
-### Module 14: Approval Workflows
-- Modules: `product-approval`, `product-approval-history`, `vendor-approval`, `vendor-approval-document`, `vendor-approval-history`
-
-### Module 15: Product Compliance
-- Modules: `product-certification`, `product-hazard`
-
-### Module 16: Enhanced Authentication
+### Module 1: Auth, Sessions, Tenancy & Core Access
+- Modules: `auth`, `user-session`
+- Modules: `tenant`, `facility`, `branch`, `department`, `unit`, `room`, `ward`, `bed`
+- Modules: `address`, `contact`
+- Modules: `user`, `user-profile`
+- Modules: `role`, `permission`, `role-permission`, `user-role`
+- Modules: `api-key`, `api-key-permission`
 - Modules: `user-mfa`, `oauth-account`
 
-### Module 17: Enterprise Payments
-- Modules: `purchase-order`, `lease-agreement`, `lease-payment`, `net-terms`
+### Module 2: Patient Registry & Consent
+- Modules: `patient`, `patient-identifier`, `patient-contact`, `patient-guardian`
+- Modules: `patient-allergy`, `patient-medical-history`, `patient-document`
+- Modules: `consent`, `terms-acceptance`
 
-### Module 18: Safety & Compliance
-- Modules: `product-recall`, `recall-notification`
+### Module 3: Scheduling, Availability & Queues
+- Modules: `appointment`, `appointment-participant`, `appointment-reminder`
+- Modules: `provider-schedule`, `availability-slot`, `visit-queue`
 
-### Module 19: Integrations & Discovery
-- Modules: `integration-log`, `saved-search`, `search-history`, `wishlist`, `wishlist-item`
-- Notes: `integration-log` and `search-history` are read-only
+### Module 4: Encounters & Clinical Documentation
+- Modules: `encounter`, `clinical-note`, `diagnosis`, `procedure`
+- Modules: `vital-sign`, `care-plan`, `clinical-alert`
+- Modules: `referral`, `follow-up`
 
-### Module 20: Marketing & Support
-- Modules: `referral-code`, `referral`, `affiliate-link`, `affiliate-commission`
-- Modules: `loyalty-points`, `loyalty-transaction`, `loyalty-badge`, `user-loyalty-badge`
-- Modules: `support-ticket`, `support-ticket-comment`, `support-ticket-history`, `dispute`, `dispute-comment`, `dispute-history`
-- Notes: `support-ticket-history` and `dispute-history` are read-only
+### Module 5: Inpatient (IPD) & Bed Management
+- Modules: `admission`, `bed-assignment`, `ward-round`, `nursing-note`
+- Modules: `medication-administration`, `discharge-summary`, `transfer-request`
+
+### Module 6: ICU & Critical Care
+- Modules: `icu-stay`, `icu-observation`, `critical-alert`
+
+### Module 7: Theatre & Anesthesia
+- Modules: `theatre-case`, `anesthesia-record`, `post-op-note`
+
+### Module 8: Laboratory (LIS)
+- Modules: `lab-test`, `lab-panel`, `lab-order`, `lab-order-item`
+- Modules: `lab-sample`, `lab-result`, `lab-qc-log`
+
+### Module 9: Radiology (RIS / PACS)
+- Modules: `radiology-test`, `radiology-order`, `radiology-result`
+- Modules: `imaging-study`, `imaging-asset`, `pacs-link`
+
+### Module 10: Pharmacy
+- Modules: `drug`, `drug-batch`, `formulary-item`
+- Modules: `pharmacy-order`, `pharmacy-order-item`
+- Modules: `dispense-log`, `adverse-event`
+
+### Module 11: Inventory & Procurement
+- Modules: `inventory-item`, `inventory-stock`, `stock-movement`
+- Modules: `supplier`, `purchase-request`, `purchase-order`, `goods-receipt`, `stock-adjustment`
+
+### Module 12: Emergency & Ambulance
+- Modules: `emergency-case`, `triage-assessment`, `emergency-response`
+- Modules: `ambulance`, `ambulance-dispatch`, `ambulance-trip`
+
+### Module 13: Billing, Payments & Insurance
+- Modules: `invoice`, `invoice-item`, `payment`, `refund`
+- Modules: `pricing-rule`, `coverage-plan`, `insurance-claim`, `pre-authorization`
+- Modules: `billing-adjustment`
+
+### Module 14: HR, Payroll & Staffing
+- Modules: `staff-profile`, `staff-assignment`, `staff-leave`
+- Modules: `shift`, `shift-assignment`, `shift-swap-request`
+- Modules: `payroll-run`, `payroll-item`
+
+### Module 15: Housekeeping & Facilities
+- Modules: `housekeeping-task`, `housekeeping-schedule`
+- Modules: `maintenance-request`, `asset`, `asset-service-log`
+
+### Module 16: Notifications & Communications
+- Modules: `notification`, `notification-delivery`
+- Modules: `conversation`, `message`
+- Modules: `template`, `template-variable`
+
+### Module 17: Reporting & Analytics
+- Modules: `report-definition`, `report-run`, `dashboard-widget`
+- Modules: `kpi-snapshot`, `analytics-event`
+
+### Module 18: Subscriptions, Licensing & Modules
+- Modules: `subscription-plan`, `subscription`, `subscription-invoice`
+- Modules: `module`, `module-subscription`, `license`
+
+### Module 19: Compliance, Audit & Security
+- Modules: `audit-log`, `phi-access-log`, `data-processing-log`
+- Modules: `breach-notification`, `system-change-log`
+- Notes: `audit-log` is read-only per `P010_api_endpoints.mdc`
+
+### Module 20: Integrations & Webhooks
+- Modules: `integration`, `integration-log`, `webhook-subscription`
+- Notes: `integration-log` is read-only per `P010_api_endpoints.mdc`
+
+### Module 21: Telemedicine & Patient Engagement (Feature Mapped)
+- No new modules. Use existing: `appointment`, `encounter`, `message`, `clinical-note`, `lab-result`, `radiology-result`, `pharmacy-order`, `notification`

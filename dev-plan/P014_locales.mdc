@@ -2,7 +2,9 @@
 alwaysApply: true
 ---
 
-## Phase 13 – Locale expansion
+## Phase 14 – Locale expansion
+
+**Scope:** Locales must match `SUPPORTED_LOCALES` in `src/config/constants.js` and follow `internationalization.mdc` (including RTL handling).
 
 ### Step 14.1: Add individual locale files
 - This step involves creating a translation file for each supported non-English locale, one at a time.

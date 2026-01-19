@@ -2,7 +2,9 @@
 alwaysApply: true
 ---
 
-## Phase 11 – Seeder (Faker-based)
+## Phase 12 – Seeder (Faker-based)
+
+**Scope:** Seed data must align with `P009_models.mdc` and HMS endpoints in `P010_api_endpoints.mdc`. Cover all modules in `P011_modules.mdc` with minimum viable records for API completeness.
 
 ### Step 12.1: Add Faker dependency
 - Install `@faker-js/faker` as a dev dependency
@@ -25,3 +27,17 @@ alwaysApply: true
 - Use faker with seeded RNG for repeatability in dev
 - Do not seed in production environments
 - **Verification**: Seeding skips when `NODE_ENV=production`
+
+### Step 12.6: Seed order and coverage (HMS)
+- Seed in dependency order to satisfy foreign keys:
+  1. Tenancy & org: `tenant`, `facility`, `branch`, `department`, `unit`, `room`, `ward`, `bed`, `address`, `contact`
+  2. Access: `role`, `permission`, `role_permission`, `user`, `user_profile`, `user_role`, `api_key`, `api_key_permission`, `user_mfa`, `oauth_account`, `user_session`
+  3. Patients & consent: `patient`, `patient_identifier`, `patient_contact`, `patient_guardian`, `patient_allergy`, `patient_medical_history`, `patient_document`, `consent`, `terms_acceptance`
+  4. Scheduling & clinical: `appointment`, `appointment_participant`, `appointment_reminder`, `provider_schedule`, `availability_slot`, `visit_queue`, `encounter`, `clinical_note`, `diagnosis`, `procedure`, `vital_sign`, `care_plan`, `clinical_alert`, `referral`, `follow_up`
+  5. IPD/ICU/Theatre: `admission`, `bed_assignment`, `ward_round`, `nursing_note`, `medication_administration`, `discharge_summary`, `transfer_request`, `icu_stay`, `icu_observation`, `critical_alert`, `theatre_case`, `anesthesia_record`, `post_op_note`
+  6. Diagnostics: `lab_test`, `lab_panel`, `lab_order`, `lab_order_item`, `lab_sample`, `lab_result`, `lab_qc_log`, `radiology_test`, `radiology_order`, `radiology_result`, `imaging_study`, `imaging_asset`, `pacs_link`
+  7. Pharmacy & inventory: `drug`, `drug_batch`, `formulary_item`, `pharmacy_order`, `pharmacy_order_item`, `dispense_log`, `adverse_event`, `inventory_item`, `inventory_stock`, `stock_movement`, `supplier`, `purchase_request`, `purchase_order`, `goods_receipt`, `stock_adjustment`
+  8. Emergency: `emergency_case`, `triage_assessment`, `emergency_response`, `ambulance`, `ambulance_dispatch`, `ambulance_trip`
+  9. Billing/HR/Facilities: `invoice`, `invoice_item`, `payment`, `refund`, `pricing_rule`, `coverage_plan`, `insurance_claim`, `pre_authorization`, `billing_adjustment`, `staff_profile`, `staff_assignment`, `staff_leave`, `shift`, `shift_assignment`, `shift_swap_request`, `payroll_run`, `payroll_item`, `housekeeping_task`, `housekeeping_schedule`, `maintenance_request`, `asset`, `asset_service_log`
+  10. Comms/Analytics/Compliance/Integrations: `notification`, `notification_delivery`, `conversation`, `message`, `template`, `template_variable`, `report_definition`, `report_run`, `dashboard_widget`, `kpi_snapshot`, `analytics_event`, `subscription_plan`, `subscription`, `subscription_invoice`, `module`, `module_subscription`, `license`, `audit_log`, `phi_access_log`, `data_processing_log`, `breach_notification`, `system_change_log`, `integration`, `integration_log`, `webhook_subscription`
+- **Verification**: `npm run seed` produces valid records for every HMS endpoint group without FK errors

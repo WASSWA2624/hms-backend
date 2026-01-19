@@ -2,87 +2,138 @@
 alwaysApply: true
 ---
 
-## Phase 8 – Prisma schema (app-specific)
+## Phase 8 – Prisma schema (HMS-specific)
 
 ### Step 8.1: Define enums
 - Add required enums in `prisma/schema.prisma` (PascalCase):
-  - UserRole, ProductStatus, MediaAssetType, CartStatus (SAVED, SHARED), QuoteStatus
-  - SupplierStatus, NotificationType, NotificationPriority, AddressType, ShipmentStatus
-  - PaymentStatus, OrderStatus (PROCESSING, IN_USE, COMPLETED), ReturnStatus
-  - InventoryReason, PromotionType, DiscountType, SubscriptionStatus, BillingCycle
-  - SubscriptionPlanType, SubscriptionFeatureType, ApiKeyStatus, ApiKeyPermissionType
-  - DataProcessingPurpose, LegalBasis, BreachSeverity, BreachStatus, SoxControlType
-  - SystemChangeType, CompatibilityLinkLinkType, VerificationTokenType
-  - PaymentMethodType, PaymentMethodRequestStatus, ProductApprovalStatus, VendorApprovalStatus
-  - MFAMethod, OAuthProvider, POStatus, LeaseStatus, LeasePaymentStatus, NetTermsStatus
-  - RecallSeverity, RecallStatus, IntegrationType, HazardClass, ReferralStatus
-  - ReferralRewardType, CommissionStatus, LoyaltyTier, LoyaltyTransactionType
-  - TicketCategory, TicketPriority, TicketStatus, DisputeType, DisputeStatus, DisputePriority
+  - UserRole, UserStatus, Gender, AddressType, ContactType
+  - FacilityType, DepartmentType, WardType, BedStatus
+  - AppointmentStatus, EncounterType, EncounterStatus
+  - AdmissionStatus, DischargeStatus, TransferStatus
+  - VitalSignType, AllergySeverity, DiagnosisType
+  - PrescriptionStatus, MedicationRoute, MedicationFrequency
+  - LabOrderStatus, LabSampleStatus, LabResultStatus
+  - RadiologyOrderStatus, RadiologyReportStatus, ImagingModality
+  - PharmacyOrderStatus, DispenseStatus
+  - InventoryCategory, StockMovementType, StockReason
+  - EmergencySeverity, AmbulanceStatus, TriageLevel
+  - BillingStatus, InvoiceStatus, PaymentStatus, PaymentMethodType
+  - InsuranceClaimStatus, AuthorizationStatus
+  - SubscriptionStatus, BillingCycle, LicenseType
+  - NotificationType, NotificationPriority, CommunicationChannel
+  - ConsentType, ConsentStatus, DataProcessingPurpose, LegalBasis
+  - AuditAction, AccessScope, BreachSeverity, BreachStatus
+  - ShiftType, ShiftStatus, LeaveStatus, PayrollStatus
+  - HousekeepingTaskStatus, MaintenanceStatus
+  - IntegrationType, IntegrationStatus
+  - TicketCategory, TicketPriority, TicketStatus
 - **Verification**: Enum names are PascalCase and include required values
 
-### Step 8.2: Define base models
-- `user`, `company`, `address`
-- **Verification**: Naming + indexes follow `prisma.mdc` (snake_case fields, soft delete index)
+### Step 8.2: Core tenancy & organization models
+- `tenant`, `facility`, `branch`, `department`, `unit`
+- `room`, `ward`, `bed`
+- `address`, `contact`
+- **Verification**: Model/field naming is snake_case with soft delete indexes
 
-### Step 8.3: Catalog models
-- `category`, `manufacturer`, `department`, `product`, `product_attribute`
-- **Verification**: `product` has unique `sku` and required relations
-
-### Step 8.4: Inventory models
-- `warehouse`, `batch_lot`, `inventory`, `inventory_transaction`
-
-### Step 8.5: Commerce models
-- `cart`, `cart_item`, `quote_request`, `quote_request_item`
-- `order`, `order_item`, `payment`, `shipment`, `return_request`
-- **Verification**: Required status enums are used (OrderStatus, ReturnStatus)
-
-### Step 8.6: Communication models
-- `notification`, `conversation`, `message`, `media_asset`
-- `support_ticket`, `support_ticket_comment`, `support_ticket_history`
-- `dispute`, `dispute_comment`, `dispute_history`
-
-### Step 8.7: Subscription models
-- `subscription_plan`, `subscription`, `subscription_invoice`
-- `subscription_payment_method`, `subscription_usage`
-
-### Step 8.8: Compliance models
-- `audit_log`, `data_processing_log`, `breach_notification`, `phi_access_log`
-- `financial_control_log`, `system_change_log`, `consent`, `terms_acceptance`
-
-### Step 8.9: Marketing models
-- `promotion`, `coupon_redemption`, `user_favourite_product`, `user_social_link`
-- `shop`, `referral_code`, `referral`, `affiliate_link`, `affiliate_commission`
-- `loyalty_points`, `loyalty_transaction`, `loyalty_badge`, `user_loyalty_badge`
-
-### Step 8.10: Reviews & ratings models
-- `product_review`, `review_media_asset`, `vendor_review_response`, `review_helpful_vote`
-
-### Step 8.11: Payment methods models
-- `order_payment_method`, `payment_method_request`, `payment_method_request_upvote`
-
-### Step 8.12: Approval workflow models
-- `product_approval`, `product_approval_history`
-- `vendor_approval`, `vendor_approval_document`, `vendor_approval_history`
-
-### Step 8.13: Product compliance models
-- `product_certification`, `product_hazard`
-
-### Step 8.14: Authentication models
+### Step 8.3: Identity, users, and RBAC models
+- `user`, `user_profile`, `user_session`
+- `role`, `permission`, `role_permission`, `user_role`
+- `api_key`, `api_key_permission`
 - `user_mfa`, `oauth_account`
+- **Verification**: RBAC supports tenant and facility scoping
 
-### Step 8.15: Enterprise payment models
-- `purchase_order`, `lease_agreement`, `lease_payment`, `net_terms`
+### Step 8.4: Patient registry & demographics models
+- `patient`, `patient_identifier`, `patient_contact`, `patient_guardian`
+- `patient_allergy`, `patient_medical_history`, `patient_document`
+- `consent`, `terms_acceptance`
+- **Verification**: MRN/identifier uniqueness per tenant
 
-### Step 8.16: Safety & compliance models
-- `product_recall`, `recall_notification`
+### Step 8.5: Scheduling & appointments models
+- `appointment`, `appointment_participant`, `appointment_reminder`
+- `provider_schedule`, `availability_slot`, `visit_queue`
+- **Verification**: Appointment and queue flow matches OPD/telemedicine
 
-### Step 8.17: Integration & discovery models
-- `integration_log`, `saved_search`, `search_history`, `wishlist`, `wishlist_item`
+### Step 8.6: Encounters & clinical documentation models
+- `encounter`, `clinical_note`, `diagnosis`, `procedure`
+- `vital_sign`, `care_plan`, `clinical_alert`
+- `referral`, `follow_up`
+- **Verification**: Encounter types cover OPD, IPD, ICU, theatre, emergency
 
-### Step 8.18: Run migration
+### Step 8.7: Inpatient (IPD) & bed management models
+- `admission`, `bed_assignment`, `ward_round`
+- `nursing_note`, `medication_administration`
+- `discharge_summary`, `transfer_request`
+
+### Step 8.8: ICU & theatre models
+- `icu_stay`, `icu_observation`, `critical_alert`
+- `theatre_case`, `anesthesia_record`, `post_op_note`
+
+### Step 8.9: Diagnostics (Lab) models
+- `lab_test`, `lab_panel`, `lab_order`, `lab_order_item`
+- `lab_sample`, `lab_result`, `lab_qc_log`
+
+### Step 8.10: Diagnostics (Radiology) models
+- `radiology_test`, `radiology_order`, `radiology_result`
+- `imaging_study`, `imaging_asset`, `pacs_link`
+
+### Step 8.11: Pharmacy models
+- `drug`, `drug_batch`, `formulary_item`
+- `pharmacy_order`, `pharmacy_order_item`, `dispense_log`
+- `adverse_event`
+
+### Step 8.12: Inventory & procurement models
+- `inventory_item`, `inventory_stock`, `stock_movement`
+- `supplier`, `purchase_request`, `purchase_order`
+- `goods_receipt`, `stock_adjustment`
+
+### Step 8.13: Emergency & ambulance models
+- `emergency_case`, `triage_assessment`, `emergency_response`
+- `ambulance`, `ambulance_dispatch`, `ambulance_trip`
+
+### Step 8.14: Billing, payments & insurance models
+- `invoice`, `invoice_item`, `payment`, `refund`
+- `pricing_rule`, `coverage_plan`, `insurance_claim`, `pre_authorization`
+- `billing_adjustment`
+
+### Step 8.15: HR, payroll & staff operations models
+- `staff_profile`, `staff_assignment`, `staff_leave`
+- `shift`, `shift_assignment`, `shift_swap_request`
+- `payroll_run`, `payroll_item`
+- **Verification**: Supports nurses time-table generator inputs/outputs
+
+### Step 8.16: Housekeeping & facilities management models
+- `housekeeping_task`, `housekeeping_schedule`
+- `maintenance_request`, `asset`, `asset_service_log`
+
+### Step 8.17: Notifications & communications models
+- `notification`, `notification_delivery`, `message`, `conversation`
+- `template`, `template_variable`
+
+### Step 8.18: Reporting & analytics models
+- `report_definition`, `report_run`, `dashboard_widget`
+- `kpi_snapshot`, `analytics_event`
+
+### Step 8.19: Subscription, licensing & module management models
+- `subscription_plan`, `subscription`, `subscription_invoice`
+- `module`, `module_subscription`, `license`
+
+### Step 8.20: Compliance, audit & security models
+- `audit_log`, `phi_access_log`, `data_processing_log`
+- `breach_notification`, `system_change_log`
+
+### Step 8.21: Integration & interoperability models
+- `integration`, `integration_log`, `webhook_subscription`
+
+### Step 8.22: Run migration
 - Run `npx prisma migrate dev --name initial_schema`
 - **Verification**: Migration folder exists in `prisma/migrations/`
 
-### Step 8.19: Generate Prisma client
+### Step 8.23: Generate Prisma client
 - Run `npx prisma generate`
 - **Verification**: Prisma client generation succeeds
+
+### Step 8.24: Final verification checklist
+- All models use snake_case names with `created_at`, `updated_at`, `deleted_at` fields
+- All soft delete models index `deleted_at`
+- All relationships include explicit foreign keys and indexes on common filters
+- All mutations produce audit logs (handled in services)

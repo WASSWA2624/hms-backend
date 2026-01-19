@@ -4,6 +4,8 @@ alwaysApply: true
 
 ## Phase 8 – Offline support base
 
+**Scope:** Applies to all HMS endpoints in `P010_api_endpoints.mdc` and modules in `P011_modules.mdc`. Responses must follow `response-format.mdc`.
+
 ### Step 8.1: Add versioning fields to responses
 - Ensure all mutation responses return full resource data and a version/timestamp (`version`, `updated_at`, or `etag`)
 - **Verification**: Mutation responses include version fields and full resource data.
@@ -16,6 +18,7 @@ alwaysApply: true
 ### Step 8.3: Add incremental sync support
 - Add `?since=<timestamp>` for list endpoints
 - Return sync metadata (`sync_token`, `has_more`, `timestamp`) per `offline-support.mdc`
+- Ensure soft-deleted records are returned with `deleted: true`
 - **Verification**: Sync responses follow standard sync format and are idempotent.
 
 ### Step 8.4: Add idempotency key handling

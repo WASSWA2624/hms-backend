@@ -2,19 +2,27 @@
 alwaysApply: true
 ---
 
-## Phase 12 – WebSocket app features
+## Phase 13 – WebSocket app features
 
-### Step 13.1: Define app-specific events
+**Scope:** HMS-only real-time events aligned with `P009_models.mdc` and `P010_api_endpoints.mdc`. No legacy ecommerce events.
+
+### Step 13.1: Define app-specific events (HMS)
 - Add events for:
-  - Support tickets (status updates, new comments, assignment changes)
-  - Disputes (status updates, new comments, resolution updates)
-  - Referral rewards (reward credited, status changes)
-  - Affiliate commissions (commission earned, payment status)
-  - Loyalty points (earned/redeemed, tier upgrades, badge earned)
+  - Appointments (created, rescheduled, canceled)
+  - Visit queue updates (position changes, triage updates)
+  - Admissions & bed assignments (admitted, transferred, discharged, bed changed)
+  - Critical alerts (ICU/clinical alert raised or resolved)
+  - Lab and radiology results (result ready, result updated)
+  - Pharmacy orders (order created, dispensed, canceled)
+  - Inventory stock (low stock, stock adjustment posted)
+  - Emergency dispatch (case assigned, ambulance dispatched, arrival updates)
+  - Billing & payments (invoice issued, payment received, refund processed)
+  - Notifications/messages (new notification, conversation message)
 - **Verification**: All event names are defined in `@lib/websocket/events.js`
 
 ### Step 13.2: Emit events from services only
 - Emit events in service layer only (no controller emissions)
+- Sensitive events must create audit logs and avoid raw entities
 - **Verification**: Controllers do not import websocket emit helpers
 
 ### Step 13.3: Add WS tests (app-specific)
