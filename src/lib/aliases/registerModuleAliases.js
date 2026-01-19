@@ -33,7 +33,8 @@ const registerModuleAliases = (moduleName) => {
     [`@controllers/${moduleName}`]: path.join(modulePath, 'controllers'),
     [`@services/${moduleName}`]: path.join(modulePath, 'services'),
     [`@repositories/${moduleName}`]: path.join(modulePath, 'repositories'),
-    [`@validations/${moduleName}`]: path.join(modulePath, 'schemas')
+    [`@validations/${moduleName}`]: path.join(modulePath, 'schemas'),
+    [`@routes/${moduleName}`]: path.join(modulePath, 'routes')
   };
   try {
     moduleAlias.addAliases(aliases);

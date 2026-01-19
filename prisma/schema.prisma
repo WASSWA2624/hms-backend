@@ -517,16 +517,97 @@ enum TicketStatus {
 }
 
 model tenant {
-  id         String   @id @default(uuid()) @db.VarChar(36)
-  name       String   @db.VarChar(255)
-  slug       String?  @db.VarChar(191)
-  is_active  Boolean  @default(true)
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  id         String    @id @default(uuid()) @db.VarChar(36)
+  name       String    @db.VarChar(255)
+  slug       String?   @db.VarChar(191)
+  is_active  Boolean   @default(true)
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
   deleted_at DateTime?
-  version    Int      @default(1)
+  version    Int       @default(1)
 
-  facilities             facility[]
+  facilities                      facility[]
+  branches                        branch[]
+  departments                     department[]
+  units                           unit[]
+  wards                           ward[]
+  rooms                           room[]
+  beds                            bed[]
+  users                           user[]
+  roles                           role[]
+  permissions                     permission[]
+  user_roles                      user_role[]
+  patients                        patient[]
+  patient_identifiers             patient_identifier[]
+  patient_contacts                patient_contact[]
+  patient_guardians               patient_guardian[]
+  patient_allergies               patient_allergy[]
+  patient_medical_history_entries patient_medical_history[]
+  patient_documents               patient_document[]
+  appointments                    appointment[]
+  provider_schedules              provider_schedule[]
+  visit_queue_entries             visit_queue[]
+  encounters                      encounter[]
+  admissions                      admission[]
+  lab_tests                       lab_test[]
+  lab_panels                      lab_panel[]
+  radiology_tests                 radiology_test[]
+  drugs                           drug[]
+  formulary_items                 formulary_item[]
+  subscriptions                   subscription[]
+  subscription_plans              subscription_plan[]
+  audit_logs                      audit_log[]
+  phi_access_logs                 phi_access_log[]
+  data_processing_logs            data_processing_log[]
+  breach_notifications            breach_notification[]
+  system_change_logs              system_change_log[]
+  integrations                    integration[]
+  webhooks                        webhook_subscription[]
+  inventory_items                 inventory_item[]
+  suppliers                       supplier[]
+  purchase_requests               purchase_request[]
+  emergency_cases                 emergency_case[]
+  ambulances                      ambulance[]
+  notification_templates          template[]
+  notifications                   notification[]
+  conversations                   conversation[]
+  report_definitions              report_definition[]
+  report_runs                     report_run[]
+  dashboards                      dashboard_widget[]
+  kpi_snapshots                   kpi_snapshot[]
+  analytics_events                analytics_event[]
+  staff_profiles                  staff_profile[]
+  shifts                          shift[]
+  payroll_runs                    payroll_run[]
+  assets                          asset[]
+  licenses                        license[]
+  addresses                       address[]
+  contacts                        contact[]
+  invoices                        invoice[]
+  payments                        payment[]
+  pricing_rules                   pricing_rule[]
+  coverage_plans                  coverage_plan[]
+  consents                        consent[]
+  terms_acceptances               terms_acceptance[]
+  api_keys                        api_key[]
+
+  @@unique([slug])
+  @@index([deleted_at])
+  @@index([is_active])
+}
+
+model facility {
+  id            String       @id @default(uuid()) @db.VarChar(36)
+  tenant_id     String       @db.VarChar(36)
+  name          String       @db.VarChar(255)
+  facility_type FacilityType
+  is_active     Boolean      @default(true)
+  created_at    DateTime     @default(now())
+  updated_at    DateTime     @updatedAt
+  deleted_at    DateTime?
+  version       Int          @default(1)
+
+  tenant                 tenant                  @relation(fields: [tenant_id], references: [id])
   branches               branch[]
   departments            department[]
   units                  unit[]
@@ -534,108 +615,28 @@ model tenant {
   rooms                  room[]
   beds                   bed[]
   users                  user[]
-  roles                  role[]
-  permissions            permission[]
-  user_roles             user_role[]
   patients               patient[]
-  patient_identifiers    patient_identifier[]
-  patient_contacts       patient_contact[]
-  patient_guardians      patient_guardian[]
-  patient_allergies      patient_allergy[]
-  patient_medical_history_entries patient_medical_history[]
-  patient_documents      patient_document[]
+  schedules              provider_schedule[]
   appointments           appointment[]
-  provider_schedules     provider_schedule[]
-  visit_queue_entries    visit_queue[]
   encounters             encounter[]
   admissions             admission[]
-  lab_tests              lab_test[]
-  lab_panels             lab_panel[]
-  radiology_tests        radiology_test[]
-  drugs                  drug[]
-  formulary_items        formulary_item[]
-  subscriptions          subscription[]
-  subscription_plans     subscription_plan[]
-  audit_logs             audit_log[]
-  phi_access_logs        phi_access_log[]
-  data_processing_logs   data_processing_log[]
-  breach_notifications   breach_notification[]
-  system_change_logs     system_change_log[]
-  integrations           integration[]
-  webhooks               webhook_subscription[]
-  inventory_items        inventory_item[]
-  suppliers              supplier[]
-  purchase_requests      purchase_request[]
-  emergency_cases         emergency_case[]
   ambulances             ambulance[]
-  notification_templates template[]
-  notifications          notification[]
-  conversations          conversation[]
-  report_definitions     report_definition[]
-  dashboards             dashboard_widget[]
-  kpi_snapshots          kpi_snapshot[]
-  analytics_events       analytics_event[]
-  staff_profiles         staff_profile[]
-  shifts                 shift[]
-  payroll_runs           payroll_run[]
-  assets                 asset[]
-  licenses               license[]
-  addresses              address[]
-  contacts               contact[]
   invoices               invoice[]
   payments               payment[]
-  pricing_rules          pricing_rule[]
-  coverage_plans         coverage_plan[]
-  consents               consent[]
-  terms_acceptances      terms_acceptance[]
-  api_keys               api_key[]
-
-  @@index([deleted_at])
-  @@index([is_active])
-  @@unique([slug])
-}
-
-model facility {
-  id          String       @id @default(uuid()) @db.VarChar(36)
-  tenant_id   String       @db.VarChar(36)
-  name        String       @db.VarChar(255)
-  facility_type FacilityType
-  is_active   Boolean      @default(true)
-  created_at  DateTime     @default(now())
-  updated_at  DateTime     @updatedAt
-  deleted_at  DateTime?
-  version     Int          @default(1)
-
-  tenant      tenant       @relation(fields: [tenant_id], references: [id])
-  branches    branch[]
-  departments department[]
-  units       unit[]
-  wards       ward[]
-  rooms       room[]
-  beds        bed[]
-  users       user[]
-  patients    patient[]
-  schedules   provider_schedule[]
-  appointments appointment[]
-  encounters  encounter[]
-  admissions  admission[]
-  ambulances  ambulance[]
-  invoices    invoice[]
-  payments    payment[]
-  inventory_stocks inventory_stock[]
-  stock_movements stock_movement[]
-  stock_adjustments stock_adjustment[]
-  purchase_requests purchase_request[]
-  visit_queue_entries visit_queue[]
-  emergency_cases emergency_case[]
-  user_profiles user_profile[]
-  shifts       shift[]
-  housekeeping_tasks housekeeping_task[]
+  inventory_stocks       inventory_stock[]
+  stock_movements        stock_movement[]
+  stock_adjustments      stock_adjustment[]
+  purchase_requests      purchase_request[]
+  visit_queue_entries    visit_queue[]
+  emergency_cases        emergency_case[]
+  user_profiles          user_profile[]
+  shifts                 shift[]
+  housekeeping_tasks     housekeeping_task[]
   housekeeping_schedules housekeeping_schedule[]
-  maintenance_requests maintenance_request[]
-  assets       asset[]
-  addresses    address[] @relation("facility_address")
-  contacts     contact[] @relation("facility_contact")
+  maintenance_requests   maintenance_request[]
+  assets                 asset[]
+  addresses              address[]               @relation("facility_address")
+  contacts               contact[]               @relation("facility_contact")
 
   @@index([tenant_id])
   @@index([facility_type])
@@ -643,48 +644,48 @@ model facility {
 }
 
 model branch {
-  id         String   @id @default(uuid()) @db.VarChar(36)
-  tenant_id  String   @db.VarChar(36)
-  facility_id String? @db.VarChar(36)
-  name       String   @db.VarChar(255)
-  is_active  Boolean  @default(true)
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-  deleted_at DateTime?
-  version    Int      @default(1)
+  id          String    @id @default(uuid()) @db.VarChar(36)
+  tenant_id   String    @db.VarChar(36)
+  facility_id String?   @db.VarChar(36)
+  name        String    @db.VarChar(255)
+  is_active   Boolean   @default(true)
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+  deleted_at  DateTime?
+  version     Int       @default(1)
 
-  tenant     tenant   @relation(fields: [tenant_id], references: [id])
-  facility   facility? @relation(fields: [facility_id], references: [id])
+  tenant      tenant       @relation(fields: [tenant_id], references: [id])
+  facility    facility?    @relation(fields: [facility_id], references: [id])
   departments department[]
-  addresses  address[] @relation("branch_address")
-  contacts   contact[] @relation("branch_contact")
+  addresses   address[]    @relation("branch_address")
+  contacts    contact[]    @relation("branch_contact")
 
   @@index([tenant_id])
   @@index([deleted_at])
 }
 
 model department {
-  id           String         @id @default(uuid()) @db.VarChar(36)
-  tenant_id    String         @db.VarChar(36)
-  facility_id  String?        @db.VarChar(36)
-  branch_id    String?        @db.VarChar(36)
-  name         String         @db.VarChar(255)
+  id              String         @id @default(uuid()) @db.VarChar(36)
+  tenant_id       String         @db.VarChar(36)
+  facility_id     String?        @db.VarChar(36)
+  branch_id       String?        @db.VarChar(36)
+  name            String         @db.VarChar(255)
   department_type DepartmentType
-  is_active    Boolean        @default(true)
-  created_at   DateTime       @default(now())
-  updated_at   DateTime       @updatedAt
-  deleted_at   DateTime?
-  version      Int            @default(1)
+  is_active       Boolean        @default(true)
+  created_at      DateTime       @default(now())
+  updated_at      DateTime       @updatedAt
+  deleted_at      DateTime?
+  version         Int            @default(1)
 
-  tenant       tenant         @relation(fields: [tenant_id], references: [id])
-  facility     facility?      @relation(fields: [facility_id], references: [id])
-  branch       branch?        @relation(fields: [branch_id], references: [id])
-  units        unit[]
-  wards        ward[]
-  staff_profiles staff_profile[]
+  tenant            tenant             @relation(fields: [tenant_id], references: [id])
+  facility          facility?          @relation(fields: [facility_id], references: [id])
+  branch            branch?            @relation(fields: [branch_id], references: [id])
+  units             unit[]
+  wards             ward[]
+  staff_profiles    staff_profile[]
   staff_assignments staff_assignment[]
-  referrals_from referral[] @relation("referral_from_department")
-  referrals_to referral[] @relation("referral_to_department")
+  referrals_from    referral[]         @relation("referral_from_department")
+  referrals_to      referral[]         @relation("referral_to_department")
 
   @@index([tenant_id])
   @@index([branch_id])
@@ -693,20 +694,20 @@ model department {
 }
 
 model unit {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  tenant_id    String   @db.VarChar(36)
-  facility_id  String?  @db.VarChar(36)
-  department_id String? @db.VarChar(36)
-  name         String   @db.VarChar(255)
-  is_active    Boolean  @default(true)
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  deleted_at   DateTime?
-  version      Int      @default(1)
+  id            String    @id @default(uuid()) @db.VarChar(36)
+  tenant_id     String    @db.VarChar(36)
+  facility_id   String?   @db.VarChar(36)
+  department_id String?   @db.VarChar(36)
+  name          String    @db.VarChar(255)
+  is_active     Boolean   @default(true)
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+  deleted_at    DateTime?
+  version       Int       @default(1)
 
-  tenant       tenant   @relation(fields: [tenant_id], references: [id])
-  facility     facility? @relation(fields: [facility_id], references: [id])
-  department   department? @relation(fields: [department_id], references: [id])
+  tenant            tenant             @relation(fields: [tenant_id], references: [id])
+  facility          facility?          @relation(fields: [facility_id], references: [id])
+  department        department?        @relation(fields: [department_id], references: [id])
   staff_assignments staff_assignment[]
 
   @@index([tenant_id])
@@ -715,25 +716,25 @@ model unit {
 }
 
 model ward {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  tenant_id    String   @db.VarChar(36)
-  facility_id  String   @db.VarChar(36)
-  department_id String? @db.VarChar(36)
-  name         String   @db.VarChar(255)
-  ward_type    WardType
-  is_active    Boolean  @default(true)
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  deleted_at   DateTime?
-  version      Int      @default(1)
+  id            String    @id @default(uuid()) @db.VarChar(36)
+  tenant_id     String    @db.VarChar(36)
+  facility_id   String    @db.VarChar(36)
+  department_id String?   @db.VarChar(36)
+  name          String    @db.VarChar(255)
+  ward_type     WardType
+  is_active     Boolean   @default(true)
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+  deleted_at    DateTime?
+  version       Int       @default(1)
 
-  tenant       tenant   @relation(fields: [tenant_id], references: [id])
-  facility     facility @relation(fields: [facility_id], references: [id])
-  department   department? @relation(fields: [department_id], references: [id])
-  rooms        room[]
-  beds         bed[]
+  tenant                 tenant             @relation(fields: [tenant_id], references: [id])
+  facility               facility           @relation(fields: [facility_id], references: [id])
+  department             department?        @relation(fields: [department_id], references: [id])
+  rooms                  room[]
+  beds                   bed[]
   transfer_requests_from transfer_request[] @relation("transfer_from_ward")
-  transfer_requests_to transfer_request[] @relation("transfer_to_ward")
+  transfer_requests_to   transfer_request[] @relation("transfer_to_ward")
 
   @@index([tenant_id])
   @@index([department_id])
@@ -742,22 +743,22 @@ model ward {
 }
 
 model room {
-  id          String   @id @default(uuid()) @db.VarChar(36)
-  tenant_id   String   @db.VarChar(36)
-  facility_id String   @db.VarChar(36)
-  ward_id     String?  @db.VarChar(36)
-  name        String   @db.VarChar(255)
-  floor       String?  @db.VarChar(50)
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
+  id          String    @id @default(uuid()) @db.VarChar(36)
+  tenant_id   String    @db.VarChar(36)
+  facility_id String    @db.VarChar(36)
+  ward_id     String?   @db.VarChar(36)
+  name        String    @db.VarChar(255)
+  floor       String?   @db.VarChar(50)
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
   deleted_at  DateTime?
-  version     Int      @default(1)
+  version     Int       @default(1)
 
-  tenant      tenant   @relation(fields: [tenant_id], references: [id])
-  facility    facility @relation(fields: [facility_id], references: [id])
-  ward        ward?    @relation(fields: [ward_id], references: [id])
-  beds        bed[]
-  housekeeping_tasks housekeeping_task[]
+  tenant                 tenant                  @relation(fields: [tenant_id], references: [id])
+  facility               facility                @relation(fields: [facility_id], references: [id])
+  ward                   ward?                   @relation(fields: [ward_id], references: [id])
+  beds                   bed[]
+  housekeeping_tasks     housekeeping_task[]
   housekeeping_schedules housekeeping_schedule[]
 
   @@index([tenant_id])
@@ -778,10 +779,10 @@ model bed {
   deleted_at  DateTime?
   version     Int       @default(1)
 
-  tenant      tenant    @relation(fields: [tenant_id], references: [id])
-  facility    facility  @relation(fields: [facility_id], references: [id])
-  ward        ward      @relation(fields: [ward_id], references: [id])
-  room        room?     @relation(fields: [room_id], references: [id])
+  tenant          tenant           @relation(fields: [tenant_id], references: [id])
+  facility        facility         @relation(fields: [facility_id], references: [id])
+  ward            ward             @relation(fields: [ward_id], references: [id])
+  room            room?            @relation(fields: [room_id], references: [id])
   bed_assignments bed_assignment[]
 
   @@index([tenant_id])
@@ -792,35 +793,35 @@ model bed {
 }
 
 model address {
-  id              String      @id @default(uuid()) @db.VarChar(36)
-  tenant_id       String      @db.VarChar(36)
-  address_type    AddressType
-  line1           String      @db.VarChar(255)
-  line2           String?     @db.VarChar(255)
-  city            String?     @db.VarChar(120)
-  state           String?     @db.VarChar(120)
-  postal_code     String?     @db.VarChar(40)
-  country         String?     @db.VarChar(120)
-  latitude        Decimal?    @db.Decimal(10, 7)
-  longitude       Decimal?    @db.Decimal(10, 7)
-  facility_id     String?     @db.VarChar(36)
-  branch_id       String?     @db.VarChar(36)
-  patient_id      String?     @db.VarChar(36)
-  user_profile_id String?     @db.VarChar(36)
-  staff_profile_id String?    @db.VarChar(36)
-  supplier_id     String?     @db.VarChar(36)
-  created_at      DateTime    @default(now())
-  updated_at      DateTime    @updatedAt
-  deleted_at      DateTime?
-  version         Int         @default(1)
+  id               String      @id @default(uuid()) @db.VarChar(36)
+  tenant_id        String      @db.VarChar(36)
+  address_type     AddressType
+  line1            String      @db.VarChar(255)
+  line2            String?     @db.VarChar(255)
+  city             String?     @db.VarChar(120)
+  state            String?     @db.VarChar(120)
+  postal_code      String?     @db.VarChar(40)
+  country          String?     @db.VarChar(120)
+  latitude         Decimal?    @db.Decimal(10, 7)
+  longitude        Decimal?    @db.Decimal(10, 7)
+  facility_id      String?     @db.VarChar(36)
+  branch_id        String?     @db.VarChar(36)
+  patient_id       String?     @db.VarChar(36)
+  user_profile_id  String?     @db.VarChar(36)
+  staff_profile_id String?     @db.VarChar(36)
+  supplier_id      String?     @db.VarChar(36)
+  created_at       DateTime    @default(now())
+  updated_at       DateTime    @updatedAt
+  deleted_at       DateTime?
+  version          Int         @default(1)
 
-  tenant          tenant      @relation(fields: [tenant_id], references: [id])
-  facility        facility?   @relation("facility_address", fields: [facility_id], references: [id])
-  branch          branch?     @relation("branch_address", fields: [branch_id], references: [id])
-  patient         patient?    @relation("patient_address", fields: [patient_id], references: [id])
-  user_profile    user_profile? @relation("user_profile_address", fields: [user_profile_id], references: [id])
-  staff_profile   staff_profile? @relation("staff_profile_address", fields: [staff_profile_id], references: [id])
-  supplier        supplier?   @relation("supplier_address", fields: [supplier_id], references: [id])
+  tenant        tenant         @relation(fields: [tenant_id], references: [id])
+  facility      facility?      @relation("facility_address", fields: [facility_id], references: [id])
+  branch        branch?        @relation("branch_address", fields: [branch_id], references: [id])
+  patient       patient?       @relation("patient_address", fields: [patient_id], references: [id])
+  user_profile  user_profile?  @relation("user_profile_address", fields: [user_profile_id], references: [id])
+  staff_profile staff_profile? @relation("staff_profile_address", fields: [staff_profile_id], references: [id])
+  supplier      supplier?      @relation("supplier_address", fields: [supplier_id], references: [id])
 
   @@index([tenant_id])
   @@index([branch_id])
@@ -832,29 +833,29 @@ model address {
 }
 
 model contact {
-  id              String      @id @default(uuid()) @db.VarChar(36)
-  tenant_id       String      @db.VarChar(36)
-  contact_type    ContactType
-  value           String      @db.VarChar(255)
-  is_primary      Boolean     @default(false)
-  facility_id     String?     @db.VarChar(36)
-  branch_id       String?     @db.VarChar(36)
-  patient_id      String?     @db.VarChar(36)
-  user_profile_id String?     @db.VarChar(36)
-  staff_profile_id String?    @db.VarChar(36)
-  supplier_id     String?     @db.VarChar(36)
-  created_at      DateTime    @default(now())
-  updated_at      DateTime    @updatedAt
-  deleted_at      DateTime?
-  version         Int         @default(1)
+  id               String      @id @default(uuid()) @db.VarChar(36)
+  tenant_id        String      @db.VarChar(36)
+  contact_type     ContactType
+  value            String      @db.VarChar(255)
+  is_primary       Boolean     @default(false)
+  facility_id      String?     @db.VarChar(36)
+  branch_id        String?     @db.VarChar(36)
+  patient_id       String?     @db.VarChar(36)
+  user_profile_id  String?     @db.VarChar(36)
+  staff_profile_id String?     @db.VarChar(36)
+  supplier_id      String?     @db.VarChar(36)
+  created_at       DateTime    @default(now())
+  updated_at       DateTime    @updatedAt
+  deleted_at       DateTime?
+  version          Int         @default(1)
 
-  tenant          tenant      @relation(fields: [tenant_id], references: [id])
-  facility        facility?   @relation("facility_contact", fields: [facility_id], references: [id])
-  branch          branch?     @relation("branch_contact", fields: [branch_id], references: [id])
-  patient         patient?    @relation("patient_contact", fields: [patient_id], references: [id])
-  user_profile    user_profile? @relation("user_profile_contact", fields: [user_profile_id], references: [id])
-  staff_profile   staff_profile? @relation("staff_profile_contact", fields: [staff_profile_id], references: [id])
-  supplier        supplier?   @relation("supplier_contact", fields: [supplier_id], references: [id])
+  tenant        tenant         @relation(fields: [tenant_id], references: [id])
+  facility      facility?      @relation("facility_contact", fields: [facility_id], references: [id])
+  branch        branch?        @relation("branch_contact", fields: [branch_id], references: [id])
+  patient       patient?       @relation("patient_contact", fields: [patient_id], references: [id])
+  user_profile  user_profile?  @relation("user_profile_contact", fields: [user_profile_id], references: [id])
+  staff_profile staff_profile? @relation("staff_profile_contact", fields: [staff_profile_id], references: [id])
+  supplier      supplier?      @relation("supplier_contact", fields: [supplier_id], references: [id])
 
   @@index([tenant_id])
   @@index([facility_id])
@@ -867,93 +868,94 @@ model contact {
 }
 
 model user {
-  id           String     @id @default(uuid()) @db.VarChar(36)
-  tenant_id    String     @db.VarChar(36)
-  facility_id  String?    @db.VarChar(36)
-  email        String     @db.VarChar(255)
-  phone        String?    @db.VarChar(40)
-  password_hash String    @db.VarChar(255)
-  status       UserStatus
-  created_at   DateTime   @default(now())
-  updated_at   DateTime   @updatedAt
-  deleted_at   DateTime?
-  version      Int        @default(1)
+  id            String     @id @default(uuid()) @db.VarChar(36)
+  tenant_id     String     @db.VarChar(36)
+  facility_id   String?    @db.VarChar(36)
+  email         String     @db.VarChar(255)
+  phone         String?    @db.VarChar(40)
+  password_hash String     @db.VarChar(255)
+  status        UserStatus
+  created_at    DateTime   @default(now())
+  updated_at    DateTime   @updatedAt
+  deleted_at    DateTime?
+  version       Int        @default(1)
 
-  tenant       tenant     @relation(fields: [tenant_id], references: [id])
-  facility     facility?  @relation(fields: [facility_id], references: [id])
-  profile      user_profile?
-  staff_profile staff_profile?
-  sessions     user_session[]
-  verification_tokens verification_token[]
-  roles        user_role[]
-  api_keys     api_key[]
-  mfa_methods  user_mfa[]
-  oauth_accounts oauth_account[]
-  audit_logs   audit_log[]
-  phi_access_logs phi_access_log[]
-  data_processing_logs data_processing_log[]
-  appointments appointment[]
-  encounters   encounter[]
-  clinical_notes clinical_note[]
-  nursing_notes nursing_note[]
-  provider_schedules provider_schedule[]
-  visit_queue_entries visit_queue[]
+  tenant                     tenant                    @relation(fields: [tenant_id], references: [id])
+  facility                   facility?                 @relation(fields: [facility_id], references: [id])
+  profile                    user_profile?
+  staff_profile              staff_profile?
+  sessions                   user_session[]
+  verification_tokens        verification_token[]
+  roles                      user_role[]
+  api_keys                   api_key[]
+  mfa_methods                user_mfa[]
+  oauth_accounts             oauth_account[]
+  audit_logs                 audit_log[]
+  phi_access_logs            phi_access_log[]
+  data_processing_logs       data_processing_log[]
+  appointments               appointment[]
+  encounters                 encounter[]
+  clinical_notes             clinical_note[]
+  nursing_notes              nursing_note[]
+  provider_schedules         provider_schedule[]
+  visit_queue_entries        visit_queue[]
   appointment_participations appointment_participant[]
-  anesthesia_records anesthesia_record[]
-  analytics_events analytics_event[]
-  system_change_logs system_change_log[]
-  terms_acceptances terms_acceptance[]
-  notifications notification[]
-  conversations conversation[]
-  messages message[]
-  report_runs report_run[]
-  purchase_requests purchase_request[]
+  anesthesia_records         anesthesia_record[]
+  analytics_events           analytics_event[]
+  system_change_logs         system_change_log[]
+  terms_acceptances          terms_acceptance[]
+  notifications              notification[]
+  conversations              conversation[]
+  messages                   message[]
+  report_runs                report_run[]
+  report_definitions_created report_definition[]
+  purchase_requests          purchase_request[]
 
+  @@unique([tenant_id, email])
   @@index([tenant_id])
   @@index([facility_id])
   @@index([email])
   @@index([status])
   @@index([deleted_at])
-  @@unique([tenant_id, email])
 }
 
 model user_profile {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  user_id      String   @db.VarChar(36)
-  facility_id  String?  @db.VarChar(36)
-  first_name   String   @db.VarChar(120)
-  last_name    String   @db.VarChar(120)
-  gender       Gender?
+  id            String    @id @default(uuid()) @db.VarChar(36)
+  user_id       String    @db.VarChar(36)
+  facility_id   String?   @db.VarChar(36)
+  first_name    String    @db.VarChar(120)
+  last_name     String    @db.VarChar(120)
+  gender        Gender?
   date_of_birth DateTime?
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  deleted_at   DateTime?
-  version      Int      @default(1)
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+  deleted_at    DateTime?
+  version       Int       @default(1)
 
-  user         user     @relation(fields: [user_id], references: [id])
-  facility     facility? @relation(fields: [facility_id], references: [id])
-  addresses    address[] @relation("user_profile_address")
-  contacts     contact[] @relation("user_profile_contact")
+  user      user      @relation(fields: [user_id], references: [id])
+  facility  facility? @relation(fields: [facility_id], references: [id])
+  addresses address[] @relation("user_profile_address")
+  contacts  contact[] @relation("user_profile_contact")
 
+  @@unique([user_id])
   @@index([user_id])
   @@index([deleted_at])
-  @@unique([user_id])
 }
 
 model user_session {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  user_id      String   @db.VarChar(36)
-  refresh_token_hash String @db.VarChar(255)
-  ip_address   String?  @db.VarChar(45)
-  user_agent   String?  @db.VarChar(255)
-  expires_at   DateTime
-  revoked_at   DateTime?
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  deleted_at   DateTime?
-  version      Int      @default(1)
+  id                 String    @id @default(uuid()) @db.VarChar(36)
+  user_id            String    @db.VarChar(36)
+  refresh_token_hash String    @db.VarChar(255)
+  ip_address         String?   @db.VarChar(45)
+  user_agent         String?   @db.VarChar(255)
+  expires_at         DateTime
+  revoked_at         DateTime?
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @updatedAt
+  deleted_at         DateTime?
+  version            Int       @default(1)
 
-  user         user     @relation(fields: [user_id], references: [id])
+  user user @relation(fields: [user_id], references: [id])
 
   @@index([user_id])
   @@index([expires_at])
@@ -961,18 +963,18 @@ model user_session {
 }
 
 model verification_token {
-  id         String                  @id @default(uuid()) @db.VarChar(36)
-  user_id    String                  @db.VarChar(36)
-  token_hash String                  @db.VarChar(255)
+  id         String                @id @default(uuid()) @db.VarChar(36)
+  user_id    String                @db.VarChar(36)
+  token_hash String                @db.VarChar(255)
   type       VerificationTokenType
   expires_at DateTime
   used_at    DateTime?
-  created_at DateTime                @default(now())
-  updated_at DateTime                @updatedAt
+  created_at DateTime              @default(now())
+  updated_at DateTime              @updatedAt
   deleted_at DateTime?
-  version    Int                     @default(1)
+  version    Int                   @default(1)
 
-  user       user                    @relation(fields: [user_id], references: [id])
+  user user @relation(fields: [user_id], references: [id])
 
   @@index([user_id])
   @@index([token_hash])
@@ -982,19 +984,19 @@ model verification_token {
 }
 
 model role {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  tenant_id    String   @db.VarChar(36)
-  facility_id  String?  @db.VarChar(36)
-  name         String   @db.VarChar(120)
-  description  String?  @db.VarChar(255)
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  deleted_at   DateTime?
-  version      Int      @default(1)
+  id          String    @id @default(uuid()) @db.VarChar(36)
+  tenant_id   String    @db.VarChar(36)
+  facility_id String?   @db.VarChar(36)
+  name        String    @db.VarChar(120)
+  description String?   @db.VarChar(255)
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+  deleted_at  DateTime?
+  version     Int       @default(1)
 
-  tenant       tenant   @relation(fields: [tenant_id], references: [id])
-  users        user_role[]
-  permissions  role_permission[]
+  tenant      tenant            @relation(fields: [tenant_id], references: [id])
+  users       user_role[]
+  permissions role_permission[]
 
   @@index([tenant_id])
   @@index([facility_id])
@@ -1003,18 +1005,18 @@ model role {
 }
 
 model permission {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  tenant_id    String   @db.VarChar(36)
-  name         String   @db.VarChar(120)
-  description  String?  @db.VarChar(255)
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  deleted_at   DateTime?
-  version      Int      @default(1)
+  id          String    @id @default(uuid()) @db.VarChar(36)
+  tenant_id   String    @db.VarChar(36)
+  name        String    @db.VarChar(120)
+  description String?   @db.VarChar(255)
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+  deleted_at  DateTime?
+  version     Int       @default(1)
 
-  tenant       tenant   @relation(fields: [tenant_id], references: [id])
-  roles        role_permission[]
-  api_keys     api_key_permission[]
+  tenant   tenant               @relation(fields: [tenant_id], references: [id])
+  roles    role_permission[]
+  api_keys api_key_permission[]
 
   @@index([tenant_id])
   @@index([name])
@@ -1022,63 +1024,63 @@ model permission {
 }
 
 model role_permission {
-  id            String   @id @default(uuid()) @db.VarChar(36)
-  role_id       String   @db.VarChar(36)
-  permission_id String   @db.VarChar(36)
-  created_at    DateTime @default(now())
-  updated_at    DateTime @updatedAt
+  id            String    @id @default(uuid()) @db.VarChar(36)
+  role_id       String    @db.VarChar(36)
+  permission_id String    @db.VarChar(36)
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
   deleted_at    DateTime?
-  version       Int      @default(1)
+  version       Int       @default(1)
 
-  role          role     @relation(fields: [role_id], references: [id])
-  permission    permission @relation(fields: [permission_id], references: [id])
+  role       role       @relation(fields: [role_id], references: [id])
+  permission permission @relation(fields: [permission_id], references: [id])
 
+  @@unique([role_id, permission_id])
   @@index([role_id])
   @@index([permission_id])
   @@index([deleted_at])
-  @@unique([role_id, permission_id])
 }
 
 model user_role {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  user_id      String   @db.VarChar(36)
-  role_id      String   @db.VarChar(36)
-  tenant_id    String   @db.VarChar(36)
-  facility_id  String?  @db.VarChar(36)
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  deleted_at   DateTime?
-  version      Int      @default(1)
+  id          String    @id @default(uuid()) @db.VarChar(36)
+  user_id     String    @db.VarChar(36)
+  role_id     String    @db.VarChar(36)
+  tenant_id   String    @db.VarChar(36)
+  facility_id String?   @db.VarChar(36)
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+  deleted_at  DateTime?
+  version     Int       @default(1)
 
-  user         user     @relation(fields: [user_id], references: [id])
-  role         role     @relation(fields: [role_id], references: [id])
-  tenant       tenant   @relation(fields: [tenant_id], references: [id])
+  user   user   @relation(fields: [user_id], references: [id])
+  role   role   @relation(fields: [role_id], references: [id])
+  tenant tenant @relation(fields: [tenant_id], references: [id])
 
+  @@unique([user_id, role_id, tenant_id, facility_id])
   @@index([user_id])
   @@index([role_id])
   @@index([tenant_id])
   @@index([facility_id])
   @@index([deleted_at])
-  @@unique([user_id, role_id, tenant_id, facility_id])
 }
 
 model api_key {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  tenant_id    String   @db.VarChar(36)
-  user_id      String   @db.VarChar(36)
-  name         String   @db.VarChar(120)
-  key_hash     String   @db.VarChar(255)
-  is_active    Boolean  @default(true)
+  id           String    @id @default(uuid()) @db.VarChar(36)
+  tenant_id    String    @db.VarChar(36)
+  user_id      String    @db.VarChar(36)
+  name         String    @db.VarChar(120)
+  key_hash     String    @db.VarChar(255)
+  is_active    Boolean   @default(true)
   last_used_at DateTime?
   expires_at   DateTime?
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
   deleted_at   DateTime?
-  version      Int      @default(1)
+  version      Int       @default(1)
 
-  tenant       tenant   @relation(fields: [tenant_id], references: [id])
-  user         user     @relation(fields: [user_id], references: [id])
-  permissions  api_key_permission[]
+  tenant      tenant               @relation(fields: [tenant_id], references: [id])
+  user        user                 @relation(fields: [user_id], references: [id])
+  permissions api_key_permission[]
 
   @@index([tenant_id])
   @@index([user_id])
@@ -1087,36 +1089,36 @@ model api_key {
 }
 
 model api_key_permission {
-  id            String   @id @default(uuid()) @db.VarChar(36)
-  api_key_id    String   @db.VarChar(36)
-  permission_id String   @db.VarChar(36)
-  created_at    DateTime @default(now())
-  updated_at    DateTime @updatedAt
+  id            String    @id @default(uuid()) @db.VarChar(36)
+  api_key_id    String    @db.VarChar(36)
+  permission_id String    @db.VarChar(36)
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
   deleted_at    DateTime?
-  version       Int      @default(1)
+  version       Int       @default(1)
 
-  api_key       api_key  @relation(fields: [api_key_id], references: [id])
-  permission    permission @relation(fields: [permission_id], references: [id])
+  api_key    api_key    @relation(fields: [api_key_id], references: [id])
+  permission permission @relation(fields: [permission_id], references: [id])
 
+  @@unique([api_key_id, permission_id])
   @@index([api_key_id])
   @@index([permission_id])
   @@index([deleted_at])
-  @@unique([api_key_id, permission_id])
 }
 
 model user_mfa {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  user_id      String   @db.VarChar(36)
-  channel      CommunicationChannel
-  secret_encrypted String @db.VarChar(255)
-  is_enabled   Boolean  @default(true)
-  last_used_at DateTime?
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  deleted_at   DateTime?
-  version      Int      @default(1)
+  id               String               @id @default(uuid()) @db.VarChar(36)
+  user_id          String               @db.VarChar(36)
+  channel          CommunicationChannel
+  secret_encrypted String               @db.VarChar(255)
+  is_enabled       Boolean              @default(true)
+  last_used_at     DateTime?
+  created_at       DateTime             @default(now())
+  updated_at       DateTime             @updatedAt
+  deleted_at       DateTime?
+  version          Int                  @default(1)
 
-  user         user     @relation(fields: [user_id], references: [id])
+  user user @relation(fields: [user_id], references: [id])
 
   @@index([user_id])
   @@index([channel])
@@ -1124,66 +1126,66 @@ model user_mfa {
 }
 
 model oauth_account {
-  id            String   @id @default(uuid()) @db.VarChar(36)
-  user_id       String   @db.VarChar(36)
-  provider      String   @db.VarChar(80)
-  provider_user_id String @db.VarChar(191)
-  access_token_encrypted String? @db.VarChar(255)
-  refresh_token_encrypted String? @db.VarChar(255)
-  expires_at    DateTime?
-  created_at    DateTime @default(now())
-  updated_at    DateTime @updatedAt
-  deleted_at    DateTime?
-  version       Int      @default(1)
+  id                      String    @id @default(uuid()) @db.VarChar(36)
+  user_id                 String    @db.VarChar(36)
+  provider                String    @db.VarChar(80)
+  provider_user_id        String    @db.VarChar(191)
+  access_token_encrypted  String?   @db.VarChar(255)
+  refresh_token_encrypted String?   @db.VarChar(255)
+  expires_at              DateTime?
+  created_at              DateTime  @default(now())
+  updated_at              DateTime  @updatedAt
+  deleted_at              DateTime?
+  version                 Int       @default(1)
 
-  user          user     @relation(fields: [user_id], references: [id])
+  user user @relation(fields: [user_id], references: [id])
 
+  @@unique([provider, provider_user_id])
   @@index([user_id])
   @@index([provider])
   @@index([provider_user_id])
   @@index([deleted_at])
-  @@unique([provider, provider_user_id])
 }
 
 model patient {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  tenant_id    String   @db.VarChar(36)
-  facility_id  String?  @db.VarChar(36)
-  first_name   String   @db.VarChar(120)
-  last_name    String   @db.VarChar(120)
+  id            String    @id @default(uuid()) @db.VarChar(36)
+  tenant_id     String    @db.VarChar(36)
+  facility_id   String?   @db.VarChar(36)
+  first_name    String    @db.VarChar(120)
+  last_name     String    @db.VarChar(120)
   date_of_birth DateTime?
-  gender       Gender?
-  is_active    Boolean  @default(true)
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  deleted_at   DateTime?
-  version      Int      @default(1)
+  gender        Gender?
+  is_active     Boolean   @default(true)
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+  deleted_at    DateTime?
+  version       Int       @default(1)
 
-  tenant       tenant   @relation(fields: [tenant_id], references: [id])
-  facility     facility? @relation(fields: [facility_id], references: [id])
-  identifiers  patient_identifier[]
-  contacts     patient_contact[]
-  guardians    patient_guardian[]
-  allergies    patient_allergy[]
-  medical_history patient_medical_history[]
-  documents    patient_document[]
-  consents     consent[]
-  appointments appointment[]
+  tenant                     tenant                    @relation(fields: [tenant_id], references: [id])
+  facility                   facility?                 @relation(fields: [facility_id], references: [id])
+  identifiers                patient_identifier[]
+  contacts                   patient_contact[]
+  guardians                  patient_guardian[]
+  allergies                  patient_allergy[]
+  medical_history            patient_medical_history[]
+  documents                  patient_document[]
+  consents                   consent[]
+  appointments               appointment[]
   appointment_participations appointment_participant[]
-  encounters   encounter[]
-  visit_queue_entries visit_queue[]
-  admissions   admission[]
-  lab_orders   lab_order[]
-  radiology_orders radiology_order[]
-  pharmacy_orders pharmacy_order[]
-  emergency_cases emergency_case[]
-  invoices     invoice[]
-  payments     payment[]
-  messages     message[]
-  phi_access_logs phi_access_log[]
-  addresses    address[] @relation("patient_address")
-  contact_entries contact[] @relation("patient_contact")
-  adverse_events adverse_event[]
+  encounters                 encounter[]
+  visit_queue_entries        visit_queue[]
+  admissions                 admission[]
+  lab_orders                 lab_order[]
+  radiology_orders           radiology_order[]
+  pharmacy_orders            pharmacy_order[]
+  emergency_cases            emergency_case[]
+  invoices                   invoice[]
+  payments                   payment[]
+  messages                   message[]
+  phi_access_logs            phi_access_log[]
+  addresses                  address[]                 @relation("patient_address")
+  contact_entries            contact[]                 @relation("patient_contact")
+  adverse_events             adverse_event[]
 
   @@index([tenant_id])
   @@index([facility_id])
@@ -1192,41 +1194,41 @@ model patient {
 }
 
 model patient_identifier {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  tenant_id    String   @db.VarChar(36)
-  patient_id   String   @db.VarChar(36)
-  identifier_type String @db.VarChar(80)
-  identifier_value String @db.VarChar(120)
-  is_primary   Boolean  @default(false)
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  deleted_at   DateTime?
-  version      Int      @default(1)
+  id               String    @id @default(uuid()) @db.VarChar(36)
+  tenant_id        String    @db.VarChar(36)
+  patient_id       String    @db.VarChar(36)
+  identifier_type  String    @db.VarChar(80)
+  identifier_value String    @db.VarChar(120)
+  is_primary       Boolean   @default(false)
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt
+  deleted_at       DateTime?
+  version          Int       @default(1)
 
-  tenant       tenant   @relation(fields: [tenant_id], references: [id])
-  patient      patient  @relation(fields: [patient_id], references: [id])
+  tenant  tenant  @relation(fields: [tenant_id], references: [id])
+  patient patient @relation(fields: [patient_id], references: [id])
 
+  @@unique([tenant_id, identifier_value])
   @@index([tenant_id])
   @@index([patient_id])
   @@index([identifier_type])
   @@index([deleted_at])
-  @@unique([tenant_id, identifier_value])
 }
 
 model patient_contact {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  tenant_id    String   @db.VarChar(36)
-  patient_id   String   @db.VarChar(36)
+  id           String      @id @default(uuid()) @db.VarChar(36)
+  tenant_id    String      @db.VarChar(36)
+  patient_id   String      @db.VarChar(36)
   contact_type ContactType
-  value        String   @db.VarChar(255)
-  is_primary   Boolean  @default(false)
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
+  value        String      @db.VarChar(255)
+  is_primary   Boolean     @default(false)
+  created_at   DateTime    @default(now())
+  updated_at   DateTime    @updatedAt
   deleted_at   DateTime?
-  version      Int      @default(1)
+  version      Int         @default(1)
 
-  tenant       tenant   @relation(fields: [tenant_id], references: [id])
-  patient      patient  @relation(fields: [patient_id], references: [id])
+  tenant  tenant  @relation(fields: [tenant_id], references: [id])
+  patient patient @relation(fields: [patient_id], references: [id])
 
   @@index([tenant_id])
   @@index([patient_id])
@@ -1235,20 +1237,20 @@ model patient_contact {
 }
 
 model patient_guardian {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  tenant_id    String   @db.VarChar(36)
-  patient_id   String   @db.VarChar(36)
-  name         String   @db.VarChar(255)
-  relationship String?  @db.VarChar(120)
-  phone        String?  @db.VarChar(40)
-  email        String?  @db.VarChar(255)
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
+  id           String    @id @default(uuid()) @db.VarChar(36)
+  tenant_id    String    @db.VarChar(36)
+  patient_id   String    @db.VarChar(36)
+  name         String    @db.VarChar(255)
+  relationship String?   @db.VarChar(120)
+  phone        String?   @db.VarChar(40)
+  email        String?   @db.VarChar(255)
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
   deleted_at   DateTime?
-  version      Int      @default(1)
+  version      Int       @default(1)
 
-  tenant       tenant   @relation(fields: [tenant_id], references: [id])
-  patient      patient  @relation(fields: [patient_id], references: [id])
+  tenant  tenant  @relation(fields: [tenant_id], references: [id])
+  patient patient @relation(fields: [patient_id], references: [id])
 
   @@index([tenant_id])
   @@index([patient_id])
@@ -1256,20 +1258,20 @@ model patient_guardian {
 }
 
 model patient_allergy {
-  id           String          @id @default(uuid()) @db.VarChar(36)
-  tenant_id    String          @db.VarChar(36)
-  patient_id   String          @db.VarChar(36)
-  allergen     String          @db.VarChar(255)
-  severity     AllergySeverity
-  reaction     String?         @db.VarChar(255)
-  notes        String?         @db.Text
-  created_at   DateTime        @default(now())
-  updated_at   DateTime        @updatedAt
-  deleted_at   DateTime?
-  version      Int             @default(1)
+  id         String          @id @default(uuid()) @db.VarChar(36)
+  tenant_id  String          @db.VarChar(36)
+  patient_id String          @db.VarChar(36)
+  allergen   String          @db.VarChar(255)
+  severity   AllergySeverity
+  reaction   String?         @db.VarChar(255)
+  notes      String?         @db.Text
+  created_at DateTime        @default(now())
+  updated_at DateTime        @updatedAt
+  deleted_at DateTime?
+  version    Int             @default(1)
 
-  tenant       tenant           @relation(fields: [tenant_id], references: [id])
-  patient      patient          @relation(fields: [patient_id], references: [id])
+  tenant  tenant  @relation(fields: [tenant_id], references: [id])
+  patient patient @relation(fields: [patient_id], references: [id])
 
   @@index([tenant_id])
   @@index([patient_id])
@@ -1278,19 +1280,19 @@ model patient_allergy {
 }
 
 model patient_medical_history {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  tenant_id    String   @db.VarChar(36)
-  patient_id   String   @db.VarChar(36)
-  condition    String   @db.VarChar(255)
+  id             String    @id @default(uuid()) @db.VarChar(36)
+  tenant_id      String    @db.VarChar(36)
+  patient_id     String    @db.VarChar(36)
+  condition      String    @db.VarChar(255)
   diagnosis_date DateTime?
-  notes        String?  @db.Text
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  deleted_at   DateTime?
-  version      Int      @default(1)
+  notes          String?   @db.Text
+  created_at     DateTime  @default(now())
+  updated_at     DateTime  @updatedAt
+  deleted_at     DateTime?
+  version        Int       @default(1)
 
-  tenant       tenant   @relation(fields: [tenant_id], references: [id])
-  patient      patient  @relation(fields: [patient_id], references: [id])
+  tenant  tenant  @relation(fields: [tenant_id], references: [id])
+  patient patient @relation(fields: [patient_id], references: [id])
 
   @@index([tenant_id])
   @@index([patient_id])
@@ -1298,20 +1300,20 @@ model patient_medical_history {
 }
 
 model patient_document {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  tenant_id    String   @db.VarChar(36)
-  patient_id   String   @db.VarChar(36)
-  document_type String @db.VarChar(120)
-  storage_key  String   @db.VarChar(255)
-  file_name    String?  @db.VarChar(255)
-  content_type String?  @db.VarChar(120)
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  deleted_at   DateTime?
-  version      Int      @default(1)
+  id            String    @id @default(uuid()) @db.VarChar(36)
+  tenant_id     String    @db.VarChar(36)
+  patient_id    String    @db.VarChar(36)
+  document_type String    @db.VarChar(120)
+  storage_key   String    @db.VarChar(255)
+  file_name     String?   @db.VarChar(255)
+  content_type  String?   @db.VarChar(120)
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+  deleted_at    DateTime?
+  version       Int       @default(1)
 
-  tenant       tenant   @relation(fields: [tenant_id], references: [id])
-  patient      patient  @relation(fields: [patient_id], references: [id])
+  tenant  tenant  @relation(fields: [tenant_id], references: [id])
+  patient patient @relation(fields: [patient_id], references: [id])
 
   @@index([tenant_id])
   @@index([patient_id])
@@ -1332,8 +1334,8 @@ model consent {
   deleted_at   DateTime?
   version      Int           @default(1)
 
-  tenant       tenant        @relation(fields: [tenant_id], references: [id])
-  patient      patient       @relation(fields: [patient_id], references: [id])
+  tenant  tenant  @relation(fields: [tenant_id], references: [id])
+  patient patient @relation(fields: [patient_id], references: [id])
 
   @@index([tenant_id])
   @@index([patient_id])
@@ -1342,18 +1344,18 @@ model consent {
 }
 
 model terms_acceptance {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  tenant_id    String   @db.VarChar(36)
-  user_id      String   @db.VarChar(36)
-  version_label String @db.VarChar(40)
-  accepted_at  DateTime @default(now())
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  deleted_at   DateTime?
-  version      Int      @default(1)
+  id            String    @id @default(uuid()) @db.VarChar(36)
+  tenant_id     String    @db.VarChar(36)
+  user_id       String    @db.VarChar(36)
+  version_label String    @db.VarChar(40)
+  accepted_at   DateTime  @default(now())
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+  deleted_at    DateTime?
+  version       Int       @default(1)
 
-  tenant       tenant   @relation(fields: [tenant_id], references: [id])
-  user         user     @relation(fields: [user_id], references: [id])
+  tenant tenant @relation(fields: [tenant_id], references: [id])
+  user   user   @relation(fields: [user_id], references: [id])
 
   @@index([tenant_id])
   @@index([user_id])
@@ -1361,26 +1363,26 @@ model terms_acceptance {
 }
 
 model appointment {
-  id           String            @id @default(uuid()) @db.VarChar(36)
-  tenant_id    String            @db.VarChar(36)
-  facility_id  String?           @db.VarChar(36)
-  patient_id   String            @db.VarChar(36)
-  provider_user_id String?       @db.VarChar(36)
-  status       AppointmentStatus
-  scheduled_start DateTime
-  scheduled_end DateTime
-  reason       String?           @db.Text
-  created_at   DateTime          @default(now())
-  updated_at   DateTime          @updatedAt
-  deleted_at   DateTime?
-  version      Int               @default(1)
+  id               String            @id @default(uuid()) @db.VarChar(36)
+  tenant_id        String            @db.VarChar(36)
+  facility_id      String?           @db.VarChar(36)
+  patient_id       String            @db.VarChar(36)
+  provider_user_id String?           @db.VarChar(36)
+  status           AppointmentStatus
+  scheduled_start  DateTime
+  scheduled_end    DateTime
+  reason           String?           @db.Text
+  created_at       DateTime          @default(now())
+  updated_at       DateTime          @updatedAt
+  deleted_at       DateTime?
+  version          Int               @default(1)
 
-  tenant       tenant            @relation(fields: [tenant_id], references: [id])
-  facility     facility?         @relation(fields: [facility_id], references: [id])
-  patient      patient           @relation(fields: [patient_id], references: [id])
-  provider     user?             @relation(fields: [provider_user_id], references: [id])
-  participants appointment_participant[]
-  reminders    appointment_reminder[]
+  tenant        tenant                    @relation(fields: [tenant_id], references: [id])
+  facility      facility?                 @relation(fields: [facility_id], references: [id])
+  patient       patient                   @relation(fields: [patient_id], references: [id])
+  provider      user?                     @relation(fields: [provider_user_id], references: [id])
+  participants  appointment_participant[]
+  reminders     appointment_reminder[]
   queue_entries visit_queue[]
 
   @@index([tenant_id])
@@ -1393,19 +1395,19 @@ model appointment {
 }
 
 model appointment_participant {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  appointment_id String @db.VarChar(36)
-  participant_user_id String? @db.VarChar(36)
-  participant_patient_id String? @db.VarChar(36)
-  role         String?  @db.VarChar(80)
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  deleted_at   DateTime?
-  version      Int      @default(1)
+  id                     String    @id @default(uuid()) @db.VarChar(36)
+  appointment_id         String    @db.VarChar(36)
+  participant_user_id    String?   @db.VarChar(36)
+  participant_patient_id String?   @db.VarChar(36)
+  role                   String?   @db.VarChar(80)
+  created_at             DateTime  @default(now())
+  updated_at             DateTime  @updatedAt
+  deleted_at             DateTime?
+  version                Int       @default(1)
 
-  appointment  appointment @relation(fields: [appointment_id], references: [id])
-  participant_user user?   @relation(fields: [participant_user_id], references: [id])
-  participant_patient patient? @relation(fields: [participant_patient_id], references: [id])
+  appointment         appointment @relation(fields: [appointment_id], references: [id])
+  participant_user    user?       @relation(fields: [participant_user_id], references: [id])
+  participant_patient patient?    @relation(fields: [participant_patient_id], references: [id])
 
   @@index([appointment_id])
   @@index([participant_user_id])
@@ -1414,17 +1416,17 @@ model appointment_participant {
 }
 
 model appointment_reminder {
-  id           String              @id @default(uuid()) @db.VarChar(36)
-  appointment_id String            @db.VarChar(36)
-  channel      CommunicationChannel
-  scheduled_at DateTime
-  sent_at      DateTime?
-  created_at   DateTime            @default(now())
-  updated_at   DateTime            @updatedAt
-  deleted_at   DateTime?
-  version      Int                 @default(1)
+  id             String               @id @default(uuid()) @db.VarChar(36)
+  appointment_id String               @db.VarChar(36)
+  channel        CommunicationChannel
+  scheduled_at   DateTime
+  sent_at        DateTime?
+  created_at     DateTime             @default(now())
+  updated_at     DateTime             @updatedAt
+  deleted_at     DateTime?
+  version        Int                  @default(1)
 
-  appointment  appointment         @relation(fields: [appointment_id], references: [id])
+  appointment appointment @relation(fields: [appointment_id], references: [id])
 
   @@index([appointment_id])
   @@index([channel])
@@ -1433,22 +1435,22 @@ model appointment_reminder {
 }
 
 model provider_schedule {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  tenant_id    String   @db.VarChar(36)
-  facility_id  String?  @db.VarChar(36)
-  provider_user_id String @db.VarChar(36)
-  day_of_week  Int
-  start_time   DateTime
-  end_time     DateTime
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  deleted_at   DateTime?
-  version      Int      @default(1)
+  id               String    @id @default(uuid()) @db.VarChar(36)
+  tenant_id        String    @db.VarChar(36)
+  facility_id      String?   @db.VarChar(36)
+  provider_user_id String    @db.VarChar(36)
+  day_of_week      Int
+  start_time       DateTime
+  end_time         DateTime
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt
+  deleted_at       DateTime?
+  version          Int       @default(1)
 
-  tenant       tenant   @relation(fields: [tenant_id], references: [id])
-  facility     facility? @relation(fields: [facility_id], references: [id])
-  provider     user     @relation(fields: [provider_user_id], references: [id])
-  slots        availability_slot[]
+  tenant   tenant              @relation(fields: [tenant_id], references: [id])
+  facility facility?           @relation(fields: [facility_id], references: [id])
+  provider user                @relation(fields: [provider_user_id], references: [id])
+  slots    availability_slot[]
 
   @@index([tenant_id])
   @@index([facility_id])
@@ -1458,17 +1460,17 @@ model provider_schedule {
 }
 
 model availability_slot {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  schedule_id  String   @db.VarChar(36)
+  id           String    @id @default(uuid()) @db.VarChar(36)
+  schedule_id  String    @db.VarChar(36)
   start_time   DateTime
   end_time     DateTime
-  is_available Boolean  @default(true)
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
+  is_available Boolean   @default(true)
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
   deleted_at   DateTime?
-  version      Int      @default(1)
+  version      Int       @default(1)
 
-  schedule     provider_schedule @relation(fields: [schedule_id], references: [id])
+  schedule provider_schedule @relation(fields: [schedule_id], references: [id])
 
   @@index([schedule_id])
   @@index([is_available])
@@ -1476,24 +1478,24 @@ model availability_slot {
 }
 
 model visit_queue {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  tenant_id    String   @db.VarChar(36)
-  facility_id  String?  @db.VarChar(36)
-  patient_id   String   @db.VarChar(36)
-  appointment_id String? @db.VarChar(36)
-  provider_user_id String? @db.VarChar(36)
-  status       AppointmentStatus
-  queued_at    DateTime @default(now())
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  deleted_at   DateTime?
-  version      Int      @default(1)
+  id               String            @id @default(uuid()) @db.VarChar(36)
+  tenant_id        String            @db.VarChar(36)
+  facility_id      String?           @db.VarChar(36)
+  patient_id       String            @db.VarChar(36)
+  appointment_id   String?           @db.VarChar(36)
+  provider_user_id String?           @db.VarChar(36)
+  status           AppointmentStatus
+  queued_at        DateTime          @default(now())
+  created_at       DateTime          @default(now())
+  updated_at       DateTime          @updatedAt
+  deleted_at       DateTime?
+  version          Int               @default(1)
 
-  tenant       tenant   @relation(fields: [tenant_id], references: [id])
-  facility     facility? @relation(fields: [facility_id], references: [id])
-  patient      patient  @relation(fields: [patient_id], references: [id])
-  appointment  appointment? @relation(fields: [appointment_id], references: [id])
-  provider     user?    @relation(fields: [provider_user_id], references: [id])
+  tenant      tenant       @relation(fields: [tenant_id], references: [id])
+  facility    facility?    @relation(fields: [facility_id], references: [id])
+  patient     patient      @relation(fields: [patient_id], references: [id])
+  appointment appointment? @relation(fields: [appointment_id], references: [id])
+  provider    user?        @relation(fields: [provider_user_id], references: [id])
 
   @@index([tenant_id])
   @@index([facility_id])
@@ -1505,37 +1507,37 @@ model visit_queue {
 }
 
 model encounter {
-  id           String        @id @default(uuid()) @db.VarChar(36)
-  tenant_id    String        @db.VarChar(36)
-  facility_id  String?       @db.VarChar(36)
-  patient_id   String        @db.VarChar(36)
-  provider_user_id String?   @db.VarChar(36)
-  encounter_type EncounterType
-  status       EncounterStatus
-  started_at   DateTime
-  ended_at     DateTime?
-  created_at   DateTime      @default(now())
-  updated_at   DateTime      @updatedAt
-  deleted_at   DateTime?
-  version      Int           @default(1)
+  id               String          @id @default(uuid()) @db.VarChar(36)
+  tenant_id        String          @db.VarChar(36)
+  facility_id      String?         @db.VarChar(36)
+  patient_id       String          @db.VarChar(36)
+  provider_user_id String?         @db.VarChar(36)
+  encounter_type   EncounterType
+  status           EncounterStatus
+  started_at       DateTime
+  ended_at         DateTime?
+  created_at       DateTime        @default(now())
+  updated_at       DateTime        @updatedAt
+  deleted_at       DateTime?
+  version          Int             @default(1)
 
-  tenant       tenant        @relation(fields: [tenant_id], references: [id])
-  facility     facility?     @relation(fields: [facility_id], references: [id])
-  patient      patient       @relation(fields: [patient_id], references: [id])
-  provider     user?         @relation(fields: [provider_user_id], references: [id])
-  clinical_notes clinical_note[]
-  diagnoses    diagnosis[]
-  procedures   procedure[]
-  vital_signs  vital_sign[]
-  care_plans   care_plan[]
-  alerts       clinical_alert[]
-  referrals    referral[]
-  follow_ups   follow_up[]
-  admissions   admission[]
-  lab_orders   lab_order[]
+  tenant           tenant            @relation(fields: [tenant_id], references: [id])
+  facility         facility?         @relation(fields: [facility_id], references: [id])
+  patient          patient           @relation(fields: [patient_id], references: [id])
+  provider         user?             @relation(fields: [provider_user_id], references: [id])
+  clinical_notes   clinical_note[]
+  diagnoses        diagnosis[]
+  procedures       procedure[]
+  vital_signs      vital_sign[]
+  care_plans       care_plan[]
+  alerts           clinical_alert[]
+  referrals        referral[]
+  follow_ups       follow_up[]
+  admissions       admission[]
+  lab_orders       lab_order[]
   radiology_orders radiology_order[]
-  pharmacy_orders pharmacy_order[]
-  theatre_cases theatre_case[]
+  pharmacy_orders  pharmacy_order[]
+  theatre_cases    theatre_case[]
 
   @@index([tenant_id])
   @@index([facility_id])
@@ -1547,17 +1549,17 @@ model encounter {
 }
 
 model clinical_note {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  encounter_id String   @db.VarChar(36)
-  author_user_id String @db.VarChar(36)
-  note         String   @db.Text
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  deleted_at   DateTime?
-  version      Int      @default(1)
+  id             String    @id @default(uuid()) @db.VarChar(36)
+  encounter_id   String    @db.VarChar(36)
+  author_user_id String    @db.VarChar(36)
+  note           String    @db.Text
+  created_at     DateTime  @default(now())
+  updated_at     DateTime  @updatedAt
+  deleted_at     DateTime?
+  version        Int       @default(1)
 
-  encounter    encounter @relation(fields: [encounter_id], references: [id])
-  author       user      @relation(fields: [author_user_id], references: [id])
+  encounter encounter @relation(fields: [encounter_id], references: [id])
+  author    user      @relation(fields: [author_user_id], references: [id])
 
   @@index([encounter_id])
   @@index([author_user_id])
@@ -1565,17 +1567,17 @@ model clinical_note {
 }
 
 model diagnosis {
-  id           String        @id @default(uuid()) @db.VarChar(36)
-  encounter_id String        @db.VarChar(36)
+  id             String        @id @default(uuid()) @db.VarChar(36)
+  encounter_id   String        @db.VarChar(36)
   diagnosis_type DiagnosisType
-  code         String?       @db.VarChar(80)
-  description  String        @db.Text
-  created_at   DateTime      @default(now())
-  updated_at   DateTime      @updatedAt
-  deleted_at   DateTime?
-  version      Int           @default(1)
+  code           String?       @db.VarChar(80)
+  description    String        @db.Text
+  created_at     DateTime      @default(now())
+  updated_at     DateTime      @updatedAt
+  deleted_at     DateTime?
+  version        Int           @default(1)
 
-  encounter    encounter     @relation(fields: [encounter_id], references: [id])
+  encounter encounter @relation(fields: [encounter_id], references: [id])
 
   @@index([encounter_id])
   @@index([diagnosis_type])
@@ -1584,17 +1586,17 @@ model diagnosis {
 }
 
 model procedure {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  encounter_id String   @db.VarChar(36)
-  code         String?  @db.VarChar(80)
-  description  String   @db.Text
+  id           String    @id @default(uuid()) @db.VarChar(36)
+  encounter_id String    @db.VarChar(36)
+  code         String?   @db.VarChar(80)
+  description  String    @db.Text
   performed_at DateTime?
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
   deleted_at   DateTime?
-  version      Int      @default(1)
+  version      Int       @default(1)
 
-  encounter    encounter @relation(fields: [encounter_id], references: [id])
+  encounter encounter @relation(fields: [encounter_id], references: [id])
 
   @@index([encounter_id])
   @@index([code])
@@ -1614,7 +1616,7 @@ model vital_sign {
   deleted_at   DateTime?
   version      Int           @default(1)
 
-  encounter    encounter     @relation(fields: [encounter_id], references: [id])
+  encounter encounter @relation(fields: [encounter_id], references: [id])
 
   @@index([encounter_id])
   @@index([vital_type])
@@ -1623,17 +1625,17 @@ model vital_sign {
 }
 
 model care_plan {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  encounter_id String   @db.VarChar(36)
-  plan         String   @db.Text
+  id           String    @id @default(uuid()) @db.VarChar(36)
+  encounter_id String    @db.VarChar(36)
+  plan         String    @db.Text
   start_date   DateTime?
   end_date     DateTime?
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
   deleted_at   DateTime?
-  version      Int      @default(1)
+  version      Int       @default(1)
 
-  encounter    encounter @relation(fields: [encounter_id], references: [id])
+  encounter encounter @relation(fields: [encounter_id], references: [id])
 
   @@index([encounter_id])
   @@index([start_date])
@@ -1651,7 +1653,7 @@ model clinical_alert {
   deleted_at   DateTime?
   version      Int               @default(1)
 
-  encounter    encounter         @relation(fields: [encounter_id], references: [id])
+  encounter encounter @relation(fields: [encounter_id], references: [id])
 
   @@index([encounter_id])
   @@index([severity])
@@ -1659,20 +1661,20 @@ model clinical_alert {
 }
 
 model referral {
-  id           String        @id @default(uuid()) @db.VarChar(36)
-  encounter_id String        @db.VarChar(36)
-  from_department_id String? @db.VarChar(36)
-  to_department_id String?   @db.VarChar(36)
-  reason       String?       @db.Text
-  status       TransferStatus
-  created_at   DateTime      @default(now())
-  updated_at   DateTime      @updatedAt
-  deleted_at   DateTime?
-  version      Int           @default(1)
+  id                 String         @id @default(uuid()) @db.VarChar(36)
+  encounter_id       String         @db.VarChar(36)
+  from_department_id String?        @db.VarChar(36)
+  to_department_id   String?        @db.VarChar(36)
+  reason             String?        @db.Text
+  status             TransferStatus
+  created_at         DateTime       @default(now())
+  updated_at         DateTime       @updatedAt
+  deleted_at         DateTime?
+  version            Int            @default(1)
 
-  encounter    encounter     @relation(fields: [encounter_id], references: [id])
+  encounter       encounter   @relation(fields: [encounter_id], references: [id])
   from_department department? @relation("referral_from_department", fields: [from_department_id], references: [id])
-  to_department department?  @relation("referral_to_department", fields: [to_department_id], references: [id])
+  to_department   department? @relation("referral_to_department", fields: [to_department_id], references: [id])
 
   @@index([encounter_id])
   @@index([from_department_id])
@@ -1682,16 +1684,16 @@ model referral {
 }
 
 model follow_up {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  encounter_id String   @db.VarChar(36)
+  id           String    @id @default(uuid()) @db.VarChar(36)
+  encounter_id String    @db.VarChar(36)
   scheduled_at DateTime
-  notes        String?  @db.Text
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
+  notes        String?   @db.Text
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
   deleted_at   DateTime?
-  version      Int      @default(1)
+  version      Int       @default(1)
 
-  encounter    encounter @relation(fields: [encounter_id], references: [id])
+  encounter encounter @relation(fields: [encounter_id], references: [id])
 
   @@index([encounter_id])
   @@index([scheduled_at])
@@ -1699,30 +1701,30 @@ model follow_up {
 }
 
 model admission {
-  id           String         @id @default(uuid()) @db.VarChar(36)
-  tenant_id    String         @db.VarChar(36)
-  facility_id  String?        @db.VarChar(36)
-  patient_id   String         @db.VarChar(36)
-  encounter_id String?        @db.VarChar(36)
-  status       AdmissionStatus
-  admitted_at  DateTime       @default(now())
+  id            String          @id @default(uuid()) @db.VarChar(36)
+  tenant_id     String          @db.VarChar(36)
+  facility_id   String?         @db.VarChar(36)
+  patient_id    String          @db.VarChar(36)
+  encounter_id  String?         @db.VarChar(36)
+  status        AdmissionStatus
+  admitted_at   DateTime        @default(now())
   discharged_at DateTime?
-  created_at   DateTime       @default(now())
-  updated_at   DateTime       @updatedAt
-  deleted_at   DateTime?
-  version      Int            @default(1)
+  created_at    DateTime        @default(now())
+  updated_at    DateTime        @updatedAt
+  deleted_at    DateTime?
+  version       Int             @default(1)
 
-  tenant       tenant         @relation(fields: [tenant_id], references: [id])
-  facility     facility?      @relation(fields: [facility_id], references: [id])
-  patient      patient        @relation(fields: [patient_id], references: [id])
-  encounter    encounter?     @relation(fields: [encounter_id], references: [id])
-  bed_assignments bed_assignment[]
-  ward_rounds  ward_round[]
-  nursing_notes nursing_note[]
+  tenant                     tenant                      @relation(fields: [tenant_id], references: [id])
+  facility                   facility?                   @relation(fields: [facility_id], references: [id])
+  patient                    patient                     @relation(fields: [patient_id], references: [id])
+  encounter                  encounter?                  @relation(fields: [encounter_id], references: [id])
+  bed_assignments            bed_assignment[]
+  ward_rounds                ward_round[]
+  nursing_notes              nursing_note[]
   medication_administrations medication_administration[]
-  discharge_summaries discharge_summary[]
-  transfer_requests transfer_request[]
-  icu_stays    icu_stay[]
+  discharge_summaries        discharge_summary[]
+  transfer_requests          transfer_request[]
+  icu_stays                  icu_stay[]
 
   @@index([tenant_id])
   @@index([facility_id])
@@ -1733,18 +1735,18 @@ model admission {
 }
 
 model bed_assignment {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  admission_id String   @db.VarChar(36)
-  bed_id       String   @db.VarChar(36)
-  assigned_at  DateTime @default(now())
+  id           String    @id @default(uuid()) @db.VarChar(36)
+  admission_id String    @db.VarChar(36)
+  bed_id       String    @db.VarChar(36)
+  assigned_at  DateTime  @default(now())
   released_at  DateTime?
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
   deleted_at   DateTime?
-  version      Int      @default(1)
+  version      Int       @default(1)
 
-  admission    admission @relation(fields: [admission_id], references: [id])
-  bed          bed       @relation(fields: [bed_id], references: [id])
+  admission admission @relation(fields: [admission_id], references: [id])
+  bed       bed       @relation(fields: [bed_id], references: [id])
 
   @@index([admission_id])
   @@index([bed_id])
@@ -1753,16 +1755,16 @@ model bed_assignment {
 }
 
 model ward_round {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  admission_id String   @db.VarChar(36)
-  round_at     DateTime @default(now())
-  notes        String?  @db.Text
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
+  id           String    @id @default(uuid()) @db.VarChar(36)
+  admission_id String    @db.VarChar(36)
+  round_at     DateTime  @default(now())
+  notes        String?   @db.Text
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
   deleted_at   DateTime?
-  version      Int      @default(1)
+  version      Int       @default(1)
 
-  admission    admission @relation(fields: [admission_id], references: [id])
+  admission admission @relation(fields: [admission_id], references: [id])
 
   @@index([admission_id])
   @@index([round_at])
@@ -1770,17 +1772,17 @@ model ward_round {
 }
 
 model nursing_note {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  admission_id String   @db.VarChar(36)
-  nurse_user_id String  @db.VarChar(36)
-  note         String   @db.Text
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  deleted_at   DateTime?
-  version      Int      @default(1)
+  id            String    @id @default(uuid()) @db.VarChar(36)
+  admission_id  String    @db.VarChar(36)
+  nurse_user_id String    @db.VarChar(36)
+  note          String    @db.Text
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+  deleted_at    DateTime?
+  version       Int       @default(1)
 
-  admission    admission @relation(fields: [admission_id], references: [id])
-  nurse        user      @relation(fields: [nurse_user_id], references: [id])
+  admission admission @relation(fields: [admission_id], references: [id])
+  nurse     user      @relation(fields: [nurse_user_id], references: [id])
 
   @@index([admission_id])
   @@index([nurse_user_id])
@@ -1788,19 +1790,19 @@ model nursing_note {
 }
 
 model medication_administration {
-  id           String            @id @default(uuid()) @db.VarChar(36)
-  admission_id String            @db.VarChar(36)
-  prescription_id String?        @db.VarChar(36)
-  administered_at DateTime       @default(now())
-  dose         String            @db.VarChar(80)
-  unit         String?           @db.VarChar(40)
-  route        MedicationRoute
-  created_at   DateTime          @default(now())
-  updated_at   DateTime          @updatedAt
-  deleted_at   DateTime?
-  version      Int               @default(1)
+  id              String          @id @default(uuid()) @db.VarChar(36)
+  admission_id    String          @db.VarChar(36)
+  prescription_id String?         @db.VarChar(36)
+  administered_at DateTime        @default(now())
+  dose            String          @db.VarChar(80)
+  unit            String?         @db.VarChar(40)
+  route           MedicationRoute
+  created_at      DateTime        @default(now())
+  updated_at      DateTime        @updatedAt
+  deleted_at      DateTime?
+  version         Int             @default(1)
 
-  admission    admission         @relation(fields: [admission_id], references: [id])
+  admission admission @relation(fields: [admission_id], references: [id])
 
   @@index([admission_id])
   @@index([route])
@@ -1808,17 +1810,17 @@ model medication_administration {
 }
 
 model discharge_summary {
-  id           String          @id @default(uuid()) @db.VarChar(36)
-  admission_id String          @db.VarChar(36)
-  summary      String          @db.Text
-  status       DischargeStatus
+  id            String          @id @default(uuid()) @db.VarChar(36)
+  admission_id  String          @db.VarChar(36)
+  summary       String          @db.Text
+  status        DischargeStatus
   discharged_at DateTime?
-  created_at   DateTime        @default(now())
-  updated_at   DateTime        @updatedAt
-  deleted_at   DateTime?
-  version      Int             @default(1)
+  created_at    DateTime        @default(now())
+  updated_at    DateTime        @updatedAt
+  deleted_at    DateTime?
+  version       Int             @default(1)
 
-  admission    admission       @relation(fields: [admission_id], references: [id])
+  admission admission @relation(fields: [admission_id], references: [id])
 
   @@index([admission_id])
   @@index([status])
@@ -1837,9 +1839,9 @@ model transfer_request {
   deleted_at   DateTime?
   version      Int            @default(1)
 
-  admission    admission      @relation(fields: [admission_id], references: [id])
-  from_ward    ward?          @relation("transfer_from_ward", fields: [from_ward_id], references: [id])
-  to_ward      ward?          @relation("transfer_to_ward", fields: [to_ward_id], references: [id])
+  admission admission @relation(fields: [admission_id], references: [id])
+  from_ward ward?     @relation("transfer_from_ward", fields: [from_ward_id], references: [id])
+  to_ward   ward?     @relation("transfer_to_ward", fields: [to_ward_id], references: [id])
 
   @@index([admission_id])
   @@index([from_ward_id])
@@ -1849,16 +1851,16 @@ model transfer_request {
 }
 
 model icu_stay {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  admission_id String   @db.VarChar(36)
-  started_at   DateTime @default(now())
+  id           String    @id @default(uuid()) @db.VarChar(36)
+  admission_id String    @db.VarChar(36)
+  started_at   DateTime  @default(now())
   ended_at     DateTime?
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
   deleted_at   DateTime?
-  version      Int      @default(1)
+  version      Int       @default(1)
 
-  admission    admission @relation(fields: [admission_id], references: [id])
+  admission    admission         @relation(fields: [admission_id], references: [id])
   observations icu_observation[]
   alerts       critical_alert[]
 
@@ -1868,16 +1870,16 @@ model icu_stay {
 }
 
 model icu_observation {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  icu_stay_id  String   @db.VarChar(36)
-  observed_at  DateTime @default(now())
-  observation  String   @db.Text
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  deleted_at   DateTime?
-  version      Int      @default(1)
+  id          String    @id @default(uuid()) @db.VarChar(36)
+  icu_stay_id String    @db.VarChar(36)
+  observed_at DateTime  @default(now())
+  observation String    @db.Text
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+  deleted_at  DateTime?
+  version     Int       @default(1)
 
-  icu_stay     icu_stay @relation(fields: [icu_stay_id], references: [id])
+  icu_stay icu_stay @relation(fields: [icu_stay_id], references: [id])
 
   @@index([icu_stay_id])
   @@index([observed_at])
@@ -1885,16 +1887,16 @@ model icu_observation {
 }
 
 model critical_alert {
-  id           String            @id @default(uuid()) @db.VarChar(36)
-  icu_stay_id  String            @db.VarChar(36)
-  severity     EmergencySeverity
-  message      String            @db.Text
-  created_at   DateTime          @default(now())
-  updated_at   DateTime          @updatedAt
-  deleted_at   DateTime?
-  version      Int               @default(1)
+  id          String            @id @default(uuid()) @db.VarChar(36)
+  icu_stay_id String            @db.VarChar(36)
+  severity    EmergencySeverity
+  message     String            @db.Text
+  created_at  DateTime          @default(now())
+  updated_at  DateTime          @updatedAt
+  deleted_at  DateTime?
+  version     Int               @default(1)
 
-  icu_stay     icu_stay           @relation(fields: [icu_stay_id], references: [id])
+  icu_stay icu_stay @relation(fields: [icu_stay_id], references: [id])
 
   @@index([icu_stay_id])
   @@index([severity])
@@ -1902,18 +1904,18 @@ model critical_alert {
 }
 
 model theatre_case {
-  id           String         @id @default(uuid()) @db.VarChar(36)
-  encounter_id String         @db.VarChar(36)
+  id           String          @id @default(uuid()) @db.VarChar(36)
+  encounter_id String          @db.VarChar(36)
   scheduled_at DateTime
   status       EncounterStatus
-  created_at   DateTime       @default(now())
-  updated_at   DateTime       @updatedAt
+  created_at   DateTime        @default(now())
+  updated_at   DateTime        @updatedAt
   deleted_at   DateTime?
-  version      Int            @default(1)
+  version      Int             @default(1)
 
-  encounter    encounter      @relation(fields: [encounter_id], references: [id])
+  encounter          encounter           @relation(fields: [encounter_id], references: [id])
   anesthesia_records anesthesia_record[]
-  post_op_notes post_op_note[]
+  post_op_notes      post_op_note[]
 
   @@index([encounter_id])
   @@index([scheduled_at])
@@ -1922,17 +1924,17 @@ model theatre_case {
 }
 
 model anesthesia_record {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  theatre_case_id String @db.VarChar(36)
-  anesthetist_user_id String? @db.VarChar(36)
-  notes        String?  @db.Text
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  deleted_at   DateTime?
-  version      Int      @default(1)
+  id                  String    @id @default(uuid()) @db.VarChar(36)
+  theatre_case_id     String    @db.VarChar(36)
+  anesthetist_user_id String?   @db.VarChar(36)
+  notes               String?   @db.Text
+  created_at          DateTime  @default(now())
+  updated_at          DateTime  @updatedAt
+  deleted_at          DateTime?
+  version             Int       @default(1)
 
   theatre_case theatre_case @relation(fields: [theatre_case_id], references: [id])
-  anesthetist user? @relation(fields: [anesthetist_user_id], references: [id])
+  anesthetist  user?        @relation(fields: [anesthetist_user_id], references: [id])
 
   @@index([theatre_case_id])
   @@index([anesthetist_user_id])
@@ -1940,13 +1942,13 @@ model anesthesia_record {
 }
 
 model post_op_note {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  theatre_case_id String @db.VarChar(36)
-  note         String   @db.Text
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  deleted_at   DateTime?
-  version      Int      @default(1)
+  id              String    @id @default(uuid()) @db.VarChar(36)
+  theatre_case_id String    @db.VarChar(36)
+  note            String    @db.Text
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+  deleted_at      DateTime?
+  version         Int       @default(1)
 
   theatre_case theatre_case @relation(fields: [theatre_case_id], references: [id])
 
@@ -1955,20 +1957,20 @@ model post_op_note {
 }
 
 model lab_test {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  tenant_id    String   @db.VarChar(36)
-  name         String   @db.VarChar(255)
-  code         String?  @db.VarChar(80)
-  unit         String?  @db.VarChar(40)
-  reference_range String? @db.VarChar(120)
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  deleted_at   DateTime?
-  version      Int      @default(1)
+  id              String    @id @default(uuid()) @db.VarChar(36)
+  tenant_id       String    @db.VarChar(36)
+  name            String    @db.VarChar(255)
+  code            String?   @db.VarChar(80)
+  unit            String?   @db.VarChar(40)
+  reference_range String?   @db.VarChar(120)
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+  deleted_at      DateTime?
+  version         Int       @default(1)
 
-  tenant       tenant   @relation(fields: [tenant_id], references: [id])
-  order_items  lab_order_item[]
-  qc_logs      lab_qc_log[]
+  tenant      tenant           @relation(fields: [tenant_id], references: [id])
+  order_items lab_order_item[]
+  qc_logs     lab_qc_log[]
 
   @@index([tenant_id])
   @@index([code])
@@ -1976,16 +1978,16 @@ model lab_test {
 }
 
 model lab_panel {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  tenant_id    String   @db.VarChar(36)
-  name         String   @db.VarChar(255)
-  code         String?  @db.VarChar(80)
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  deleted_at   DateTime?
-  version      Int      @default(1)
+  id         String    @id @default(uuid()) @db.VarChar(36)
+  tenant_id  String    @db.VarChar(36)
+  name       String    @db.VarChar(255)
+  code       String?   @db.VarChar(80)
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?
+  version    Int       @default(1)
 
-  tenant       tenant   @relation(fields: [tenant_id], references: [id])
+  tenant tenant @relation(fields: [tenant_id], references: [id])
 
   @@index([tenant_id])
   @@index([code])
@@ -1993,20 +1995,20 @@ model lab_panel {
 }
 
 model lab_order {
-  id           String        @id @default(uuid()) @db.VarChar(36)
-  encounter_id String?       @db.VarChar(36)
-  patient_id   String        @db.VarChar(36)
+  id           String         @id @default(uuid()) @db.VarChar(36)
+  encounter_id String?        @db.VarChar(36)
+  patient_id   String         @db.VarChar(36)
   status       LabOrderStatus
-  ordered_at   DateTime      @default(now())
-  created_at   DateTime      @default(now())
-  updated_at   DateTime      @updatedAt
+  ordered_at   DateTime       @default(now())
+  created_at   DateTime       @default(now())
+  updated_at   DateTime       @updatedAt
   deleted_at   DateTime?
-  version      Int           @default(1)
+  version      Int            @default(1)
 
-  encounter    encounter?     @relation(fields: [encounter_id], references: [id])
-  patient      patient        @relation(fields: [patient_id], references: [id])
-  items        lab_order_item[]
-  samples      lab_sample[]
+  encounter encounter?       @relation(fields: [encounter_id], references: [id])
+  patient   patient          @relation(fields: [patient_id], references: [id])
+  items     lab_order_item[]
+  samples   lab_sample[]
 
   @@index([encounter_id])
   @@index([patient_id])
@@ -2016,18 +2018,18 @@ model lab_order {
 }
 
 model lab_order_item {
-  id           String        @id @default(uuid()) @db.VarChar(36)
-  lab_order_id String        @db.VarChar(36)
-  lab_test_id  String        @db.VarChar(36)
+  id           String         @id @default(uuid()) @db.VarChar(36)
+  lab_order_id String         @db.VarChar(36)
+  lab_test_id  String         @db.VarChar(36)
   status       LabOrderStatus
-  created_at   DateTime      @default(now())
-  updated_at   DateTime      @updatedAt
+  created_at   DateTime       @default(now())
+  updated_at   DateTime       @updatedAt
   deleted_at   DateTime?
-  version      Int           @default(1)
+  version      Int            @default(1)
 
-  lab_order    lab_order      @relation(fields: [lab_order_id], references: [id])
-  lab_test     lab_test       @relation(fields: [lab_test_id], references: [id])
-  results      lab_result[]
+  lab_order lab_order    @relation(fields: [lab_order_id], references: [id])
+  lab_test  lab_test     @relation(fields: [lab_test_id], references: [id])
+  results   lab_result[]
 
   @@index([lab_order_id])
   @@index([lab_test_id])
@@ -2036,17 +2038,17 @@ model lab_order_item {
 }
 
 model lab_sample {
-  id           String         @id @default(uuid()) @db.VarChar(36)
-  lab_order_id String         @db.VarChar(36)
+  id           String          @id @default(uuid()) @db.VarChar(36)
+  lab_order_id String          @db.VarChar(36)
   status       LabSampleStatus
   collected_at DateTime?
   received_at  DateTime?
-  created_at   DateTime       @default(now())
-  updated_at   DateTime       @updatedAt
+  created_at   DateTime        @default(now())
+  updated_at   DateTime        @updatedAt
   deleted_at   DateTime?
-  version      Int            @default(1)
+  version      Int             @default(1)
 
-  lab_order    lab_order      @relation(fields: [lab_order_id], references: [id])
+  lab_order lab_order @relation(fields: [lab_order_id], references: [id])
 
   @@index([lab_order_id])
   @@index([status])
@@ -2054,17 +2056,17 @@ model lab_sample {
 }
 
 model lab_result {
-  id           String         @id @default(uuid()) @db.VarChar(36)
-  lab_order_item_id String    @db.VarChar(36)
-  status       LabResultStatus
-  result_value String?        @db.VarChar(120)
-  result_unit  String?        @db.VarChar(40)
-  result_text  String?        @db.Text
-  reported_at  DateTime?
-  created_at   DateTime       @default(now())
-  updated_at   DateTime       @updatedAt
-  deleted_at   DateTime?
-  version      Int            @default(1)
+  id                String          @id @default(uuid()) @db.VarChar(36)
+  lab_order_item_id String          @db.VarChar(36)
+  status            LabResultStatus
+  result_value      String?         @db.VarChar(120)
+  result_unit       String?         @db.VarChar(40)
+  result_text       String?         @db.Text
+  reported_at       DateTime?
+  created_at        DateTime        @default(now())
+  updated_at        DateTime        @updatedAt
+  deleted_at        DateTime?
+  version           Int             @default(1)
 
   lab_order_item lab_order_item @relation(fields: [lab_order_item_id], references: [id])
 
@@ -2075,17 +2077,17 @@ model lab_result {
 }
 
 model lab_qc_log {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  lab_test_id  String   @db.VarChar(36)
-  status       String?  @db.VarChar(80)
-  notes        String?  @db.Text
-  logged_at    DateTime @default(now())
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  deleted_at   DateTime?
-  version      Int      @default(1)
+  id          String    @id @default(uuid()) @db.VarChar(36)
+  lab_test_id String    @db.VarChar(36)
+  status      String?   @db.VarChar(80)
+  notes       String?   @db.Text
+  logged_at   DateTime  @default(now())
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+  deleted_at  DateTime?
+  version     Int       @default(1)
 
-  lab_test     lab_test @relation(fields: [lab_test_id], references: [id])
+  lab_test lab_test @relation(fields: [lab_test_id], references: [id])
 
   @@index([lab_test_id])
   @@index([logged_at])
@@ -2093,18 +2095,18 @@ model lab_qc_log {
 }
 
 model radiology_test {
-  id           String         @id @default(uuid()) @db.VarChar(36)
-  tenant_id    String         @db.VarChar(36)
-  name         String         @db.VarChar(255)
-  code         String?        @db.VarChar(80)
-  modality     ImagingModality
-  created_at   DateTime       @default(now())
-  updated_at   DateTime       @updatedAt
-  deleted_at   DateTime?
-  version      Int            @default(1)
+  id         String          @id @default(uuid()) @db.VarChar(36)
+  tenant_id  String          @db.VarChar(36)
+  name       String          @db.VarChar(255)
+  code       String?         @db.VarChar(80)
+  modality   ImagingModality
+  created_at DateTime        @default(now())
+  updated_at DateTime        @updatedAt
+  deleted_at DateTime?
+  version    Int             @default(1)
 
-  tenant       tenant          @relation(fields: [tenant_id], references: [id])
-  orders       radiology_order[]
+  tenant tenant            @relation(fields: [tenant_id], references: [id])
+  orders radiology_order[]
 
   @@index([tenant_id])
   @@index([code])
@@ -2113,21 +2115,21 @@ model radiology_test {
 }
 
 model radiology_order {
-  id           String              @id @default(uuid()) @db.VarChar(36)
-  encounter_id String?             @db.VarChar(36)
-  patient_id   String              @db.VarChar(36)
-  radiology_test_id String?        @db.VarChar(36)
-  status       RadiologyOrderStatus
-  ordered_at   DateTime            @default(now())
-  created_at   DateTime            @default(now())
-  updated_at   DateTime            @updatedAt
-  deleted_at   DateTime?
-  version      Int                 @default(1)
+  id                String               @id @default(uuid()) @db.VarChar(36)
+  encounter_id      String?              @db.VarChar(36)
+  patient_id        String               @db.VarChar(36)
+  radiology_test_id String?              @db.VarChar(36)
+  status            RadiologyOrderStatus
+  ordered_at        DateTime             @default(now())
+  created_at        DateTime             @default(now())
+  updated_at        DateTime             @updatedAt
+  deleted_at        DateTime?
+  version           Int                  @default(1)
 
-  encounter    encounter?          @relation(fields: [encounter_id], references: [id])
-  patient      patient             @relation(fields: [patient_id], references: [id])
-  radiology_test radiology_test?   @relation(fields: [radiology_test_id], references: [id])
-  results      radiology_result[]
+  encounter       encounter?         @relation(fields: [encounter_id], references: [id])
+  patient         patient            @relation(fields: [patient_id], references: [id])
+  radiology_test  radiology_test?    @relation(fields: [radiology_test_id], references: [id])
+  results         radiology_result[]
   imaging_studies imaging_study[]
 
   @@index([encounter_id])
@@ -2139,17 +2141,17 @@ model radiology_order {
 }
 
 model radiology_result {
-  id           String               @id @default(uuid()) @db.VarChar(36)
-  radiology_order_id String         @db.VarChar(36)
-  status       RadiologyReportStatus
-  report_text  String?              @db.Text
-  reported_at  DateTime?
-  created_at   DateTime             @default(now())
-  updated_at   DateTime             @updatedAt
-  deleted_at   DateTime?
-  version      Int                  @default(1)
+  id                 String                @id @default(uuid()) @db.VarChar(36)
+  radiology_order_id String                @db.VarChar(36)
+  status             RadiologyReportStatus
+  report_text        String?               @db.Text
+  reported_at        DateTime?
+  created_at         DateTime              @default(now())
+  updated_at         DateTime              @updatedAt
+  deleted_at         DateTime?
+  version            Int                   @default(1)
 
-  radiology_order radiology_order   @relation(fields: [radiology_order_id], references: [id])
+  radiology_order radiology_order @relation(fields: [radiology_order_id], references: [id])
 
   @@index([radiology_order_id])
   @@index([status])
@@ -2158,18 +2160,18 @@ model radiology_result {
 }
 
 model imaging_study {
-  id           String         @id @default(uuid()) @db.VarChar(36)
-  radiology_order_id String   @db.VarChar(36)
-  modality     ImagingModality
-  performed_at DateTime?
-  created_at   DateTime       @default(now())
-  updated_at   DateTime       @updatedAt
-  deleted_at   DateTime?
-  version      Int            @default(1)
+  id                 String          @id @default(uuid()) @db.VarChar(36)
+  radiology_order_id String          @db.VarChar(36)
+  modality           ImagingModality
+  performed_at       DateTime?
+  created_at         DateTime        @default(now())
+  updated_at         DateTime        @updatedAt
+  deleted_at         DateTime?
+  version            Int             @default(1)
 
   radiology_order radiology_order @relation(fields: [radiology_order_id], references: [id])
-  assets       imaging_asset[]
-  pacs_links   pacs_link[]
+  assets          imaging_asset[]
+  pacs_links      pacs_link[]
 
   @@index([radiology_order_id])
   @@index([modality])
@@ -2178,15 +2180,15 @@ model imaging_study {
 }
 
 model imaging_asset {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  imaging_study_id String @db.VarChar(36)
-  storage_key  String   @db.VarChar(255)
-  file_name    String?  @db.VarChar(255)
-  content_type String?  @db.VarChar(120)
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  deleted_at   DateTime?
-  version      Int      @default(1)
+  id               String    @id @default(uuid()) @db.VarChar(36)
+  imaging_study_id String    @db.VarChar(36)
+  storage_key      String    @db.VarChar(255)
+  file_name        String?   @db.VarChar(255)
+  content_type     String?   @db.VarChar(120)
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt
+  deleted_at       DateTime?
+  version          Int       @default(1)
 
   imaging_study imaging_study @relation(fields: [imaging_study_id], references: [id])
 
@@ -2195,14 +2197,14 @@ model imaging_asset {
 }
 
 model pacs_link {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  imaging_study_id String @db.VarChar(36)
-  url          String   @db.VarChar(255)
-  expires_at   DateTime?
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  deleted_at   DateTime?
-  version      Int      @default(1)
+  id               String    @id @default(uuid()) @db.VarChar(36)
+  imaging_study_id String    @db.VarChar(36)
+  url              String    @db.VarChar(255)
+  expires_at       DateTime?
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt
+  deleted_at       DateTime?
+  version          Int       @default(1)
 
   imaging_study imaging_study @relation(fields: [imaging_study_id], references: [id])
 
@@ -2212,22 +2214,22 @@ model pacs_link {
 }
 
 model drug {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  tenant_id    String   @db.VarChar(36)
-  name         String   @db.VarChar(255)
-  code         String?  @db.VarChar(80)
-  form         String?  @db.VarChar(80)
-  strength     String?  @db.VarChar(80)
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  deleted_at   DateTime?
-  version      Int      @default(1)
+  id         String    @id @default(uuid()) @db.VarChar(36)
+  tenant_id  String    @db.VarChar(36)
+  name       String    @db.VarChar(255)
+  code       String?   @db.VarChar(80)
+  form       String?   @db.VarChar(80)
+  strength   String?   @db.VarChar(80)
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?
+  version    Int       @default(1)
 
-  tenant       tenant   @relation(fields: [tenant_id], references: [id])
-  batches      drug_batch[]
-  formulary_items formulary_item[]
+  tenant               tenant                @relation(fields: [tenant_id], references: [id])
+  batches              drug_batch[]
+  formulary_items      formulary_item[]
   pharmacy_order_items pharmacy_order_item[]
-  adverse_events adverse_event[]
+  adverse_events       adverse_event[]
 
   @@index([tenant_id])
   @@index([code])
@@ -2235,17 +2237,17 @@ model drug {
 }
 
 model drug_batch {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  drug_id      String   @db.VarChar(36)
-  batch_number String   @db.VarChar(80)
+  id           String    @id @default(uuid()) @db.VarChar(36)
+  drug_id      String    @db.VarChar(36)
+  batch_number String    @db.VarChar(80)
   expiry_date  DateTime?
-  quantity     Int      @default(0)
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
+  quantity     Int       @default(0)
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
   deleted_at   DateTime?
-  version      Int      @default(1)
+  version      Int       @default(1)
 
-  drug         drug     @relation(fields: [drug_id], references: [id])
+  drug drug @relation(fields: [drug_id], references: [id])
 
   @@index([drug_id])
   @@index([batch_number])
@@ -2254,17 +2256,17 @@ model drug_batch {
 }
 
 model formulary_item {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  tenant_id    String   @db.VarChar(36)
-  drug_id      String   @db.VarChar(36)
-  is_active    Boolean  @default(true)
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  deleted_at   DateTime?
-  version      Int      @default(1)
+  id         String    @id @default(uuid()) @db.VarChar(36)
+  tenant_id  String    @db.VarChar(36)
+  drug_id    String    @db.VarChar(36)
+  is_active  Boolean   @default(true)
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?
+  version    Int       @default(1)
 
-  tenant       tenant   @relation(fields: [tenant_id], references: [id])
-  drug         drug     @relation(fields: [drug_id], references: [id])
+  tenant tenant @relation(fields: [tenant_id], references: [id])
+  drug   drug   @relation(fields: [drug_id], references: [id])
 
   @@index([tenant_id])
   @@index([drug_id])
@@ -2273,19 +2275,19 @@ model formulary_item {
 }
 
 model pharmacy_order {
-  id           String            @id @default(uuid()) @db.VarChar(36)
-  encounter_id String?           @db.VarChar(36)
-  patient_id   String            @db.VarChar(36)
+  id           String              @id @default(uuid()) @db.VarChar(36)
+  encounter_id String?             @db.VarChar(36)
+  patient_id   String              @db.VarChar(36)
   status       PharmacyOrderStatus
-  ordered_at   DateTime          @default(now())
-  created_at   DateTime          @default(now())
-  updated_at   DateTime          @updatedAt
+  ordered_at   DateTime            @default(now())
+  created_at   DateTime            @default(now())
+  updated_at   DateTime            @updatedAt
   deleted_at   DateTime?
-  version      Int               @default(1)
+  version      Int                 @default(1)
 
-  encounter    encounter?        @relation(fields: [encounter_id], references: [id])
-  patient      patient           @relation(fields: [patient_id], references: [id])
-  items        pharmacy_order_item[]
+  encounter encounter?            @relation(fields: [encounter_id], references: [id])
+  patient   patient               @relation(fields: [patient_id], references: [id])
+  items     pharmacy_order_item[]
 
   @@index([encounter_id])
   @@index([patient_id])
@@ -2295,22 +2297,22 @@ model pharmacy_order {
 }
 
 model pharmacy_order_item {
-  id           String             @id @default(uuid()) @db.VarChar(36)
-  pharmacy_order_id String        @db.VarChar(36)
-  drug_id      String             @db.VarChar(36)
-  quantity     Int
-  dosage       String?            @db.VarChar(80)
-  frequency    MedicationFrequency?
-  route        MedicationRoute?
-  status       PrescriptionStatus @default(ACTIVE)
-  created_at   DateTime           @default(now())
-  updated_at   DateTime           @updatedAt
-  deleted_at   DateTime?
-  version      Int                @default(1)
+  id                String               @id @default(uuid()) @db.VarChar(36)
+  pharmacy_order_id String               @db.VarChar(36)
+  drug_id           String               @db.VarChar(36)
+  quantity          Int
+  dosage            String?              @db.VarChar(80)
+  frequency         MedicationFrequency?
+  route             MedicationRoute?
+  status            PrescriptionStatus   @default(ACTIVE)
+  created_at        DateTime             @default(now())
+  updated_at        DateTime             @updatedAt
+  deleted_at        DateTime?
+  version           Int                  @default(1)
 
-  pharmacy_order pharmacy_order   @relation(fields: [pharmacy_order_id], references: [id])
-  drug          drug              @relation(fields: [drug_id], references: [id])
-  dispense_logs dispense_log[]
+  pharmacy_order pharmacy_order @relation(fields: [pharmacy_order_id], references: [id])
+  drug           drug           @relation(fields: [drug_id], references: [id])
+  dispense_logs  dispense_log[]
 
   @@index([pharmacy_order_id])
   @@index([drug_id])
@@ -2319,15 +2321,15 @@ model pharmacy_order_item {
 }
 
 model dispense_log {
-  id           String         @id @default(uuid()) @db.VarChar(36)
-  pharmacy_order_item_id String @db.VarChar(36)
-  status       DispenseStatus
-  dispensed_at DateTime?
-  quantity_dispensed Int @default(0)
-  created_at   DateTime       @default(now())
-  updated_at   DateTime       @updatedAt
-  deleted_at   DateTime?
-  version      Int            @default(1)
+  id                     String         @id @default(uuid()) @db.VarChar(36)
+  pharmacy_order_item_id String         @db.VarChar(36)
+  status                 DispenseStatus
+  dispensed_at           DateTime?
+  quantity_dispensed     Int            @default(0)
+  created_at             DateTime       @default(now())
+  updated_at             DateTime       @updatedAt
+  deleted_at             DateTime?
+  version                Int            @default(1)
 
   pharmacy_order_item pharmacy_order_item @relation(fields: [pharmacy_order_item_id], references: [id])
 
@@ -2338,19 +2340,19 @@ model dispense_log {
 }
 
 model adverse_event {
-  id           String          @id @default(uuid()) @db.VarChar(36)
-  patient_id   String          @db.VarChar(36)
-  drug_id      String?         @db.VarChar(36)
-  severity     AllergySeverity
-  description  String?         @db.Text
-  reported_at  DateTime        @default(now())
-  created_at   DateTime        @default(now())
-  updated_at   DateTime        @updatedAt
-  deleted_at   DateTime?
-  version      Int             @default(1)
+  id          String          @id @default(uuid()) @db.VarChar(36)
+  patient_id  String          @db.VarChar(36)
+  drug_id     String?         @db.VarChar(36)
+  severity    AllergySeverity
+  description String?         @db.Text
+  reported_at DateTime        @default(now())
+  created_at  DateTime        @default(now())
+  updated_at  DateTime        @updatedAt
+  deleted_at  DateTime?
+  version     Int             @default(1)
 
-  patient      patient         @relation(fields: [patient_id], references: [id])
-  drug         drug?           @relation(fields: [drug_id], references: [id])
+  patient patient @relation(fields: [patient_id], references: [id])
+  drug    drug?   @relation(fields: [drug_id], references: [id])
 
   @@index([patient_id])
   @@index([drug_id])
@@ -2360,20 +2362,20 @@ model adverse_event {
 }
 
 model inventory_item {
-  id           String          @id @default(uuid()) @db.VarChar(36)
-  tenant_id    String          @db.VarChar(36)
-  name         String          @db.VarChar(255)
-  category     InventoryCategory
-  sku          String?         @db.VarChar(80)
-  unit         String?         @db.VarChar(40)
-  created_at   DateTime        @default(now())
-  updated_at   DateTime        @updatedAt
-  deleted_at   DateTime?
-  version      Int             @default(1)
+  id         String            @id @default(uuid()) @db.VarChar(36)
+  tenant_id  String            @db.VarChar(36)
+  name       String            @db.VarChar(255)
+  category   InventoryCategory
+  sku        String?           @db.VarChar(80)
+  unit       String?           @db.VarChar(40)
+  created_at DateTime          @default(now())
+  updated_at DateTime          @updatedAt
+  deleted_at DateTime?
+  version    Int               @default(1)
 
-  tenant       tenant          @relation(fields: [tenant_id], references: [id])
-  stocks       inventory_stock[]
-  movements    stock_movement[]
+  tenant            tenant             @relation(fields: [tenant_id], references: [id])
+  stocks            inventory_stock[]
+  movements         stock_movement[]
   stock_adjustments stock_adjustment[]
 
   @@index([tenant_id])
@@ -2383,18 +2385,18 @@ model inventory_item {
 }
 
 model inventory_stock {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  inventory_item_id String @db.VarChar(36)
-  facility_id  String?  @db.VarChar(36)
-  quantity     Int      @default(0)
-  reorder_level Int     @default(0)
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  deleted_at   DateTime?
-  version      Int      @default(1)
+  id                String    @id @default(uuid()) @db.VarChar(36)
+  inventory_item_id String    @db.VarChar(36)
+  facility_id       String?   @db.VarChar(36)
+  quantity          Int       @default(0)
+  reorder_level     Int       @default(0)
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
+  deleted_at        DateTime?
+  version           Int       @default(1)
 
   inventory_item inventory_item @relation(fields: [inventory_item_id], references: [id])
-  facility     facility? @relation(fields: [facility_id], references: [id])
+  facility       facility?      @relation(fields: [facility_id], references: [id])
 
   @@index([inventory_item_id])
   @@index([facility_id])
@@ -2402,20 +2404,20 @@ model inventory_stock {
 }
 
 model stock_movement {
-  id           String            @id @default(uuid()) @db.VarChar(36)
-  inventory_item_id String       @db.VarChar(36)
-  facility_id  String?           @db.VarChar(36)
-  movement_type StockMovementType
-  reason       StockReason
-  quantity     Int
-  occurred_at  DateTime          @default(now())
-  created_at   DateTime          @default(now())
-  updated_at   DateTime          @updatedAt
-  deleted_at   DateTime?
-  version      Int               @default(1)
+  id                String            @id @default(uuid()) @db.VarChar(36)
+  inventory_item_id String            @db.VarChar(36)
+  facility_id       String?           @db.VarChar(36)
+  movement_type     StockMovementType
+  reason            StockReason
+  quantity          Int
+  occurred_at       DateTime          @default(now())
+  created_at        DateTime          @default(now())
+  updated_at        DateTime          @updatedAt
+  deleted_at        DateTime?
+  version           Int               @default(1)
 
-  inventory_item inventory_item  @relation(fields: [inventory_item_id], references: [id])
-  facility     facility?         @relation(fields: [facility_id], references: [id])
+  inventory_item inventory_item @relation(fields: [inventory_item_id], references: [id])
+  facility       facility?      @relation(fields: [facility_id], references: [id])
 
   @@index([inventory_item_id])
   @@index([facility_id])
@@ -2426,20 +2428,20 @@ model stock_movement {
 }
 
 model supplier {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  tenant_id    String   @db.VarChar(36)
-  name         String   @db.VarChar(255)
-  contact_email String? @db.VarChar(255)
-  phone        String?  @db.VarChar(40)
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  deleted_at   DateTime?
-  version      Int      @default(1)
+  id            String    @id @default(uuid()) @db.VarChar(36)
+  tenant_id     String    @db.VarChar(36)
+  name          String    @db.VarChar(255)
+  contact_email String?   @db.VarChar(255)
+  phone         String?   @db.VarChar(40)
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+  deleted_at    DateTime?
+  version       Int       @default(1)
 
-  tenant       tenant   @relation(fields: [tenant_id], references: [id])
+  tenant          tenant           @relation(fields: [tenant_id], references: [id])
   purchase_orders purchase_order[]
-  addresses    address[] @relation("supplier_address")
-  contacts     contact[] @relation("supplier_contact")
+  addresses       address[]        @relation("supplier_address")
+  contacts        contact[]        @relation("supplier_contact")
 
   @@index([tenant_id])
   @@index([name])
@@ -2447,20 +2449,20 @@ model supplier {
 }
 
 model purchase_request {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  tenant_id    String   @db.VarChar(36)
-  facility_id  String?  @db.VarChar(36)
-  requested_by_user_id String? @db.VarChar(36)
-  status       String   @db.VarChar(60)
-  requested_at DateTime @default(now())
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  deleted_at   DateTime?
-  version      Int      @default(1)
+  id                   String    @id @default(uuid()) @db.VarChar(36)
+  tenant_id            String    @db.VarChar(36)
+  facility_id          String?   @db.VarChar(36)
+  requested_by_user_id String?   @db.VarChar(36)
+  status               String    @db.VarChar(60)
+  requested_at         DateTime  @default(now())
+  created_at           DateTime  @default(now())
+  updated_at           DateTime  @updatedAt
+  deleted_at           DateTime?
+  version              Int       @default(1)
 
-  tenant       tenant   @relation(fields: [tenant_id], references: [id])
-  facility     facility? @relation(fields: [facility_id], references: [id])
-  requested_by user?    @relation(fields: [requested_by_user_id], references: [id])
+  tenant          tenant           @relation(fields: [tenant_id], references: [id])
+  facility        facility?        @relation(fields: [facility_id], references: [id])
+  requested_by    user?            @relation(fields: [requested_by_user_id], references: [id])
   purchase_orders purchase_order[]
 
   @@index([tenant_id])
@@ -2471,19 +2473,19 @@ model purchase_request {
 }
 
 model purchase_order {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  purchase_request_id String? @db.VarChar(36)
-  supplier_id  String?  @db.VarChar(36)
-  status       String   @db.VarChar(60)
-  ordered_at   DateTime @default(now())
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  deleted_at   DateTime?
-  version      Int      @default(1)
+  id                  String    @id @default(uuid()) @db.VarChar(36)
+  purchase_request_id String?   @db.VarChar(36)
+  supplier_id         String?   @db.VarChar(36)
+  status              String    @db.VarChar(60)
+  ordered_at          DateTime  @default(now())
+  created_at          DateTime  @default(now())
+  updated_at          DateTime  @updatedAt
+  deleted_at          DateTime?
+  version             Int       @default(1)
 
   purchase_request purchase_request? @relation(fields: [purchase_request_id], references: [id])
-  supplier     supplier? @relation(fields: [supplier_id], references: [id])
-  goods_receipts goods_receipt[]
+  supplier         supplier?         @relation(fields: [supplier_id], references: [id])
+  goods_receipts   goods_receipt[]
 
   @@index([purchase_request_id])
   @@index([supplier_id])
@@ -2493,14 +2495,14 @@ model purchase_order {
 }
 
 model goods_receipt {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  purchase_order_id String @db.VarChar(36)
-  received_at DateTime @default(now())
-  status       String   @db.VarChar(60)
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  deleted_at   DateTime?
-  version      Int      @default(1)
+  id                String    @id @default(uuid()) @db.VarChar(36)
+  purchase_order_id String    @db.VarChar(36)
+  received_at       DateTime  @default(now())
+  status            String    @db.VarChar(60)
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
+  deleted_at        DateTime?
+  version           Int       @default(1)
 
   purchase_order purchase_order @relation(fields: [purchase_order_id], references: [id])
 
@@ -2511,19 +2513,19 @@ model goods_receipt {
 }
 
 model stock_adjustment {
-  id           String       @id @default(uuid()) @db.VarChar(36)
-  inventory_item_id String  @db.VarChar(36)
-  facility_id  String?      @db.VarChar(36)
-  quantity     Int
-  reason       StockReason
-  adjusted_at  DateTime     @default(now())
-  created_at   DateTime     @default(now())
-  updated_at   DateTime     @updatedAt
-  deleted_at   DateTime?
-  version      Int          @default(1)
+  id                String      @id @default(uuid()) @db.VarChar(36)
+  inventory_item_id String      @db.VarChar(36)
+  facility_id       String?     @db.VarChar(36)
+  quantity          Int
+  reason            StockReason
+  adjusted_at       DateTime    @default(now())
+  created_at        DateTime    @default(now())
+  updated_at        DateTime    @updatedAt
+  deleted_at        DateTime?
+  version           Int         @default(1)
 
   inventory_item inventory_item @relation(fields: [inventory_item_id], references: [id])
-  facility     facility? @relation(fields: [facility_id], references: [id])
+  facility       facility?      @relation(fields: [facility_id], references: [id])
 
   @@index([inventory_item_id])
   @@index([facility_id])
@@ -2533,24 +2535,24 @@ model stock_adjustment {
 }
 
 model emergency_case {
-  id           String            @id @default(uuid()) @db.VarChar(36)
-  tenant_id    String            @db.VarChar(36)
-  facility_id  String?           @db.VarChar(36)
-  patient_id   String            @db.VarChar(36)
-  severity     EmergencySeverity
-  status       EncounterStatus
-  created_at   DateTime          @default(now())
-  updated_at   DateTime          @updatedAt
-  deleted_at   DateTime?
-  version      Int               @default(1)
+  id          String            @id @default(uuid()) @db.VarChar(36)
+  tenant_id   String            @db.VarChar(36)
+  facility_id String?           @db.VarChar(36)
+  patient_id  String            @db.VarChar(36)
+  severity    EmergencySeverity
+  status      EncounterStatus
+  created_at  DateTime          @default(now())
+  updated_at  DateTime          @updatedAt
+  deleted_at  DateTime?
+  version     Int               @default(1)
 
-  tenant       tenant            @relation(fields: [tenant_id], references: [id])
-  facility     facility?         @relation(fields: [facility_id], references: [id])
-  patient      patient           @relation(fields: [patient_id], references: [id])
-  triage_assessments triage_assessment[]
-  responses    emergency_response[]
+  tenant               tenant               @relation(fields: [tenant_id], references: [id])
+  facility             facility?            @relation(fields: [facility_id], references: [id])
+  patient              patient              @relation(fields: [patient_id], references: [id])
+  triage_assessments   triage_assessment[]
+  responses            emergency_response[]
   ambulance_dispatches ambulance_dispatch[]
-  ambulance_trips ambulance_trip[]
+  ambulance_trips      ambulance_trip[]
 
   @@index([tenant_id])
   @@index([facility_id])
@@ -2561,14 +2563,14 @@ model emergency_case {
 }
 
 model triage_assessment {
-  id           String      @id @default(uuid()) @db.VarChar(36)
-  emergency_case_id String @db.VarChar(36)
-  triage_level TriageLevel
-  notes        String?     @db.Text
-  created_at   DateTime    @default(now())
-  updated_at   DateTime    @updatedAt
-  deleted_at   DateTime?
-  version      Int         @default(1)
+  id                String      @id @default(uuid()) @db.VarChar(36)
+  emergency_case_id String      @db.VarChar(36)
+  triage_level      TriageLevel
+  notes             String?     @db.Text
+  created_at        DateTime    @default(now())
+  updated_at        DateTime    @updatedAt
+  deleted_at        DateTime?
+  version           Int         @default(1)
 
   emergency_case emergency_case @relation(fields: [emergency_case_id], references: [id])
 
@@ -2578,14 +2580,14 @@ model triage_assessment {
 }
 
 model emergency_response {
-  id           String      @id @default(uuid()) @db.VarChar(36)
-  emergency_case_id String @db.VarChar(36)
-  response_at  DateTime    @default(now())
-  notes        String?     @db.Text
-  created_at   DateTime    @default(now())
-  updated_at   DateTime    @updatedAt
-  deleted_at   DateTime?
-  version      Int         @default(1)
+  id                String    @id @default(uuid()) @db.VarChar(36)
+  emergency_case_id String    @db.VarChar(36)
+  response_at       DateTime  @default(now())
+  notes             String?   @db.Text
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
+  deleted_at        DateTime?
+  version           Int       @default(1)
 
   emergency_case emergency_case @relation(fields: [emergency_case_id], references: [id])
 
@@ -2595,20 +2597,20 @@ model emergency_response {
 }
 
 model ambulance {
-  id           String          @id @default(uuid()) @db.VarChar(36)
-  tenant_id    String          @db.VarChar(36)
-  facility_id  String?         @db.VarChar(36)
-  identifier   String          @db.VarChar(120)
-  status       AmbulanceStatus
-  created_at   DateTime        @default(now())
-  updated_at   DateTime        @updatedAt
-  deleted_at   DateTime?
-  version      Int             @default(1)
+  id          String          @id @default(uuid()) @db.VarChar(36)
+  tenant_id   String          @db.VarChar(36)
+  facility_id String?         @db.VarChar(36)
+  identifier  String          @db.VarChar(120)
+  status      AmbulanceStatus
+  created_at  DateTime        @default(now())
+  updated_at  DateTime        @updatedAt
+  deleted_at  DateTime?
+  version     Int             @default(1)
 
-  tenant       tenant          @relation(fields: [tenant_id], references: [id])
-  facility     facility?       @relation(fields: [facility_id], references: [id])
-  dispatches   ambulance_dispatch[]
-  trips        ambulance_trip[]
+  tenant     tenant               @relation(fields: [tenant_id], references: [id])
+  facility   facility?            @relation(fields: [facility_id], references: [id])
+  dispatches ambulance_dispatch[]
+  trips      ambulance_trip[]
 
   @@index([tenant_id])
   @@index([facility_id])
@@ -2618,17 +2620,17 @@ model ambulance {
 }
 
 model ambulance_dispatch {
-  id           String          @id @default(uuid()) @db.VarChar(36)
-  ambulance_id String          @db.VarChar(36)
-  emergency_case_id String     @db.VarChar(36)
-  dispatched_at DateTime       @default(now())
-  status       AmbulanceStatus
-  created_at   DateTime        @default(now())
-  updated_at   DateTime        @updatedAt
-  deleted_at   DateTime?
-  version      Int             @default(1)
+  id                String          @id @default(uuid()) @db.VarChar(36)
+  ambulance_id      String          @db.VarChar(36)
+  emergency_case_id String          @db.VarChar(36)
+  dispatched_at     DateTime        @default(now())
+  status            AmbulanceStatus
+  created_at        DateTime        @default(now())
+  updated_at        DateTime        @updatedAt
+  deleted_at        DateTime?
+  version           Int             @default(1)
 
-  ambulance    ambulance       @relation(fields: [ambulance_id], references: [id])
+  ambulance      ambulance      @relation(fields: [ambulance_id], references: [id])
   emergency_case emergency_case @relation(fields: [emergency_case_id], references: [id])
 
   @@index([ambulance_id])
@@ -2639,17 +2641,17 @@ model ambulance_dispatch {
 }
 
 model ambulance_trip {
-  id           String          @id @default(uuid()) @db.VarChar(36)
-  ambulance_id String          @db.VarChar(36)
-  emergency_case_id String     @db.VarChar(36)
-  started_at   DateTime?
-  ended_at     DateTime?
-  created_at   DateTime        @default(now())
-  updated_at   DateTime        @updatedAt
-  deleted_at   DateTime?
-  version      Int             @default(1)
+  id                String    @id @default(uuid()) @db.VarChar(36)
+  ambulance_id      String    @db.VarChar(36)
+  emergency_case_id String    @db.VarChar(36)
+  started_at        DateTime?
+  ended_at          DateTime?
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
+  deleted_at        DateTime?
+  version           Int       @default(1)
 
-  ambulance    ambulance       @relation(fields: [ambulance_id], references: [id])
+  ambulance      ambulance      @relation(fields: [ambulance_id], references: [id])
   emergency_case emergency_case @relation(fields: [emergency_case_id], references: [id])
 
   @@index([ambulance_id])
@@ -2659,27 +2661,27 @@ model ambulance_trip {
 }
 
 model invoice {
-  id           String        @id @default(uuid()) @db.VarChar(36)
-  tenant_id    String        @db.VarChar(36)
-  facility_id  String?       @db.VarChar(36)
-  patient_id   String?       @db.VarChar(36)
-  status       InvoiceStatus
+  id             String        @id @default(uuid()) @db.VarChar(36)
+  tenant_id      String        @db.VarChar(36)
+  facility_id    String?       @db.VarChar(36)
+  patient_id     String?       @db.VarChar(36)
+  status         InvoiceStatus
   billing_status BillingStatus @default(DRAFT)
-  total_amount Decimal       @db.Decimal(12, 2)
-  currency     String        @db.VarChar(10)
-  issued_at    DateTime      @default(now())
-  created_at   DateTime      @default(now())
-  updated_at   DateTime      @updatedAt
-  deleted_at   DateTime?
-  version      Int           @default(1)
+  total_amount   Decimal       @db.Decimal(12, 2)
+  currency       String        @db.VarChar(10)
+  issued_at      DateTime      @default(now())
+  created_at     DateTime      @default(now())
+  updated_at     DateTime      @updatedAt
+  deleted_at     DateTime?
+  version        Int           @default(1)
 
-  tenant       tenant        @relation(fields: [tenant_id], references: [id])
-  facility     facility?     @relation(fields: [facility_id], references: [id])
-  patient      patient?      @relation(fields: [patient_id], references: [id])
-  items        invoice_item[]
-  payments     payment[]
-  insurance_claims insurance_claim[]
-  billing_adjustments billing_adjustment[]
+  tenant                tenant                 @relation(fields: [tenant_id], references: [id])
+  facility              facility?              @relation(fields: [facility_id], references: [id])
+  patient               patient?               @relation(fields: [patient_id], references: [id])
+  items                 invoice_item[]
+  payments              payment[]
+  insurance_claims      insurance_claim[]
+  billing_adjustments   billing_adjustment[]
   subscription_invoices subscription_invoice[]
 
   @@index([tenant_id])
@@ -2692,44 +2694,44 @@ model invoice {
 }
 
 model invoice_item {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  invoice_id   String   @db.VarChar(36)
-  description  String   @db.VarChar(255)
-  quantity     Int      @default(1)
-  unit_price   Decimal  @db.Decimal(12, 2)
-  total_price  Decimal  @db.Decimal(12, 2)
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  deleted_at   DateTime?
-  version      Int      @default(1)
+  id          String    @id @default(uuid()) @db.VarChar(36)
+  invoice_id  String    @db.VarChar(36)
+  description String    @db.VarChar(255)
+  quantity    Int       @default(1)
+  unit_price  Decimal   @db.Decimal(12, 2)
+  total_price Decimal   @db.Decimal(12, 2)
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+  deleted_at  DateTime?
+  version     Int       @default(1)
 
-  invoice      invoice  @relation(fields: [invoice_id], references: [id])
+  invoice invoice @relation(fields: [invoice_id], references: [id])
 
   @@index([invoice_id])
   @@index([deleted_at])
 }
 
 model payment {
-  id           String          @id @default(uuid()) @db.VarChar(36)
-  tenant_id    String          @db.VarChar(36)
-  facility_id  String?         @db.VarChar(36)
-  patient_id   String?         @db.VarChar(36)
-  invoice_id   String          @db.VarChar(36)
-  status       PaymentStatus
-  method       PaymentMethodType
-  amount       Decimal         @db.Decimal(12, 2)
-  paid_at      DateTime?
-  transaction_ref String?      @db.VarChar(120)
-  created_at   DateTime        @default(now())
-  updated_at   DateTime        @updatedAt
-  deleted_at   DateTime?
-  version      Int             @default(1)
+  id              String            @id @default(uuid()) @db.VarChar(36)
+  tenant_id       String            @db.VarChar(36)
+  facility_id     String?           @db.VarChar(36)
+  patient_id      String?           @db.VarChar(36)
+  invoice_id      String            @db.VarChar(36)
+  status          PaymentStatus
+  method          PaymentMethodType
+  amount          Decimal           @db.Decimal(12, 2)
+  paid_at         DateTime?
+  transaction_ref String?           @db.VarChar(120)
+  created_at      DateTime          @default(now())
+  updated_at      DateTime          @updatedAt
+  deleted_at      DateTime?
+  version         Int               @default(1)
 
-  tenant       tenant          @relation(fields: [tenant_id], references: [id])
-  facility     facility?       @relation(fields: [facility_id], references: [id])
-  patient      patient?        @relation(fields: [patient_id], references: [id])
-  invoice      invoice         @relation(fields: [invoice_id], references: [id])
-  refunds      refund[]
+  tenant   tenant    @relation(fields: [tenant_id], references: [id])
+  facility facility? @relation(fields: [facility_id], references: [id])
+  patient  patient?  @relation(fields: [patient_id], references: [id])
+  invoice  invoice   @relation(fields: [invoice_id], references: [id])
+  refunds  refund[]
 
   @@index([tenant_id])
   @@index([facility_id])
@@ -2742,17 +2744,17 @@ model payment {
 }
 
 model refund {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  payment_id   String   @db.VarChar(36)
-  amount       Decimal  @db.Decimal(12, 2)
-  refunded_at  DateTime @default(now())
-  reason       String?  @db.VarChar(255)
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  deleted_at   DateTime?
-  version      Int      @default(1)
+  id          String    @id @default(uuid()) @db.VarChar(36)
+  payment_id  String    @db.VarChar(36)
+  amount      Decimal   @db.Decimal(12, 2)
+  refunded_at DateTime  @default(now())
+  reason      String?   @db.VarChar(255)
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+  deleted_at  DateTime?
+  version     Int       @default(1)
 
-  payment      payment  @relation(fields: [payment_id], references: [id])
+  payment payment @relation(fields: [payment_id], references: [id])
 
   @@index([payment_id])
   @@index([refunded_at])
@@ -2760,20 +2762,20 @@ model refund {
 }
 
 model pricing_rule {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  tenant_id    String   @db.VarChar(36)
-  name         String   @db.VarChar(255)
-  description  String?  @db.Text
-  amount       Decimal  @db.Decimal(12, 2)
-  currency     String   @db.VarChar(10)
+  id             String    @id @default(uuid()) @db.VarChar(36)
+  tenant_id      String    @db.VarChar(36)
+  name           String    @db.VarChar(255)
+  description    String?   @db.Text
+  amount         Decimal   @db.Decimal(12, 2)
+  currency       String    @db.VarChar(10)
   effective_from DateTime?
-  effective_to DateTime?
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  deleted_at   DateTime?
-  version      Int      @default(1)
+  effective_to   DateTime?
+  created_at     DateTime  @default(now())
+  updated_at     DateTime  @updatedAt
+  deleted_at     DateTime?
+  version        Int       @default(1)
 
-  tenant       tenant   @relation(fields: [tenant_id], references: [id])
+  tenant tenant @relation(fields: [tenant_id], references: [id])
 
   @@index([tenant_id])
   @@index([effective_from])
@@ -2782,18 +2784,18 @@ model pricing_rule {
 }
 
 model coverage_plan {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  tenant_id    String   @db.VarChar(36)
-  name         String   @db.VarChar(255)
-  provider_name String? @db.VarChar(255)
-  coverage_percentage Int? @default(0)
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  deleted_at   DateTime?
-  version      Int      @default(1)
+  id                  String    @id @default(uuid()) @db.VarChar(36)
+  tenant_id           String    @db.VarChar(36)
+  name                String    @db.VarChar(255)
+  provider_name       String?   @db.VarChar(255)
+  coverage_percentage Int?      @default(0)
+  created_at          DateTime  @default(now())
+  updated_at          DateTime  @updatedAt
+  deleted_at          DateTime?
+  version             Int       @default(1)
 
-  tenant       tenant   @relation(fields: [tenant_id], references: [id])
-  claims       insurance_claim[]
+  tenant         tenant              @relation(fields: [tenant_id], references: [id])
+  claims         insurance_claim[]
   authorizations pre_authorization[]
 
   @@index([tenant_id])
@@ -2801,18 +2803,18 @@ model coverage_plan {
 }
 
 model insurance_claim {
-  id           String             @id @default(uuid()) @db.VarChar(36)
-  coverage_plan_id String         @db.VarChar(36)
-  invoice_id   String             @db.VarChar(36)
-  status       InsuranceClaimStatus
-  submitted_at DateTime           @default(now())
-  created_at   DateTime           @default(now())
-  updated_at   DateTime           @updatedAt
-  deleted_at   DateTime?
-  version      Int                @default(1)
+  id               String               @id @default(uuid()) @db.VarChar(36)
+  coverage_plan_id String               @db.VarChar(36)
+  invoice_id       String               @db.VarChar(36)
+  status           InsuranceClaimStatus
+  submitted_at     DateTime             @default(now())
+  created_at       DateTime             @default(now())
+  updated_at       DateTime             @updatedAt
+  deleted_at       DateTime?
+  version          Int                  @default(1)
 
-  coverage_plan coverage_plan     @relation(fields: [coverage_plan_id], references: [id])
-  invoice      invoice            @relation(fields: [invoice_id], references: [id])
+  coverage_plan coverage_plan @relation(fields: [coverage_plan_id], references: [id])
+  invoice       invoice       @relation(fields: [invoice_id], references: [id])
 
   @@index([coverage_plan_id])
   @@index([invoice_id])
@@ -2822,17 +2824,17 @@ model insurance_claim {
 }
 
 model pre_authorization {
-  id           String              @id @default(uuid()) @db.VarChar(36)
-  coverage_plan_id String          @db.VarChar(36)
-  status       AuthorizationStatus
-  requested_at DateTime            @default(now())
-  approved_at  DateTime?
-  created_at   DateTime            @default(now())
-  updated_at   DateTime            @updatedAt
-  deleted_at   DateTime?
-  version      Int                 @default(1)
+  id               String              @id @default(uuid()) @db.VarChar(36)
+  coverage_plan_id String              @db.VarChar(36)
+  status           AuthorizationStatus
+  requested_at     DateTime            @default(now())
+  approved_at      DateTime?
+  created_at       DateTime            @default(now())
+  updated_at       DateTime            @updatedAt
+  deleted_at       DateTime?
+  version          Int                 @default(1)
 
-  coverage_plan coverage_plan      @relation(fields: [coverage_plan_id], references: [id])
+  coverage_plan coverage_plan @relation(fields: [coverage_plan_id], references: [id])
 
   @@index([coverage_plan_id])
   @@index([status])
@@ -2841,18 +2843,18 @@ model pre_authorization {
 }
 
 model billing_adjustment {
-  id           String        @id @default(uuid()) @db.VarChar(36)
-  invoice_id   String        @db.VarChar(36)
-  amount       Decimal       @db.Decimal(12, 2)
-  status       BillingStatus
-  reason       String?       @db.VarChar(255)
-  adjusted_at  DateTime      @default(now())
-  created_at   DateTime      @default(now())
-  updated_at   DateTime      @updatedAt
-  deleted_at   DateTime?
-  version      Int           @default(1)
+  id          String        @id @default(uuid()) @db.VarChar(36)
+  invoice_id  String        @db.VarChar(36)
+  amount      Decimal       @db.Decimal(12, 2)
+  status      BillingStatus
+  reason      String?       @db.VarChar(255)
+  adjusted_at DateTime      @default(now())
+  created_at  DateTime      @default(now())
+  updated_at  DateTime      @updatedAt
+  deleted_at  DateTime?
+  version     Int           @default(1)
 
-  invoice      invoice       @relation(fields: [invoice_id], references: [id])
+  invoice invoice @relation(fields: [invoice_id], references: [id])
 
   @@index([invoice_id])
   @@index([status])
@@ -2861,54 +2863,54 @@ model billing_adjustment {
 }
 
 model staff_profile {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  tenant_id    String   @db.VarChar(36)
-  user_id      String   @unique @db.VarChar(36)
-  department_id String? @db.VarChar(36)
-  staff_number String?  @db.VarChar(80)
-  position     String?  @db.VarChar(120)
-  hire_date    DateTime?
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  deleted_at   DateTime?
-  version      Int      @default(1)
+  id            String    @id @default(uuid()) @db.VarChar(36)
+  tenant_id     String    @db.VarChar(36)
+  user_id       String    @unique @db.VarChar(36)
+  department_id String?   @db.VarChar(36)
+  staff_number  String?   @db.VarChar(80)
+  position      String?   @db.VarChar(120)
+  hire_date     DateTime?
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+  deleted_at    DateTime?
+  version       Int       @default(1)
 
-  tenant       tenant   @relation(fields: [tenant_id], references: [id])
-  user         user     @relation(fields: [user_id], references: [id])
-  department   department? @relation(fields: [department_id], references: [id])
-  assignments  staff_assignment[]
-  leaves       staff_leave[]
-  shift_assignments shift_assignment[]
+  tenant                     tenant               @relation(fields: [tenant_id], references: [id])
+  user                       user                 @relation(fields: [user_id], references: [id])
+  department                 department?          @relation(fields: [department_id], references: [id])
+  assignments                staff_assignment[]
+  leaves                     staff_leave[]
+  shift_assignments          shift_assignment[]
   swap_requests_as_requester shift_swap_request[] @relation("shift_swap_requester")
-  swap_requests_as_target shift_swap_request[] @relation("shift_swap_target")
-  payroll_items payroll_item[]
-  housekeeping_tasks housekeeping_task[]
-  addresses    address[] @relation("staff_profile_address")
-  contacts     contact[] @relation("staff_profile_contact")
+  swap_requests_as_target    shift_swap_request[] @relation("shift_swap_target")
+  payroll_items              payroll_item[]
+  housekeeping_tasks         housekeeping_task[]
+  addresses                  address[]            @relation("staff_profile_address")
+  contacts                   contact[]            @relation("staff_profile_contact")
 
+  @@unique([tenant_id, staff_number])
   @@index([tenant_id])
   @@index([user_id])
   @@index([department_id])
   @@index([staff_number])
   @@index([deleted_at])
-  @@unique([tenant_id, staff_number])
 }
 
 model staff_assignment {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  staff_profile_id String @db.VarChar(36)
-  department_id String? @db.VarChar(36)
-  unit_id      String?  @db.VarChar(36)
-  start_date   DateTime @default(now())
-  end_date     DateTime?
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  deleted_at   DateTime?
-  version      Int      @default(1)
+  id               String    @id @default(uuid()) @db.VarChar(36)
+  staff_profile_id String    @db.VarChar(36)
+  department_id    String?   @db.VarChar(36)
+  unit_id          String?   @db.VarChar(36)
+  start_date       DateTime  @default(now())
+  end_date         DateTime?
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt
+  deleted_at       DateTime?
+  version          Int       @default(1)
 
   staff_profile staff_profile @relation(fields: [staff_profile_id], references: [id])
-  department   department? @relation(fields: [department_id], references: [id])
-  unit         unit?      @relation(fields: [unit_id], references: [id])
+  department    department?   @relation(fields: [department_id], references: [id])
+  unit          unit?         @relation(fields: [unit_id], references: [id])
 
   @@index([staff_profile_id])
   @@index([department_id])
@@ -2917,16 +2919,16 @@ model staff_assignment {
 }
 
 model staff_leave {
-  id           String      @id @default(uuid()) @db.VarChar(36)
-  staff_profile_id String @db.VarChar(36)
-  status       LeaveStatus
-  start_date   DateTime
-  end_date     DateTime
-  reason       String?     @db.Text
-  created_at   DateTime    @default(now())
-  updated_at   DateTime    @updatedAt
-  deleted_at   DateTime?
-  version      Int         @default(1)
+  id               String      @id @default(uuid()) @db.VarChar(36)
+  staff_profile_id String      @db.VarChar(36)
+  status           LeaveStatus
+  start_date       DateTime
+  end_date         DateTime
+  reason           String?     @db.Text
+  created_at       DateTime    @default(now())
+  updated_at       DateTime    @updatedAt
+  deleted_at       DateTime?
+  version          Int         @default(1)
 
   staff_profile staff_profile @relation(fields: [staff_profile_id], references: [id])
 
@@ -2938,21 +2940,21 @@ model staff_leave {
 }
 
 model shift {
-  id           String    @id @default(uuid()) @db.VarChar(36)
-  tenant_id    String    @db.VarChar(36)
-  facility_id  String?   @db.VarChar(36)
-  shift_type   ShiftType
-  status       ShiftStatus
-  start_time   DateTime
-  end_time     DateTime
-  created_at   DateTime  @default(now())
-  updated_at   DateTime  @updatedAt
-  deleted_at   DateTime?
-  version      Int       @default(1)
+  id          String      @id @default(uuid()) @db.VarChar(36)
+  tenant_id   String      @db.VarChar(36)
+  facility_id String?     @db.VarChar(36)
+  shift_type  ShiftType
+  status      ShiftStatus
+  start_time  DateTime
+  end_time    DateTime
+  created_at  DateTime    @default(now())
+  updated_at  DateTime    @updatedAt
+  deleted_at  DateTime?
+  version     Int         @default(1)
 
-  tenant       tenant    @relation(fields: [tenant_id], references: [id])
-  facility     facility? @relation(fields: [facility_id], references: [id])
-  assignments  shift_assignment[]
+  tenant        tenant               @relation(fields: [tenant_id], references: [id])
+  facility      facility?            @relation(fields: [facility_id], references: [id])
+  assignments   shift_assignment[]
   swap_requests shift_swap_request[]
 
   @@index([tenant_id])
@@ -2963,16 +2965,16 @@ model shift {
 }
 
 model shift_assignment {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  shift_id     String   @db.VarChar(36)
-  staff_profile_id String @db.VarChar(36)
-  assigned_at  DateTime @default(now())
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  deleted_at   DateTime?
-  version      Int      @default(1)
+  id               String    @id @default(uuid()) @db.VarChar(36)
+  shift_id         String    @db.VarChar(36)
+  staff_profile_id String    @db.VarChar(36)
+  assigned_at      DateTime  @default(now())
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt
+  deleted_at       DateTime?
+  version          Int       @default(1)
 
-  shift        shift    @relation(fields: [shift_id], references: [id])
+  shift         shift         @relation(fields: [shift_id], references: [id])
   staff_profile staff_profile @relation(fields: [staff_profile_id], references: [id])
 
   @@index([shift_id])
@@ -2981,19 +2983,19 @@ model shift_assignment {
 }
 
 model shift_swap_request {
-  id           String      @id @default(uuid()) @db.VarChar(36)
-  shift_id     String      @db.VarChar(36)
-  requester_staff_id String @db.VarChar(36)
-  target_staff_id String?  @db.VarChar(36)
-  status       ShiftStatus
-  created_at   DateTime    @default(now())
-  updated_at   DateTime    @updatedAt
-  deleted_at   DateTime?
-  version      Int         @default(1)
+  id                 String      @id @default(uuid()) @db.VarChar(36)
+  shift_id           String      @db.VarChar(36)
+  requester_staff_id String      @db.VarChar(36)
+  target_staff_id    String?     @db.VarChar(36)
+  status             ShiftStatus
+  created_at         DateTime    @default(now())
+  updated_at         DateTime    @updatedAt
+  deleted_at         DateTime?
+  version            Int         @default(1)
 
-  shift        shift       @relation(fields: [shift_id], references: [id])
-  requester    staff_profile @relation("shift_swap_requester", fields: [requester_staff_id], references: [id])
-  target       staff_profile? @relation("shift_swap_target", fields: [target_staff_id], references: [id])
+  shift     shift          @relation(fields: [shift_id], references: [id])
+  requester staff_profile  @relation("shift_swap_requester", fields: [requester_staff_id], references: [id])
+  target    staff_profile? @relation("shift_swap_target", fields: [target_staff_id], references: [id])
 
   @@index([shift_id])
   @@index([requester_staff_id])
@@ -3003,18 +3005,18 @@ model shift_swap_request {
 }
 
 model payroll_run {
-  id           String      @id @default(uuid()) @db.VarChar(36)
-  tenant_id    String      @db.VarChar(36)
+  id           String        @id @default(uuid()) @db.VarChar(36)
+  tenant_id    String        @db.VarChar(36)
   period_start DateTime
   period_end   DateTime
   status       PayrollStatus
-  created_at   DateTime    @default(now())
-  updated_at   DateTime    @updatedAt
+  created_at   DateTime      @default(now())
+  updated_at   DateTime      @updatedAt
   deleted_at   DateTime?
-  version      Int         @default(1)
+  version      Int           @default(1)
 
-  tenant       tenant      @relation(fields: [tenant_id], references: [id])
-  items        payroll_item[]
+  tenant tenant         @relation(fields: [tenant_id], references: [id])
+  items  payroll_item[]
 
   @@index([tenant_id])
   @@index([period_start])
@@ -3024,17 +3026,17 @@ model payroll_run {
 }
 
 model payroll_item {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  payroll_run_id String @db.VarChar(36)
-  staff_profile_id String @db.VarChar(36)
-  amount       Decimal  @db.Decimal(12, 2)
-  currency     String   @db.VarChar(10)
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  deleted_at   DateTime?
-  version      Int      @default(1)
+  id               String    @id @default(uuid()) @db.VarChar(36)
+  payroll_run_id   String    @db.VarChar(36)
+  staff_profile_id String    @db.VarChar(36)
+  amount           Decimal   @db.Decimal(12, 2)
+  currency         String    @db.VarChar(10)
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt
+  deleted_at       DateTime?
+  version          Int       @default(1)
 
-  payroll_run  payroll_run @relation(fields: [payroll_run_id], references: [id])
+  payroll_run   payroll_run   @relation(fields: [payroll_run_id], references: [id])
   staff_profile staff_profile @relation(fields: [staff_profile_id], references: [id])
 
   @@index([payroll_run_id])
@@ -3043,21 +3045,21 @@ model payroll_item {
 }
 
 model housekeeping_task {
-  id           String                @id @default(uuid()) @db.VarChar(36)
-  facility_id  String?               @db.VarChar(36)
-  room_id      String?               @db.VarChar(36)
-  assigned_to_staff_id String?       @db.VarChar(36)
-  status       HousekeepingTaskStatus
-  scheduled_at DateTime?
-  completed_at DateTime?
-  created_at   DateTime              @default(now())
-  updated_at   DateTime              @updatedAt
-  deleted_at   DateTime?
-  version      Int                   @default(1)
+  id                   String                 @id @default(uuid()) @db.VarChar(36)
+  facility_id          String?                @db.VarChar(36)
+  room_id              String?                @db.VarChar(36)
+  assigned_to_staff_id String?                @db.VarChar(36)
+  status               HousekeepingTaskStatus
+  scheduled_at         DateTime?
+  completed_at         DateTime?
+  created_at           DateTime               @default(now())
+  updated_at           DateTime               @updatedAt
+  deleted_at           DateTime?
+  version              Int                    @default(1)
 
-  facility     facility?             @relation(fields: [facility_id], references: [id])
-  room         room?                 @relation(fields: [room_id], references: [id])
-  assigned_to  staff_profile?        @relation(fields: [assigned_to_staff_id], references: [id])
+  facility    facility?      @relation(fields: [facility_id], references: [id])
+  room        room?          @relation(fields: [room_id], references: [id])
+  assigned_to staff_profile? @relation(fields: [assigned_to_staff_id], references: [id])
 
   @@index([facility_id])
   @@index([room_id])
@@ -3067,19 +3069,19 @@ model housekeeping_task {
 }
 
 model housekeeping_schedule {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  facility_id  String?  @db.VarChar(36)
-  room_id      String?  @db.VarChar(36)
-  frequency    String?  @db.VarChar(80)
-  start_date   DateTime?
-  end_date     DateTime?
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  deleted_at   DateTime?
-  version      Int      @default(1)
+  id          String    @id @default(uuid()) @db.VarChar(36)
+  facility_id String?   @db.VarChar(36)
+  room_id     String?   @db.VarChar(36)
+  frequency   String?   @db.VarChar(80)
+  start_date  DateTime?
+  end_date    DateTime?
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+  deleted_at  DateTime?
+  version     Int       @default(1)
 
-  facility     facility? @relation(fields: [facility_id], references: [id])
-  room         room?     @relation(fields: [room_id], references: [id])
+  facility facility? @relation(fields: [facility_id], references: [id])
+  room     room?     @relation(fields: [room_id], references: [id])
 
   @@index([facility_id])
   @@index([room_id])
@@ -3087,20 +3089,20 @@ model housekeeping_schedule {
 }
 
 model maintenance_request {
-  id           String           @id @default(uuid()) @db.VarChar(36)
-  facility_id  String?          @db.VarChar(36)
-  asset_id     String?          @db.VarChar(36)
-  status       MaintenanceStatus
-  description  String?          @db.Text
-  reported_at  DateTime         @default(now())
-  resolved_at  DateTime?
-  created_at   DateTime         @default(now())
-  updated_at   DateTime         @updatedAt
-  deleted_at   DateTime?
-  version      Int              @default(1)
+  id          String            @id @default(uuid()) @db.VarChar(36)
+  facility_id String?           @db.VarChar(36)
+  asset_id    String?           @db.VarChar(36)
+  status      MaintenanceStatus
+  description String?           @db.Text
+  reported_at DateTime          @default(now())
+  resolved_at DateTime?
+  created_at  DateTime          @default(now())
+  updated_at  DateTime          @updatedAt
+  deleted_at  DateTime?
+  version     Int               @default(1)
 
-  facility     facility?        @relation(fields: [facility_id], references: [id])
-  asset        asset?           @relation(fields: [asset_id], references: [id])
+  facility facility? @relation(fields: [facility_id], references: [id])
+  asset    asset?    @relation(fields: [asset_id], references: [id])
 
   @@index([facility_id])
   @@index([asset_id])
@@ -3110,20 +3112,20 @@ model maintenance_request {
 }
 
 model asset {
-  id           String           @id @default(uuid()) @db.VarChar(36)
-  tenant_id    String           @db.VarChar(36)
-  facility_id  String?          @db.VarChar(36)
-  name         String           @db.VarChar(255)
-  asset_tag    String?          @db.VarChar(80)
-  status       MaintenanceStatus
-  created_at   DateTime         @default(now())
-  updated_at   DateTime         @updatedAt
-  deleted_at   DateTime?
-  version      Int              @default(1)
+  id          String            @id @default(uuid()) @db.VarChar(36)
+  tenant_id   String            @db.VarChar(36)
+  facility_id String?           @db.VarChar(36)
+  name        String            @db.VarChar(255)
+  asset_tag   String?           @db.VarChar(80)
+  status      MaintenanceStatus
+  created_at  DateTime          @default(now())
+  updated_at  DateTime          @updatedAt
+  deleted_at  DateTime?
+  version     Int               @default(1)
 
-  tenant       tenant           @relation(fields: [tenant_id], references: [id])
-  facility     facility?        @relation(fields: [facility_id], references: [id])
-  service_logs asset_service_log[]
+  tenant               tenant                @relation(fields: [tenant_id], references: [id])
+  facility             facility?             @relation(fields: [facility_id], references: [id])
+  service_logs         asset_service_log[]
   maintenance_requests maintenance_request[]
 
   @@index([tenant_id])
@@ -3134,16 +3136,16 @@ model asset {
 }
 
 model asset_service_log {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  asset_id     String   @db.VarChar(36)
-  serviced_at  DateTime @default(now())
-  notes        String?  @db.Text
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  deleted_at   DateTime?
-  version      Int      @default(1)
+  id          String    @id @default(uuid()) @db.VarChar(36)
+  asset_id    String    @db.VarChar(36)
+  serviced_at DateTime  @default(now())
+  notes       String?   @db.Text
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+  deleted_at  DateTime?
+  version     Int       @default(1)
 
-  asset        asset    @relation(fields: [asset_id], references: [id])
+  asset asset @relation(fields: [asset_id], references: [id])
 
   @@index([asset_id])
   @@index([serviced_at])
@@ -3151,22 +3153,22 @@ model asset_service_log {
 }
 
 model notification {
-  id           String               @id @default(uuid()) @db.VarChar(36)
-  tenant_id    String               @db.VarChar(36)
-  user_id      String?              @db.VarChar(36)
+  id                String               @id @default(uuid()) @db.VarChar(36)
+  tenant_id         String               @db.VarChar(36)
+  user_id           String?              @db.VarChar(36)
   notification_type NotificationType
-  priority     NotificationPriority
-  title        String               @db.VarChar(255)
-  message      String               @db.Text
-  read_at      DateTime?
-  created_at   DateTime             @default(now())
-  updated_at   DateTime             @updatedAt
-  deleted_at   DateTime?
-  version      Int                  @default(1)
+  priority          NotificationPriority
+  title             String               @db.VarChar(255)
+  message           String               @db.Text
+  read_at           DateTime?
+  created_at        DateTime             @default(now())
+  updated_at        DateTime             @updatedAt
+  deleted_at        DateTime?
+  version           Int                  @default(1)
 
-  tenant       tenant               @relation(fields: [tenant_id], references: [id])
-  user         user?                @relation(fields: [user_id], references: [id])
-  deliveries   notification_delivery[]
+  tenant     tenant                  @relation(fields: [tenant_id], references: [id])
+  user       user?                   @relation(fields: [user_id], references: [id])
+  deliveries notification_delivery[]
 
   @@index([tenant_id])
   @@index([user_id])
@@ -3176,17 +3178,17 @@ model notification {
 }
 
 model notification_delivery {
-  id           String              @id @default(uuid()) @db.VarChar(36)
-  notification_id String           @db.VarChar(36)
-  channel      CommunicationChannel
-  status       String?             @db.VarChar(60)
-  sent_at      DateTime?
-  created_at   DateTime            @default(now())
-  updated_at   DateTime            @updatedAt
-  deleted_at   DateTime?
-  version      Int                 @default(1)
+  id              String               @id @default(uuid()) @db.VarChar(36)
+  notification_id String               @db.VarChar(36)
+  channel         CommunicationChannel
+  status          String?              @db.VarChar(60)
+  sent_at         DateTime?
+  created_at      DateTime             @default(now())
+  updated_at      DateTime             @updatedAt
+  deleted_at      DateTime?
+  version         Int                  @default(1)
 
-  notification notification        @relation(fields: [notification_id], references: [id])
+  notification notification @relation(fields: [notification_id], references: [id])
 
   @@index([notification_id])
   @@index([channel])
@@ -3195,18 +3197,18 @@ model notification_delivery {
 }
 
 model conversation {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  tenant_id    String   @db.VarChar(36)
-  subject      String?  @db.VarChar(255)
-  created_by_user_id String? @db.VarChar(36)
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  deleted_at   DateTime?
-  version      Int      @default(1)
+  id                 String    @id @default(uuid()) @db.VarChar(36)
+  tenant_id          String    @db.VarChar(36)
+  subject            String?   @db.VarChar(255)
+  created_by_user_id String?   @db.VarChar(36)
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @updatedAt
+  deleted_at         DateTime?
+  version            Int       @default(1)
 
-  tenant       tenant   @relation(fields: [tenant_id], references: [id])
-  created_by   user?    @relation(fields: [created_by_user_id], references: [id])
-  messages     message[]
+  tenant     tenant    @relation(fields: [tenant_id], references: [id])
+  created_by user?     @relation(fields: [created_by_user_id], references: [id])
+  messages   message[]
 
   @@index([tenant_id])
   @@index([created_by_user_id])
@@ -3214,20 +3216,20 @@ model conversation {
 }
 
 model message {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  conversation_id String @db.VarChar(36)
-  sender_user_id String? @db.VarChar(36)
-  sender_patient_id String? @db.VarChar(36)
-  content      String   @db.Text
-  sent_at      DateTime @default(now())
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  deleted_at   DateTime?
-  version      Int      @default(1)
+  id                String    @id @default(uuid()) @db.VarChar(36)
+  conversation_id   String    @db.VarChar(36)
+  sender_user_id    String?   @db.VarChar(36)
+  sender_patient_id String?   @db.VarChar(36)
+  content           String    @db.Text
+  sent_at           DateTime  @default(now())
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
+  deleted_at        DateTime?
+  version           Int       @default(1)
 
-  conversation conversation @relation(fields: [conversation_id], references: [id])
-  sender_user  user?        @relation(fields: [sender_user_id], references: [id])
-  sender_patient patient?   @relation(fields: [sender_patient_id], references: [id])
+  conversation   conversation @relation(fields: [conversation_id], references: [id])
+  sender_user    user?        @relation(fields: [sender_user_id], references: [id])
+  sender_patient patient?     @relation(fields: [sender_patient_id], references: [id])
 
   @@index([conversation_id])
   @@index([sender_user_id])
@@ -3237,18 +3239,18 @@ model message {
 }
 
 model template {
-  id           String              @id @default(uuid()) @db.VarChar(36)
-  tenant_id    String              @db.VarChar(36)
-  name         String              @db.VarChar(120)
-  channel      CommunicationChannel
-  body         String              @db.Text
-  created_at   DateTime            @default(now())
-  updated_at   DateTime            @updatedAt
-  deleted_at   DateTime?
-  version      Int                 @default(1)
+  id         String               @id @default(uuid()) @db.VarChar(36)
+  tenant_id  String               @db.VarChar(36)
+  name       String               @db.VarChar(120)
+  channel    CommunicationChannel
+  body       String               @db.Text
+  created_at DateTime             @default(now())
+  updated_at DateTime             @updatedAt
+  deleted_at DateTime?
+  version    Int                  @default(1)
 
-  tenant       tenant              @relation(fields: [tenant_id], references: [id])
-  variables    template_variable[]
+  tenant    tenant              @relation(fields: [tenant_id], references: [id])
+  variables template_variable[]
 
   @@index([tenant_id])
   @@index([channel])
@@ -3257,57 +3259,63 @@ model template {
 }
 
 model template_variable {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  template_id  String   @db.VarChar(36)
-  key          String   @db.VarChar(120)
-  description  String?  @db.VarChar(255)
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  deleted_at   DateTime?
-  version      Int      @default(1)
+  id          String    @id @default(uuid()) @db.VarChar(36)
+  template_id String    @db.VarChar(36)
+  key         String    @db.VarChar(120)
+  description String?   @db.VarChar(255)
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+  deleted_at  DateTime?
+  version     Int       @default(1)
 
-  template     template @relation(fields: [template_id], references: [id])
+  template template @relation(fields: [template_id], references: [id])
 
+  @@unique([template_id, key])
   @@index([template_id])
   @@index([key])
   @@index([deleted_at])
-  @@unique([template_id, key])
 }
 
 model report_definition {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  tenant_id    String   @db.VarChar(36)
-  name         String   @db.VarChar(255)
-  query        String   @db.Text
-  description  String?  @db.Text
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  deleted_at   DateTime?
-  version      Int      @default(1)
+  id          String    @id @default(uuid()) @db.VarChar(36)
+  tenant_id   String    @db.VarChar(36)
+  created_by  String?   @db.VarChar(36)
+  name        String    @db.VarChar(255)
+  query       String    @db.Text
+  description String?   @db.Text
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+  deleted_at  DateTime?
+  version     Int       @default(1)
 
-  tenant       tenant   @relation(fields: [tenant_id], references: [id])
-  runs         report_run[]
+  tenant  tenant       @relation(fields: [tenant_id], references: [id])
+  creator user?        @relation(fields: [created_by], references: [id])
+  runs    report_run[]
 
   @@index([tenant_id])
+  @@index([created_by])
   @@index([name])
   @@index([deleted_at])
 }
 
 model report_run {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  report_definition_id String @db.VarChar(36)
-  run_by_user_id String? @db.VarChar(36)
-  status       String   @db.VarChar(60)
-  started_at   DateTime @default(now())
-  completed_at DateTime?
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  deleted_at   DateTime?
-  version      Int      @default(1)
+  id                   String    @id @default(uuid()) @db.VarChar(36)
+  tenant_id            String    @db.VarChar(36)
+  report_definition_id String    @db.VarChar(36)
+  run_by_user_id       String?   @db.VarChar(36)
+  status               String    @db.VarChar(60)
+  started_at           DateTime  @default(now())
+  completed_at         DateTime?
+  created_at           DateTime  @default(now())
+  updated_at           DateTime  @updatedAt
+  deleted_at           DateTime?
+  version              Int       @default(1)
 
+  tenant            tenant            @relation(fields: [tenant_id], references: [id])
   report_definition report_definition @relation(fields: [report_definition_id], references: [id])
-  run_by       user?    @relation(fields: [run_by_user_id], references: [id])
+  run_by            user?             @relation(fields: [run_by_user_id], references: [id])
 
+  @@index([tenant_id])
   @@index([report_definition_id])
   @@index([run_by_user_id])
   @@index([status])
@@ -3316,16 +3324,16 @@ model report_run {
 }
 
 model dashboard_widget {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  tenant_id    String   @db.VarChar(36)
-  name         String   @db.VarChar(255)
-  config_json  Json
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  deleted_at   DateTime?
-  version      Int      @default(1)
+  id          String    @id @default(uuid()) @db.VarChar(36)
+  tenant_id   String    @db.VarChar(36)
+  name        String    @db.VarChar(255)
+  config_json Json
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+  deleted_at  DateTime?
+  version     Int       @default(1)
 
-  tenant       tenant   @relation(fields: [tenant_id], references: [id])
+  tenant tenant @relation(fields: [tenant_id], references: [id])
 
   @@index([tenant_id])
   @@index([name])
@@ -3333,17 +3341,17 @@ model dashboard_widget {
 }
 
 model kpi_snapshot {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  tenant_id    String   @db.VarChar(36)
-  name         String   @db.VarChar(255)
-  value        Decimal  @db.Decimal(14, 4)
-  recorded_at  DateTime @default(now())
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  deleted_at   DateTime?
-  version      Int      @default(1)
+  id          String    @id @default(uuid()) @db.VarChar(36)
+  tenant_id   String    @db.VarChar(36)
+  name        String    @db.VarChar(255)
+  value       Decimal   @db.Decimal(14, 4)
+  recorded_at DateTime  @default(now())
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+  deleted_at  DateTime?
+  version     Int       @default(1)
 
-  tenant       tenant   @relation(fields: [tenant_id], references: [id])
+  tenant tenant @relation(fields: [tenant_id], references: [id])
 
   @@index([tenant_id])
   @@index([recorded_at])
@@ -3351,19 +3359,19 @@ model kpi_snapshot {
 }
 
 model analytics_event {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  tenant_id    String   @db.VarChar(36)
-  user_id      String?  @db.VarChar(36)
-  event_name   String   @db.VarChar(255)
+  id           String    @id @default(uuid()) @db.VarChar(36)
+  tenant_id    String    @db.VarChar(36)
+  user_id      String?   @db.VarChar(36)
+  event_name   String    @db.VarChar(255)
   payload_json Json?
-  occurred_at  DateTime @default(now())
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
+  occurred_at  DateTime  @default(now())
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
   deleted_at   DateTime?
-  version      Int      @default(1)
+  version      Int       @default(1)
 
-  tenant       tenant   @relation(fields: [tenant_id], references: [id])
-  user         user?    @relation(fields: [user_id], references: [id])
+  tenant tenant @relation(fields: [tenant_id], references: [id])
+  user   user?  @relation(fields: [user_id], references: [id])
 
   @@index([tenant_id])
   @@index([user_id])
@@ -3373,17 +3381,17 @@ model analytics_event {
 }
 
 model subscription_plan {
-  id           String      @id @default(uuid()) @db.VarChar(36)
-  tenant_id    String?     @db.VarChar(36)
-  name         String      @db.VarChar(255)
-  price        Decimal     @db.Decimal(12, 2)
+  id            String       @id @default(uuid()) @db.VarChar(36)
+  tenant_id     String?      @db.VarChar(36)
+  name          String       @db.VarChar(255)
+  price         Decimal      @db.Decimal(12, 2)
   billing_cycle BillingCycle
-  created_at   DateTime    @default(now())
-  updated_at   DateTime    @updatedAt
-  deleted_at   DateTime?
-  version      Int         @default(1)
+  created_at    DateTime     @default(now())
+  updated_at    DateTime     @updatedAt
+  deleted_at    DateTime?
+  version       Int          @default(1)
 
-  tenant       tenant?     @relation(fields: [tenant_id], references: [id])
+  tenant        tenant?        @relation(fields: [tenant_id], references: [id])
   subscriptions subscription[]
 
   @@index([tenant_id])
@@ -3392,20 +3400,20 @@ model subscription_plan {
 }
 
 model subscription {
-  id           String            @id @default(uuid()) @db.VarChar(36)
-  tenant_id    String            @db.VarChar(36)
-  plan_id      String            @db.VarChar(36)
-  status       SubscriptionStatus
-  start_date   DateTime          @default(now())
-  end_date     DateTime?
-  created_at   DateTime          @default(now())
-  updated_at   DateTime          @updatedAt
-  deleted_at   DateTime?
-  version      Int               @default(1)
+  id         String             @id @default(uuid()) @db.VarChar(36)
+  tenant_id  String             @db.VarChar(36)
+  plan_id    String             @db.VarChar(36)
+  status     SubscriptionStatus
+  start_date DateTime           @default(now())
+  end_date   DateTime?
+  created_at DateTime           @default(now())
+  updated_at DateTime           @updatedAt
+  deleted_at DateTime?
+  version    Int                @default(1)
 
-  tenant       tenant            @relation(fields: [tenant_id], references: [id])
-  plan         subscription_plan @relation(fields: [plan_id], references: [id])
-  invoices     subscription_invoice[]
+  tenant               tenant                 @relation(fields: [tenant_id], references: [id])
+  plan                 subscription_plan      @relation(fields: [plan_id], references: [id])
+  invoices             subscription_invoice[]
   module_subscriptions module_subscription[]
 
   @@index([tenant_id])
@@ -3415,72 +3423,72 @@ model subscription {
 }
 
 model subscription_invoice {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  subscription_id String @db.VarChar(36)
-  invoice_id   String   @db.VarChar(36)
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  deleted_at   DateTime?
-  version      Int      @default(1)
+  id              String    @id @default(uuid()) @db.VarChar(36)
+  subscription_id String    @db.VarChar(36)
+  invoice_id      String    @db.VarChar(36)
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+  deleted_at      DateTime?
+  version         Int       @default(1)
 
   subscription subscription @relation(fields: [subscription_id], references: [id])
   invoice      invoice      @relation(fields: [invoice_id], references: [id])
 
+  @@unique([subscription_id, invoice_id])
   @@index([subscription_id])
   @@index([invoice_id])
   @@index([deleted_at])
-  @@unique([subscription_id, invoice_id])
 }
 
 model module {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  name         String   @db.VarChar(120)
-  description  String?  @db.Text
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  deleted_at   DateTime?
-  version      Int      @default(1)
+  id          String    @id @default(uuid()) @db.VarChar(36)
+  name        String    @db.VarChar(120)
+  description String?   @db.Text
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+  deleted_at  DateTime?
+  version     Int       @default(1)
 
   subscriptions module_subscription[]
 
+  @@unique([name])
   @@index([name])
   @@index([deleted_at])
-  @@unique([name])
 }
 
 model module_subscription {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  module_id    String   @db.VarChar(36)
-  subscription_id String @db.VarChar(36)
-  is_active    Boolean  @default(true)
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  deleted_at   DateTime?
-  version      Int      @default(1)
+  id              String    @id @default(uuid()) @db.VarChar(36)
+  module_id       String    @db.VarChar(36)
+  subscription_id String    @db.VarChar(36)
+  is_active       Boolean   @default(true)
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+  deleted_at      DateTime?
+  version         Int       @default(1)
 
-  module       module   @relation(fields: [module_id], references: [id])
+  module       module       @relation(fields: [module_id], references: [id])
   subscription subscription @relation(fields: [subscription_id], references: [id])
 
+  @@unique([module_id, subscription_id])
   @@index([module_id])
   @@index([subscription_id])
   @@index([is_active])
   @@index([deleted_at])
-  @@unique([module_id, subscription_id])
 }
 
 model license {
-  id           String       @id @default(uuid()) @db.VarChar(36)
-  tenant_id    String       @db.VarChar(36)
+  id           String             @id @default(uuid()) @db.VarChar(36)
+  tenant_id    String             @db.VarChar(36)
   license_type LicenseType
   status       SubscriptionStatus
-  issued_at    DateTime     @default(now())
+  issued_at    DateTime           @default(now())
   expires_at   DateTime?
-  created_at   DateTime     @default(now())
-  updated_at   DateTime     @updatedAt
+  created_at   DateTime           @default(now())
+  updated_at   DateTime           @updatedAt
   deleted_at   DateTime?
-  version      Int          @default(1)
+  version      Int                @default(1)
 
-  tenant       tenant       @relation(fields: [tenant_id], references: [id])
+  tenant tenant @relation(fields: [tenant_id], references: [id])
 
   @@index([tenant_id])
   @@index([license_type])
@@ -3489,21 +3497,21 @@ model license {
 }
 
 model audit_log {
-  id           String     @id @default(uuid()) @db.VarChar(36)
-  tenant_id    String     @db.VarChar(36)
-  user_id      String?    @db.VarChar(36)
-  action       AuditAction
-  entity       String     @db.VarChar(120)
-  entity_id    String     @db.VarChar(36)
-  diff_json    Json?
-  ip_address   String?    @db.VarChar(45)
-  created_at   DateTime   @default(now())
-  updated_at   DateTime   @updatedAt
-  deleted_at   DateTime?
-  version      Int        @default(1)
+  id         String      @id @default(uuid()) @db.VarChar(36)
+  tenant_id  String      @db.VarChar(36)
+  user_id    String?     @db.VarChar(36)
+  action     AuditAction
+  entity     String      @db.VarChar(120)
+  entity_id  String      @db.VarChar(36)
+  diff_json  Json?
+  ip_address String?     @db.VarChar(45)
+  created_at DateTime    @default(now())
+  updated_at DateTime    @updatedAt
+  deleted_at DateTime?
+  version    Int         @default(1)
 
-  tenant       tenant     @relation(fields: [tenant_id], references: [id])
-  user         user?      @relation(fields: [user_id], references: [id])
+  tenant tenant @relation(fields: [tenant_id], references: [id])
+  user   user?  @relation(fields: [user_id], references: [id])
 
   @@index([tenant_id])
   @@index([user_id])
@@ -3514,21 +3522,21 @@ model audit_log {
 }
 
 model phi_access_log {
-  id           String     @id @default(uuid()) @db.VarChar(36)
-  tenant_id    String     @db.VarChar(36)
-  user_id      String     @db.VarChar(36)
-  patient_id   String     @db.VarChar(36)
+  id           String      @id @default(uuid()) @db.VarChar(36)
+  tenant_id    String      @db.VarChar(36)
+  user_id      String      @db.VarChar(36)
+  patient_id   String      @db.VarChar(36)
   access_scope AccessScope
-  reason       String?    @db.VarChar(255)
-  accessed_at  DateTime   @default(now())
-  created_at   DateTime   @default(now())
-  updated_at   DateTime   @updatedAt
+  reason       String?     @db.VarChar(255)
+  accessed_at  DateTime    @default(now())
+  created_at   DateTime    @default(now())
+  updated_at   DateTime    @updatedAt
   deleted_at   DateTime?
-  version      Int        @default(1)
+  version      Int         @default(1)
 
-  tenant       tenant     @relation(fields: [tenant_id], references: [id])
-  user         user       @relation(fields: [user_id], references: [id])
-  patient      patient    @relation(fields: [patient_id], references: [id])
+  tenant  tenant  @relation(fields: [tenant_id], references: [id])
+  user    user    @relation(fields: [user_id], references: [id])
+  patient patient @relation(fields: [patient_id], references: [id])
 
   @@index([tenant_id])
   @@index([user_id])
@@ -3539,20 +3547,20 @@ model phi_access_log {
 }
 
 model data_processing_log {
-  id           String              @id @default(uuid()) @db.VarChar(36)
-  tenant_id    String              @db.VarChar(36)
-  user_id      String?             @db.VarChar(36)
+  id           String                @id @default(uuid()) @db.VarChar(36)
+  tenant_id    String                @db.VarChar(36)
+  user_id      String?               @db.VarChar(36)
   purpose      DataProcessingPurpose
   legal_basis  LegalBasis
-  details      String?             @db.Text
-  processed_at DateTime            @default(now())
-  created_at   DateTime            @default(now())
-  updated_at   DateTime            @updatedAt
+  details      String?               @db.Text
+  processed_at DateTime              @default(now())
+  created_at   DateTime              @default(now())
+  updated_at   DateTime              @updatedAt
   deleted_at   DateTime?
-  version      Int                 @default(1)
+  version      Int                   @default(1)
 
-  tenant       tenant              @relation(fields: [tenant_id], references: [id])
-  user         user?               @relation(fields: [user_id], references: [id])
+  tenant tenant @relation(fields: [tenant_id], references: [id])
+  user   user?  @relation(fields: [user_id], references: [id])
 
   @@index([tenant_id])
   @@index([user_id])
@@ -3563,19 +3571,19 @@ model data_processing_log {
 }
 
 model breach_notification {
-  id           String         @id @default(uuid()) @db.VarChar(36)
-  tenant_id    String         @db.VarChar(36)
-  severity     BreachSeverity
-  status       BreachStatus
-  description  String?        @db.Text
-  reported_at  DateTime       @default(now())
-  resolved_at  DateTime?
-  created_at   DateTime       @default(now())
-  updated_at   DateTime       @updatedAt
-  deleted_at   DateTime?
-  version      Int            @default(1)
+  id          String         @id @default(uuid()) @db.VarChar(36)
+  tenant_id   String         @db.VarChar(36)
+  severity    BreachSeverity
+  status      BreachStatus
+  description String?        @db.Text
+  reported_at DateTime       @default(now())
+  resolved_at DateTime?
+  created_at  DateTime       @default(now())
+  updated_at  DateTime       @updatedAt
+  deleted_at  DateTime?
+  version     Int            @default(1)
 
-  tenant       tenant         @relation(fields: [tenant_id], references: [id])
+  tenant tenant @relation(fields: [tenant_id], references: [id])
 
   @@index([tenant_id])
   @@index([severity])
@@ -3585,18 +3593,18 @@ model breach_notification {
 }
 
 model system_change_log {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  tenant_id    String   @db.VarChar(36)
-  user_id      String?  @db.VarChar(36)
-  change_type  String   @db.VarChar(120)
-  details      String?  @db.Text
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  deleted_at   DateTime?
-  version      Int      @default(1)
+  id          String    @id @default(uuid()) @db.VarChar(36)
+  tenant_id   String    @db.VarChar(36)
+  user_id     String?   @db.VarChar(36)
+  change_type String    @db.VarChar(120)
+  details     String?   @db.Text
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+  deleted_at  DateTime?
+  version     Int       @default(1)
 
-  tenant       tenant   @relation(fields: [tenant_id], references: [id])
-  user         user?    @relation(fields: [user_id], references: [id])
+  tenant tenant @relation(fields: [tenant_id], references: [id])
+  user   user?  @relation(fields: [user_id], references: [id])
 
   @@index([tenant_id])
   @@index([user_id])
@@ -3606,20 +3614,20 @@ model system_change_log {
 }
 
 model integration {
-  id           String           @id @default(uuid()) @db.VarChar(36)
-  tenant_id    String           @db.VarChar(36)
+  id               String            @id @default(uuid()) @db.VarChar(36)
+  tenant_id        String            @db.VarChar(36)
   integration_type IntegrationType
-  status       IntegrationStatus
-  name         String           @db.VarChar(120)
-  config_json  Json?
-  created_at   DateTime         @default(now())
-  updated_at   DateTime         @updatedAt
-  deleted_at   DateTime?
-  version      Int              @default(1)
+  status           IntegrationStatus
+  name             String            @db.VarChar(120)
+  config_json      Json?
+  created_at       DateTime          @default(now())
+  updated_at       DateTime          @updatedAt
+  deleted_at       DateTime?
+  version          Int               @default(1)
 
-  tenant       tenant           @relation(fields: [tenant_id], references: [id])
-  logs         integration_log[]
-  webhooks     webhook_subscription[]
+  tenant   tenant                 @relation(fields: [tenant_id], references: [id])
+  logs     integration_log[]
+  webhooks webhook_subscription[]
 
   @@index([tenant_id])
   @@index([integration_type])
@@ -3628,17 +3636,17 @@ model integration {
 }
 
 model integration_log {
-  id           String           @id @default(uuid()) @db.VarChar(36)
-  integration_id String         @db.VarChar(36)
-  status       IntegrationStatus
-  message      String?          @db.Text
-  logged_at    DateTime         @default(now())
-  created_at   DateTime         @default(now())
-  updated_at   DateTime         @updatedAt
-  deleted_at   DateTime?
-  version      Int              @default(1)
+  id             String            @id @default(uuid()) @db.VarChar(36)
+  integration_id String            @db.VarChar(36)
+  status         IntegrationStatus
+  message        String?           @db.Text
+  logged_at      DateTime          @default(now())
+  created_at     DateTime          @default(now())
+  updated_at     DateTime          @updatedAt
+  deleted_at     DateTime?
+  version        Int               @default(1)
 
-  integration  integration      @relation(fields: [integration_id], references: [id])
+  integration integration @relation(fields: [integration_id], references: [id])
 
   @@index([integration_id])
   @@index([status])
@@ -3647,19 +3655,19 @@ model integration_log {
 }
 
 model webhook_subscription {
-  id           String   @id @default(uuid()) @db.VarChar(36)
-  tenant_id    String   @db.VarChar(36)
-  integration_id String? @db.VarChar(36)
-  event        String   @db.VarChar(120)
-  target_url   String   @db.VarChar(255)
-  is_active    Boolean  @default(true)
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  deleted_at   DateTime?
-  version      Int      @default(1)
+  id             String    @id @default(uuid()) @db.VarChar(36)
+  tenant_id      String    @db.VarChar(36)
+  integration_id String?   @db.VarChar(36)
+  event          String    @db.VarChar(120)
+  target_url     String    @db.VarChar(255)
+  is_active      Boolean   @default(true)
+  created_at     DateTime  @default(now())
+  updated_at     DateTime  @updatedAt
+  deleted_at     DateTime?
+  version        Int       @default(1)
 
-  tenant       tenant   @relation(fields: [tenant_id], references: [id])
-  integration  integration? @relation(fields: [integration_id], references: [id])
+  tenant      tenant       @relation(fields: [tenant_id], references: [id])
+  integration integration? @relation(fields: [integration_id], references: [id])
 
   @@index([tenant_id])
   @@index([integration_id])

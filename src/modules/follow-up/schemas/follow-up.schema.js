@@ -1,0 +1,65 @@
+/**
+ * Follow-up module validation schemas
+ *
+ * @module modules/follow-up/schemas
+ * @description Zod validation schemas for follow-up endpoints.
+ * Per validation.mdc: Use Zod exclusively for all validation
+ * Per module-creation.mdc: Define schemas for body, params, and query
+ */
+
+const { z } = require('zod');
+const { 
+  uuidSchema, 
+  listQuerySchema,
+  isoDateSchema
+} = require('@lib/validation/zod');
+
+// ==================== Body Schemas ====================
+
+/**
+ * Create follow-up body validation
+ * Used for POST /follow-ups endpoint
+ */
+const createFollowUpSchema = z.object({
+  encounter_id: uuidSchema,
+  scheduled_at: isoDateSchema,
+  notes: z.string().max(10000).optional().nullable()
+});
+
+/**
+ * Update follow-up body validation
+ * Used for PUT /follow-ups/:id endpoint
+ * All fields optional for partial updates
+ */
+const updateFollowUpSchema = z.object({
+  scheduled_at: isoDateSchema.optional(),
+  notes: z.string().max(10000).optional().nullable()
+});
+
+// ==================== URL Params ====================
+
+/**
+ * Follow-up ID URL parameter validation
+ * Used for GET /:id, PUT /:id, and DELETE /:id endpoints
+ */
+const followUpIdParamsSchema = z.object({
+  id: uuidSchema
+});
+
+// ==================== Query Params ====================
+
+/**
+ * List follow-ups query parameter validation
+ * Used for GET / endpoint
+ * Extends base listQuerySchema with follow-up-specific filters
+ */
+const listFollowUpsQuerySchema = listQuerySchema.extend({
+  encounter_id: uuidSchema.optional()
+});
+
+module.exports = {
+  createFollowUpSchema,
+  updateFollowUpSchema,
+  followUpIdParamsSchema,
+  listFollowUpsQuerySchema
+};

@@ -161,6 +161,15 @@ const currencySchema = z.number()
   .multipleOf(0.01, 'Amount must have at most 2 decimal places');
 
 /**
+ * Decimal string validation
+ * Validates decimal number as string (for Prisma Decimal fields)
+ * Accepts formats like: "123", "123.45", "0.99"
+ */
+const decimalStringSchema = z.string()
+  .regex(/^\d+(\.\d{1,2})?$/, 'Must be a valid decimal number with up to 2 decimal places')
+  .trim();
+
+/**
  * Percentage validation
  * Validates percentage value (0-100)
  */
@@ -235,6 +244,7 @@ module.exports = {
   positiveIntSchema,
   nonNegativeIntSchema,
   currencySchema,
+  decimalStringSchema,
   percentageSchema,
   
   // Pagination validators

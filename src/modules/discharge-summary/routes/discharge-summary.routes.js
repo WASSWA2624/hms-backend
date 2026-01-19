@@ -1,0 +1,136 @@
+/**
+ * Discharge summary routes
+ *
+ * @module modules/discharge-summary/routes
+ * @description Discharge summary endpoints mounted at /api/v1/discharge-summaries
+ * Per module-creation.mdc: Apply all required middlewares
+ * Per api.mdc: All endpoints must follow REST conventions
+ */
+
+const express = require('express');
+const router = express.Router();
+const dischargeSummaryController = require('@controllers/discharge-summary/discharge-summary.controller');
+const { validateRequest } = require('@middlewares/validate.middleware');
+const { authenticate } = require('@middlewares/auth.middleware');
+const {
+  createDischargeSummarySchema,
+  updateDischargeSummarySchema,
+  dischargeSummaryIdParamsSchema,
+  listDischargeSummariesQuerySchema
+} = require('@validations/discharge-summary/discharge-summary.schema');
+
+/**
+ * @description List discharge summaries with pagination and filters
+ * @method GET
+ * @route /api/v1/discharge-summaries/
+ * @authentication Required (JWT)
+ * @permissions Authenticated users
+ * @urlParams None
+ * @queryParams {number} [page=1] - Page number
+ * @queryParams {number} [limit=20] - Items per page
+ * @queryParams {string} [sort_by=created_at] - Field to sort by
+ * @queryParams {string} [order=desc] - Sort order (asc/desc)
+ * @queryParams {string} [admission_id] - Filter by admission ID (UUID)
+ * @queryParams {string} [status] - Filter by discharge status (PLANNED, COMPLETED, CANCELLED)
+ * @bodyParams None
+ * @returns {Object} Paginated list of discharge summaries
+ * @throws 401 Unauthorized
+ */
+router.get(
+  '/',
+  authenticate(),
+  validateRequest({ query: listDischargeSummariesQuerySchema }),
+  dischargeSummaryController.listDischargeSummaries
+);
+
+/**
+ * @description Get discharge summary by ID
+ * @method GET
+ * @route /api/v1/discharge-summaries/:id
+ * @authentication Required (JWT)
+ * @permissions Authenticated users
+ * @urlParams {string} id - Discharge summary ID (UUID)
+ * @queryParams None
+ * @bodyParams None
+ * @returns {Object} Discharge summary data
+ * @throws 401 Unauthorized
+ * @throws 404 Discharge summary not found
+ */
+router.get(
+  '/:id',
+  authenticate(),
+  validateRequest({ params: dischargeSummaryIdParamsSchema }),
+  dischargeSummaryController.getDischargeSummaryById
+);
+
+/**
+ * @description Create new discharge summary
+ * @method POST
+ * @route /api/v1/discharge-summaries/
+ * @authentication Required (JWT)
+ * @permissions Authenticated users
+ * @urlParams None
+ * @queryParams None
+ * @bodyParams {string} admission_id - Admission ID (required, UUID)
+ * @bodyParams {string} summary - Discharge summary content (required, max 65535 chars)
+ * @bodyParams {string} status - Discharge status (required, enum: PLANNED, COMPLETED, CANCELLED)
+ * @bodyParams {string} [discharged_at] - Discharge timestamp (optional, ISO 8601 datetime)
+ * @returns {Object} Created discharge summary
+ * @throws 401 Unauthorized
+ * @throws 400 Validation error
+ * @throws 400 Foreign key constraint violation
+ * @throws 409 Unique constraint violation
+ */
+router.post(
+  '/',
+  authenticate(),
+  validateRequest({ body: createDischargeSummarySchema }),
+  dischargeSummaryController.createDischargeSummary
+);
+
+/**
+ * @description Update discharge summary
+ * @method PUT
+ * @route /api/v1/discharge-summaries/:id
+ * @authentication Required (JWT)
+ * @permissions Authenticated users
+ * @urlParams {string} id - Discharge summary ID (UUID)
+ * @queryParams None
+ * @bodyParams {string} [summary] - Discharge summary content (max 65535 chars)
+ * @bodyParams {string} [status] - Discharge status (enum: PLANNED, COMPLETED, CANCELLED)
+ * @bodyParams {string} [discharged_at] - Discharge timestamp (ISO 8601 datetime)
+ * @returns {Object} Updated discharge summary
+ * @throws 401 Unauthorized
+ * @throws 400 Validation error
+ * @throws 404 Discharge summary not found
+ * @throws 400 Foreign key constraint violation
+ * @throws 409 Unique constraint violation
+ */
+router.put(
+  '/:id',
+  authenticate(),
+  validateRequest({ params: dischargeSummaryIdParamsSchema, body: updateDischargeSummarySchema }),
+  dischargeSummaryController.updateDischargeSummary
+);
+
+/**
+ * @description Delete discharge summary (soft delete)
+ * @method DELETE
+ * @route /api/v1/discharge-summaries/:id
+ * @authentication Required (JWT)
+ * @permissions Authenticated users
+ * @urlParams {string} id - Discharge summary ID (UUID)
+ * @queryParams None
+ * @bodyParams None
+ * @returns {void} 204 No Content
+ * @throws 401 Unauthorized
+ * @throws 404 Discharge summary not found
+ */
+router.delete(
+  '/:id',
+  authenticate(),
+  validateRequest({ params: dischargeSummaryIdParamsSchema }),
+  dischargeSummaryController.deleteDischargeSummary
+);
+
+module.exports = router;

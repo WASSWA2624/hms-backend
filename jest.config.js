@@ -9,10 +9,12 @@ module.exports = {
     '^@logs/(.*)$': '<rootDir>/logs/$1',
     '^@websockets/(.*)$': '<rootDir>/src/websockets/$1',
     '^@prisma/client$': '<rootDir>/src/prisma/client.js',
+    '^@modules/([^/]+)/(.*)$': '<rootDir>/src/modules/$1/$2',
     '^@controllers/([^/]+)/(.*)$': '<rootDir>/src/modules/$1/controllers/$2',
     '^@services/([^/]+)/(.*)$': '<rootDir>/src/modules/$1/services/$2',
     '^@repositories/([^/]+)/(.*)$': '<rootDir>/src/modules/$1/repositories/$2',
-    '^@validations/([^/]+)/(.*)$': '<rootDir>/src/modules/$1/schemas/$2'
+    '^@validations/([^/]+)/(.*)$': '<rootDir>/src/modules/$1/schemas/$2',
+    '^@routes/([^/]+)/(.*)$': '<rootDir>/src/modules/$1/routes/$2'
   },
   collectCoverageFrom: [
     'src/**/*.js',

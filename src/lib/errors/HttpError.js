@@ -20,6 +20,7 @@ class HttpError extends AppError {
   constructor(message, statusCode = 400, errors = []) {
     super(message, statusCode, true);
     
+    this.messageKey = message; // Store the i18n message key
     this.errors = errors;
   }
 }

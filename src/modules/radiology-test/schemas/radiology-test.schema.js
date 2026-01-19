@@ -1,0 +1,70 @@
+/**
+ * Radiology test module validation schemas
+ *
+ * @module modules/radiology-test/schemas
+ * @description Zod validation schemas for radiology test endpoints.
+ * Per validation.mdc: Use Zod exclusively for all validation
+ * Per module-creation.mdc: Define schemas for body, params, and query
+ */
+
+const { z } = require('zod');
+const { 
+  uuidSchema, 
+  listQuerySchema
+} = require('@lib/validation/zod');
+
+// ==================== Body Schemas ====================
+
+/**
+ * Create radiology test body validation
+ * Used for POST /radiology-tests endpoint
+ */
+const createRadiologyTestSchema = z.object({
+  tenant_id: uuidSchema,
+  name: z.string().trim().min(1).max(255),
+  code: z.string().trim().max(80).optional().nullable(),
+  modality: z.enum(['XRAY', 'CT', 'MRI', 'ULTRASOUND', 'PET', 'OTHER'])
+});
+
+/**
+ * Update radiology test body validation
+ * Used for PUT /radiology-tests/:id endpoint
+ * All fields optional for partial updates
+ */
+const updateRadiologyTestSchema = z.object({
+  name: z.string().trim().min(1).max(255).optional(),
+  code: z.string().trim().max(80).optional().nullable(),
+  modality: z.enum(['XRAY', 'CT', 'MRI', 'ULTRASOUND', 'PET', 'OTHER']).optional()
+});
+
+// ==================== URL Params ====================
+
+/**
+ * Radiology test ID URL parameter validation
+ * Used for GET /:id, PUT /:id, and DELETE /:id endpoints
+ */
+const radiologyTestIdParamsSchema = z.object({
+  id: uuidSchema
+});
+
+// ==================== Query Params ====================
+
+/**
+ * List radiology tests query parameter validation
+ * Used for GET / endpoint
+ * Extends base listQuerySchema with radiology-test-specific filters
+ */
+const listRadiologyTestsQuerySchema = listQuerySchema.extend({
+  tenant_id: uuidSchema.optional(),
+  name: z.string().trim().optional(),
+  code: z.string().trim().optional(),
+  modality: z.enum(['XRAY', 'CT', 'MRI', 'ULTRASOUND', 'PET', 'OTHER']).optional(),
+  search: z.string().trim().optional()
+});
+
+module.exports = {
+  createRadiologyTestSchema,
+  updateRadiologyTestSchema,
+  radiologyTestIdParamsSchema,
+  listRadiologyTestsQuerySchema
+};
