@@ -87,6 +87,16 @@ apiV1Router.use('/wards', require('../modules/ward/routes/ward.routes'));
 apiV1Router.use('/beds', require('../modules/bed/routes/bed.routes'));
 apiV1Router.use('/addresses', require('../modules/address/routes/address.routes'));
 apiV1Router.use('/contacts', require('../modules/contact/routes/contact.routes'));
+apiV1Router.use('/users', require('../modules/user/routes/user.routes'));
+apiV1Router.use('/user-profiles', require('../modules/user-profile/routes/user-profile.routes'));
+apiV1Router.use('/roles', require('../modules/role/routes/role.routes'));
+apiV1Router.use('/permissions', require('../modules/permission/routes/permission.routes'));
+apiV1Router.use('/role-permissions', require('../modules/role-permission/routes/role-permission.routes'));
+apiV1Router.use('/user-roles', require('../modules/user-role/routes/user-role.routes'));
+apiV1Router.use('/user-mfas', require('../modules/user-mfa/routes/user-mfa.routes'));
+apiV1Router.use('/oauth-accounts', require('../modules/oauth-account/routes/oauth-account.routes'));
+apiV1Router.use('/api-keys', require('../modules/api-key/routes/api-key.routes'));
+apiV1Router.use('/api-key-permissions', require('../modules/api-key-permission/routes/api-key-permission.routes'));
 
 // Mount API v1 router
 router.use('/api/v1', apiV1Router);
