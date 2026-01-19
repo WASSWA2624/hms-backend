@@ -3,6 +3,7 @@
  *
  * Health endpoints are at root level (not under /api/v1/)
  * Per health-checks.mdc: Health endpoints are public at root level
+ * Per api-versioning.mdc: All API endpoints must be versioned under /api/v1/
  */
 
 const express = require('express');
@@ -64,6 +65,21 @@ router.get('/live', (req, res) => {
   const liveness = livenessCheck();
   return sendSuccess(res, 200, 'messages.liveness.check', liveness);
 });
+
+/**
+ * API v1 Router
+ * Per api-versioning.mdc: All API endpoints must be versioned
+ * Per module-creation.mdc: Modules are mounted under /api/v1/<module>
+ */
+const apiV1Router = express.Router();
+
+// Mount module routes under /api/v1/
+// Per module-creation.mdc step 7: Use relative paths to mount modules
+apiV1Router.use('/auth', require('../modules/auth/routes/auth.routes'));
+apiV1Router.use('/user-sessions', require('../modules/user-session/routes/user-session.routes'));
+
+// Mount API v1 router
+router.use('/api/v1', apiV1Router);
 
 module.exports = router;
 

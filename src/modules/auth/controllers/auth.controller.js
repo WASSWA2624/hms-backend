@@ -1,0 +1,230 @@
+/**
+ * Auth controller
+ *
+ * @module modules/auth/controllers
+ * @description Handles HTTP requests for authentication endpoints.
+ */
+
+const authService = require('@services/auth/auth.service');
+const { asyncHandler } = require('@lib/async');
+const { sendSuccess } = require('@lib/response');
+
+/**
+ * Login user
+ *
+ * @param {Object} req - Express request
+ * @param {Object} res - Express response
+ * @returns {Promise<void>}
+ */
+const login = asyncHandler(async (req, res) => {
+  const { email, password, tenant_id } = req.body;
+  const ip_address = req.ip;
+  const user_agent = req.get('user-agent');
+
+  const result = await authService.login({
+    email,
+    password,
+    tenant_id,
+    ip_address,
+    user_agent
+  });
+
+  return sendSuccess(res, 200, 'messages.auth.login.success', result);
+});
+
+/**
+ * Register new user
+ *
+ * @param {Object} req - Express request
+ * @param {Object} res - Express response
+ * @returns {Promise<void>}
+ */
+const register = asyncHandler(async (req, res) => {
+  const { email, password, tenant_id, facility_id, phone } = req.body;
+  const ip_address = req.ip;
+  const user_agent = req.get('user-agent');
+
+  const result = await authService.register({
+    email,
+    password,
+    tenant_id,
+    facility_id,
+    phone,
+    ip_address,
+    user_agent
+  });
+
+  return sendSuccess(res, 201, 'messages.auth.register.success', result);
+});
+
+/**
+ * Verify email
+ *
+ * @param {Object} req - Express request
+ * @param {Object} res - Express response
+ * @returns {Promise<void>}
+ */
+const verifyEmail = asyncHandler(async (req, res) => {
+  const { token, email } = req.body;
+
+  const result = await authService.verifyEmail({ token, email });
+
+  return sendSuccess(res, 200, 'messages.auth.email_verified.success', result);
+});
+
+/**
+ * Verify phone
+ *
+ * @param {Object} req - Express request
+ * @param {Object} res - Express response
+ * @returns {Promise<void>}
+ */
+const verifyPhone = asyncHandler(async (req, res) => {
+  const { token, phone } = req.body;
+
+  const result = await authService.verifyPhone({ token, phone });
+
+  return sendSuccess(res, 200, 'messages.auth.phone_verified.success', result);
+});
+
+/**
+ * Resend verification
+ *
+ * @param {Object} req - Express request
+ * @param {Object} res - Express response
+ * @returns {Promise<void>}
+ */
+const resendVerification = asyncHandler(async (req, res) => {
+  const { email, phone, type } = req.body;
+
+  const result = await authService.resendVerification({ email, phone, type });
+
+  return sendSuccess(res, 200, 'messages.auth.verification_sent.success', result);
+});
+
+/**
+ * Forgot password
+ *
+ * @param {Object} req - Express request
+ * @param {Object} res - Express response
+ * @returns {Promise<void>}
+ */
+const forgotPassword = asyncHandler(async (req, res) => {
+  const { email, tenant_id } = req.body;
+
+  const result = await authService.forgotPassword({ email, tenant_id });
+
+  return sendSuccess(res, 200, 'messages.auth.password_reset.email_sent', result);
+});
+
+/**
+ * Reset password
+ *
+ * @param {Object} req - Express request
+ * @param {Object} res - Express response
+ * @returns {Promise<void>}
+ */
+const resetPassword = asyncHandler(async (req, res) => {
+  const { token, new_password } = req.body;
+
+  const result = await authService.resetPassword({ token, new_password });
+
+  return sendSuccess(res, 200, 'messages.auth.password_reset.success', result);
+});
+
+/**
+ * Change password (authenticated)
+ *
+ * @param {Object} req - Express request
+ * @param {Object} res - Express response
+ * @returns {Promise<void>}
+ */
+const changePassword = asyncHandler(async (req, res) => {
+  const { old_password, new_password } = req.body;
+  const user_id = req.user.userId;
+  const ip_address = req.ip;
+  const user_agent = req.get('user-agent');
+
+  const result = await authService.changePassword({
+    user_id,
+    old_password,
+    new_password,
+    ip_address,
+    user_agent
+  });
+
+  return sendSuccess(res, 200, 'messages.auth.password_changed.success', result);
+});
+
+/**
+ * Refresh access token
+ *
+ * @param {Object} req - Express request
+ * @param {Object} res - Express response
+ * @returns {Promise<void>}
+ */
+const refresh = asyncHandler(async (req, res) => {
+  const { refresh_token } = req.body;
+  const ip_address = req.ip;
+  const user_agent = req.get('user-agent');
+
+  const result = await authService.refresh({
+    refresh_token,
+    ip_address,
+    user_agent
+  });
+
+  return sendSuccess(res, 200, 'messages.auth.token_refreshed.success', result);
+});
+
+/**
+ * Logout user
+ *
+ * @param {Object} req - Express request
+ * @param {Object} res - Express response
+ * @returns {Promise<void>}
+ */
+const logout = asyncHandler(async (req, res) => {
+  const { refresh_token } = req.body;
+  const user_id = req.user.userId;
+  const ip_address = req.ip;
+  const user_agent = req.get('user-agent');
+
+  const result = await authService.logout({
+    user_id,
+    refresh_token,
+    ip_address,
+    user_agent
+  });
+
+  return sendSuccess(res, 200, 'messages.auth.logout.success', result);
+});
+
+/**
+ * Get current user info
+ *
+ * @param {Object} req - Express request
+ * @param {Object} res - Express response
+ * @returns {Promise<void>}
+ */
+const getMe = asyncHandler(async (req, res) => {
+  const userId = req.user.userId;
+
+  const result = await authService.getMe(userId);
+
+  return sendSuccess(res, 200, 'messages.auth.user_info.retrieved', result);
+});
+
+module.exports = {
+  login,
+  register,
+  verifyEmail,
+  verifyPhone,
+  resendVerification,
+  forgotPassword,
+  resetPassword,
+  changePassword,
+  refresh,
+  logout,
+  getMe
+};
