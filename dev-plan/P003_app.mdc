@@ -1,0 +1,41 @@
+## Phase 3 – Minimal runnable app
+
+### Step 3.1: Wire Express app (task-atomic sub-steps)
+#### Step 3.1.1: Verify CORS middleware is applied globally (read-only)
+- Verify CORS middleware is configured in `src/config/cors.js` and applied in `src/app/index.js`
+- **Verification**: CORS is applied globally and is environment-aware (no `*` in production).
+
+#### Step 3.1.2: Verify JSON/body parsing is enabled (read-only)
+- Verify `src/app/index.js` enables JSON request parsing
+- **Verification**: JSON parsing middleware is applied before routers.
+
+#### Step 3.1.3: Verify rate limiting is applied globally (read-only)
+- Verify rate limiting middleware is configured in `src/config/rateLimit.js` and applied in `src/app/index.js`
+- **Verification**: Rate limiting runs before route handlers.
+
+#### Step 3.1.4: Verify router is mounted before error middleware (read-only)
+- Verify `src/app/index.js` mounts `src/app/router.js` before the error middleware
+- **Verification**: Router mounting occurs before `error.middleware.js`.
+
+#### Step 3.1.5: Verify error middleware is last (read-only)
+- Verify the centralized error middleware is last in the middleware chain
+- **Verification**: `src/middlewares/error.middleware.js` is registered after all routes.
+
+### Step 3.2: Mount router
+#### Step 3.2.1: Verify router mounting (read-only)
+- Verify `src/app/index.js` mounts `src/app/router.js`
+- **Verification**: API module routes are accessible at `/api/v1/*` (health endpoints remain unversioned).
+
+### Step 3.3: API versioning middleware (task-atomic sub-steps)
+#### Step 3.3.1: Add deprecation headers support
+- Add optional middleware to emit `Deprecation` and `Sunset` headers for deprecated versions
+- **Verification**: Deprecated versions include required headers when configured.
+
+### Step 3.4: Verify server startup
+#### Step 3.4.1: Verify dev startup
+- Run `npm run dev` (nodemon)
+- **Verification**: Server starts and `/health` responds with HTTP 200.
+
+#### Step 3.4.2: Verify production startup
+- Run `node src/server.js`
+- **Verification**: Server starts and `/health`, `/ready`, `/live` respond with correct schemas.

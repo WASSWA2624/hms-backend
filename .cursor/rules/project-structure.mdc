@@ -1,0 +1,141 @@
+--- 
+alwaysApply: true
+---
+
+# Project Structure Rules
+## Purpose
+Defines the **authoritative backend folder and file structure**.
+This structure is designed to guarantee:
+- Strict MVC enforcement
+- High code reusability
+- Clear ownership of responsibilities
+- Predictable scalability
+- Zero structural ambiguity
+Any deviation from this structure is **invalid**.
+---
+
+## Authoritative Project Structure
+```text
+project-root/
+├── package.json                 # Project metadata, scripts, dependencies
+├── package-lock.json            # Dependency lockfile (version consistency)
+├── .env                         # Runtime environment variables (never committed)
+├── env.template.txt             # Required env variables template (git ignored)
+├── .gitignore                   # Git ignore rules
+├── nodemon.json                 # Nodemon dev runtime configuration
+├── jest.config.js               # Jest testing configuration
+├── README.md                    # Project overview, setup, usage
+│
+├── prisma/                      # (Optional) Prisma ORM files
+│   ├── schema.prisma            # Prisma schema (models, enums, relations)
+│   ├── guide.md                 # Contains commands for prisma
+│   ├── migrations/              # Auto-generated DB migration history
+│   └── seed.js                  # Database seed script (dev/test only)
+│
+└── src/
+    ├── server.js                # App bootstrap (HTTP server entry point)
+    │
+    ├── app/
+    │   ├── index.js             # Express app initialization (middlewares, config)
+    │   └── router.js            # Root router (mounts module routes)
+    │
+    ├── prisma/                  # (Optional) Prisma client wrapper
+    │   └── client.js            # Prisma client singleton initialization
+    │
+    ├── modules/
+    │   └── <module>/            # Feature module (auth, user, product, etc.)
+    │       ├── routes/
+    │       │   └── module.routes.js       # Express routes (no logic)
+    │       ├── controllers/
+    │       │   └── module.controller.js   # Request/response handling
+    │       ├── services/
+    │       │   └── module.service.js      # Business logic layer
+    │       ├── repositories/
+    │       │   └── module.repository.js   # Prisma data access only
+    │       └── schemas/
+    │           └── module.schema.js       # Zod validation schemas
+    │
+    ├── websockets/
+    │   ├── server.js             # WebSocket server entry point
+    │   └── gateway.js            # Handles connection routing & auth
+    │   # Note: WebSocket event definitions are in src/lib/websocket/events.js (per websockets.mdc)
+    │
+    ├── middlewares/
+    │   ├── auth.middleware.js     # JWT authentication & RBAC enforcement
+    │   ├── validate.middleware.js # Zod validation execution
+    │   ├── error.middleware.js    # Centralized error handler
+    │   └── rateLimit.middleware.js# API rate limiting
+    │
+    ├── lib/
+    │   ├── crypto/               # Cryptographic helpers
+    │   │   └── index.js          # Barrel export (required)
+    │   ├── jwt/                  # JWT helpers
+    │   │   └── index.js          # Barrel export (required)
+    │   ├── errors/               # Custom error types & handleApiError
+    │   │   └── index.js          # Barrel export (required)
+    │   ├── response/             # Response helpers (success.js, pagination.js, error.js)
+    │   │   └── index.js          # Barrel export (required)
+    │   ├── async/                # Async utilities
+    │   │   └── index.js          # Barrel export (required)
+    │   ├── validation/           # Validation helpers
+    │   │   └── index.js          # Barrel export (required)
+    │   ├── dates/                # Date & time utilities
+    │   │   └── index.js          # Barrel export (required)
+    │   ├── logging/              # Log sanitization helpers
+    │   │   └── index.js          # Barrel export (required)
+    │   ├── audit/                # Audit trail utilities (createAuditLog, etc.)
+    │   │   └── index.js          # Barrel export (required)
+    │   ├── websocket/            # WebSocket helper utilities (events.js)
+    │   │   └── index.js          # Barrel export (required)
+    │   ├── storage/              # StorageService abstraction & providers
+    │   │   └── index.js          # Barrel export (required)
+    │   └── index.js              # Lib exports barrel
+    │
+    ├── config/
+    │   ├── env.js                # Env loading & validation
+    │   ├── constants.js          # Application constants (per constants-env.mdc)
+    │   ├── jwt.js                # JWT configuration
+    │   ├── security.js           # Security configuration
+    │   ├── cors.js               # CORS rules
+    │   ├── rateLimit.js          # Rate limit configuration
+    │   ├── roles.js              # Role definitions
+    │   ├── permissions.js        # Permission mapping
+    │   └── index.js              # Config exports barrel
+    │
+    ├── tests/
+    │   ├── setup.js              # Global Jest setup & mocks
+    │   └── modules/              # Module-level tests
+    │
+    └── logs/                     # Daily application logs (runtime generated)
+````
+---
+## Structure Rules
+
+- Root: only config/tooling files.
+- All code in `src/`, entry: `server.js`.
+- One domain = one module; modules isolated, no cross-module imports.
+- Shared code in `lib/` only.
+- Module names: kebab-case. Module files: `<module>.routes.js`, `.controller.js`, `.service.js`, `.repository.js`, `.schema.js`.
+- Layers: Routes (map), Controllers (HTTP), Services (business logic), Repositories (DB/ORM). WebSockets: only in `websockets/`, called via services.
+- Any dir with >1 util/helper: must have `index.js` barrel exporting all via `module.exports`.
+- Barrel imports required (`require('@lib/foo')`), never direct subfile (e.g., `.../success`).
+- Required barrel files: all `src/lib/*` subdirs, `src/config/`, any multi-file utility dir.
+- No barrel needed for module subdirs (routes, controllers, etc.).
+- `lib/`: only stateless, reusable utils.
+- `config/`: only config/constants.
+- `middlewares/`: global middleware, barrel optional.
+
+## Forbidden
+
+- Business logic in routes/controllers.
+- DB access outside repositories/services.
+- Cross-module imports.
+- Feature logic in `lib/`.
+- Circular deps.
+- WebSockets in controllers/routes.
+
+## Enforcement
+
+- Any deviation: invalid.
+- Refactors must reduce coupling/duplication.
+- Structure is mandatory, applies project-wide.

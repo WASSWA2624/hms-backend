@@ -1,0 +1,122 @@
+## Phase 14 – Performance & release readiness
+
+### Step 8.1: Enforce pagination
+#### Step 8.1.1: Verify pagination helper usage (read-only)
+- Verify all list endpoints use pagination helpers from `@lib/response/pagination`
+- **Verification**: No list endpoint hand-rolls pagination metadata.
+
+#### Step 8.1.2: Verify pagination defaults (read-only)
+- Verify default pagination values from `@config/constants` are used
+- **Verification**: Defaults match `DEFAULT_PAGE`, `DEFAULT_PAGE_LIMIT`, `MAX_PAGE_LIMIT`.
+
+### Step 8.2: Optimize Prisma queries
+#### Step 8.2.1: Review for N+1 (read-only)
+- Review repository queries for N+1 issues
+- **Verification**: No N+1 patterns found in critical paths.
+
+#### Step 8.2.2: Apply select/include optimizations (task-atomic sub-steps)
+##### Step 8.2.2.1: Identify endpoints/repositories with oversized payloads (read-only)
+- Identify query paths returning more fields/relations than needed
+- **Verification**: A short list exists: `repo.fn → fields/relations to trim`.
+
+##### Step 8.2.2.2: Apply `select` trimming
+- Apply Prisma `select` to return only required scalar fields where appropriate
+- **Verification**: At least one previously "wide" query is narrowed via `select`.
+
+##### Step 8.2.2.3: Apply `include` strategically
+- Apply Prisma `include` only where needed to prevent N+1 without over-fetching
+- **Verification**: At least one query uses `include` for relations without adding unused relations.
+
+#### Step 8.2.3: Verify indexes (read-only)
+- Verify indexes exist for frequently queried fields (especially `deleted_at`)
+- **Verification**: Prisma schema defines required indexes.
+
+### Step 8.3: Add caching (if justified)
+#### Step 8.3.1: Decide whether caching is justified (read-only)
+- Identify candidates for caching and expected impact
+- **Caching Decision (2025-01-14):** Caching is **NOT justified** at current stage
+  - **Rationale:**
+    - No performance metrics showing bottlenecks (no production data yet)
+    - Database queries already optimized (indexes, `select`/`include`, pagination)
+    - Application in early development (traffic patterns unknown)
+    - Most data changes frequently (products, orders, inventory) - cache invalidation complexity high
+    - Reference data (categories, manufacturers) is small and query-optimized
+    - Real-time accuracy critical for marketplace operations
+  - **Potential Candidates (deferred):**
+    - Reference data (categories, manufacturers, departments) - if accessed > 100x/day
+    - Product/user data - NOT recommended due to frequent changes and real-time requirements
+  - **Revisit Triggers:**
+    - Query response times > 50ms (simple) or > 200ms (complex)
+    - Hot paths with > 1000 requests/minute
+    - Database connection pool exhaustion
+    - > 1000 concurrent users or > 10,000 requests/hour
+  - **If Implemented:** Use in-memory cache (Phase 1) or Redis (Phase 2) with cache-aside pattern, deterministic keys, and invalidation on mutations per `performance.mdc`
+- **Verification**: Caching decision documented above.
+
+#### Step 8.3.2: Implement caching (optional)
+- Add caching layer for frequently accessed resources (if needed)
+- **Verification**: Cache invalidation occurs on mutations.
+
+### Step 8.4: Performance metrics
+#### Step 8.4.1: Add performance metrics
+- Add performance logging/metrics per `performance.mdc`
+- **Verification**: Metrics are emitted/collected.
+
+### Step 8.5: Final compliance check
+#### Step 8.5.1: Verify env validation on startup (read-only)
+- Verify env validation on startup
+- **Verification**: Missing env vars fail fast with clear errors.
+
+#### Step 8.5.2: Verify storage provider config (read-only)
+- Verify storage provider config
+- **Verification**: Provider is selected via env only.
+
+#### Step 8.5.3: Verify audit logging is non-blocking (read-only)
+- Verify audit logging exists for mutations and does not block primary operations on failure
+- **Verification**: Audit log failures do not prevent the main mutation from completing.
+
+#### Step 8.5.4: Verify daily logs are written and sanitized (read-only)
+- Verify runtime logs are written to `logs/YYYY-MM-DD.txt` and sanitized
+- **Verification**: Log files exist and contain no secrets/tokens/passwords/API keys.
+
+#### Step 8.5.5: Verify dev vs prod entrypoints (read-only)
+- Verify nodemon dev vs `node` prod entry
+- **Verification**: `npm run dev` and `npm start` work as intended.
+
+#### Step 8.5.6: Verify API versioning (read-only)
+- Verify `/api/v1/` prefix on all API module endpoints
+- **Verification**: All API module endpoints are mounted under `/api/v1/` only.
+
+#### Step 8.5.7: Verify health endpoints are unversioned (read-only)
+- Verify health endpoints remain unversioned: `/health`, `/ready`, `/live`
+- **Verification**: Health endpoints are not mounted under `/api/v1` and return correct schemas.
+
+## Verification Checklist (run after each phase)
+
+- [ ] All files follow CommonJS (`require`/`module.exports`)
+- [ ] All imports use aliases from `import-aliases.mdc` (no relative imports across modules)
+- [ ] All API module endpoints use `/api/v1/` prefix per `dev-plan/P010_api_endpoints.mdc`
+- [ ] Health endpoints exist at root: `GET /health`, `GET /ready`, `GET /live` (unversioned) per `health-checks.mdc`
+- [ ] All responses use helpers from `@lib/response/*` per `response-format.mdc`
+- [ ] All validations use Zod schemas from `@validations/*` per `validation.mdc`
+- [ ] All mutations create audit logs (non-blocking) per `prisma.mdc` and `compliance.mdc`
+- [ ] All logs sanitize sensitive data using `@lib/logging/sanitize` per `error-logging.mdc`
+- [ ] All repositories filter soft deletes by default (`deleted_at IS NULL`) per `prisma.mdc`
+- [ ] All services call repositories (no direct Prisma access) per `architecture.mdc`
+- [ ] All controllers use response helpers (no direct DB access) per `architecture.mdc`
+- [ ] All routes use validation/auth/RBAC middleware per `api.mdc` and `auth-security.mdc`
+- [ ] All DELETE endpoints return 204 with empty body (or 200 with data if exception) per `response-format.mdc`
+- [ ] All list endpoints use pagination with defaults from `@config/constants` per `constants-env.mdc`
+- [ ] All tests mock external dependencies (Prisma, WebSocket, Storage) per `testing.mdc`
+- [ ] No hardcoded secrets or credentials (all via `@config/env`) per `constants-env.mdc`
+- [ ] All JSDoc complete per `documentation.mdc` (routes, controllers, services)
+- [ ] CORS configured and applied per `cors.mdc`
+- [ ] Rate limiting configured and applied per `rate-limiting.mdc`
+- [ ] Health check endpoints implemented per `health-checks.mdc`
+- [ ] Storage operations use StorageService abstraction per `storage.mdc`
+- [ ] Environment variables validated on application boot per `constants-env.mdc`
+- [ ] Runtime aliases registered at the very top of `src/server.js` per `import-aliases.mdc`
+- [ ] Env is loaded/validated via `@config/env` early on startup per `constants-env.mdc`
+- [ ] `prisma.config.js` exists at project root for Prisma 7.x migrations (per `prisma.mdc`)
+- [ ] `env.template.txt` exists (not `.env.example`) per `constants-env.mdc`
+- [ ] WebSocket events are in `src/lib/websocket/events.js` (not `src/websockets/events.js`) per `websockets.mdc`

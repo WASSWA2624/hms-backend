@@ -1,0 +1,90 @@
+---
+alwaysApply: true
+---
+
+# WebSocket Rules
+## Purpose
+Defines **mandatory standards for real-time communication** via WebSockets.
+Ensures:
+- Secure, auditable, and efficient live updates
+- Separation from RESTful architecture
+- Compliance with all existing rules (auth, validation, logging)
+Any violation is **invalid**.
+---
+
+## Integration & Architecture
+- WebSockets **must** be implemented as a separate module/library
+- Must not bypass MVC layers; flow: WebSocketClient → Gateway/Server → Services → Repositories → Prisma
+- Controllers may not call WebSocket server directly
+- Only real-time events are handled via WebSockets; CRUD remains REST
+---
+
+## Dependencies
+- Only `ws` is allowed for WebSocket server
+- No Socket.IO or alternative frameworks unless explicitly justified
+- Native JS structures (`Map`, `Set`) must be used to manage connections
+---
+
+## Authentication & Authorization
+- All connections **must** be authenticated using JWT
+- JWT validation logic **must** reuse existing auth middleware
+- Role-based access enforced for sensitive events
+- API keys may **not** be used for client WebSocket connections
+---
+
+## Events & Message Format
+- All messages **must** be JSON:
+```json
+{
+  "event": "event_name",
+  "payload": {}
+}
+```
+* Event types **must** be centralized in `src/lib/websocket/events.js` (per `project-structure.mdc`)
+* Sensitive data **must** be sanitized and encrypted if needed
+* No raw database entities are sent directly
+---
+
+## Client Management
+* Must maintain a Map of `UserID → WebSocket` for routing messages
+* Must handle disconnections, reconnections, and heartbeat/ping
+* Maximum number of concurrent connections **must** be configurable
+---
+
+## Emission & Services
+* Only **services** may emit WebSocket events
+* Controllers **must not** emit events directly
+* All sensitive events **must** generate audit logs
+* Broadcasts **must** be explicit and avoid unnecessary data duplication
+---
+
+## Security & Compliance
+* Must comply with:
+  * JWT rules from `auth-security.mdc`
+  * Sensitive data encryption & logging from `compliance.mdc`
+  * Error handling and logging from `error-logging.mdc`
+* Rate limiting **recommended** to prevent abuse
+* Sensitive messages **must not** include secrets, passwords, or tokens
+---
+
+## Testing
+* Must use Jest tests in `src/tests/modules/` for:
+  * Connection/authentication
+  * Event emission
+  * Disconnection handling
+* WebSocket server **must be mocked** in all tests
+* No tests may hit production DB
+---
+
+## Forbidden Patterns
+* Bypassing authentication or RBAC
+* Sending unvalidated or raw sensitive data to clients
+* Mixing WebSocket logic into controllers or REST routes
+* Using multiple WebSocket libraries
+* Logging sensitive information
+* Direct database access in WebSocket events
+
+## Enforcement
+❌ Violations are invalid
+✅ Refactors must improve real-time efficiency, security, and maintainability
+All WebSocket implementation **must comply strictly** with these rules.

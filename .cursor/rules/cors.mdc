@@ -1,0 +1,81 @@
+---
+alwaysApply: true
+---
+
+# CORS Rules
+## Purpose
+Defines **mandatory Cross-Origin Resource Sharing (CORS) configuration**.
+Ensures:
+- Secure cross-origin access control
+- Proper handling of preflight requests
+- Compliance with browser security policies
+- Configurable allowed origins
+Any violation is **invalid**.
+---
+
+## Package Dependency
+- The `cors` npm package **must** be installed as a dependency
+- CORS middleware **must** be imported using: `const cors = require('cors')`
+- The `cors` package **must** be listed in `package.json` dependencies
+---
+
+## Configuration
+- CORS configuration **must** be defined in `src/config/cors.js` (per `project-structure.mdc`)
+- CORS middleware **must** be applied globally in `src/app/index.js`
+- Configuration **must** be environment-aware (different origins for dev/staging/production)
+---
+
+## Allowed Origins
+- **Production**: Only explicitly allowed origins from environment variable
+  - `CORS_ORIGINS` environment variable (comma-separated list)
+  - Example: `https://app.example.com,https://admin.example.com`
+- **Development**: May allow `*` or specific localhost origins
+- **Staging**: Specific staging domain origins only
+- Wildcard `*` **must not** be used in production
+---
+
+## Credentials & Headers
+- `credentials: true` **must** be enabled for authenticated endpoints
+- Allowed headers **must** include:
+  - `Content-Type`
+  - `Authorization`
+  - Custom headers as needed (documented)
+- Exposed headers **must** include custom response headers used by frontend
+---
+
+## Methods & Preflight
+- Allowed methods **must** include: `GET`, `POST`, `PUT`, `DELETE`, `PATCH`, `OPTIONS`
+- Preflight requests (OPTIONS) **must** be handled automatically by CORS middleware
+- Preflight cache duration **should** be configured (e.g., 24 hours)
+---
+
+## Security Rules
+- CORS **must not** bypass authentication or authorization
+- CORS is **not** a security mechanism; proper authentication **must** still be enforced
+- Sensitive endpoints **must** validate origin even with CORS enabled
+- CORS errors **must** be logged for security monitoring
+---
+
+## Error Handling
+- Invalid origin requests **must** return 403 Forbidden
+- CORS errors **must** be logged but **must not** expose sensitive information
+- Error responses **must** follow standard error format (per `response-format.mdc`)
+---
+
+## Testing
+- CORS configuration **must** be tested in integration tests
+- Tests **must** verify allowed origins, methods, and headers
+- Preflight request handling **must** be tested
+---
+
+## Forbidden Patterns
+- Using wildcard `*` for origins in production
+- Disabling CORS without justification
+- Allowing credentials with wildcard origins
+- Bypassing CORS checks in middleware
+---
+
+## Enforcement
+❌ Violations are invalid  
+✅ CORS must be secure, configurable, and properly tested  
+All CORS configuration **must strictly follow these rules**.

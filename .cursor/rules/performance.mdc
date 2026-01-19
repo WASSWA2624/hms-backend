@@ -1,0 +1,66 @@
+---
+alwaysApply: true
+---
+
+# Performance Rules
+## Purpose
+Defines **mandatory performance standards** for queries, endpoints, and responses.
+Ensures:
+- Fast and predictable API response times
+- Efficient database queries
+- Proper use of caching and pagination
+- High scalability
+Any violation is **invalid**.
+---
+
+## Query Performance
+- Simple queries (single table, indexed) **must** return < 50ms under normal load
+- Complex queries (joins, aggregations) **must** return < 200ms under normal load
+- Database average response time **must** be < 10ms
+- Prisma queries **must** be optimized:
+  - Use `select`/`include` wisely
+  - Avoid N+1 queries
+  - Index relevant columns
+- Batch operations **must** be used when processing multiple records:
+  - Use `createMany`, `updateMany`, `deleteMany` instead of loops
+  - Batch size **must** be configurable (default: 100 records per batch)
+  - Large batches **must** be processed in chunks to avoid memory issues
+---
+
+## Pagination
+- All list endpoints **must** implement pagination (per `response-format.mdc`)
+- Default pagination values **must** come from `@config/constants` (DEFAULT_PAGE, DEFAULT_PAGE_LIMIT, MAX_PAGE_LIMIT) - see `constants-env.mdc`
+- Response must include pagination metadata (per `response-format.mdc`)
+- Use standardized pagination helpers (`@lib/response/pagination`)
+---
+
+## Caching
+- Cache frequently accessed resources where applicable
+- Use in-memory or external cache (Redis) depending on scale
+- Cache keys **must** be deterministic and namespace-safe
+- Cache invalidation **must** occur on mutations
+---
+
+## Response Optimization
+- Return only required fields (never full DB objects)
+- Minimize payload size
+- Compress responses if large
+---
+
+## Monitoring & Alerts
+- Performance metrics **must** be logged or monitored
+- Identify slow queries and optimize
+- Alert on API endpoints exceeding thresholds
+---
+
+## Forbidden Patterns
+- Hardcoded large queries without limits
+- Returning full database rows to clients
+- Ignoring pagination or filtering
+- Unmonitored or unoptimized critical endpoints
+---
+
+## Enforcement
+❌ Violations are invalid  
+✅ Refactors must improve speed, scalability, and efficiency  
+All modules **must strictly follow these performance rules**.

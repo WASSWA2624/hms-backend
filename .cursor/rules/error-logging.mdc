@@ -1,0 +1,93 @@
+---
+alwaysApply: true
+---
+
+# Error Handling & Logging Rules
+## Purpose
+Defines **mandatory error handling and logging standards**.
+Ensures:
+- Centralized, consistent error responses
+- Sensitive information is protected
+- Audit trails exist for critical operations
+- Logs are structured, sanitized, and reliable
+Any violation is **invalid**.
+---
+
+## Error Handling
+- All errors **must** be passed to centralized error middleware
+- Error middleware **must** be implemented in `src/middlewares/error.middleware.js`
+- Error handler function `handleApiError` **must** live in `src/lib/errors/handleApiError.js`
+- Middleware **must** use `handleApiError` internally
+- Prisma errors **must** be decoded to readable messages
+- Stack traces **must not** be returned to clients
+- Validation errors **must** follow the standard error format
+---
+
+## Logging Rules
+- All logs **must** be written to `logs/YYYY-MM-DD.txt`
+- Log levels: info, warn, error
+- Mandatory logging for:
+  - Authentication events
+  - Sensitive data access (where applicable)
+  - Financial operations (where applicable)
+  - System configuration changes
+- Log messages **must** be sanitized for PII/sensitive data using `src/lib/logging/sanitize.js`
+- Sensitive information (passwords, tokens, API keys) **must never** be logged
+---
+
+## Error Response Format
+- Standardized JSON error format **must** be followed:
+```javascript
+{
+  "status": number,
+  "message": string,
+  "data": null,
+  "errors": array
+}
+```
+
+* `status`: HTTP status code
+* `message`: user-friendly message
+* `errors`: array of detailed error info (optional)
+---
+
+## Resilience & Retry Logic
+- External service calls **must** implement retry logic with exponential backoff for critical services:
+  - Maximum retry attempts: 3 (configurable)
+  - Initial delay: 100ms, exponential multiplier: 2
+  - Maximum delay: 5 seconds
+  - Retry only on transient errors (network, timeout, 5xx)
+- External service calls **must** have timeouts:
+  - Default timeout: 30 seconds (configurable per service)
+  - Timeout errors **must** be handled gracefully
+  - Timeout configuration **must** be in `@config/constants` or environment variables
+- Circuit breaker pattern **should** be used for external services:
+  - Open circuit after N consecutive failures
+  - Half-open state for testing recovery
+  - Close circuit after successful requests
+- Retry and circuit breaker logic **must** live in `src/lib/resilience/` if implemented
+- Graceful degradation **should** be implemented:
+  - Fallback to cached data when service unavailable
+  - Return partial results when possible
+  - Clear error messages for users
+
+## Best Practices
+* Never swallow errors silently
+* Use descriptive error messages internally
+* Centralize error definitions in `lib/errors/`
+* All modules must throw `AppError` or `HttpError` where applicable
+* Implement retry logic for external dependencies
+* Use circuit breakers for unreliable services
+---
+
+## Forbidden Patterns
+* Logging sensitive data
+* Returning raw Prisma or system errors to clients
+* Multiple error formats across endpoints
+* Error handling logic scattered across routes/controllers
+---
+
+## Enforcement
+❌ Violations are invalid
+✅ Refactors must improve consistency, clarity, and security
+All errors and logs **must** comply strictly with these rules.

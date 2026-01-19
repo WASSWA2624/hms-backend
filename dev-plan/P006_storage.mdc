@@ -1,0 +1,90 @@
+## Phase 6 – Storage integration
+
+### Step 6.1: Configure storage provider (task-atomic sub-steps)
+
+#### Step 6.1.1: Ensure env template contains STORAGE_PROVIDER
+- Ensure `STORAGE_PROVIDER` is in `env.template.txt`
+- **Verification**: `env.template.txt` includes `STORAGE_PROVIDER`.
+
+#### Step 6.1.2: Validate STORAGE_PROVIDER in env config
+- Validate `STORAGE_PROVIDER` in `src/config/env.js`
+- **Verification**: Invalid provider values cause startup validation failure.
+
+#### Step 6.1.3: Read STORAGE_PROVIDER in storage factory
+- Update `src/lib/storage/factory.js` to read `STORAGE_PROVIDER` from `@config/env`
+- **Verification**: Factory selects provider based on validated config.
+
+#### Step 6.1.4: Verify provider switching is env-driven (read-only)
+- Confirm provider switching works via env change only
+- **Verification**: No code changes required to switch providers.
+
+### Step 6.2: Integrate StorageService in media module (task-atomic sub-steps)
+
+#### Step 6.2.1: Route storage operations through StorageService
+- Update `media-asset` service to use StorageService (never direct file access)
+- **Verification**: No direct filesystem/S3 SDK calls exist outside `src/lib/storage/*`.
+
+#### Step 6.2.2: Enforce validation via Zod schemas
+- Ensure schemas exist in `@validations/media-asset/*` and are used in routes (no inline validation)
+- **Verification**: Invalid upload payloads are rejected by validation middleware.
+
+#### Step 6.2.3: Verify middleware order (read-only)
+- Confirm route middleware order: validation → auth → RBAC → handler
+- **Verification**: Media routes follow middleware order per `api.mdc`.
+
+#### Step 6.2.4: Enforce file handling and security rules
+- Enforce file handling rules per `storage.mdc` (filename sanitization, size/type limits)
+- **Verification**: Invalid files rejected; filenames sanitized.
+
+### Step 6.3: Add storage RBAC (task-atomic sub-steps)
+
+#### Step 6.3.1: Enforce auth + RBAC on storage routes
+- Enforce auth + RBAC for upload/download/delete per `auth-security.mdc` + `api.mdc`
+- **Verification**: Unauthorized requests return 401/403.
+
+#### Step 6.3.2: Document protected access behavior
+- Document protected media access behavior in route JSDoc per `documentation.mdc`
+- **Verification**: Media routes have complete JSDoc documenting auth/permissions.
+
+### Step 6.4: Add storage encryption (task-atomic sub-steps)
+
+#### Step 6.4.1: Implement encryption-at-rest
+- Implement encryption-at-rest per `compliance.mdc` + `auth-security.mdc`
+- **Verification**: Sensitive files are stored encrypted at rest.
+
+#### Step 6.4.2: Enforce env access rules (read-only)
+- Ensure encryption config/keys are accessed via `@config/env` (no direct `process.env`)
+- **Verification**: No non-config module reads `process.env`.
+
+#### Step 6.4.3: Verify log sanitization (read-only)
+- Ensure logs use `@lib/logging/sanitize` and never log secrets
+- **Verification**: Logs contain no tokens/passwords/API keys.
+
+### Step 6.5: Add storage audit logs (task-atomic sub-steps)
+
+#### Step 6.5.1: Audit storage mutations
+- Add audit logs for storage mutations per `compliance.mdc` + `prisma.mdc` (non-blocking)
+- **Verification**: Audit log failures do not block the main operation.
+
+### Step 6.6: Storage tests (task-atomic sub-steps)
+
+#### Step 6.6.1: Create storage tests (mocked)
+- Follow `testing.mdc` (mock StorageService and providers; no real filesystem/S3/network)
+- **Verification**: Storage tests do not touch real providers.
+
+#### Step 6.6.2: Add required storage test cases
+##### Step 6.6.2.1: Test provider selection via factory
+- Add tests that verify provider selection changes when `STORAGE_PROVIDER` changes
+- **Verification**: At least one test asserts the provider selected by `src/lib/storage/factory.js`.
+
+##### Step 6.6.2.2: Test validation failures (mime/size/filename constraints)
+- Add tests for invalid mime/type, size limit, and filename sanitization constraints
+- **Verification**: At least one test asserts invalid inputs are rejected.
+
+##### Step 6.6.2.3: Test auth/RBAC restrictions (where applicable)
+- Add route tests that verify 401/403 behavior for protected storage endpoints
+- **Verification**: At least one test asserts 401/403 is returned when unauthorized/forbidden.
+
+#### Step 6.6.3: Run storage tests
+- Run `npm test`
+- **Verification**: Storage tests pass.

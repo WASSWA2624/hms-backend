@@ -1,0 +1,26 @@
+openapi: "3.0.3"
+info:
+  title: "Biomedical Marketplace API"
+  version: "1.0.0"
+  description: "API specification stub for v1."
+servers:
+  - url: "/"
+paths:
+  /health:
+    get:
+      summary: "Health check"
+      responses:
+        "200":
+          description: "Service is healthy"
+  /ready:
+    get:
+      summary: "Readiness check"
+      responses:
+        "200":
+          description: "Service is ready"
+  /live:
+    get:
+      summary: "Liveness check"
+      responses:
+        "200":
+          description: "Service is alive"

@@ -1,0 +1,47 @@
+## Phase 7 – Testing & CI
+
+### Step 7.1: Global test setup
+#### Step 7.1.1: Create global Jest setup file
+- Create `src/tests/setup.js`
+- **Verification**: File exists and is referenced by Jest config.
+
+#### Step 7.1.2: Add global mocks (task-atomic sub-steps)
+
+##### Step 7.1.2.1: Mock Prisma globally
+- Add a global Prisma mock in `src/tests/setup.js`
+- **Verification**: No tests perform real DB calls (Prisma is fully mocked).
+
+##### Step 7.1.2.2: Mock WebSocket globally (if WebSockets are used)
+- Add a global mock/stub for WebSocket server/client usage in tests
+- **Verification**: No tests open real sockets or require a running WS server.
+
+##### Step 7.1.2.3: Mock Storage globally
+- Add a global mock/stub for StorageService/provider selection in tests
+- **Verification**: No tests touch real filesystem/S3/network for storage.
+
+### Step 7.2: Module test coverage
+#### Step 7.2.1: Route test coverage (module-by-module)
+- Ensure all modules have route tests (status codes, response format)
+- **Verification**: Each module has route tests under `src/tests/modules/<module>/routes/`.
+
+#### Step 7.2.2: Service test coverage (module-by-module)
+- Ensure all modules have service tests (business logic)
+- **Verification**: Each module has service tests under `src/tests/modules/<module>/services/`.
+
+#### Step 7.2.3: Schema test coverage (module-by-module)
+- Ensure all modules have validation tests (Zod schemas)
+- **Verification**: Each module has schema tests under `src/tests/modules/<module>/schemas/`.
+
+### Step 7.3: Integration test setup
+#### Step 7.3.1: Add integration test structure (optional)
+- Create integration test structure if needed
+- **Verification**: Integration tests do not hit production DB.
+
+### Step 7.4: CI configuration
+#### Step 7.4.1: Add CI workflow
+- Add CI configuration (GitHub Actions, etc.) to run `npm test`
+- **Verification**: CI workflow file exists.
+
+#### Step 7.4.2: Verify CI execution
+- Push/trigger workflow
+- **Verification**: CI runs `npm test` successfully on push.

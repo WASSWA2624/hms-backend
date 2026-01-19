@@ -1,0 +1,99 @@
+---
+alwaysApply: true
+---
+
+# Health Check Rules
+## Purpose
+Defines **mandatory health check and monitoring endpoints**.
+Ensures:
+- Reliable application monitoring
+- Clear service status visibility
+- Proper dependency health tracking
+- Kubernetes/container orchestration compatibility
+Any violation is **invalid**.
+---
+
+## Required Endpoints
+- **Health Check**: `GET /health` (public, no authentication)
+  - Returns 200 if application is running
+  - Returns 503 if application is unhealthy
+  - Response format:
+  ```javascript
+  {
+    "status": "healthy" | "unhealthy",
+    "timestamp": "ISO 8601 string",
+    "uptime": number // seconds
+  }
+  ```
+
+- **Readiness Check**: `GET /ready` (public, no authentication)
+  - Returns 200 if application is ready to serve traffic
+  - Returns 503 if application is not ready (e.g., database not connected)
+  - Response format:
+  ```javascript
+  {
+    "status": "ready" | "not_ready",
+    "timestamp": "ISO 8601 string",
+    "checks": {
+      "database": "ok" | "error",
+      "storage": "ok" | "error" // if applicable
+    }
+  }
+  ```
+
+- **Liveness Check**: `GET /live` (public, no authentication)
+  - Returns 200 if application process is alive
+  - Used for container restart policies
+  - Minimal response: `{ "status": "alive" }`
+---
+
+## Implementation
+- Health check endpoints **must** be defined in `src/app/router.js` or dedicated health routes
+- Health check logic **must** live in `src/lib/health/` or `src/middlewares/health.middleware.js`
+- Database connectivity **must** be checked with resilient fallback strategy:
+  - **Primary**: Use Prisma client from `globalThis.prisma` if already initialized
+    - **Timeout**: Prisma queries **must** timeout after 2 seconds to prevent hanging
+    - If Prisma query fails or times out, **must** fall back to direct connection
+  - **Fallback**: Use direct database connection (mysql2) with `DATABASE_URL` if:
+    - Prisma is not available (not initialized)
+    - Prisma query fails or times out (pool issues, connection problems)
+  - This ensures health checks work during server startup and remain resilient if Prisma's pool has issues
+  - Direct mysql2 connection **must** use a 5-second timeout maximum
+  - Both methods test actual database connectivity and are equivalent for connectivity testing
+- External service dependencies (S3, email, etc.) **should** be checked but **must not** block readiness if optional
+---
+
+## Response Times
+- Health checks **must** respond within 100ms (under normal conditions)
+- Health checks **must not** perform expensive operations
+- Database checks **must** use lightweight queries (e.g., `SELECT 1`)
+- Timeout strategy for database checks:
+  - Prisma queries: 2 seconds (fast fail to enable fallback)
+  - Direct mysql2 connection: 5 seconds maximum
+  - Total maximum time for database check: 7 seconds (2s Prisma + 5s fallback)
+---
+
+## Security
+- Health check endpoints **must** be public (no authentication required)
+- Health checks **must not** expose sensitive information
+- No credentials, connection strings, or internal system details in responses
+- Rate limiting **may** be applied to prevent abuse
+---
+
+## Monitoring Integration
+- Health check endpoints **must** be monitored by infrastructure (Kubernetes, load balancers, etc.)
+- Health check failures **must** trigger alerts
+- Metrics **should** be collected for health check response times
+---
+
+## Forbidden Patterns
+- Including sensitive data in health check responses
+- Performing expensive operations in health checks
+- Requiring authentication for health endpoints
+- Blocking readiness on optional dependencies
+---
+
+## Enforcement
+❌ Violations are invalid  
+✅ Health checks must be reliable, fast, and secure  
+All health check endpoints **must strictly follow these rules**.

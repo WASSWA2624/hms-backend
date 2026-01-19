@@ -1,0 +1,22 @@
+---
+alwaysApply: true
+---
+
+## Phase 12 – WebSocket app features
+
+### Step 13.1: Define app-specific events
+- Add events for:
+  - Support tickets (status updates, new comments, assignment changes)
+  - Disputes (status updates, new comments, resolution updates)
+  - Referral rewards (reward credited, status changes)
+  - Affiliate commissions (commission earned, payment status)
+  - Loyalty points (earned/redeemed, tier upgrades, badge earned)
+- **Verification**: All event names are defined in `@lib/websocket/events.js`
+
+### Step 13.2: Emit events from services only
+- Emit events in service layer only (no controller emissions)
+- **Verification**: Controllers do not import websocket emit helpers
+
+### Step 13.3: Add WS tests (app-specific)
+- Add tests for app-specific event emissions
+- **Verification**: WS tests pass without real sockets

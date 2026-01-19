@@ -1,0 +1,56 @@
+jest.mock('@lib/logging', () => ({
+  logger: {
+    warn: jest.fn(),
+    info: jest.fn(),
+    error: jest.fn()
+  }
+}));
+
+const loadCorsConfig = () => {
+  jest.resetModules();
+  const { setEnvForTests } = require('@config/env');
+  setEnvForTests({
+    JWT_SECRET: 'test-jwt-secret-key-minimum-32-characters-long',
+    DATABASE_URL: 'mysql://test:test@localhost:3306/test_db',
+    NODE_ENV: 'development',
+    CORS_ORIGINS: 'http://example.com'
+  });
+  return require('@config/cors');
+};
+
+describe('CORS config', () => {
+  test('allows configured origin', (done) => {
+    const { corsOptions } = loadCorsConfig();
+    corsOptions.origin('http://example.com', (err, allowed) => {
+      expect(err).toBeNull();
+      expect(allowed).toBe(true);
+      done();
+    });
+  });
+
+  test('exposes required methods and headers', () => {
+    const { corsOptions } = loadCorsConfig();
+    expect(corsOptions.credentials).toBe(true);
+    expect(corsOptions.methods).toContain('OPTIONS');
+    expect(corsOptions.allowedHeaders).toContain('Content-Type');
+    expect(corsOptions.allowedHeaders).toContain('Authorization');
+  });
+
+  test('allows requests with no origin', (done) => {
+    const { corsOptions } = loadCorsConfig();
+    corsOptions.origin(undefined, (err, allowed) => {
+      expect(err).toBeNull();
+      expect(allowed).toBe(true);
+      done();
+    });
+  });
+
+  test('rejects disallowed origin', (done) => {
+    const { corsOptions } = loadCorsConfig();
+    corsOptions.origin('http://evil.test', (err) => {
+      expect(err).toBeInstanceOf(Error);
+      expect(err.statusCode).toBe(403);
+      done();
+    });
+  });
+});

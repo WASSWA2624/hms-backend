@@ -1,0 +1,175 @@
+/**
+ * Server Entry Point
+ *
+ * HTTP server bootstrap per architecture.mdc
+ * Uses nodemon in dev, node in prod
+ * Validates environment variables on startup via @config/env
+ *
+ * Per architecture.mdc: Development runtime uses nodemon, production uses node directly
+ */
+
+// Must be absolute first - register module aliases before any other requires
+// This enables @app/*, @lib/*, @config/*, etc. to work at runtime
+require('module-alias/register');
+const path = require('path');
+
+// Register global aliases for runtime resolution
+try {
+  const moduleAlias = require('module-alias');
+  const prismaClientPath = path.join(process.cwd(), 'node_modules', '@prisma', 'client');
+  
+  // Register base aliases first
+  moduleAlias.addAliases({
+    '@app': path.join(__dirname, 'app'),
+    '@lib': path.join(__dirname, 'lib'),
+    '@config': path.join(__dirname, 'config'),
+    '@middlewares': path.join(__dirname, 'middlewares'),
+    '@logs': path.join(__dirname, 'logs'),
+    '@websockets': path.join(__dirname, 'websockets'),
+    '@prisma/client': path.join(__dirname, 'prisma', 'client.js')
+  });
+  
+  // CRITICAL: Register @prisma/client/runtime LAST so it takes precedence
+  // module-alias checks aliases in reverse order (last registered = checked first)
+  // Prisma's generated code requires '@prisma/client/runtime/client.js' which must resolve to the actual package
+  // By registering runtime AFTER @prisma/client, it will be checked first and match before @prisma/client
+  const prismaRuntimePath = path.join(prismaClientPath, 'runtime');
+  moduleAlias.addAlias('@prisma/client/runtime', prismaRuntimePath);
+} catch (err) {
+  throw err;
+}
+
+// Register module-scoped aliases (@controllers/*, @services/*, etc.) for all existing modules
+// This auto-discovers modules in src/modules/ and registers their aliases
+try {
+  const { registerAllModuleAliases } = require('@lib/aliases');
+  registerAllModuleAliases();
+} catch (err) {
+  throw err;
+}
+
+let createApp;
+try {
+  createApp = require('@app/index');
+} catch (err) {
+  throw err;
+}
+
+let PORT, NODE_ENV;
+try {
+  const envConfig = require('@config/env');
+  PORT = envConfig.PORT;
+  NODE_ENV = envConfig.NODE_ENV;
+} catch (err) {
+  throw err;
+}
+
+let logger;
+try {
+  ({ logger } = require('@lib/logging'));
+} catch (err) {
+  throw err;
+}
+
+/**
+ * Start HTTP server
+ */
+const startServer = () => {
+  try {
+    // Environment variables are validated in @config/env on import
+    // If validation fails, the import will throw an error
+    
+    // Create Express app
+    const app = createApp();
+    
+    // Start HTTP server
+    const server = app.listen(PORT, () => {
+      logger.info(`Server started successfully`, {
+        port: PORT,
+        environment: NODE_ENV,
+        nodeVersion: process.version
+      });
+      
+      console.log(`🚀 Server running on port ${PORT}`);
+      console.log(`📝 Environment: ${NODE_ENV}`);
+      console.log(`🌐 Health check: http://localhost:${PORT}/health`);
+      console.log(`✅ Readiness check: http://localhost:${PORT}/ready`);
+      console.log(`💓 Liveness check: http://localhost:${PORT}/live`);
+    });
+    
+    // Graceful shutdown handling
+    const gracefulShutdown = (signal) => {
+      logger.info(`Received ${signal}, shutting down gracefully...`);
+
+      // Stop accepting new connections
+      server.close(async () => {
+        logger.info('HTTP server closed');
+
+        try {
+          // Close WebSocket server and cleanup gateway
+          const wsServer = require('@websockets/server');
+          const wsGateway = require('@websockets/gateway');
+          if (wsGateway && typeof wsGateway.cleanup === 'function') {
+            wsGateway.cleanup();
+          }
+          if (wsServer && typeof wsServer.closeWebSocketServer === 'function') {
+            await wsServer.closeWebSocketServer();
+          }
+        } catch (err) {
+          logger.warn('WebSocket shutdown encountered an error', {
+            error: err.message
+          });
+        }
+
+        try {
+          // Close Prisma client if initialized
+          if (globalThis.prisma && typeof globalThis.prisma.$disconnect === 'function') {
+            await globalThis.prisma.$disconnect();
+          }
+        } catch (err) {
+          logger.warn('Prisma disconnect encountered an error', {
+            error: err.message
+          });
+        }
+
+        process.exit(0);
+      });
+
+      // Force close after 30 seconds
+      setTimeout(() => {
+        logger.error('Forced shutdown after timeout');
+        process.exit(1);
+      }, 30000);
+    };
+    
+    // Listen for termination signals
+    process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+    process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+    
+    // Handle uncaught exceptions
+    process.on('uncaughtException', (err) => {
+      logger.error('Uncaught exception', { error: err.message, stack: err.stack });
+      gracefulShutdown('uncaughtException');
+    });
+    
+    // Handle unhandled promise rejections
+    process.on('unhandledRejection', (reason, promise) => {
+      logger.error('Unhandled promise rejection', { reason, promise });
+      gracefulShutdown('unhandledRejection');
+    });
+    
+    return server;
+  } catch (err) {
+    logger.error('Failed to start server', { error: err.message, stack: err.stack });
+    console.error('❌ Failed to start server:', err.message);
+    process.exit(1);
+  }
+};
+
+// Start server if this file is run directly
+if (require.main === module) {
+  startServer();
+}
+
+module.exports = { startServer };
+

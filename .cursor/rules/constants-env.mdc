@@ -1,0 +1,70 @@
+---
+alwaysApply: true
+---
+
+# Constants & Environment Rules
+## Purpose
+Defines **mandatory standards for constants and environment variables**.
+Ensures:
+- Centralized configuration
+- Secure access to sensitive values
+- Standardization across modules
+- Avoids direct `process.env` usage
+Any violation is **invalid**.
+---
+
+## Constants
+- All constants **must** live in `src/config/constants.js`
+- Naming convention: `UPPER_SNAKE_CASE`
+- Config objects: `PascalCase`
+- No constants scattered across modules
+- Examples:
+```javascript
+const DEFAULT_PAGE_LIMIT = 20;
+const DEFAULT_PAGE = 1;
+const MAX_LOGIN_ATTEMPTS = 5;
+const JwtConfig = {
+  expiresIn: '15m',
+  algorithm: 'HS256'
+};
+```
+
+## Pagination Constants
+- Global pagination defaults **must** be defined in `src/config/constants.js`:
+  - `DEFAULT_PAGE = 1` (first page)
+  - `DEFAULT_PAGE_LIMIT = 20` (items per page)
+  - `MAX_PAGE_LIMIT = 100` (maximum items per page)
+- Modules may override defaults but **must** document the override
+- All list endpoints **must** use these constants unless module-specific override exists
+---
+
+## Environment Variables
+* All required env variables **must** be listed in `env.template.txt` at the project root
+* The `env.template.txt` file **must** be git ignored (per `.gitignore`)
+* Only `src/config/env.js` may read `process.env`
+* Accessing `process.env` directly elsewhere is forbidden
+* Common required env variables:
+  * `DATABASE_URL` (if using database)
+  * `JWT_SECRET` (≥ 32 chars, if using JWT)
+  * Additional variables as needed by the project
+* Env values **must** be validated on application boot
+---
+
+## Best Practices
+* No secrets in code
+* Never commit `.env` to version control
+* Use fallback defaults **only** if safe
+* Keep sensitive configurations separate from source code
+---
+
+## Forbidden Patterns
+* Direct `process.env` access outside config
+* Mixing constant definitions across modules
+* Hardcoding secrets in code
+* Using inconsistent naming conventions
+---
+
+## Enforcement
+❌ Violations are invalid
+✅ Refactors must improve centralization, security, and clarity
+All constants and environment variables **must** comply strictly with these rules.

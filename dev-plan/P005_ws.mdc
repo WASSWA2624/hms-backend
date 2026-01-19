@@ -1,0 +1,56 @@
+## Phase 5 – WebSockets
+
+### Step 5.1: WebSocket server setup (task-atomic sub-steps)
+
+#### Step 5.1.1: Create WebSocket server entry point
+- Create `src/websockets/server.js` (WebSocket server entry point using `ws` library)
+- **Verification**: `src/websockets/server.js` exists and can be required without throwing.
+
+### Step 5.2: WebSocket gateway (task-atomic sub-steps)
+
+#### Step 5.2.1: Create WebSocket gateway file
+- Create `src/websockets/gateway.js` (handles connection routing, manages Map<UserID→WebSocket>)
+- **Verification**: `src/websockets/gateway.js` exists and exports gateway functions.
+
+#### Step 5.2.2: Implement connection map management
+- Implement Map<UserID→WebSocket> tracking
+- **Verification**: On disconnect, the user entry is removed.
+
+### Step 5.3: WebSocket authentication (task-atomic sub-steps)
+
+#### Step 5.3.1: Add JWT authentication
+- Add JWT authentication to `src/websockets/gateway.js` (reuses auth middleware logic)
+- **Verification**: Invalid/missing tokens reject the connection; valid tokens accept it.
+
+### Step 5.4: WebSocket heartbeat (task-atomic sub-steps)
+
+#### Step 5.4.1: Add heartbeat/ping
+- Add heartbeat/ping mechanism to `src/websockets/gateway.js`
+- **Verification**: Dead connections are cleaned up.
+
+### Step 5.5: WebSocket RBAC (task-atomic sub-steps)
+
+#### Step 5.5.1: Enforce RBAC for sensitive events
+- Add RBAC enforcement for sensitive WebSocket events in `src/websockets/gateway.js`
+- **Verification**: Unauthorized events are rejected.
+
+### Step 5.6: WebSocket event emission in services (task-atomic sub-steps)
+
+#### Step 5.6.1: Use centralized events
+- Update services to emit WebSocket events using events from `@lib/websocket/events`
+- **Verification**: Event names used in emissions come from `@lib/websocket/events`.
+
+#### Step 5.6.2: Enforce service-only emission rule (read-only)
+- Confirm only services emit WebSocket events (controllers must not emit)
+- **Verification**: No controller imports websocket emission helpers.
+> App-specific WebSocket events are defined in Phase 13 (`P013_ws_features.mdc`).
+
+### Step 5.7: WebSocket tests (task-atomic sub-steps)
+
+#### Step 5.7.1: Create WebSocket tests
+- Create `src/tests/modules/websockets/` tests (connection, auth, emission, disconnect)
+- **Verification**: Tests exist and mock WS server per `testing.mdc`.
+
+#### Step 5.7.2: Run WebSocket tests
+- Run `npm test`
+- **Verification**: WebSocket tests pass.

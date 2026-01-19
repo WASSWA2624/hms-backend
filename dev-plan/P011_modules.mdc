@@ -1,0 +1,76 @@
+---
+alwaysApply: true
+---
+
+## Phase 10 – Module implementation order
+
+**Rule:** Every module follows the 8-step pattern in `module-creation.mdc`. This file defines **order only**.
+
+### Module 1: Auth/User
+- Modules: `auth`, `user`
+- Notes: JWT + RBAC required; endpoints per `P010_api_endpoints.mdc`
+
+### Module 2: Company/Addresses
+- Modules: `company`, `address`
+
+### Module 3: Catalog
+- Modules: `category`, `manufacturer`, `department`, `product`
+- Notes: Product search/publish required
+
+### Module 4: Inventory
+- Modules: `warehouse`, `batch-lot`, `inventory`
+- Notes: Inventory adjustment endpoint required
+
+### Module 5: Commerce
+- Modules: `cart`, `quote-request`, `order`, `payment`, `shipment`, `return`
+
+### Module 6: Media Assets
+- Modules: `media-asset`
+- Notes: Must use `StorageService` abstraction
+
+### Module 7: Communication
+- Modules: `notification`, `conversation`, `message`
+
+### Module 8: Shops
+- Modules: `shop`
+
+### Module 9: Subscriptions
+- Modules: `subscription-plan`, `subscription`, `subscription-invoice`, `subscription-payment-method`, `subscription-usage`
+
+### Module 10: Compliance
+- Modules: `data-processing`, `breach-notification`, `phi-access`, `financial-control`, `system-change`, `consent`, `terms-acceptance`, `audit-log`, `price-history`
+- Notes: `audit-log` and `price-history` are read-only
+
+### Module 11: Marketing
+- Modules: `promotion`, `coupon-redemption`, `user-favorite`, `user-social-link`
+
+### Module 12: Reviews & Ratings
+- Modules: `product-review`, `review-media-asset`, `vendor-review-response`, `review-helpful-vote`
+
+### Module 13: Payment Methods
+- Modules: `order-payment-method`, `payment-method-request`, `payment-method-request-upvote`
+
+### Module 14: Approval Workflows
+- Modules: `product-approval`, `product-approval-history`, `vendor-approval`, `vendor-approval-document`, `vendor-approval-history`
+
+### Module 15: Product Compliance
+- Modules: `product-certification`, `product-hazard`
+
+### Module 16: Enhanced Authentication
+- Modules: `user-mfa`, `oauth-account`
+
+### Module 17: Enterprise Payments
+- Modules: `purchase-order`, `lease-agreement`, `lease-payment`, `net-terms`
+
+### Module 18: Safety & Compliance
+- Modules: `product-recall`, `recall-notification`
+
+### Module 19: Integrations & Discovery
+- Modules: `integration-log`, `saved-search`, `search-history`, `wishlist`, `wishlist-item`
+- Notes: `integration-log` and `search-history` are read-only
+
+### Module 20: Marketing & Support
+- Modules: `referral-code`, `referral`, `affiliate-link`, `affiliate-commission`
+- Modules: `loyalty-points`, `loyalty-transaction`, `loyalty-badge`, `user-loyalty-badge`
+- Modules: `support-ticket`, `support-ticket-comment`, `support-ticket-history`, `dispute`, `dispute-comment`, `dispute-history`
+- Notes: `support-ticket-history` and `dispute-history` are read-only

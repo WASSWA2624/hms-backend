@@ -1,0 +1,116 @@
+---
+alwaysApply: true
+---
+
+# Import Alias Rules
+
+## Purpose
+Enforces mandatory import aliasing for no cross-module relative imports, consistent paths, maintainability, and module boundaries. All violations are invalid.
+
+---
+
+## Mandatory Aliases
+
+| Alias             | Points To                               | Example Usage                                        |
+|-------------------|-----------------------------------------|------------------------------------------------------|
+| `@app/*`          | `src/app`                               | `require('@app/router')`                             |
+| `@controllers/*`  | `src/modules/<module>/controllers`      | `require('@controllers/user/UserController')`        |
+| `@services/*`     | `src/modules/<module>/services`         | `require('@services/user/UserService')`              |
+| `@repositories/*` | `src/modules/<module>/repositories`     | `require('@repositories/user/UserRepository')`       |
+| `@lib/*`          | `src/lib`                               | `require('@lib/async')`                              |
+| `@middlewares/*`  | `src/middlewares`                       | `require('@middlewares/validate.middleware')`         |
+| `@config/*`       | `src/config`                            | `require('@config/index')`                           |
+| `@validations/*`  | `src/modules/<module>/schemas`          | `require('@validations/user/user.schema')`           |
+| `@prisma/client`  | `src/prisma/client.js`                  | `require('@prisma/client')`                          |
+| `@logs/*`         | `src/logs`                              | `require('@logs/logger')`                            |
+
+**Alias Rules:**
+- Module aliases (`@controllers/*`, etc.) require module name (e.g. `@controllers/user/UserController`) → `src/modules/user/controllers/UserController.js`
+- Global aliases (`@lib/*`, `@config/*`, etc.) map to `src/<folder>/*`
+
+---
+
+## Configuration
+
+- Add aliases to `jsconfig.json` (`compilerOptions.paths`) for IDE support.
+- Use `module-alias` for runtime (install via `npm install module-alias`). Register at top of `src/server.js`.
+- Example `jsconfig.json`:
+```json
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@app/*": ["src/app/*"],
+      "@lib/*": ["src/lib/*"],
+      "@middlewares/*": ["src/middlewares/*"],
+      "@config/*": ["src/config/*"],
+      "@prisma/client": ["src/prisma/client.js"],
+      "@logs/*": ["src/logs/*"]
+    }
+  }
+}
+```
+- Module-scoped aliases (multiple wildcards) unsupported in `jsconfig.json`, but handled by `module-alias` at runtime.
+- Example runtime registration (`src/server.js`):
+```javascript
+require('module-alias/register');
+const path = require('path');
+require('module-alias').addAliases({
+  '@app': path.join(__dirname, 'app'),
+  '@lib': path.join(__dirname, 'lib'),
+  '@config': path.join(__dirname, 'config'),
+  '@middlewares': path.join(__dirname, 'middlewares'),
+  '@prisma/client': path.join(__dirname, 'prisma', 'client.js'),
+  '@logs': path.join(__dirname, 'logs')
+});
+// Module-scoped aliases auto-registered via registerAllModuleAliases()
+```
+- Module-scoped aliases must be registered via `src/lib/aliases/registerModuleAliases.js`
+- In `src/server.js`:  
+  - Register all: `registerAllModuleAliases()`
+  - Register one: `registerModuleAliases('user')`
+```javascript
+const { registerAllModuleAliases } = require('@lib/aliases/registerModuleAliases');
+registerAllModuleAliases();
+
+const { registerModuleAliases } = require('@lib/aliases/registerModuleAliases');
+registerModuleAliases('user');
+```
+
+---
+
+## Barrel File Requirements
+
+- Any directory with multiple helpers/utilities **must** have an `index.js` barrel file with aggregated `module.exports`.
+- Always import via barrel if present (e.g., `require('@lib/response')` not individual file).
+- Required barrels: all `src/lib/*` subdirs (crypto, jwt, errors, response, async, validation, dates, logging, audit, websocket, storage, health), and `src/config/`.
+- No barrels required for module routes/controllers/services/repos/schemas.
+- Do not import files directly if a barrel exists.
+
+---
+
+## General Rules
+
+- No cross-module relative imports.  
+  - Exception: `src/app/router.js` may use relative `require('../modules/...')` only to mount routes.
+- Always use aliases for all local/external modules.
+- Barrels are mandatory for utility directories.
+- Cross-module access allowed only via services or lib, not direct to controllers/repos.
+- Import paths must be static.
+
+---
+
+## Forbidden
+
+- Mixing relative and alias imports
+- Hardcoded paths bypassing aliases
+- Cross-module direct imports to repos/controllers
+- Dynamic imports without an alias
+
+---
+
+## Enforcement
+
+❌ Violations are invalid  
+✅ Refactors centralize imports, improve clarity and isolation  
+All modules **must** follow these import alias rules.

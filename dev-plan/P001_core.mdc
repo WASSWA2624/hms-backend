@@ -1,0 +1,338 @@
+---
+alwaysApply: true
+---
+
+## Phase 1 – Core utilities (small, deterministic steps)
+
+### Step 1.1: Error handling foundation (task-atomic sub-steps)
+
+#### Step 1.1.1: Create AppError
+- Create `src/lib/errors/AppError.js` (base error class)
+- **Verification**: `AppError` exports and can be required without throwing.
+
+#### Step 1.1.2: Create HttpError
+- Create `src/lib/errors/HttpError.js` (HTTP error class extending AppError)
+- **Verification**: `HttpError` extends `AppError` and exports correctly.
+
+#### Step 1.1.3: Create handleApiError
+- Create `src/lib/errors/handleApiError.js` (centralized error handler function)
+- **Verification**: `handleApiError` exports a function and does not leak stack traces to clients.
+
+### Step 1.2: Response helpers (task-atomic sub-steps)
+
+#### Step 1.2.1: Create success response helper
+- Create `src/lib/response/success.js` with `sendSuccess(res, status, message, data)`
+- **Verification**: Response shape matches `response-format.mdc` success format.
+
+#### Step 1.2.2: Create paginated response helper
+- Create `src/lib/response/pagination.js` with `sendPaginated(res, message, data, pagination)`
+- **Verification**: Response shape matches `response-format.mdc` paginated format.
+
+#### Step 1.2.3: Create error response helper
+- Create `src/lib/response/error.js` with `sendError(res, status, message, errors)`
+- **Verification**: Error response shape matches `response-format.mdc`.
+
+#### Step 1.2.4: Create response barrel export
+- Create/maintain `src/lib/response/index.js` to export response helpers
+- **Verification**: `require('@lib/response')` exposes the helper functions.
+
+### Step 1.3: Logging utilities (task-atomic sub-steps)
+
+#### Step 1.3.1: Create sanitize utility
+- Create `src/lib/logging/sanitize.js` (sanitizes PII/sensitive data from logs)
+- **Verification**: sanitize removes passwords/tokens/API keys from strings/objects.
+
+#### Step 1.3.2: Create logger utility
+- Create `src/lib/logging/logger.js` (writes to `logs/YYYY-MM-DD.txt`, uses sanitize)
+- **Verification**: Logger writes to `logs/YYYY-MM-DD.txt` and sanitizes inputs.
+
+#### Step 1.3.3: Create logging barrel export
+- Create/maintain `src/lib/logging/index.js`
+- **Verification**: `require('@lib/logging')` exposes logger + sanitize.
+
+### Step 1.4: JWT utilities (task-atomic sub-steps)
+
+#### Step 1.4.1: Create access token generator
+- Create `src/lib/jwt/generateToken.js` (generates JWT access token)
+- **Verification**: Token generation uses `@config/jwt` and returns a signed JWT.
+
+#### Step 1.4.2: Create refresh token generator
+- Create `src/lib/jwt/generateRefreshToken.js` (generates refresh token)
+- **Verification**: Refresh token generation uses `@config/jwt`.
+
+#### Step 1.4.3: Create token verifier
+- Create `src/lib/jwt/verifyToken.js` (verifies JWT token)
+- **Verification**: Invalid tokens are rejected; valid tokens decode correctly.
+
+#### Step 1.4.4: Create jwt barrel export
+- Create/maintain `src/lib/jwt/index.js`
+- **Verification**: `require('@lib/jwt')` exposes JWT helpers.
+
+### Step 1.5: Crypto utilities (task-atomic sub-steps)
+
+#### Step 1.5.1: Create encrypt helper
+- Create `src/lib/crypto/encrypt.js` (AES-256 encryption helper)
+- **Verification**: encrypt returns encrypted payload without logging secrets.
+
+#### Step 1.5.2: Create decrypt helper
+- Create `src/lib/crypto/decrypt.js` (AES-256 decryption helper)
+- **Verification**: decrypt reverses encrypt for valid inputs.
+
+#### Step 1.5.3: Create password hash helper
+- Create `src/lib/crypto/hashPassword.js` (bcryptjs wrapper)
+- **Verification**: Hashes are non-reversible and bcrypt-based.
+
+#### Step 1.5.4: Create password compare helper
+- Create `src/lib/crypto/comparePassword.js` (bcryptjs compare wrapper)
+- **Verification**: Correctly matches valid password against hash.
+
+#### Step 1.5.5: Create API key hash helper
+- Create `src/lib/crypto/hashApiKey.js` (Argon2id wrapper for API keys)
+- **Verification**: Uses Argon2id and does not store plaintext.
+
+#### Step 1.5.6: Create crypto barrel export
+- Create/maintain `src/lib/crypto/index.js`
+- **Verification**: `require('@lib/crypto')` exposes crypto helpers.
+
+### Step 1.6: Async utilities
+#### Step 1.6.1: Create asyncHandler
+- Create `src/lib/async/asyncHandler.js` (wraps async route handlers, passes errors to middleware)
+- **Verification**: asyncHandler catches promise rejections and calls `next(err)`.
+
+#### Step 1.6.2: Create async barrel export
+- Create/maintain `src/lib/async/index.js`
+- **Verification**: `require('@lib/async')` exposes `asyncHandler`.
+
+### Step 1.7: Validation utilities
+#### Step 1.7.1: Create reusable Zod validators
+- Create `src/lib/validation/zod.js` (reusable Zod validators: email, UUID, common patterns)
+- **Verification**: Validators can be imported from `@lib/validation/zod`.
+
+#### Step 1.7.2: Create validation barrel export
+- Create/maintain `src/lib/validation/index.js`
+- **Verification**: `require('@lib/validation')` exposes shared validators.
+
+### Step 1.8: Date utilities
+#### Step 1.8.1: Create `formatDate`
+- Create `src/lib/dates/formatDate.js` (date formatting helper)
+- **Verification**: `formatDate` exports correctly.
+
+#### Step 1.8.2: Create `getCurrentTimestamp`
+- Create `src/lib/dates/getCurrentTimestamp.js` (returns current timestamp)
+- **Verification**: `getCurrentTimestamp` exports correctly.
+
+#### Step 1.8.3: Create dates barrel export
+- Create/maintain `src/lib/dates/index.js`
+- **Verification**: `require('@lib/dates')` exposes date utilities.
+
+### Step 1.9: WebSocket events
+- Create `src/lib/websocket/events.js` (centralized WebSocket event type constants)
+- **Note:** WebSocket events are in `src/lib/websocket/events.js` (per `websockets.mdc`), not in `src/websockets/events.js`
+- **Note:** `src/websockets/` directory contains server implementation (`server.js`, `gateway.js`), while event definitions are in `src/lib/websocket/events.js`
+- **Verification**: Events file exports event name constants
+
+### Step 1.9.1: Create websocket barrel export
+- Create/maintain `src/lib/websocket/index.js`
+- **Verification**: `require('@lib/websocket')` exposes events (and emit helpers if present).
+
+### Step 1.10: Storage abstraction - base
+- Create `src/lib/storage/StorageService.js` (abstract base class/interface)
+- **Verification**: StorageService defines required methods (upload, delete, get, etc.)
+
+### Step 1.11: Storage providers - local
+- Create `src/lib/storage/LocalStorageService.js` (extends StorageService, local file system)
+- **Verification**: LocalStorageService implements all StorageService methods
+
+### Step 1.12: Storage providers - S3
+- Create `src/lib/storage/S3StorageService.js` (extends StorageService, AWS S3)
+- **Verification**: S3StorageService implements all StorageService methods
+
+### Step 1.13: Storage factory
+- Create `src/lib/storage/factory.js` (factory function to select provider based on env, reads from `@config/env`)
+- Create `src/lib/storage/index.js` (exports StorageService, factory, providers)
+- **Verification**: Factory returns correct provider based on config
+
+### Step 1.14: Audit utilities
+- Create `src/lib/audit/createAuditLog.js` (creates audit log entry, non-blocking)
+- **Verification**: createAuditLog function exists, handles errors gracefully
+
+### Step 1.15: Lib barrel export
+- Create `src/lib/index.js` (exports all lib utilities)
+- **Verification**: All lib modules accessible via `@lib/*`
+
+### Step 1.16: Error middleware
+- Create `src/middlewares/error.middleware.js` (uses handleApiError, catches all errors)
+- **Verification**: Middleware uses `@lib/errors/handleApiError`
+
+### Step 1.17: Validation middleware
+- Create `src/middlewares/validate.middleware.js` (executes Zod validation, uses `@validations/*`)
+- **Verification**: Middleware validates body/params/query per `validation.mdc`
+
+### Step 1.18: Auth middleware - JWT
+- Create `src/middlewares/auth.middleware.js` (JWT authentication, extracts user from token)
+- **Verification**: Middleware verifies JWT, attaches user to request
+
+### Step 1.19: Auth middleware - RBAC
+- Extend `src/middlewares/auth.middleware.js` with RBAC enforcement (checks roles/permissions)
+- **Verification**: RBAC checks use `@config/roles` and `@config/permissions`
+
+### Step 1.20: Rate limit middleware
+- Create `src/middlewares/rateLimit.middleware.js` (rate limiting per `rate-limiting.mdc`)
+- **Verification**: Middleware uses `@config/rateLimit`, returns 429 when exceeded, includes rate limit headers
+
+### Step 1.21: Health check utilities
+#### Step 1.21.1: Implement `healthCheck`
+- Create `src/lib/health/healthCheck.js` (health check logic returning status, timestamp, uptime)
+- **Verification**: `healthCheck` returns the exact response schema required by `health-checks.mdc`.
+
+#### Step 1.21.2: Implement `readinessCheck` (Prisma primary)
+- Create `src/lib/health/readinessCheck.js` with primary DB connectivity check:
+  - Lightweight query (e.g., `SELECT 1`) using Prisma
+  - Timeout after 2 seconds (fast fail)
+- **Verification**: Prisma readiness check times out at ~2s max and does not hang.
+
+#### Step 1.21.3: Implement `readinessCheck` fallback (mysql2)
+- Add fallback DB connectivity check in `readinessCheck`:
+  - Direct mysql2 connection using `DATABASE_URL`
+  - Timeout after 5 seconds max
+  - Used when Prisma is unavailable/fails/times out
+- **Verification**: Fallback executes only when primary fails; total DB check time ≤ 7 seconds.
+
+#### Step 1.21.4: Implement `livenessCheck`
+- Create `src/lib/health/livenessCheck.js` (liveness check minimal response)
+- **Verification**: `livenessCheck` returns `{ "status": "alive" }` with HTTP 200.
+
+#### Step 1.21.5: Verify health performance and safety (read-only)
+- Confirm health checks do not expose sensitive info and are lightweight (no expensive queries)
+- **Verification**: Health endpoints respond within 100ms under normal conditions per `health-checks.mdc`.
+
+### Step 1.22: Configure constants
+- Populate `src/config/constants.js` with:
+  - `DEFAULT_PAGE = 1`
+  - `DEFAULT_PAGE_LIMIT = 20`
+  - `MAX_PAGE_LIMIT = 100`
+  - Additional constants as needed (naming: `UPPER_SNAKE_CASE`)
+- **Verification**: Constants follow naming convention, pagination defaults defined
+
+### Step 1.23: Configure JWT
+- Populate `src/config/jwt.js` with JWT configuration:
+  - Access token expiration (e.g., '15m')
+  - Refresh token expiration (e.g., '7d')
+  - Algorithm ('HS256')
+  - Reads `JWT_SECRET` from `@config/env` (validated to be ≥ 32 characters)
+- **Verification**: JWT config exports configuration object, validates JWT_SECRET length
+
+### Step 1.24: Configure security
+- Populate `src/config/security.js` with security configuration:
+  - Password requirements (min length: 8, complexity rules)
+  - API key requirements
+  - Encryption settings (AES-256)
+  - CSRF protection settings
+- **Verification**: Security config exports configuration object
+
+### Step 1.24.1: Add security headers middleware
+- Add global security headers middleware (e.g., `helmet`) configured via `@config/security`
+- Enforce stricter headers in production per `auth-security.mdc`
+- **Verification**: Security headers are present on all responses.
+
+### Step 1.24.2: Add CSRF protection middleware
+- Add CSRF middleware for state-changing routes (POST/PUT/PATCH/DELETE)
+- Exempt public health endpoints
+- **Verification**: CSRF tokens are required for mutations and validated.
+
+### Step 1.25: Configure CORS
+- Populate `src/config/cors.js` with CORS configuration:
+  - Environment-aware origins (reads `CORS_ORIGINS` from `@config/env`)
+  - Credentials enabled (`credentials: true`)
+  - Allowed headers: `Content-Type`, `Authorization`, custom headers
+  - Allowed methods: `GET`, `POST`, `PUT`, `DELETE`, `PATCH`, `OPTIONS`
+  - Preflight cache duration
+- **Verification**: CORS config exports middleware options, environment-aware, no wildcard in production
+
+### Step 1.26: Configure rate limiting
+- Populate `src/config/rateLimit.js` with rate limit configuration:
+  - Global limit: 100 requests per 15 minutes per IP
+  - Authenticated limit: 1000 requests per 15 minutes per user
+  - Endpoint-specific limits (auth endpoints: 5/15min, etc.)
+  - Environment-aware (different limits for dev/staging/production)
+- **Verification**: Rate limit config exports configuration object
+
+### Step 1.27: Configure roles
+- Populate `src/config/roles.js` with role definitions (e.g., 'admin', 'user', 'guest')
+- **Verification**: Roles exported as constants or configuration object
+
+### Step 1.28: Configure permissions
+- Populate `src/config/permissions.js` with permission mappings (role → permissions)
+- **Verification**: Permissions exported, maps roles to permission sets
+
+### Step 1.29: Populate config barrel exports
+- Populate `src/config/index.js` with exports of all config modules (env, constants, jwt, security, cors, rateLimit, roles, permissions)
+- Use CommonJS `module.exports` pattern
+- **Verification**: All config modules accessible via `@config/*` aliases
+
+### Step 1.30: Express app initialization
+#### Step 1.30.1: Create Express app scaffold
+- Create `src/app/index.js` and initialize Express app
+- **Verification**: `src/app/index.js` exports an Express app instance.
+
+#### Step 1.30.2: Apply global middleware (order enforced)
+- Apply middleware in this order:
+  - Security headers middleware (uses `@config/security`)
+  - CORS middleware (uses `@config/cors`)
+  - JSON parser middleware
+  - Rate limit middleware (uses `@config/rateLimit`)
+  - CSRF middleware for state-changing routes
+- **Verification**: Middleware order matches `cors.mdc` + `rate-limiting.mdc` + `api.mdc`.
+
+#### Step 1.30.3: Mount router
+- Mount routes from `src/app/router.js`
+- **Verification**: API module routes resolve under `/api/v1/*` (health endpoints remain unversioned).
+
+#### Step 1.30.4: Apply error middleware last
+- Apply error middleware (must be last)
+- **Verification**: Errors propagate to centralized handler and responses match `response-format.mdc`.
+
+### Step 1.31: Root router
+- Create `src/app/router.js` (mounts all module routes under `/api/v1/`)
+- **Verification**: Router exports Express router, ready for module mounting
+
+### Step 1.32: Health check endpoints
+- Add `GET /health` route in `src/app/router.js` (public, no auth, uses `@lib/health/healthCheck`)
+- Add `GET /ready` route in `src/app/router.js` (public, no auth, uses `@lib/health/readinessCheck`)
+- Add `GET /live` route in `src/app/router.js` (public, no auth, uses `@lib/health/livenessCheck`)
+- All health endpoints return correct format per `health-checks.mdc`, no authentication required
+- **Verification**: Health endpoints return correct format, respond within 100ms, no sensitive info exposed
+
+### Step 1.33: Server entry point
+#### Step 1.33.1: Create server bootstrap file
+- Create `src/server.js` (HTTP server bootstrap)
+- **Verification**: `src/server.js` exists and uses CommonJS.
+
+#### Step 1.33.2: Register runtime aliases first (mandatory)
+- First executable line: `require('module-alias/register')`
+- Register global aliases using `module-alias.addAliases()`:
+  - `@app`, `@lib`, `@config`, `@middlewares`, `@prisma/client`, `@logs`
+- Call `registerAllModuleAliases()` from `@lib/aliases/registerModuleAliases`
+- **Verification**: Aliases resolve at runtime; server starts without relative cross-module imports.
+
+#### Step 1.33.3: Load and validate env early (mandatory)
+- Import `@config/env` near the top (after alias registration)
+- Ensure only `src/config/env.js` reads `process.env` and performs validation
+- **Verification**: Server fails fast on missing/invalid env vars; no other file accesses `process.env`.
+
+#### Step 1.33.4: Start HTTP server
+- Start Express app and listen on configured port
+- **Verification**: Server listens on expected port and serves health endpoints.
+
+#### Step 1.33.5: Add graceful shutdown handling
+- Handle SIGTERM, SIGINT, uncaught exceptions, unhandled rejections
+- **Verification**: Server shuts down gracefully without leaving open handles.
+
+### Step 1.34: Documentation baseline
+- Enforce JSDoc for all routes, controllers, services, and lib utilities per `documentation.mdc`
+- **Verification**: New modules include complete JSDoc blocks on public functions and routes.
+
+### Step 1.35: Resilience utilities
+- Create `src/lib/resilience/` helpers for retries and timeouts
+- Define retry/timeout defaults in `src/config/constants.js`
+- **Verification**: External service calls use resilience helpers and configurable timeouts.

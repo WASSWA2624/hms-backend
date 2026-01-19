@@ -1,0 +1,72 @@
+---
+alwaysApply: true
+---
+
+# Testing Rules
+## Purpose
+Defines **mandatory testing standards** using Jest.
+Ensures:
+- Full coverage of routes, controllers, and services
+- Safe testing without affecting production
+- Consistent and maintainable test code
+- Mocking external dependencies including Prisma
+Any violation is **invalid**.
+---
+
+## Test Structure
+- Tests **must** reside in `src/tests/`:
+  - `setup.js` → global setup and mocks
+  - `modules/` → module-specific tests
+- Test files **must** mirror module paths within `src/tests/modules/`:
+  - Example: `src/tests/modules/user/services/user.service.test.js`
+  - Structure: `src/tests/modules/<module>/<layer>/<file>.test.js`
+---
+
+## What to Test
+- Routes:
+  - HTTP method, status codes, and response format
+- Controllers:
+  - Proper handling of request/response
+  - Validation and error handling
+- Services:
+  - Business logic correctness
+  - Repository calls and edge cases
+- Authentication flows:
+  - JWT, RBAC, API keys
+- Validation:
+  - Zod schemas for body, params, and query
+- Error handling:
+  - Centralized error middleware coverage
+---
+
+## Mocks & Isolation
+- **Prisma must be mocked** in tests (never hit production DB)
+- External services must be mocked
+- Tests **must not** depend on real-time network or DB calls
+- CI-safe tests only
+---
+
+## Naming & Conventions
+- Test filenames: `<module>.<layer>.test.js` (e.g., `user.service.test.js`)
+- Test descriptions **must** clearly describe the case
+- Group related tests using `describe()`
+---
+
+## Best Practices
+- Each test **must** be independent
+- Keep test cases small and focused
+- Use reusable test utilities from `lib/` if needed
+- Always clean up mocks and states after each test
+---
+
+## Forbidden Patterns
+- Hitting production or dev databases
+- Hardcoding credentials or secrets
+- Skipping important modules from tests
+- Mixing multiple testing libraries unnecessarily
+---
+
+## Enforcement
+❌ Violations are invalid  
+✅ Refactors must improve coverage, reliability, and maintainability  
+All modules **must strictly follow these testing rules**.

@@ -1,0 +1,70 @@
+---
+alwaysApply: true
+---
+
+# Coding Standards
+
+## Purpose
+Mandatory, universal JavaScript conventions for consistency, readability, maintainability, and easy refactoring.
+
+---
+
+## Language Style
+- Only arrow functions; no `function x() {}`.
+- Classes allowed only for Error types.
+
+---
+
+## Async & Error Handling
+- All async errors must be handled:
+  - Routes/controllers: use `@lib/async/asyncHandler`; never `try/catch` in controllers.
+  - Services/repos/lib: use `try/catch` for error translation or multi-step ops.
+- No unhandled promise rejections; always pass errors to centralized handler.
+
+---
+
+## Module System & Imports
+- Use CommonJS (per `architecture.mdc`).
+- Always use import aliases (`import-aliases.mdc`).
+
+## Code Reuse
+- No code duplication.
+- Centralize reusable logic.
+- Helpers in `lib/`; config in `config/`.
+
+---
+
+## Layer Restrictions
+- Routes: map requests.
+- Controllers: handle request/response.
+- Services: business logic.
+- Only repositories may access Prisma models.
+
+---
+
+## Environment Access
+- Never access `process.env` directly; use config.
+
+---
+
+## Naming Conventions
+- Vars/functions: `camelCase`
+- Constants: `UPPER_SNAKE_CASE`
+- Files: `kebab-case.js`
+- Folders: `kebab-case`
+
+---
+
+## Comments & Clean Code
+- Code should be self-explanatory.
+- No commented-out code.
+- TODOs require context/owner.
+- Limit functions to 50 lines; extract complex logic.
+- Keep cyclomatic complexity < 10.
+- Prioritize simple over complex solutions.
+
+---
+
+## Enforcement
+❌ Violations are invalid  
+✅ Refactors must only increase compliance

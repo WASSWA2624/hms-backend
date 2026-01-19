@@ -1,0 +1,27 @@
+---
+alwaysApply: true
+---
+
+## Phase 11 – Seeder (Faker-based)
+
+### Step 12.1: Add Faker dependency
+- Install `@faker-js/faker` as a dev dependency
+- **Verification**: `@faker-js/faker` appears in `devDependencies`
+
+### Step 12.2: Create seed entrypoint
+- Create `prisma/seed.js` (CommonJS)
+- **Verification**: `prisma/seed.js` exists and can be executed
+
+### Step 12.3: Support dynamic record counts
+- Use `SEED_RECORD_COUNT` (global default) from `@config/env`
+- Allow per-table overrides via a constants map, e.g. `SEED_COUNTS` in `src/config/constants.js`
+- **Verification**: Seed count can be changed without code edits
+
+### Step 12.4: Add seed script
+- Add `seed` script to `package.json`: `"seed": "node prisma/seed.js"`
+- **Verification**: `npm run seed` executes the seeder
+
+### Step 12.5: Ensure deterministic and safe output
+- Use faker with seeded RNG for repeatability in dev
+- Do not seed in production environments
+- **Verification**: Seeding skips when `NODE_ENV=production`

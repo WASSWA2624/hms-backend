@@ -1,0 +1,88 @@
+---
+alwaysApply: true
+---
+
+## Phase 8 – Prisma schema (app-specific)
+
+### Step 8.1: Define enums
+- Add required enums in `prisma/schema.prisma` (PascalCase):
+  - UserRole, ProductStatus, MediaAssetType, CartStatus (SAVED, SHARED), QuoteStatus
+  - SupplierStatus, NotificationType, NotificationPriority, AddressType, ShipmentStatus
+  - PaymentStatus, OrderStatus (PROCESSING, IN_USE, COMPLETED), ReturnStatus
+  - InventoryReason, PromotionType, DiscountType, SubscriptionStatus, BillingCycle
+  - SubscriptionPlanType, SubscriptionFeatureType, ApiKeyStatus, ApiKeyPermissionType
+  - DataProcessingPurpose, LegalBasis, BreachSeverity, BreachStatus, SoxControlType
+  - SystemChangeType, CompatibilityLinkLinkType, VerificationTokenType
+  - PaymentMethodType, PaymentMethodRequestStatus, ProductApprovalStatus, VendorApprovalStatus
+  - MFAMethod, OAuthProvider, POStatus, LeaseStatus, LeasePaymentStatus, NetTermsStatus
+  - RecallSeverity, RecallStatus, IntegrationType, HazardClass, ReferralStatus
+  - ReferralRewardType, CommissionStatus, LoyaltyTier, LoyaltyTransactionType
+  - TicketCategory, TicketPriority, TicketStatus, DisputeType, DisputeStatus, DisputePriority
+- **Verification**: Enum names are PascalCase and include required values
+
+### Step 8.2: Define base models
+- `user`, `company`, `address`
+- **Verification**: Naming + indexes follow `prisma.mdc` (snake_case fields, soft delete index)
+
+### Step 8.3: Catalog models
+- `category`, `manufacturer`, `department`, `product`, `product_attribute`
+- **Verification**: `product` has unique `sku` and required relations
+
+### Step 8.4: Inventory models
+- `warehouse`, `batch_lot`, `inventory`, `inventory_transaction`
+
+### Step 8.5: Commerce models
+- `cart`, `cart_item`, `quote_request`, `quote_request_item`
+- `order`, `order_item`, `payment`, `shipment`, `return_request`
+- **Verification**: Required status enums are used (OrderStatus, ReturnStatus)
+
+### Step 8.6: Communication models
+- `notification`, `conversation`, `message`, `media_asset`
+- `support_ticket`, `support_ticket_comment`, `support_ticket_history`
+- `dispute`, `dispute_comment`, `dispute_history`
+
+### Step 8.7: Subscription models
+- `subscription_plan`, `subscription`, `subscription_invoice`
+- `subscription_payment_method`, `subscription_usage`
+
+### Step 8.8: Compliance models
+- `audit_log`, `data_processing_log`, `breach_notification`, `phi_access_log`
+- `financial_control_log`, `system_change_log`, `consent`, `terms_acceptance`
+
+### Step 8.9: Marketing models
+- `promotion`, `coupon_redemption`, `user_favourite_product`, `user_social_link`
+- `shop`, `referral_code`, `referral`, `affiliate_link`, `affiliate_commission`
+- `loyalty_points`, `loyalty_transaction`, `loyalty_badge`, `user_loyalty_badge`
+
+### Step 8.10: Reviews & ratings models
+- `product_review`, `review_media_asset`, `vendor_review_response`, `review_helpful_vote`
+
+### Step 8.11: Payment methods models
+- `order_payment_method`, `payment_method_request`, `payment_method_request_upvote`
+
+### Step 8.12: Approval workflow models
+- `product_approval`, `product_approval_history`
+- `vendor_approval`, `vendor_approval_document`, `vendor_approval_history`
+
+### Step 8.13: Product compliance models
+- `product_certification`, `product_hazard`
+
+### Step 8.14: Authentication models
+- `user_mfa`, `oauth_account`
+
+### Step 8.15: Enterprise payment models
+- `purchase_order`, `lease_agreement`, `lease_payment`, `net_terms`
+
+### Step 8.16: Safety & compliance models
+- `product_recall`, `recall_notification`
+
+### Step 8.17: Integration & discovery models
+- `integration_log`, `saved_search`, `search_history`, `wishlist`, `wishlist_item`
+
+### Step 8.18: Run migration
+- Run `npx prisma migrate dev --name initial_schema`
+- **Verification**: Migration folder exists in `prisma/migrations/`
+
+### Step 8.19: Generate Prisma client
+- Run `npx prisma generate`
+- **Verification**: Prisma client generation succeeds

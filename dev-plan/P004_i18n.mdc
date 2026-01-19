@@ -1,0 +1,41 @@
+---
+alwaysApply: true
+---
+
+## Phase 4 – Internationalization (i18n) base
+
+### Step 4.1: Create locale folder
+- Create `src/locales/` and add `en.json` with complete base translations
+- **Verification**: `src/locales/en.json` exists and is non-empty
+
+### Step 4.2: Add i18n helpers
+- Create `src/lib/i18n/` utilities:
+  - `getLocale(req)` (Accept-Language + query param)
+  - `translate(key, locale, params)`
+  - `formatDate(date, locale)`
+  - `formatNumber(number, locale, options)`
+- **Verification**: Helpers can be imported from `@lib/i18n/*`
+
+### Step 4.2.1: Load translations at startup
+- Load translation files once at boot (no per-request disk reads)
+- Add in-memory cache for translation lookups
+- **Verification**: Translation lookup is cached and fast (<1ms).
+
+### Step 4.3: Locale validation + defaults
+- Add `DEFAULT_LOCALE` and `SUPPORTED_LOCALES` to `src/config/constants.js`
+- Validate locale via Zod in `@lib/validation/zod`
+- **Verification**: Invalid locale falls back to default and logs a warning
+
+### Step 4.3.1: Localize error and validation messages
+- Route all error and validation messages through `@lib/i18n/translate`
+- Ensure Zod validation errors are translated with `errors.*` keys
+- **Verification**: Error/validation responses are localized and include `meta.locale`.
+
+### Step 4.4: Locale in responses
+- Update response helpers to include `meta.locale` and `meta.direction`
+- Set `Content-Language` when locale differs from default
+- **Verification**: All non-204 responses include locale metadata
+
+### Step 4.5: i18n middleware
+- Add middleware to detect locale and attach to request context
+- **Verification**: Locale is available in controllers/services without direct header parsing

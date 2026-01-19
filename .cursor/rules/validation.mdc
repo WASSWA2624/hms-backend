@@ -1,0 +1,61 @@
+---
+alwaysApply: true
+---
+
+# Validation Rules
+
+## Purpose
+Zod-based validation is mandatory for strict input checking, data integrity, reusability, and security. All violations are invalid.
+
+---
+
+## General
+- Use Zod exclusively for all request body, URL parameter, and query parameter validation, always before controllers.
+- No manual or inline validation.
+
+---
+
+## Schema Organization
+- Schemas reside in `@validations/*` → `src/modules/<module>/schemas/`
+- Each module: schemas in `src/modules/<module>/schemas/<module>.schema.js`
+- Export separate schemas for body, params, and query (e.g., `CreateUserSchema`, `UserIdParamsSchema`, `ListUsersQuerySchema`)
+- Reusable validators: `src/lib/validation/zod.js`; import shared utilities from `@lib/validation/zod`
+
+---
+
+## Naming
+- Const names: `<Module><Purpose>Schema` (e.g., `CreateUserSchema`)
+- Fields: snake_case (match DB)
+
+---
+
+## Rules
+- String: min/max, trim
+- Number: min/max, integer/float
+- Date: valid, required/optional
+- Enum: matches Prisma
+- Array: type check, optional max
+- Optional fields: `.optional()`
+- Required: `.nonempty()` if applicable
+
+---
+
+## Errors
+- Pass errors to centralized middleware
+- No internal system info in responses
+- Format per `response-format.mdc`
+
+---
+
+## Forbidden
+- No inline/controller validation
+- Don't skip optional validation without reason
+- Never mix validation libraries
+- No non-standardized hard-coded messages
+
+---
+
+## Enforcement
+❌ Violations = invalid  
+✅ Refactors must clarify/improve validation  
+All endpoints must comply.

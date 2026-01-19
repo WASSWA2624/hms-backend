@@ -1,0 +1,243 @@
+---
+alwaysApply: true
+---
+
+## Phase 0 – One-time setup (identical starting point)
+
+### Step 0.1: Initialize project structure (task-atomic sub-steps)
+
+#### Step 0.1.1: Initialize Node project
+- Run `npm init -y` in project root
+- **Verification**: `package.json` exists at project root.
+
+#### Step 0.1.2: Create `.gitignore`
+- Create `.gitignore` with standard Node.js ignores (node_modules, .env, logs/, etc.)
+- **Verification**: `.gitignore` exists and includes `node_modules/` and `.env`.
+
+#### Step 0.1.3: Create `env.template.txt`
+- Create `env.template.txt` with required environment variable placeholders (per `constants-env.mdc`):
+  - `DATABASE_URL="mysql://user:password@localhost:3306/dbname"`
+  - `JWT_SECRET="<32+ character secret>"` (≥ 32 characters)
+  - `CORS_ORIGINS="http://localhost:3000,http://localhost:3001"` (comma-separated for development)
+  - `NODE_ENV="development"`
+  - `PORT="3000"` (optional, defaults to 3000)
+  - `STORAGE_PROVIDER="local"` (local or s3)
+  - Additional variables as needed (AWS credentials if using S3, etc.)
+- **Note:** `env.template.txt` must be git ignored (per `constants-env.mdc`) — add it explicitly to `.gitignore`.
+- **Verification**: `env.template.txt` exists and includes all required variables.
+
+#### Step 0.1.4: Create nodemon config
+- Create `nodemon.json` with dev script configuration
+- **Verification**: `nodemon.json` exists.
+
+#### Step 0.1.5: Create Jest config
+- Create `jest.config.js` with Jest test configuration
+- **Verification**: `jest.config.js` exists.
+
+#### Step 0.1.6: Create README skeleton
+- Create `README.md` skeleton with project overview
+- **Verification**: `README.md` exists.
+
+#### Step 0.1.7: Add npm scripts
+- Add npm scripts to `package.json`:
+  - `"dev": "nodemon src/server.js"` (development with auto-reload)
+  - `"start": "node src/server.js"` (production)
+- Add test scripts (per `testing.mdc` conventions):
+  - `"test": "jest"`
+  - `"test:watch": "jest --watch"`
+  - `"test:coverage": "jest --coverage"`
+- Ensure CommonJS is explicit (per `architecture.mdc`): `"type": "commonjs"`
+- **Verification**: `package.json` contains `dev` and `start` scripts exactly as required.
+
+#### Step 0.1.8: Create Prisma guide
+- Create `prisma/guide.md` with Prisma commands and usage notes
+- **Verification**: `prisma/guide.md` exists.
+
+#### Step 0.1.9: Create API versioning docs
+- Create docs placeholders:
+  - `CHANGELOG.md` (version history)
+  - `docs/api/v1/openapi.yaml` (versioned API spec stub)
+  - `docs/migrations/v1.md` (migration guide stub)
+- **Verification**: Docs placeholders exist and are versioned by path.
+
+### Step 0.2: Install core dependencies (task-atomic sub-steps)
+
+#### Step 0.2.1: Install production dependencies
+- Install production dependencies:
+  - `npm install express prisma @prisma/client ws zod bcryptjs jsonwebtoken argon2 cors module-alias @prisma/adapter-mariadb mysql2 dotenv`
+- **Verification**: `package.json` has these packages under `dependencies`.
+
+#### Step 0.2.2: Install development dependencies
+- Install development dependencies:
+  - `npm install --save-dev jest supertest nodemon eslint prettier`
+- **Verification**: `package.json` has these packages under `devDependencies`.
+
+#### Step 0.2.3: Verify dependency lock
+- **Verification**: `package-lock.json` exists.
+
+#### Step 0.2.4: Verify required dependency notes (documentation-only check)
+- **Note:** `module-alias` is required for runtime import alias resolution (Node.js doesn't support `jsconfig.json` paths at runtime)
+- **Note:** `@prisma/adapter-mariadb` and `mysql2` are required for Prisma 7.x MySQL compatibility
+- **Note:** `dotenv` is required to load `.env` file at runtime (must be loaded before any other requires in `src/server.js`)
+- **Verification**: All three packages exist in `package.json`.
+
+### Step 0.3: Create folder structure (task-atomic sub-steps)
+
+#### Step 0.3.1: Create root folders
+- Create folder tree per `project-structure.mdc`:
+  - `src/`
+  - `src/app/`, `src/prisma/`, `src/modules/`, `src/websockets/`, `src/middlewares/`, `src/lib/`, `src/config/`, `src/tests/`, `src/logs/`
+- **Verification**: All listed directories exist.
+
+#### Step 0.3.2: Create `src/lib/` subfolders
+- Under `src/lib/`: `crypto/`, `jwt/`, `errors/`, `response/`, `async/`, `validation/`, `dates/`, `logging/`, `audit/`, `websocket/`, `storage/`, `health/`
+- **Verification**: All listed `src/lib/*` directories exist.
+
+#### Step 0.3.3: Create required barrel files (`index.js`) (task-atomic sub-steps)
+
+##### Step 0.3.3.1: Create lib root barrel
+- Create `src/lib/index.js`
+- **Verification**: `src/lib/index.js` exists.
+
+##### Step 0.3.3.2: Create lib subfolder barrels
+- Create `index.js` in each `src/lib/*` directory listed in Step 0.3.2 (per `project-structure.mdc` and `import-aliases.mdc` barrel rules)
+- **Verification**: Every directory listed in Step 0.3.2 contains an `index.js`.
+
+#### Step 0.3.4: Create Prisma root directory
+- Create `prisma/` directory at project root
+- **Verification**: `prisma/` exists at project root.
+
+#### Step 0.3.5: Create required runtime entry stubs (task-atomic sub-steps)
+
+##### Step 0.3.5.1: Create server entry point
+- Create `src/server.js` (entry point)
+- **Verification**: `src/server.js` exists.
+
+##### Step 0.3.5.2: Create Express app init
+- Create `src/app/index.js` (Express app init)
+- **Verification**: `src/app/index.js` exists.
+
+##### Step 0.3.5.3: Create root router
+- Create `src/app/router.js` (mounts `/api/v1/*` modules + system health endpoints per `health-checks.mdc`)
+- **Verification**: `src/app/router.js` exists.
+
+##### Step 0.3.5.4: Create auth middleware stub
+- Create `src/middlewares/auth.middleware.js`
+- **Verification**: `src/middlewares/auth.middleware.js` exists.
+
+##### Step 0.3.5.5: Create validation middleware stub
+- Create `src/middlewares/validate.middleware.js`
+- **Verification**: `src/middlewares/validate.middleware.js` exists.
+
+##### Step 0.3.5.6: Create error middleware stub
+- Create `src/middlewares/error.middleware.js`
+- **Verification**: `src/middlewares/error.middleware.js` exists.
+
+##### Step 0.3.5.7: Create rate limit middleware stub
+- Create `src/middlewares/rateLimit.middleware.js`
+- **Verification**: `src/middlewares/rateLimit.middleware.js` exists.
+
+##### Step 0.3.5.8: Enforce CommonJS on runtime stubs
+- Ensure all created stubs use CommonJS (`require`/`module.exports`) (per `architecture.mdc`)
+- **Verification**: Each created stub contains at least one `require(` or `module.exports`.
+
+### Step 0.4: Configure import aliases (task-atomic sub-steps)
+
+#### Step 0.4.1: Create `jsconfig.json` (IDE support)
+- Create `jsconfig.json` at root with aliases per `import-aliases.mdc`:
+  - `@app/*` → `src/app/*`
+  - `@lib/*` → `src/lib/*`
+  - `@middlewares/*` → `src/middlewares/*`
+  - `@config/*` → `src/config/*`
+  - `@prisma/client` → `src/prisma/client.js`
+  - `@logs/*` → `src/logs/*`
+- **Verification**: `jsconfig.json` exists and contains these paths.
+
+#### Step 0.4.2: Record module-scoped alias limitation (documentation-only)
+- **Note:** Module-scoped aliases (`@controllers/*`, `@services/*`, etc.) with multiple wildcards are not supported in `jsconfig.json` but will work at runtime
+- **Verification**: Note exists in this plan (no code change).
+
+#### Step 0.4.3: Ensure runtime alias registration is planned (mandatory)
+- In `src/server.js`, ensure `require('module-alias/register')` is the very first require, then register base aliases (`@app`, `@lib`, `@config`, `@middlewares`, `@prisma/client`, `@logs`) and call `registerAllModuleAliases()` (per `import-aliases.mdc`).
+- **Verification**: Plan explicitly calls out "alias registration must be first" and includes module-scoped alias registration.
+
+### Step 0.5: Initialize Prisma (task-atomic sub-steps)
+
+#### Step 0.5.1: Initialize Prisma scaffold
+- Run `npx prisma init` (creates `prisma/schema.prisma` and `.env` entry)
+- Ensure `.env` is git ignored and never committed (per security rules)
+- **Verification**: `prisma/schema.prisma` exists.
+
+#### Step 0.5.2: Ensure env template has DB URL placeholder
+- Update `env.template.txt` with `DATABASE_URL` placeholder if not already present
+- **Verification**: `env.template.txt` includes `DATABASE_URL=...`.
+
+#### Step 0.5.3: Enforce Prisma 7.x datasource rule
+- Remove `url` from `datasource` block in `prisma/schema.prisma` (Prisma 7.x requirement - URL is passed via adapter)
+- **Verification**: `prisma/schema.prisma` datasource block does not contain `url =`.
+
+#### Step 0.5.4: Create `prisma.config.js` (Prisma CLI config)
+- Create `prisma.config.js` at project root:
+  - Do **not** read `process.env` directly here (per `constants-env.mdc`)
+  - Import `src/config/env.js` (the only file allowed to read `process.env`) and use its validated values
+  - Use a **relative** require (not alias) because Prisma CLI does not automatically run `module-alias` registration
+  - Export configuration with `schema` path and `datasource.url` using the validated `DATABASE_URL`
+  - Use CommonJS format (`require`/`module.exports`)
+- **Verification**: `prisma.config.js` exists and uses `src/config/env.js` (not raw `process.env`).
+
+#### Step 0.5.5: Create Prisma client wrapper
+- Create `src/prisma/client.js`:
+  - Use `@prisma/adapter-mariadb` for MySQL connections (Prisma 7.x requirement)
+  - Parse `DATABASE_URL` to extract connection parameters
+  - Create MySQL connection pool using `mysql2`
+  - Instantiate `PrismaClient` with adapter: `new PrismaClient({ adapter })`
+  - Handle singleton pattern for development (globalThis) and production instances
+  - CommonJS format (`require`/`module.exports`)
+- **Verification**: `src/prisma/client.js` exists and exports a Prisma client singleton initialized via adapter.
+
+### Step 0.6: Create config stubs (task-atomic sub-steps)
+
+#### Step 0.6.1: Create env config
+- Create `src/config/env.js` (only file allowed to use `process.env`, validates required vars on boot)
+- **Verification**: `src/config/env.js` exists and is the only place reading `process.env`.
+
+#### Step 0.6.2: Create config stub files
+- Create empty stubs:
+  - `src/config/constants.js` (populated in Step 1.22)
+  - `src/config/jwt.js` (populated in Step 1.23)
+  - `src/config/security.js` (populated in Step 1.24)
+  - `src/config/cors.js` (populated in Step 1.25)
+  - `src/config/rateLimit.js` (populated in Step 1.26)
+  - `src/config/roles.js` (populated in Step 1.27)
+  - `src/config/permissions.js` (populated in Step 1.28)
+- **Verification**: All listed stub files exist.
+
+#### Step 0.6.3: Create config barrel
+- Create `src/config/index.js` (barrel export file, empty initially)
+- **Verification**: `src/config/index.js` exists.
+
+---
+
+### Phase 0 verification checklist (quick, high-signal)
+
+| Check | What “complete” means | Where to verify |
+|---|---|---|
+| Project initialized | `package.json` + `package-lock.json` exist | project root |
+| CommonJS enforced | `package.json` contains `"type": "commonjs"` | `package.json` |
+| Required scripts | `dev`, `start`, `test`, `test:watch`, `test:coverage` present | `package.json` |
+| Git ignore basics | `.gitignore` includes `node_modules/`, `.env`, `logs/`, and `env.template.txt` | `.gitignore` |
+| Env template present | `env.template.txt` lists `DATABASE_URL`, `JWT_SECRET`, `CORS_ORIGINS`, `NODE_ENV`, `PORT`, `STORAGE_PROVIDER` | `env.template.txt` |
+| Prisma scaffold exists | `prisma/schema.prisma` exists | `prisma/schema.prisma` |
+| Prisma 7 datasource rule | `prisma/schema.prisma` datasource has **no** `url = ...` | `prisma/schema.prisma` |
+| Prisma CLI config safe | `prisma.config.js` uses `require('./src/config/env')` (no raw `process.env`) | `prisma.config.js` |
+| Prisma client wrapper | `src/prisma/client.js` uses adapter + mysql2 pool + singleton pattern | `src/prisma/client.js` |
+| Config is centralized | `src/config/env.js` exists and is the **only** place reading `process.env` | `src/config/env.js` + repo grep |
+| CORS rule ready | `cors` dependency installed and `src/config/cors.js` stub exists | `package.json`, `src/config/cors.js` |
+| Jest configured | `jest.config.js` exists and points to `src/tests/setup.js` | `jest.config.js` |
+| Aliases (IDE) | `jsconfig.json` paths include `@app`, `@lib`, `@config`, `@middlewares`, `@prisma/client`, `@logs` | `jsconfig.json` |
+| Aliases (runtime) | `src/server.js` registers `module-alias` **first**, then base aliases + `registerAllModuleAliases()` | `src/server.js` |
+| Required folder structure | `src/app`, `src/modules`, `src/lib`, `src/config`, `src/middlewares`, `src/tests`, `src/prisma` exist | `src/` tree |
+| Lib barrel files | `src/lib/index.js` exists and every `src/lib/*/index.js` exists (including `health/`) | `src/lib/**/index.js` |
+| Router planned | `src/app/router.js` exists and is responsible for mounting `/api/v1/*` and system health endpoints | `src/app/router.js` |
+| Prisma guide | `prisma/guide.md` exists | `prisma/guide.md` |
+| Versioned docs | `CHANGELOG.md` and `docs/api/v1/openapi.yaml` exist | project root, `docs/api/v1/` |

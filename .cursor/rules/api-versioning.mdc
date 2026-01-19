@@ -1,0 +1,61 @@
+---
+alwaysApply: true
+---
+
+# API Versioning Rules
+
+## Purpose
+Defines **mandatory API versioning** for backward compatibility and smooth evolution. Requires policy clarity, compatibility, migration support, predictable lifecycle. **No violations allowed**.
+---
+
+## Version Format
+- API versions **must** be in URL using integer semantic versioning: `/api/v1/`, `/api/v2/`, etc. (not `v1.2.3`).
+- Initial release is `v1`.
+- All API endpoints **must** have a version in the path, except `GET /health`, `GET /ready`, `GET /live` (see `health-checks.mdc`).
+---
+
+## Version Bumping Policy
+- **Major bump (vN → vN+1)**: Breaking request/response, removing endpoints/fields, changing auth/core logic.
+- **No bump** for: Adding endpoints/optional fields/queries, compatible bugfixes/performance.
+---
+
+## Backward Compatibility
+- Old versions **must** work ≥6 months after new release.
+- Deprecated versions **must** include `Deprecation: true` and `Sunset: <RFC 3339 date>` headers.
+- Breaking changes **must** be in changelogs before release.
+- Migration guides **must** be provided.
+---
+
+## Version Lifecycle
+1. **Active**: fully supported
+2. **Deprecated**: functional, removal scheduled (≥6 months notice)
+3. **Sunset**: removed, inaccessible
+- Deprecations **must** be announced 6+ months before sunset.
+- Multiple active versions allowed in transition.
+---
+
+## Implementation
+- Version routing **must** be in `src/app/router.js`.
+- Each version **may** use separate route files: `src/modules/<module>/routes/v1/`, etc.
+- Shared logic **must** be only in services/repositories.
+- Version-specific validation allowed if needed.
+---
+
+## Documentation
+- Docs **must** indicate endpoint version.
+- Changelog **must** track version changes.
+- Migration guides **must** be supplied for major bumps.
+- OpenAPI/Swagger specs **must** be versioned individually.
+---
+
+## Forbidden Patterns
+- Removing endpoints without deprecation
+- Breaking changes without version bump
+- Mixing v1/v2 endpoints in one file without clear separation
+- Duplicating business logic across versions
+---
+
+## Enforcement
+❌ Violations are invalid  
+✅ Refactors must keep compatibility and clear versioning  
+All API versions **must strictly comply with these rules**.

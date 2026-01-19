@@ -1,0 +1,38 @@
+---
+alwaysApply: true
+---
+
+## Phase 8 – Offline support base
+
+### Step 8.1: Add versioning fields to responses
+- Ensure all mutation responses return full resource data and a version/timestamp (`version`, `updated_at`, or `etag`)
+- **Verification**: Mutation responses include version fields and full resource data.
+
+### Step 8.2: Add conditional GET support
+- Support `If-None-Match` and `If-Modified-Since` headers on GET endpoints
+- Return 304 when resource is unchanged
+- **Verification**: Conditional requests return 304 with empty body.
+
+### Step 8.3: Add incremental sync support
+- Add `?since=<timestamp>` for list endpoints
+- Return sync metadata (`sync_token`, `has_more`, `timestamp`) per `offline-support.mdc`
+- **Verification**: Sync responses follow standard sync format and are idempotent.
+
+### Step 8.4: Add idempotency key handling
+- Support `Idempotency-Key` header on mutation endpoints
+- Return same response for duplicate keys within expiry window
+- **Verification**: Duplicate requests return identical responses without side effects.
+
+### Step 8.5: Add conflict detection
+- Require `version` or `expected_version` in update requests
+- Return 409 with current resource on version mismatch
+- **Verification**: Conflicts return standard conflict response format.
+
+### Step 8.6: Add cache headers
+- Return `ETag` or `Last-Modified` and `Cache-Control` headers
+- Add `Vary: Accept-Language` where i18n is used
+- **Verification**: Cache headers are present and consistent.
+
+### Step 8.7: Offline-focused tests
+- Add tests for conditional GET, sync, idempotency, and conflict responses
+- **Verification**: Offline support tests pass without external dependencies.

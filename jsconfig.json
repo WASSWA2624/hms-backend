@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@app/*": ["src/app/*"],
+      "@lib/*": ["src/lib/*"],
+      "@middlewares/*": ["src/middlewares/*"],
+      "@config/*": ["src/config/*"],
+      "@prisma/client": ["src/prisma/client.js"],
+      "@logs/*": ["src/logs/*"],
+      "@websockets/*": ["src/websockets/*"]
+    }
+  },
+  "exclude": ["node_modules", "logs"]
+}

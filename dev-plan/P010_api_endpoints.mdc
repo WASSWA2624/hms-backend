@@ -1,0 +1,823 @@
+---
+alwaysApply: true
+---
+
+# API Endpoints Reference
+
+## Overview
+This document defines the standard API endpoint patterns and structure for Express.js backend applications.
+All API module endpoints **must** use the `/api/v1/` base path prefix as required by `api.mdc`.
+
+## 0. System Health Endpoints (Unversioned)
+These endpoints are **system endpoints** and are not mounted under `/api/v1` (see `health-checks.mdc`):
+```javascript
+GET /health
+GET /ready
+GET /live
+```
+
+## 1. Authentication & User Management
+```javascript
+/api/v1/auth/
+├── POST /login                    // Authenticate user and return JWT
+├── POST /register                 // Register new user account
+├── POST /verify-email             // Verify email with token/code
+├── POST /verify-phone             // Verify phone with token
+├── POST /forgot-password          // Send password reset email
+├── POST /reset-password           // Reset password with token
+├── POST /change-password           // Change password (authenticated)
+├── POST /refresh                  // Refresh JWT token
+├── POST /logout                   // Logout and invalidate session
+├── GET /me                        // Get current user info
+└── POST /resend-verification      // Resend verification email/SMS
+
+/api/v1/users/
+├── GET /                          // List users with pagination
+├── POST /                         // Create user (admin only)
+├── GET /{id}                      // Get user by ID
+├── PUT /{id}                      // Update user
+├── DELETE /{id}                   // Soft delete user
+├── GET /{id}/orders               // Get user's orders
+├── GET /{id}/carts                // Get user's carts
+├── GET /{id}/favorites            // Get user's favorites
+├── GET /{id}/addresses            // Get user's addresses
+├── GET /{id}/notifications        // Get user's notifications
+├── GET /{id}/sessions             // Get user's sessions
+├── GET /{id}/api-keys             // Get user's API keys
+├── GET /{id}/subscriptions        // Get user's subscriptions
+├── GET /{id}/consents             // Get user's consents
+└── GET /{id}/audit-logs           // Get user's audit logs
+```
+
+## 2. Company & Address Management
+```javascript
+/api/v1/companies/
+├── GET /                          // List companies with pagination
+├── POST /                         // Create company
+├── GET /{id}                      // Get company by ID
+├── PUT /{id}                      // Update company
+├── DELETE /{id}                   // Soft delete company
+├── GET /{id}/users                // Get company users
+├── POST /{id}/users               // Add user to company
+├── DELETE /{id}/users/{userId}    // Remove user from company
+├── GET /{id}/addresses            // Get company addresses
+├── GET /{id}/shops                // Get company shops
+└── GET /{id}/orders               // Get company orders
+
+/api/v1/addresses/
+├── GET /                          // List addresses with pagination
+├── POST /                         // Create address
+├── GET /{id}                      // Get address by ID
+├── PUT /{id}                      // Update address
+├── DELETE /{id}                   // Soft delete address
+├── POST /{id}/set-default         // Set address as default
+└── GET /default/{type}            // Get default address by type
+```
+
+## 3. Product Catalog & Inventory
+```javascript
+/api/v1/categories/
+├── GET /                          // List categories with pagination
+├── POST /                         // Create category
+├── GET /{id}                      // Get category by ID
+├── PUT /{id}                      // Update category
+├── DELETE /{id}                   // Soft delete category
+├── GET /{id}/products             // Get category products
+└── GET /{id}/children             // Get subcategories
+
+/api/v1/manufacturers/
+├── GET /                          // List manufacturers with pagination
+├── POST /                         // Create manufacturer
+├── GET /{id}                      // Get manufacturer by ID
+├── PUT /{id}                      // Update manufacturer
+├── DELETE /{id}                   // Soft delete manufacturer
+└── GET /{id}/products             // Get manufacturer products
+
+/api/v1/departments/
+├── GET /                          // List departments with pagination
+├── POST /                         // Create department
+├── GET /{id}                      // Get department by ID
+├── PUT /{id}                      // Update department
+├── DELETE /{id}                   // Soft delete department
+├── GET /{id}/products             // Get department products
+└── GET /{id}/media                // Get department media
+
+/api/v1/products/
+├── GET /                          // List products with pagination
+├── GET /search                    // Search products with fulltext search
+├── POST /                         // Create product
+├── GET /{id}                      // Get product by ID
+├── PUT /{id}                      // Update product
+├── DELETE /{id}                   // Soft delete product
+├── POST /{id}/publish             // Publish product
+├── GET /{id}/attributes           // Get product attributes
+├── POST /{id}/attributes          // Add product attribute
+├── GET /{id}/media                // Get product media
+├── POST /{id}/media               // Add product media
+├── GET /{id}/suppliers            // Get product suppliers
+├── POST /{id}/suppliers           // Add product supplier
+├── GET /{id}/compatibility        // Get product compatibility
+├── GET /{id}/price-history        // Get product price history
+├── GET /{id}/comments             // Get product comments
+├── POST /{id}/comments            // Add product comment
+└── GET /{id}/inventory            // Get product inventory
+```
+
+## 4. Inventory Management
+```javascript
+/api/v1/warehouses/
+├── GET /                          // List warehouses with pagination
+├── POST /                         // Create warehouse
+├── GET /{id}                      // Get warehouse by ID
+├── PUT /{id}                      // Update warehouse
+├── DELETE /{id}                   // Soft delete warehouse
+└── GET /{id}/inventory            // Get warehouse inventory
+
+/api/v1/inventory/
+├── GET /                          // List inventory with pagination
+├── POST /                         // Create inventory record
+├── GET /{id}                      // Get inventory by ID
+├── PUT /{id}                      // Update inventory
+├── DELETE /{id}                   // Soft delete inventory
+├── POST /{id}/adjust              // Adjust inventory quantity
+└── GET /by-location/{warehouseId}/{productId}/{batchLotId}
+
+/api/v1/batch-lots/
+├── GET /                          // List batch lots with pagination
+├── POST /                         // Create batch lot
+├── GET /{id}                      // Get batch lot by ID
+├── PUT /{id}                      // Update batch lot
+├── DELETE /{id}                   // Soft delete batch lot
+├── GET /{id}/inventory            // Get batch lot inventory
+└── GET /{id}/transactions         // Get batch lot transactions
+```
+
+## 5. E-commerce & Shopping
+```javascript
+/api/v1/carts/
+├── GET /                          // List carts with pagination
+├── POST /                         // Create cart
+├── GET /{id}                      // Get cart by ID
+├── PUT /{id}                      // Update cart
+├── DELETE /{id}                   // Soft delete cart
+├── GET /{id}/items                // Get cart items
+├── POST /{id}/items               // Add item to cart
+├── PUT /{id}/items/{productId}    // Update cart item
+├── DELETE /{id}/items/{productId} // Remove item from cart
+└── POST /{id}/request-quote       // Request quote for cart
+
+/api/v1/quote-requests/
+├── GET /                          // List quote requests with pagination
+├── POST /                         // Create quote request
+├── GET /{id}                      // Get quote request by ID
+├── PUT /{id}                      // Update quote request
+├── DELETE /{id}                   // Soft delete quote request
+├── GET /{id}/items                // Get quote request items
+├── POST /{id}/items               // Add item to quote request
+├── GET /{id}/comments             // Get quote request comments
+├── POST /{id}/comments            // Add comment to quote request
+├── GET /{id}/media                // Get quote request media
+├── POST /{id}/media               // Add media to quote request
+└── POST /{id}/accept              // Accept quote request
+
+/api/v1/orders/
+├── GET /                          // List orders with pagination
+├── POST /                         // Create order
+├── GET /{id}                      // Get order by ID
+├── PUT /{id}                      // Update order
+├── DELETE /{id}                   // Soft delete order
+├── GET /{id}/items                // Get order items
+├── GET /{id}/payments             // Get order payments
+├── GET /{id}/shipments            // Get order shipments
+├── GET /{id}/returns              // Get order returns
+├── POST /{id}/cancel              // Cancel order
+└── GET /{id}/tracking             // Get order tracking
+```
+
+## 6. Payments & Shipping
+```javascript
+/api/v1/payments/
+├── GET /                          // List payments with pagination
+├── POST /                         // Create payment
+├── GET /{id}                      // Get payment by ID
+├── PUT /{id}                      // Update payment
+├── DELETE /{id}                   // Soft delete payment
+├── GET /{id}/refunds              // Get payment refunds
+└── POST /{id}/refund              // Process refund
+
+/api/v1/shipments/
+├── GET /                          // List shipments with pagination
+├── POST /                         // Create shipment
+├── GET /{id}                      // Get shipment by ID
+├── PUT /{id}                      // Update shipment
+├── DELETE /{id}                   // Soft delete shipment
+├── GET /{id}/items                // Get shipment items
+├── GET /{id}/events               // Get shipment events
+└── POST /{id}/track               // Track shipment
+
+/api/v1/returns/
+├── GET /                          // List returns with pagination
+├── POST /                         // Create return
+├── GET /{id}                      // Get return by ID
+├── PUT /{id}                      // Update return
+├── DELETE /{id}                   // Soft delete return
+├── GET /{id}/items                // Get return items
+└── POST /{id}/approve             // Approve return
+```
+
+## 7. Media Asset Management
+```javascript
+/api/v1/media-assets/
+├── GET /                          // List media assets with pagination
+├── POST /                         // Upload media asset
+├── GET /{id}                      // Get media asset by ID
+├── PUT /{id}                      // Update media asset
+├── DELETE /{id}                   // Soft delete media asset
+├── POST /{id}/review              // Review media asset
+└── GET /{id}/download             // Download media asset
+```
+
+## 8. Communication & Notifications
+```javascript
+/api/v1/notifications/
+├── GET /                          // List notifications with pagination
+├── POST /                         // Create notification
+├── GET /{id}                      // Get notification by ID
+├── PUT /{id}                      // Update notification
+├── DELETE /{id}                   // Soft delete notification
+├── POST /{id}/read                // Mark notification as read
+├── POST /{id}/unread              // Mark notification as unread
+└── GET /targets                   // Get notification targets
+
+/api/v1/conversations/
+├── GET /                          // List conversations with pagination
+├── POST /                         // Create conversation
+├── GET /{id}                      // Get conversation by ID
+├── PUT /{id}                      // Update conversation
+├── DELETE /{id}                   // Soft delete conversation
+├── GET /{id}/participants         // Get conversation participants
+├── POST /{id}/participants        // Add participant to conversation
+├── DELETE /{id}/participants/{userId} // Remove participant
+├── GET /{id}/messages             // Get conversation messages
+└── POST /{id}/messages            // Add message to conversation
+
+/api/v1/messages/
+├── GET /                          // List messages with pagination
+├── POST /                         // Create message
+├── GET /{id}                      // Get message by ID
+├── PUT /{id}                      // Update message
+├── DELETE /{id}                   // Soft delete message
+├── GET /{id}/media                // Get message media
+└── GET /conversation/{conversationId} // Get conversation messages
+```
+
+## 9. Shop Management
+```javascript
+/api/v1/shops/
+├── GET /                          // List shops with pagination
+├── POST /                         // Create shop
+├── GET /{id}                      // Get shop by ID
+├── PUT /{id}                      // Update shop
+├── DELETE /{id}                   // Soft delete shop
+├── GET /{id}/products             // Get shop products
+├── GET /{id}/media                // Get shop media
+├── POST /{id}/media               // Add media to shop
+├── DELETE /{id}/media/{mediaId}   // Remove media from shop
+├── GET /{id}/quote-requests       // Get shop quote requests
+├── GET /{id}/orders               // Get shop orders
+└── GET /{id}/owner                // Get shop owner
+```
+
+## 10. Subscription Management
+```javascript
+/api/v1/subscription-plans/
+├── GET /                          // List plans with pagination
+├── POST /                         // Create plan
+├── GET /{id}                      // Get plan by ID
+├── PUT /{id}                      // Update plan
+├── DELETE /{id}                   // Soft delete plan
+├── GET /{id}/features             // Get plan features
+├── POST /{id}/features            // Add feature to plan
+├── PUT /{id}/features/{featureType} // Update plan feature
+├── DELETE /{id}/features/{featureType} // Remove plan feature
+├── GET /{id}/subscriptions        // Get plan subscriptions
+└── POST /{id}/activate            // Activate plan
+
+/api/v1/subscriptions/
+├── GET /                          // List subscriptions with pagination
+├── POST /                         // Create subscription
+├── GET /{id}                      // Get subscription by ID
+├── PUT /{id}                      // Update subscription
+├── DELETE /{id}                   // Soft delete subscription
+├── POST /{id}/cancel              // Cancel subscription
+└── POST /{id}/reactivate          // Reactivate subscription
+
+/api/v1/subscription-invoices/
+├── GET /                          // List invoices with pagination
+├── POST /                         // Create invoice
+├── GET /{id}                      // Get invoice by ID
+├── PUT /{id}                      // Update invoice
+├── DELETE /{id}                   // Soft delete invoice
+├── POST /{id}/pay                 // Pay invoice
+└── POST /{id}/void                // Void invoice
+
+/api/v1/subscription-payment-methods/
+├── GET /                          // List payment methods with pagination
+├── POST /                         // Create payment method
+├── GET /{id}                      // Get payment method by ID
+├── PUT /{id}                      // Update payment method
+├── DELETE /{id}                   // Soft delete payment method
+├── POST /{id}/set-default         // Set as default payment method
+├── POST /{id}/activate            // Activate payment method
+├── POST /{id}/deactivate          // Deactivate payment method
+└── GET /user/{userId}             // Get user payment methods
+
+/api/v1/subscription-usage/
+├── GET /                          // List usage with pagination
+├── POST /                         // Create usage record
+├── GET /{id}                      // Get usage record by ID
+├── PUT /{id}                      // Update usage record
+├── DELETE /{id}                   // Soft delete usage record
+├── GET /subscription/{subscriptionId} // Get subscription usage
+├── GET /feature/{featureType}     // Get feature usage
+└── GET /date/{usageDate}          // Get usage by date
+```
+
+## 11. Compliance & Legal
+```javascript
+/api/v1/data-processing/
+├── GET /                          // List processing logs with pagination
+├── POST /                         // Create processing log
+├── GET /{id}                      // Get processing log by ID
+├── PUT /{id}                      // Update processing log
+└── DELETE /{id}                   // Soft delete processing log
+
+/api/v1/breach-notifications/
+├── GET /                          // List notifications with pagination
+├── POST /                         // Report breach
+├── GET /{id}                      // Get notification by ID
+├── PUT /{id}                      // Update notification
+└── POST /{id}/resolve             // Resolve breach notification
+
+/api/v1/phi-access/
+├── GET /                          // List PHI access logs with pagination
+├── POST /                         // Create access log
+├── GET /{id}                      // Get access log by ID
+├── GET /user/{userId}             // Get user PHI access
+└── GET /type/{phiType}            // Get PHI access by type
+
+/api/v1/financial-controls/
+├── GET /                          // List control logs with pagination
+├── POST /                         // Create control log
+├── GET /{id}                      // Get control log by ID
+├── PUT /{id}                      // Update control log
+└── GET /type/{controlType}        // Get controls by type
+
+/api/v1/system-changes/
+├── GET /                          // List change logs with pagination
+├── POST /                         // Create change log
+├── GET /{id}                      // Get change log by ID
+├── PUT /{id}                      // Update change log
+├── POST /{id}/approve             // Approve system change
+├── POST /{id}/implement           // Implement system change
+└── POST /{id}/rollback            // Rollback system change
+
+/api/v1/consents/
+├── GET /                          // List consents with pagination
+├── POST /                         // Create consent
+├── GET /{id}                      // Get consent by ID
+├── PUT /{id}                      // Update consent
+├── DELETE /{id}                   // Soft delete consent
+└── GET /user/{userId}             // Get user consents
+
+/api/v1/terms-acceptance/
+├── GET /                          // List terms acceptances with pagination
+├── POST /                         // Create terms acceptance
+├── GET /{id}                      // Get terms acceptance by ID
+└── GET /user/{userId}             // Get user terms acceptances
+```
+
+## 12. Analytics & Reporting
+```javascript
+/api/v1/audit-logs/
+├── GET /                          // List audit logs with pagination
+├── GET /{id}                      // Get audit log by ID
+├── GET /entity/{entity}/{entityId} // Get entity audit logs
+└── GET /user/{userId}             // Get user audit logs
+
+/api/v1/price-history/
+├── GET /                          // List price history with pagination
+├── GET /{id}                      // Get price history by ID
+└── GET /product/{productId}       // Get product price history
+```
+
+## 13. Promotions & Marketing
+```javascript
+/api/v1/promotions/
+├── GET /                          // List promotions with pagination
+├── POST /                         // Create promotion
+├── GET /{id}                      // Get promotion by ID
+├── PUT /{id}                      // Update promotion
+├── DELETE /{id}                   // Soft delete promotion
+└── GET /{id}/redemptions          // Get promotion redemptions
+
+/api/v1/coupon-redemptions/
+├── GET /                          // List coupon redemptions with pagination
+├── POST /                         // Create coupon redemption
+├── GET /{id}                      // Get coupon redemption by ID
+└── GET /promotion/{promotionId}   // Get promotion redemptions
+```
+
+## 14. User Favorites & Social Links
+```javascript
+/api/v1/user-favorites/
+├── GET /                          // List user favorites with pagination
+├── POST /                         // Add favorite
+├── DELETE /{id}                   // Remove favorite
+├── GET /user/{userId}             // Get user favorites
+└── GET /product/{productId}       // Get product favorites
+
+/api/v1/user-social-links/
+├── GET /                          // List social links with pagination
+├── POST /                         // Create social link
+├── GET /{id}                      // Get social link by ID
+├── PUT /{id}                      // Update social link
+├── DELETE /{id}                   // Soft delete social link
+├── GET /user/{userId}             // Get user social links
+└── GET /platform/{platform}       // Get platform social links
+```
+
+## 15. Reviews & Ratings
+```javascript
+/api/v1/product-reviews/
+├── GET /                          // List product reviews with pagination
+├── POST /                         // Create product review
+├── GET /{id}                      // Get product review by ID
+├── PUT /{id}                      // Update product review
+├── DELETE /{id}                   // Soft delete product review
+├── GET /product/{productId}       // Get product reviews
+└── GET /user/{userId}             // Get user reviews
+
+/api/v1/review-media-assets/
+├── GET /                          // List review media assets with pagination
+├── POST /                         // Add media to review
+├── GET /{id}                      // Get review media asset by ID
+├── PUT /{id}                      // Update review media asset
+├── DELETE /{id}                   // Soft delete review media asset
+└── GET /review/{reviewId}         // Get review media assets
+
+/api/v1/vendor-review-responses/
+├── GET /                          // List vendor review responses with pagination
+├── POST /                         // Create vendor review response
+├── GET /{id}                      // Get vendor review response by ID
+├── PUT /{id}                      // Update vendor review response
+├── DELETE /{id}                   // Soft delete vendor review response
+└── GET /review/{reviewId}         // Get review responses
+
+/api/v1/review-helpful-votes/
+├── GET /                          // List review helpful votes with pagination
+├── POST /                         // Add helpful vote to review
+├── DELETE /{id}                   // Remove helpful vote
+├── GET /review/{reviewId}         // Get review helpful votes
+└── GET /user/{userId}             // Get user helpful votes
+```
+
+## 16. Payment Methods
+```javascript
+/api/v1/order-payment-methods/
+├── GET /                          // List order payment methods with pagination
+├── POST /                         // Create order payment method
+├── GET /{id}                      // Get order payment method by ID
+├── PUT /{id}                      // Update order payment method
+├── DELETE /{id}                   // Soft delete order payment method
+└── GET /order/{orderId}            // Get order payment methods
+
+/api/v1/payment-method-requests/
+├── GET /                          // List payment method requests with pagination
+├── POST /                         // Create payment method request
+├── GET /{id}                      // Get payment method request by ID
+├── PUT /{id}                      // Update payment method request
+├── DELETE /{id}                   // Soft delete payment method request
+└── GET /user/{userId}             // Get user payment method requests
+
+/api/v1/payment-method-request-upvotes/
+├── GET /                          // List payment method request upvotes with pagination
+├── POST /                         // Add upvote to payment method request
+├── DELETE /{id}                   // Remove upvote
+├── GET /request/{requestId}       // Get request upvotes
+└── GET /user/{userId}             // Get user upvotes
+```
+
+## 17. Approval Workflows
+```javascript
+/api/v1/product-approvals/
+├── GET /                          // List product approvals with pagination
+├── POST /                         // Create product approval
+├── GET /{id}                      // Get product approval by ID
+├── PUT /{id}                      // Update product approval
+├── DELETE /{id}                   // Soft delete product approval
+├── POST /{id}/approve             // Approve product
+├── POST /{id}/reject              // Reject product
+└── GET /product/{productId}       // Get product approvals
+
+/api/v1/product-approval-histories/
+├── GET /                          // List product approval histories with pagination
+├── GET /{id}                      // Get product approval history by ID
+├── GET /product/{productId}       // Get product approval history
+└── GET /approval/{approvalId}      // Get approval history
+
+/api/v1/vendor-approvals/
+├── GET /                          // List vendor approvals with pagination
+├── POST /                         // Create vendor approval
+├── GET /{id}                      // Get vendor approval by ID
+├── PUT /{id}                      // Update vendor approval
+├── DELETE /{id}                   // Soft delete vendor approval
+├── POST /{id}/approve             // Approve vendor
+├── POST /{id}/reject              // Reject vendor
+└── GET /shop/{shopId}             // Get shop vendor approvals
+
+/api/v1/vendor-approval-documents/
+├── GET /                          // List vendor approval documents with pagination
+├── POST /                         // Upload vendor approval document
+├── GET /{id}                      // Get vendor approval document by ID
+├── PUT /{id}                      // Update vendor approval document
+├── DELETE /{id}                   // Soft delete vendor approval document
+└── GET /approval/{approvalId}      // Get approval documents
+
+/api/v1/vendor-approval-histories/
+├── GET /                          // List vendor approval histories with pagination
+├── GET /{id}                      // Get vendor approval history by ID
+├── GET /shop/{shopId}             // Get shop approval history
+└── GET /approval/{approvalId}      // Get approval history
+```
+
+## 18. Product Compliance
+```javascript
+/api/v1/product-certifications/
+├── GET /                          // List product certifications with pagination
+├── POST /                         // Create product certification
+├── GET /{id}                      // Get product certification by ID
+├── PUT /{id}                      // Update product certification
+├── DELETE /{id}                   // Soft delete product certification
+└── GET /product/{productId}       // Get product certifications
+
+/api/v1/product-hazards/
+├── GET /                          // List product hazards with pagination
+├── POST /                         // Create product hazard
+├── GET /{id}                      // Get product hazard by ID
+├── PUT /{id}                      // Update product hazard
+├── DELETE /{id}                   // Soft delete product hazard
+└── GET /product/{productId}       // Get product hazards
+```
+
+## 19. Enhanced Authentication
+```javascript
+/api/v1/user-mfas/
+├── GET /                          // List user MFA configurations with pagination
+├── POST /                         // Create user MFA configuration
+├── GET /{id}                      // Get user MFA by ID
+├── PUT /{id}                      // Update user MFA
+├── DELETE /{id}                   // Soft delete user MFA
+├── POST /{id}/verify              // Verify MFA code
+├── POST /{id}/enable              // Enable MFA
+├── POST /{id}/disable             // Disable MFA
+└── GET /user/{userId}             // Get user MFA configurations
+
+/api/v1/oauth-accounts/
+├── GET /                          // List OAuth accounts with pagination
+├── POST /                         // Link OAuth account
+├── GET /{id}                      // Get OAuth account by ID
+├── PUT /{id}                      // Update OAuth account
+├── DELETE /{id}                   // Soft delete OAuth account
+└── GET /user/{userId}             // Get user OAuth accounts
+```
+
+## 20. Enterprise Payments
+```javascript
+/api/v1/purchase-orders/
+├── GET /                          // List purchase orders with pagination
+├── POST /                         // Create purchase order
+├── GET /{id}                      // Get purchase order by ID
+├── PUT /{id}                      // Update purchase order
+├── DELETE /{id}                   // Soft delete purchase order
+├── POST /{id}/approve             // Approve purchase order
+├── POST /{id}/reject              // Reject purchase order
+└── GET /order/{orderId}            // Get order purchase orders
+
+/api/v1/lease-agreements/
+├── GET /                          // List lease agreements with pagination
+├── POST /                         // Create lease agreement
+├── GET /{id}                      // Get lease agreement by ID
+├── PUT /{id}                      // Update lease agreement
+├── DELETE /{id}                   // Soft delete lease agreement
+├── POST /{id}/activate            // Activate lease agreement
+├── POST /{id}/terminate            // Terminate lease agreement
+└── GET /order/{orderId}            // Get order lease agreements
+
+/api/v1/lease-payments/
+├── GET /                          // List lease payments with pagination
+├── POST /                         // Create lease payment
+├── GET /{id}                      // Get lease payment by ID
+├── PUT /{id}                      // Update lease payment
+├── DELETE /{id}                   // Soft delete lease payment
+└── GET /lease/{leaseId}            // Get lease payments
+
+/api/v1/net-terms/
+├── GET /                          // List net terms with pagination
+├── POST /                         // Create net terms
+├── GET /{id}                      // Get net terms by ID
+├── PUT /{id}                      // Update net terms
+├── DELETE /{id}                   // Soft delete net terms
+└── GET /order/{orderId}            // Get order net terms
+```
+
+## 21. Safety & Compliance
+```javascript
+/api/v1/product-recalls/
+├── GET /                          // List product recalls with pagination
+├── POST /                         // Create product recall
+├── GET /{id}                      // Get product recall by ID
+├── PUT /{id}                      // Update product recall
+├── DELETE /{id}                   // Soft delete product recall
+├── POST /{id}/publish             // Publish product recall
+└── GET /product/{productId}       // Get product recalls
+
+/api/v1/recall-notifications/
+├── GET /                          // List recall notifications with pagination
+├── POST /                         // Create recall notification
+├── GET /{id}                      // Get recall notification by ID
+├── PUT /{id}                      // Update recall notification
+├── DELETE /{id}                   // Soft delete recall notification
+└── GET /recall/{recallId}          // Get recall notifications
+```
+
+## 22. Integrations & Discovery
+```javascript
+/api/v1/integration-logs/
+├── GET /                          // List integration logs with pagination
+├── GET /{id}                      // Get integration log by ID
+├── GET /integration/{integrationId} // Get integration logs
+└── GET /date/{date}               // Get logs by date
+
+/api/v1/saved-searches/
+├── GET /                          // List saved searches with pagination
+├── POST /                         // Create saved search
+├── GET /{id}                      // Get saved search by ID
+├── PUT /{id}                      // Update saved search
+├── DELETE /{id}                   // Soft delete saved search
+└── GET /user/{userId}             // Get user saved searches
+
+/api/v1/search-history/
+├── GET /                          // List search history with pagination
+├── GET /{id}                      // Get search history by ID
+├── GET /user/{userId}             // Get user search history
+└── DELETE /{id}                   // Delete search history entry
+
+/api/v1/wishlists/
+├── GET /                          // List wishlists with pagination
+├── POST /                         // Create wishlist
+├── GET /{id}                      // Get wishlist by ID
+├── PUT /{id}                      // Update wishlist
+├── DELETE /{id}                   // Soft delete wishlist
+└── GET /user/{userId}             // Get user wishlists
+
+/api/v1/wishlist-items/
+├── GET /                          // List wishlist items with pagination
+├── POST /                         // Add item to wishlist
+├── GET /{id}                      // Get wishlist item by ID
+├── PUT /{id}                      // Update wishlist item
+├── DELETE /{id}                   // Soft delete wishlist item
+└── GET /wishlist/{wishlistId}      // Get wishlist items
+```
+
+## 23. Marketing & Support
+```javascript
+/api/v1/referral-codes/
+├── GET /                          // List referral codes with pagination
+├── POST /                         // Create referral code
+├── GET /{id}                      // Get referral code by ID
+├── PUT /{id}                      // Update referral code
+├── DELETE /{id}                   // Soft delete referral code
+├── GET /user/{userId}             // Get user referral codes
+└── GET /code/{code}               // Get referral code by code string
+
+/api/v1/referrals/
+├── GET /                          // List referrals with pagination
+├── POST /                         // Create referral
+├── GET /{id}                      // Get referral by ID
+├── PUT /{id}                      // Update referral
+├── DELETE /{id}                   // Soft delete referral
+├── GET /referrer/{userId}         // Get referrals by referrer
+└── GET /referee/{userId}          // Get referrals by referee
+
+/api/v1/affiliate-links/
+├── GET /                          // List affiliate links with pagination
+├── POST /                         // Create affiliate link
+├── GET /{id}                      // Get affiliate link by ID
+├── PUT /{id}                      // Update affiliate link
+├── DELETE /{id}                   // Soft delete affiliate link
+├── GET /user/{userId}             // Get user affiliate links
+└── GET /product/{productId}       // Get product affiliate links
+
+/api/v1/affiliate-commissions/
+├── GET /                          // List affiliate commissions with pagination
+├── POST /                         // Create affiliate commission
+├── GET /{id}                      // Get affiliate commission by ID
+├── PUT /{id}                      // Update affiliate commission
+├── DELETE /{id}                   // Soft delete affiliate commission
+├── GET /affiliate/{affiliateId}    // Get affiliate commissions
+└── GET /order/{orderId}            // Get order commissions
+```
+
+## 24. Support & Dispute Resolution
+```javascript
+/api/v1/support-tickets/
+├── GET /                          // List support tickets with pagination
+├── POST /                         // Create support ticket
+├── GET /{id}                      // Get support ticket by ID
+├── PUT /{id}                      // Update support ticket
+├── DELETE /{id}                   // Soft delete support ticket
+├── POST /{id}/assign              // Assign ticket to user
+├── POST /{id}/close               // Close support ticket
+├── POST /{id}/reopen              // Reopen support ticket
+└── GET /user/{userId}             // Get user support tickets
+
+/api/v1/support-ticket-comments/
+├── GET /                          // List support ticket comments with pagination
+├── POST /                         // Add comment to support ticket
+├── GET /{id}                      // Get support ticket comment by ID
+├── PUT /{id}                      // Update support ticket comment
+├── DELETE /{id}                   // Soft delete support ticket comment
+└── GET /ticket/{ticketId}          // Get ticket comments
+
+/api/v1/support-ticket-histories/
+├── GET /                          // List support ticket histories with pagination
+├── GET /{id}                      // Get support ticket history by ID
+├── GET /ticket/{ticketId}         // Get ticket history
+└── GET /user/{userId}             // Get user ticket histories
+
+/api/v1/disputes/
+├── GET /                          // List disputes with pagination
+├── POST /                         // Create dispute
+├── GET /{id}                      // Get dispute by ID
+├── PUT /{id}                      // Update dispute
+├── DELETE /{id}                   // Soft delete dispute
+├── POST /{id}/resolve             // Resolve dispute
+├── POST /{id}/escalate            // Escalate dispute
+└── GET /order/{orderId}            // Get order disputes
+
+/api/v1/dispute-comments/
+├── GET /                          // List dispute comments with pagination
+├── POST /                         // Add comment to dispute
+├── GET /{id}                      // Get dispute comment by ID
+├── PUT /{id}                      // Update dispute comment
+├── DELETE /{id}                   // Soft delete dispute comment
+└── GET /dispute/{disputeId}        // Get dispute comments
+
+/api/v1/dispute-histories/
+├── GET /                          // List dispute histories with pagination
+├── GET /{id}                      // Get dispute history by ID
+├── GET /dispute/{disputeId}        // Get dispute history
+└── GET /user/{userId}             // Get user dispute histories
+```
+
+## 25. Loyalty Program
+```javascript
+/api/v1/loyalty-points/
+├── GET /                          // List loyalty points with pagination
+├── POST /                         // Create loyalty points
+├── GET /{id}                      // Get loyalty points by ID
+├── PUT /{id}                      // Update loyalty points
+├── DELETE /{id}                   // Soft delete loyalty points
+└── GET /user/{userId}             // Get user loyalty points
+
+/api/v1/loyalty-transactions/
+├── GET /                          // List loyalty transactions with pagination
+├── POST /                         // Create loyalty transaction
+├── GET /{id}                      // Get loyalty transaction by ID
+├── PUT /{id}                      // Update loyalty transaction
+├── DELETE /{id}                   // Soft delete loyalty transaction
+├── GET /user/{userId}             // Get user loyalty transactions
+└── GET /points/{pointsId}         // Get points transactions
+
+/api/v1/loyalty-badges/
+├── GET /                          // List loyalty badges with pagination
+├── POST /                         // Create loyalty badge
+├── GET /{id}                      // Get loyalty badge by ID
+├── PUT /{id}                      // Update loyalty badge
+├── DELETE /{id}                   // Soft delete loyalty badge
+└── GET /tier/{tier}                // Get badges by tier
+
+/api/v1/user-loyalty-badges/
+├── GET /                          // List user loyalty badges with pagination
+├── POST /                         // Assign badge to user
+├── GET /{id}                      // Get user loyalty badge by ID
+├── DELETE /{id}                   // Remove badge from user
+├── GET /user/{userId}             // Get user badges
+└── GET /badge/{badgeId}           // Get badge assignments
+```
+
+## 26. Final Enforcement Rule
+❌ Any API module endpoint under `/api/v1/` that is not defined in this file **invalid**  
+✅ All refactors must **improve compliance**, never reduce it  
+This file is **non-negotiable** and applies globally.
