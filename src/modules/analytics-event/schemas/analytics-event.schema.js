@@ -24,7 +24,7 @@ const createAnalyticsEventSchema = z.object({
   tenant_id: uuidSchema,
   user_id: uuidSchema.optional().nullable(),
   event_name: z.string().trim().min(1).max(255),
-  payload_json: z.record(z.any()).optional().nullable(),
+  payload_json: z.record(z.string(), z.unknown()).optional().nullable(),
   occurred_at: isoDateSchema.optional()
 });
 
@@ -35,7 +35,7 @@ const createAnalyticsEventSchema = z.object({
  */
 const updateAnalyticsEventSchema = z.object({
   event_name: z.string().trim().min(1).max(255).optional(),
-  payload_json: z.record(z.any()).optional().nullable(),
+  payload_json: z.record(z.string(), z.unknown()).nullable().optional(),
   occurred_at: isoDateSchema.optional()
 });
 

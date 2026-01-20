@@ -7,11 +7,15 @@
 
 const triageAssessmentController = require('../../../../modules/triage-assessment/controllers/triage-assessment.controller');
 const triageAssessmentService = require('../../../../modules/triage-assessment/services/triage-assessment.service');
-const { sendSuccess, sendCreated, sendDeleted } = require('@lib/response');
 
 // Mock dependencies
 jest.mock('../../../../modules/triage-assessment/services/triage-assessment.service');
-jest.mock('@lib/response');
+jest.mock('@lib/response', () => ({
+  sendSuccess: jest.fn(),
+  sendNoContent: jest.fn()
+}));
+
+const { sendSuccess, sendNoContent } = require('@lib/response');
 
 describe('Triage Assessment Controller', () => {
   let mockReq;
@@ -75,7 +79,12 @@ describe('Triage Assessment Controller', () => {
 
       await triageAssessmentController.createTriageAssessment(mockReq, mockRes);
 
-      expect(sendCreated).toHaveBeenCalled();
+      expect(sendSuccess).toHaveBeenCalledWith(
+        mockRes,
+        201,
+        'messages.triage_assessment.create.success',
+        mockCreated
+      );
     });
   });
 
@@ -101,7 +110,7 @@ describe('Triage Assessment Controller', () => {
 
       await triageAssessmentController.deleteTriageAssessment(mockReq, mockRes);
 
-      expect(sendDeleted).toHaveBeenCalled();
+      expect(sendNoContent).toHaveBeenCalledWith(mockRes);
     });
   });
 });

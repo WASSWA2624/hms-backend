@@ -131,7 +131,7 @@ describe('Appointment Schemas', () => {
       const data = { ...validData, reason: '  Valid reason  ' };
       const result = createAppointmentSchema.safeParse(data);
       expect(result.success).toBe(true);
-      expect(result.data.reason).toBe('  Valid reason  ');
+      expect(result.data.reason).toBe('Valid reason');
     });
   });
 
@@ -192,6 +192,7 @@ describe('Appointment Schemas', () => {
       const data = { reason: '  Cancel reason  ' };
       const result = cancelAppointmentSchema.safeParse(data);
       expect(result.success).toBe(true);
+      expect(result.data.reason).toBe('Cancel reason');
     });
 
     it('should accept null reason', () => {
@@ -263,6 +264,7 @@ describe('Appointment Schemas', () => {
       const data = { search: '  test search  ' };
       const result = listAppointmentsQuerySchema.safeParse(data);
       expect(result.success).toBe(true);
+      expect(result.data.search).toBe('test search');
     });
   });
 });

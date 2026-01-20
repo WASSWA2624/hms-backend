@@ -9,11 +9,15 @@ const { sendSuccess } = require('@lib/response/success');
 const { sendPaginated } = require('@lib/response/pagination');
 const { sendError } = require('@lib/response/error');
 const { sendNoContent } = require('@lib/response/noContent');
+const { sendCreated } = require('@lib/response/created');
+const { sendDeleted } = require('@lib/response/deleted');
 
 module.exports = {
   sendSuccess,
   sendPaginated,
   sendError,
-  sendNoContent
+  sendNoContent,
+  sendCreated,
+  sendDeleted
 };
 

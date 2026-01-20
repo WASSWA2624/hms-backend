@@ -3,7 +3,7 @@
  * @module tests/modules/stock-movement/repositories
  */
 
-const stockMovementRepository = require('../../../modules/stock-movement/repositories/stock-movement.repository');
+const stockMovementRepository = require('@repositories/stock-movement/stock-movement.repository');
 const prisma = require('@prisma/client');
 
 jest.mock('@prisma/client', () => ({

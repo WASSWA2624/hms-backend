@@ -298,7 +298,7 @@ describe('Visit Queue Schemas', () => {
       const result = listVisitQueuesQuerySchema.safeParse(data);
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.data.search).toBe('  test  '); // Zod trim happens at parse
+        expect(result.data.search).toBe('test'); // Zod trim happens at parse
       }
     });
   });

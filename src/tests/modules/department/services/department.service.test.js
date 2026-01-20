@@ -10,9 +10,13 @@ const { HttpError } = require('@lib/errors');
 // Mock dependencies
 jest.mock('@repositories/department/department.repository');
 jest.mock('@lib/audit');
+jest.mock('@services/unit/unit.service', () => ({
+  listUnits: jest.fn()
+}));
 
 const departmentRepository = require('@repositories/department/department.repository');
 const { createAuditLog } = require('@lib/audit');
+const unitService = require('@services/unit/unit.service');
 const {
   listDepartments,
   getDepartmentById,
@@ -25,6 +29,7 @@ const {
 describe('Department Service', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    createAuditLog.mockResolvedValue({});
   });
 
   describe('listDepartments', () => {
@@ -506,6 +511,17 @@ describe('Department Service', () => {
         department_type: 'CLINICAL'
       };
       departmentRepository.findById.mockResolvedValue(mockDepartment);
+      unitService.listUnits.mockResolvedValue({
+        units: [],
+        pagination: {
+          page: 1,
+          limit: 20,
+          total: 0,
+          totalPages: 0,
+          hasNextPage: false,
+          hasPreviousPage: false
+        }
+      });
 
       const result = await getDepartmentUnits('dept-123', 1, 20);
 

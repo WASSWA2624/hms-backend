@@ -16,10 +16,14 @@
  */
 const asyncHandler = (fn) => {
   return (req, res, next) => {
-    // Wrap the async function in a Promise
-    // If the function returns a Promise, resolve it
-    // If it throws an error, catch it and pass to error middleware
-    Promise.resolve(fn(req, res, next)).catch(next);
+    // If next is provided, forward errors to middleware.
+    // If not, return the promise for direct test assertions.
+    const result = Promise.resolve(fn(req, res, next));
+    if (typeof next === 'function') {
+      result.catch(next);
+      return undefined;
+    }
+    return result;
   };
 };
 

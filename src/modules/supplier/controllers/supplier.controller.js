@@ -8,7 +8,7 @@
  */
 
 const supplierService = require('@modules/supplier/services/supplier.service');
-const asyncHandler = require('@lib/async/asyncHandler');
+const { asyncHandler } = require('@lib/async');
 const { sendSuccess, sendCreated, sendNoContent } = require('@lib/response');
 
 /**

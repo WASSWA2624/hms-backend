@@ -54,11 +54,11 @@ describe('Anesthesia record Controller', () => {
 
     it('should list Anesthesia records with default pagination', async () => {
       req.query = {};
-      anesthesiaRecordService.listanesthesiaRecords.mockResolvedValue(mockResult);
+      anesthesiaRecordService.listAnesthesiaRecords.mockResolvedValue(mockResult);
 
-      await anesthesiaRecordController.listanesthesiaRecords(req, res);
+      await anesthesiaRecordController.listAnesthesiaRecords(req, res);
 
-      expect(anesthesiaRecordService.listanesthesiaRecords).toHaveBeenCalledWith(
+      expect(anesthesiaRecordService.listAnesthesiaRecords).toHaveBeenCalledWith(
         expect.any(Object),
         1,
         20,
@@ -77,11 +77,11 @@ describe('Anesthesia record Controller', () => {
 
     it('should list Anesthesia records with custom pagination', async () => {
       req.query = { page: '2', limit: '10', sort_by: 'scheduled_at', order: 'desc' };
-      anesthesiaRecordService.listanesthesiaRecords.mockResolvedValue(mockResult);
+      anesthesiaRecordService.listAnesthesiaRecords.mockResolvedValue(mockResult);
 
-      await anesthesiaRecordController.listanesthesiaRecords(req, res);
+      await anesthesiaRecordController.listAnesthesiaRecords(req, res);
 
-      expect(anesthesiaRecordService.listanesthesiaRecords).toHaveBeenCalledWith(
+      expect(anesthesiaRecordService.listAnesthesiaRecords).toHaveBeenCalledWith(
         expect.any(Object),
         2,
         10,
@@ -99,11 +99,11 @@ describe('Anesthesia record Controller', () => {
         scheduled_from: '2026-01-20T00:00:00.000Z',
         scheduled_to: '2026-01-20T23:59:59.000Z'
       };
-      anesthesiaRecordService.listanesthesiaRecords.mockResolvedValue(mockResult);
+      anesthesiaRecordService.listAnesthesiaRecords.mockResolvedValue(mockResult);
 
-      await anesthesiaRecordController.listanesthesiaRecords(req, res);
+      await anesthesiaRecordController.listAnesthesiaRecords(req, res);
 
-      expect(anesthesiaRecordService.listanesthesiaRecords).toHaveBeenCalledWith(
+      expect(anesthesiaRecordService.listAnesthesiaRecords).toHaveBeenCalledWith(
         expect.objectContaining({
           encounter_id: '550e8400-e29b-41d4-a716-446655440001',
           status: 'SCHEDULED',
@@ -130,11 +130,11 @@ describe('Anesthesia record Controller', () => {
 
     it('should get Anesthesia record by id', async () => {
       req.params = { id: mockanesthesiaRecord.id };
-      anesthesiaRecordService.getanesthesiaRecordById.mockResolvedValue(mockanesthesiaRecord);
+      anesthesiaRecordService.getAnesthesiaRecordById.mockResolvedValue(mockanesthesiaRecord);
 
-      await anesthesiaRecordController.getanesthesiaRecordById(req, res);
+      await anesthesiaRecordController.getAnesthesiaRecordById(req, res);
 
-      expect(anesthesiaRecordService.getanesthesiaRecordById).toHaveBeenCalledWith(
+      expect(anesthesiaRecordService.getAnesthesiaRecordById).toHaveBeenCalledWith(
         mockanesthesiaRecord.id,
         'user-123',
         '127.0.0.1'
@@ -162,11 +162,11 @@ describe('Anesthesia record Controller', () => {
 
     it('should create Anesthesia record', async () => {
       req.body = createData;
-      anesthesiaRecordService.createanesthesiaRecord.mockResolvedValue(mockCreatedanesthesiaRecord);
+      anesthesiaRecordService.createAnesthesiaRecord.mockResolvedValue(mockCreatedanesthesiaRecord);
 
-      await anesthesiaRecordController.createanesthesiaRecord(req, res);
+      await anesthesiaRecordController.createAnesthesiaRecord(req, res);
 
-      expect(anesthesiaRecordService.createanesthesiaRecord).toHaveBeenCalledWith(
+      expect(anesthesiaRecordService.createAnesthesiaRecord).toHaveBeenCalledWith(
         createData,
         'user-123',
         '127.0.0.1'
@@ -195,11 +195,11 @@ describe('Anesthesia record Controller', () => {
     it('should update Anesthesia record', async () => {
       req.params = { id: mockUpdatedanesthesiaRecord.id };
       req.body = updateData;
-      anesthesiaRecordService.updateanesthesiaRecord.mockResolvedValue(mockUpdatedanesthesiaRecord);
+      anesthesiaRecordService.updateAnesthesiaRecord.mockResolvedValue(mockUpdatedanesthesiaRecord);
 
-      await anesthesiaRecordController.updateanesthesiaRecord(req, res);
+      await anesthesiaRecordController.updateAnesthesiaRecord(req, res);
 
-      expect(anesthesiaRecordService.updateanesthesiaRecord).toHaveBeenCalledWith(
+      expect(anesthesiaRecordService.updateAnesthesiaRecord).toHaveBeenCalledWith(
         mockUpdatedanesthesiaRecord.id,
         updateData,
         'user-123',
@@ -218,11 +218,11 @@ describe('Anesthesia record Controller', () => {
     it('should delete Anesthesia record', async () => {
       const id = '550e8400-e29b-41d4-a716-446655440000';
       req.params = { id };
-      anesthesiaRecordService.deleteanesthesiaRecord.mockResolvedValue();
+      anesthesiaRecordService.deleteAnesthesiaRecord.mockResolvedValue();
 
-      await anesthesiaRecordController.deleteanesthesiaRecord(req, res);
+      await anesthesiaRecordController.deleteAnesthesiaRecord(req, res);
 
-      expect(anesthesiaRecordService.deleteanesthesiaRecord).toHaveBeenCalledWith(
+      expect(anesthesiaRecordService.deleteAnesthesiaRecord).toHaveBeenCalledWith(
         id,
         'user-123',
         '127.0.0.1'

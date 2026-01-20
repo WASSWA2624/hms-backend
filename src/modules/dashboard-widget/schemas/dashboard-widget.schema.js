@@ -22,7 +22,7 @@ const {
 const createDashboardWidgetSchema = z.object({
   tenant_id: uuidSchema,
   name: z.string().trim().min(1).max(255),
-  config_json: z.record(z.any())
+  config_json: z.record(z.string(), z.unknown())
 });
 
 /**
@@ -32,7 +32,7 @@ const createDashboardWidgetSchema = z.object({
  */
 const updateDashboardWidgetSchema = z.object({
   name: z.string().trim().min(1).max(255).optional(),
-  config_json: z.record(z.any()).optional()
+  config_json: z.record(z.string(), z.unknown()).optional()
 });
 
 // ==================== URL Params ====================

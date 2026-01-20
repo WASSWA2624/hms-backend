@@ -9,7 +9,7 @@
 
 const emergencyCaseService = require('@modules/emergency-case/services/emergency-case.service');
 const { asyncHandler } = require('@lib/async');
-const { sendSuccess, sendCreated, sendDeleted } = require('@lib/response');
+const { sendSuccess, sendPaginated, sendNoContent } = require('@lib/response');
 const { DEFAULT_PAGE, DEFAULT_PAGE_LIMIT } = require('@config/constants');
 
 /**
@@ -47,16 +47,16 @@ const listEmergencyCases = asyncHandler(async (req, res) => {
     order
   );
 
-  const meta = {
-    pagination: {
-      page: result.page,
-      limit: result.limit,
-      total: result.total,
-      totalPages: result.totalPages
-    }
+  const pagination = {
+    page: result.page,
+    limit: result.limit,
+    total: result.total,
+    totalPages: result.totalPages,
+    hasNextPage: result.page < result.totalPages,
+    hasPreviousPage: result.page > 1
   };
 
-  sendSuccess(res, 200, 'messages.emergency_case.list.success', result.items);
+  sendPaginated(res, 'messages.emergency_case.list.success', result.items, pagination);
 });
 
 /**

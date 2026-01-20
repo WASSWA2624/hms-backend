@@ -108,7 +108,7 @@ describe('Referral Repository', () => {
         where: {
           deleted_at: null,
           encounter_id: 'encounter-123',
-          status: 'REQUESTED'
+          status: 'PENDING'
         },
         skip: 0,
         take: 20,
@@ -146,7 +146,7 @@ describe('Referral Repository', () => {
       expect(prisma.referral.count).toHaveBeenCalledWith({
         where: {
           deleted_at: null,
-          status: 'PENDING'
+          status: 'REQUESTED'
         }
       });
     });

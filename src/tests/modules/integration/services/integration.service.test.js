@@ -15,7 +15,7 @@ const prisma = require('@prisma/client');
 jest.mock('@repositories/integration/integration.repository');
 jest.mock('@lib/audit');
 jest.mock('@prisma/client', () => ({
-  $transaction: jest.fn((callback) => callback())
+  $transaction: jest.fn(async (callback) => await callback())
 }));
 
 describe('Integration Service', () => {

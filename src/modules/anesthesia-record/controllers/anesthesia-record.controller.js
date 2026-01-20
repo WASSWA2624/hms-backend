@@ -23,6 +23,10 @@ const listAnesthesiaRecords = asyncHandler(async (req, res) => {
   const {
     theatre_case_id,
     anesthetist_user_id,
+    encounter_id,
+    status,
+    scheduled_from,
+    scheduled_to,
     page = DEFAULT_PAGE,
     limit = DEFAULT_PAGE_LIMIT,
     sort_by,
@@ -31,7 +35,11 @@ const listAnesthesiaRecords = asyncHandler(async (req, res) => {
 
   const filters = {
     theatre_case_id,
-    anesthetist_user_id
+    anesthetist_user_id,
+    encounter_id,
+    status,
+    scheduled_from,
+    scheduled_to
   };
 
   const userId = req.user?.id;

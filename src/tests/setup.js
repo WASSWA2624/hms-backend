@@ -47,9 +47,9 @@ jest.mock('@prisma/client', () => {
     audit_log: {
       create: jest.fn()
     },
-    $transaction: jest.fn((arg) => {
+    $transaction: jest.fn(async (arg) => {
       if (typeof arg === 'function') {
-        return arg(mockPrisma);
+        return await arg(mockPrisma);
       }
       if (Array.isArray(arg)) {
         return Promise.resolve(arg);

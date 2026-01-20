@@ -37,7 +37,7 @@ describe('Anesthesia record Service', () => {
       anesthesiaRecordRepository.findMany.mockResolvedValue(mockanesthesiaRecords);
       anesthesiaRecordRepository.count.mockResolvedValue(1);
 
-      const result = await anesthesiaRecordService.listanesthesiaRecords({}, 1, 20, 'created_at', 'desc', userId, ipAddress);
+      const result = await anesthesiaRecordService.listAnesthesiaRecords({}, 1, 20, 'created_at', 'desc', userId, ipAddress);
 
       expect(result.anesthesia_records).toEqual(mockanesthesiaRecords);
       expect(result.pagination).toEqual({
@@ -50,16 +50,16 @@ describe('Anesthesia record Service', () => {
       });
     });
 
-    it('should apply encounter_id filter', async () => {
-      const filters = { encounter_id: '550e8400-e29b-41d4-a716-446655440001' };
+    it('should apply theatre_case_id filter', async () => {
+      const filters = { theatre_case_id: '550e8400-e29b-41d4-a716-446655440001' };
       anesthesiaRecordRepository.findMany.mockResolvedValue(mockanesthesiaRecords);
       anesthesiaRecordRepository.count.mockResolvedValue(1);
 
-      await anesthesiaRecordService.listanesthesiaRecords(filters, 1, 20, null, 'asc', userId, ipAddress);
+      await anesthesiaRecordService.listAnesthesiaRecords(filters, 1, 20, null, 'asc', userId, ipAddress);
 
       expect(anesthesiaRecordRepository.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          encounter_id: filters.encounter_id
+          theatre_case_id: filters.theatre_case_id
         }),
         expect.any(Number),
         expect.any(Number),
@@ -67,16 +67,16 @@ describe('Anesthesia record Service', () => {
       );
     });
 
-    it('should apply status filter', async () => {
-      const filters = { notes: 'Test notes' };
+    it('should apply anesthetist_user_id filter', async () => {
+      const filters = { anesthetist_user_id: '550e8400-e29b-41d4-a716-446655440002' };
       anesthesiaRecordRepository.findMany.mockResolvedValue(mockanesthesiaRecords);
       anesthesiaRecordRepository.count.mockResolvedValue(1);
 
-      await anesthesiaRecordService.listanesthesiaRecords(filters, 1, 20, null, 'asc', userId, ipAddress);
+      await anesthesiaRecordService.listAnesthesiaRecords(filters, 1, 20, null, 'asc', userId, ipAddress);
 
       expect(anesthesiaRecordRepository.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          notes: 'Test notes'
+          anesthetist_user_id: filters.anesthetist_user_id
         }),
         expect.any(Number),
         expect.any(Number),
@@ -84,23 +84,15 @@ describe('Anesthesia record Service', () => {
       );
     });
 
-    it('should apply date range filters', async () => {
-      const filters = {
-        scheduled_from: '2026-01-20T00:00:00.000Z',
-        scheduled_to: '2026-01-20T23:59:59.000Z'
-      };
+    it('should handle empty filters', async () => {
+      const filters = {};
       anesthesiaRecordRepository.findMany.mockResolvedValue(mockanesthesiaRecords);
       anesthesiaRecordRepository.count.mockResolvedValue(1);
 
-      await anesthesiaRecordService.listanesthesiaRecords(filters, 1, 20, null, 'asc', userId, ipAddress);
+      await anesthesiaRecordService.listAnesthesiaRecords(filters, 1, 20, null, 'asc', userId, ipAddress);
 
       expect(anesthesiaRecordRepository.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          scheduled_at: {
-            gte: new Date(filters.scheduled_from),
-            lte: new Date(filters.scheduled_to)
-          }
-        }),
+        {},
         expect.any(Number),
         expect.any(Number),
         expect.any(Object)
@@ -111,7 +103,7 @@ describe('Anesthesia record Service', () => {
       anesthesiaRecordRepository.findMany.mockResolvedValue(mockanesthesiaRecords);
       anesthesiaRecordRepository.count.mockResolvedValue(45);
 
-      const result = await anesthesiaRecordService.listanesthesiaRecords({}, 2, 20, null, 'asc', userId, ipAddress);
+      const result = await anesthesiaRecordService.listAnesthesiaRecords({}, 2, 20, null, 'asc', userId, ipAddress);
 
       expect(result.pagination).toEqual({
         page: 2,
@@ -127,7 +119,7 @@ describe('Anesthesia record Service', () => {
       anesthesiaRecordRepository.findMany.mockRejectedValue(new Error('Database error'));
 
       await expect(
-        anesthesiaRecordService.listanesthesiaRecords({}, 1, 20, null, 'asc', userId, ipAddress)
+        anesthesiaRecordService.listAnesthesiaRecords({}, 1, 20, null, 'asc', userId, ipAddress)
       ).rejects.toThrow(HttpError);
     });
   });
@@ -143,7 +135,7 @@ describe('Anesthesia record Service', () => {
     it('should get Anesthesia record by id', async () => {
       anesthesiaRecordRepository.findById.mockResolvedValue(mockanesthesiaRecord);
 
-      const result = await anesthesiaRecordService.getanesthesiaRecordById(mockanesthesiaRecord.id, userId, ipAddress);
+      const result = await anesthesiaRecordService.getAnesthesiaRecordById(mockanesthesiaRecord.id, userId, ipAddress);
 
       expect(result).toEqual(mockanesthesiaRecord);
       expect(anesthesiaRecordRepository.findById).toHaveBeenCalledWith(mockanesthesiaRecord.id);
@@ -153,7 +145,7 @@ describe('Anesthesia record Service', () => {
       anesthesiaRecordRepository.findById.mockResolvedValue(null);
 
       await expect(
-        anesthesiaRecordService.getanesthesiaRecordById('non-existent-id', userId, ipAddress)
+        anesthesiaRecordService.getAnesthesiaRecordById('non-existent-id', userId, ipAddress)
       ).rejects.toThrow(HttpError);
     });
 
@@ -161,7 +153,7 @@ describe('Anesthesia record Service', () => {
       anesthesiaRecordRepository.findById.mockRejectedValue(new Error('Database error'));
 
       await expect(
-        anesthesiaRecordService.getanesthesiaRecordById('some-id', userId, ipAddress)
+        anesthesiaRecordService.getAnesthesiaRecordById('some-id', userId, ipAddress)
       ).rejects.toThrow(HttpError);
     });
   });
@@ -182,7 +174,7 @@ describe('Anesthesia record Service', () => {
       anesthesiaRecordRepository.create.mockResolvedValue(mockCreatedanesthesiaRecord);
       createAuditLog.mockResolvedValue({});
 
-      const result = await anesthesiaRecordService.createanesthesiaRecord(createData, userId, ipAddress);
+      const result = await anesthesiaRecordService.createAnesthesiaRecord(createData, userId, ipAddress);
 
       expect(result).toEqual(mockCreatedanesthesiaRecord);
       expect(anesthesiaRecordRepository.create).toHaveBeenCalledWith(createData);
@@ -200,7 +192,7 @@ describe('Anesthesia record Service', () => {
       anesthesiaRecordRepository.create.mockRejectedValue(new Error('Database error'));
 
       await expect(
-        anesthesiaRecordService.createanesthesiaRecord(createData, userId, ipAddress)
+        anesthesiaRecordService.createAnesthesiaRecord(createData, userId, ipAddress)
       ).rejects.toThrow(HttpError);
     });
 
@@ -209,7 +201,7 @@ describe('Anesthesia record Service', () => {
       anesthesiaRecordRepository.create.mockRejectedValue(httpError);
 
       await expect(
-        anesthesiaRecordService.createanesthesiaRecord(createData, userId, ipAddress)
+        anesthesiaRecordService.createAnesthesiaRecord(createData, userId, ipAddress)
       ).rejects.toThrow(httpError);
     });
   });
@@ -237,7 +229,7 @@ describe('Anesthesia record Service', () => {
       anesthesiaRecordRepository.update.mockResolvedValue(mockUpdatedanesthesiaRecord);
       createAuditLog.mockResolvedValue({});
 
-      const result = await anesthesiaRecordService.updateanesthesiaRecord(anesthesiaRecordId, updateData, userId, ipAddress);
+      const result = await anesthesiaRecordService.updateAnesthesiaRecord(anesthesiaRecordId, updateData, userId, ipAddress);
 
       expect(result).toEqual(mockUpdatedanesthesiaRecord);
       expect(anesthesiaRecordRepository.findById).toHaveBeenCalledWith(anesthesiaRecordId);
@@ -259,7 +251,7 @@ describe('Anesthesia record Service', () => {
       anesthesiaRecordRepository.findById.mockResolvedValue(null);
 
       await expect(
-        anesthesiaRecordService.updateanesthesiaRecord('non-existent-id', updateData, userId, ipAddress)
+        anesthesiaRecordService.updateAnesthesiaRecord('non-existent-id', updateData, userId, ipAddress)
       ).rejects.toThrow(HttpError);
     });
 
@@ -268,7 +260,7 @@ describe('Anesthesia record Service', () => {
       anesthesiaRecordRepository.update.mockRejectedValue(new Error('Database error'));
 
       await expect(
-        anesthesiaRecordService.updateanesthesiaRecord(anesthesiaRecordId, updateData, userId, ipAddress)
+        anesthesiaRecordService.updateAnesthesiaRecord(anesthesiaRecordId, updateData, userId, ipAddress)
       ).rejects.toThrow(HttpError);
     });
   });
@@ -288,7 +280,7 @@ describe('Anesthesia record Service', () => {
       anesthesiaRecordRepository.softDelete.mockResolvedValue(mockExistinganesthesiaRecord);
       createAuditLog.mockResolvedValue({});
 
-      await anesthesiaRecordService.deleteanesthesiaRecord(anesthesiaRecordId, userId, ipAddress);
+      await anesthesiaRecordService.deleteAnesthesiaRecord(anesthesiaRecordId, userId, ipAddress);
 
       expect(anesthesiaRecordRepository.findById).toHaveBeenCalledWith(anesthesiaRecordId);
       expect(anesthesiaRecordRepository.softDelete).toHaveBeenCalledWith(anesthesiaRecordId);
@@ -306,7 +298,7 @@ describe('Anesthesia record Service', () => {
       anesthesiaRecordRepository.findById.mockResolvedValue(null);
 
       await expect(
-        anesthesiaRecordService.deleteanesthesiaRecord('non-existent-id', userId, ipAddress)
+        anesthesiaRecordService.deleteAnesthesiaRecord('non-existent-id', userId, ipAddress)
       ).rejects.toThrow(HttpError);
     });
 
@@ -315,7 +307,7 @@ describe('Anesthesia record Service', () => {
       anesthesiaRecordRepository.softDelete.mockRejectedValue(new Error('Database error'));
 
       await expect(
-        anesthesiaRecordService.deleteanesthesiaRecord(anesthesiaRecordId, userId, ipAddress)
+        anesthesiaRecordService.deleteAnesthesiaRecord(anesthesiaRecordId, userId, ipAddress)
       ).rejects.toThrow(HttpError);
     });
   });

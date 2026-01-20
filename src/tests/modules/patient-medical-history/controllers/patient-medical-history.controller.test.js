@@ -8,7 +8,6 @@
 // Mock dependencies
 jest.mock('@services/patient-medical-history/patient-medical-history.service');
 jest.mock('@lib/response');
-jest.mock('@lib/errors');
 
 const patientMedicalHistoryService = require('@services/patient-medical-history/patient-medical-history.service');
 const { sendSuccess, sendPaginated } = require('@lib/response');

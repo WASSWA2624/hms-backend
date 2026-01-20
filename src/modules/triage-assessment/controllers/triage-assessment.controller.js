@@ -9,7 +9,7 @@
 
 const triageAssessmentService = require('@modules/triage-assessment/services/triage-assessment.service');
 const { asyncHandler } = require('@lib/async');
-const { sendSuccess, sendCreated, sendDeleted } = require('@lib/response');
+const { sendSuccess, sendCreated, sendDeleted, sendNoContent } = require('@lib/response');
 const { DEFAULT_PAGE, DEFAULT_PAGE_LIMIT } = require('@config/constants');
 
 /**

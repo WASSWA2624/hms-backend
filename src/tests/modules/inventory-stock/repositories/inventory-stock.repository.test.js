@@ -3,7 +3,7 @@
  * @module tests/modules/inventory-stock/repositories
  */
 
-const inventoryStockRepository = require('../../../modules/inventory-stock/repositories/inventory-stock.repository');
+const inventoryStockRepository = require('@repositories/inventory-stock/inventory-stock.repository');
 const prisma = require('@prisma/client');
 const { HttpError } = require('@lib/errors');
 

@@ -20,7 +20,7 @@ describe('Referral Schemas', () => {
       from_department_id: '550e8400-e29b-41d4-a716-446655440001',
       to_department_id: '550e8400-e29b-41d4-a716-446655440002',
       reason: 'Specialist consultation required',
-      status: 'REQUESTED'
+      status: 'PENDING'
     };
 
     it('should validate correct referral data', () => {
@@ -72,7 +72,10 @@ describe('Referral Schemas', () => {
     it('should accept valid status values', () => {
       const statuses = ['PENDING', 'APPROVED', 'REJECTED', 'COMPLETED', 'CANCELLED'];
       statuses.forEach(status => {
-        const data = { ...validData, status };
+        const data = { 
+          encounter_id: '550e8400-e29b-41d4-a716-446655440000',
+          status 
+        };
         const result = createReferralSchema.safeParse(data);
         expect(result.success).toBe(true);
       });
@@ -102,7 +105,7 @@ describe('Referral Schemas', () => {
     });
 
     it('should allow partial updates', () => {
-      const data = { status: 'REJECTED' };
+      const data = { status: 'REQUESTED' };
       const result = updateReferralSchema.safeParse(data);
       expect(result.success).toBe(true);
     });
@@ -137,21 +140,21 @@ describe('Referral Schemas', () => {
       const data = {
         encounter_id: '550e8400-e29b-41d4-a716-446655440000',
         status: 'REQUESTED',
-        page: 1,
-        limit: 20
+        page: '1',
+        limit: '20'
       };
       const result = listReferralsQuerySchema.safeParse(data);
       expect(result.success).toBe(true);
     });
 
     it('should allow optional filters', () => {
-      const data = { page: 1, limit: 20 };
+      const data = { page: '1', limit: '20' };
       const result = listReferralsQuerySchema.safeParse(data);
       expect(result.success).toBe(true);
     });
 
     it('should reject invalid status', () => {
-      const data = { status: 'INVALID' };
+      const data = { status: 'INVALID', page: '1', limit: '20' };
       const result = listReferralsQuerySchema.safeParse(data);
       expect(result.success).toBe(false);
     });

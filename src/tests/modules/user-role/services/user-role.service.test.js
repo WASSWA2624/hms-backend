@@ -25,6 +25,7 @@ const {
 describe('User-Role Service', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    createAuditLog.mockResolvedValue({});
   });
 
   describe('listUserRoles', () => {

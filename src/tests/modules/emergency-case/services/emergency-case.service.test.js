@@ -15,7 +15,7 @@ const prisma = require('@prisma/client');
 jest.mock('../../../../modules/emergency-case/repositories/emergency-case.repository');
 jest.mock('@lib/audit');
 jest.mock('@prisma/client', () => ({
-  $transaction: jest.fn((callback) => callback())
+  $transaction: jest.fn(async (callback) => await callback())
 }));
 
 describe('Emergency Case Service', () => {
@@ -24,6 +24,7 @@ describe('Emergency Case Service', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     createAuditLog.mockResolvedValue({});
+    prisma.$transaction.mockImplementation(async (callback) => await callback());
   });
 
   describe('listEmergencyCases', () => {

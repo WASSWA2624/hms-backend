@@ -25,7 +25,8 @@ describe('Pricing Rule Controller', () => {
     };
     res = {
       status: jest.fn().mockReturnThis(),
-      json: jest.fn()
+      json: jest.fn(),
+      send: jest.fn()
     };
   });
 

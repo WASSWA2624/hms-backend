@@ -3,11 +3,11 @@
  * @module tests/modules/stock-movement/services
  */
 
-const stockMovementService = require('../../../modules/stock-movement/services/stock-movement.service');
-const stockMovementRepository = require('../../../modules/stock-movement/repositories/stock-movement.repository');
+const stockMovementService = require('@services/stock-movement/stock-movement.service');
+const stockMovementRepository = require('@repositories/stock-movement/stock-movement.repository');
 const { createAuditLog } = require('@lib/audit');
 
-jest.mock('../../../modules/stock-movement/repositories/stock-movement.repository');
+jest.mock('@repositories/stock-movement/stock-movement.repository');
 jest.mock('@lib/audit');
 
 describe('Stock Movement Service', () => {

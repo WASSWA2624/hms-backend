@@ -22,7 +22,12 @@ const { DEFAULT_PAGE, DEFAULT_PAGE_LIMIT } = require('@config/constants');
 const listpostOpNotes = asyncHandler(async (req, res) => {
   const {
     theatre_case_id,
+    encounter_id,
     note,
+    notes,
+    status,
+    scheduled_from,
+    scheduled_to,
     page = DEFAULT_PAGE,
     limit = DEFAULT_PAGE_LIMIT,
     sort_by,
@@ -31,7 +36,12 @@ const listpostOpNotes = asyncHandler(async (req, res) => {
 
   const filters = {
     theatre_case_id,
-    note
+    encounter_id,
+    note,
+    notes,
+    status,
+    scheduled_from,
+    scheduled_to
   };
 
   const userId = req.user?.id;

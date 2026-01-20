@@ -11,7 +11,7 @@ const {
   updateDashboardWidgetSchema,
   dashboardWidgetIdParamsSchema,
   listDashboardWidgetsQuerySchema
-} = require('@modules/dashboard-widget/schemas/dashboard-widget.schema');
+} = require('../../../../modules/dashboard-widget/schemas/dashboard-widget.schema');
 
 describe('Dashboard Widget Schemas', () => {
   describe('createDashboardWidgetSchema', () => {

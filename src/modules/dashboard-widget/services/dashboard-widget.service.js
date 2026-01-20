@@ -42,7 +42,7 @@ const listDashboardWidgets = async (filters, page, limit, sortBy, order, userId,
     }
 
     const [dashboardWidgets, total] = await Promise.all([
-      dashboardWidgetRepository.findMany(whereClause, skip, limit, orderBy),
+      dashboardWidgetRepository.findMany(whereClause, skip, limit, orderBy, {}),
       dashboardWidgetRepository.count(whereClause)
     ]);
 

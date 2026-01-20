@@ -33,6 +33,17 @@ const listAnesthesiaRecords = async (filters, page, limit, sortBy, order, userId
     
     if (filters.theatre_case_id) whereClause.theatre_case_id = filters.theatre_case_id;
     if (filters.anesthetist_user_id) whereClause.anesthetist_user_id = filters.anesthetist_user_id;
+    if (filters.encounter_id) whereClause.encounter_id = filters.encounter_id;
+    if (filters.status) whereClause.status = filters.status;
+    if (filters.scheduled_from || filters.scheduled_to) {
+      whereClause.scheduled_at = {};
+      if (filters.scheduled_from) {
+        whereClause.scheduled_at.gte = new Date(filters.scheduled_from);
+      }
+      if (filters.scheduled_to) {
+        whereClause.scheduled_at.lte = new Date(filters.scheduled_to);
+      }
+    }
 
     const [anesthesiaRecords, total] = await Promise.all([
       anesthesiaRecordRepository.findMany(whereClause, skip, limit, orderBy),

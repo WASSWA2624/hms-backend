@@ -3,11 +3,11 @@
  * @module tests/modules/inventory-stock/services
  */
 
-const inventoryStockService = require('../../../modules/inventory-stock/services/inventory-stock.service');
-const inventoryStockRepository = require('../../../modules/inventory-stock/repositories/inventory-stock.repository');
+const inventoryStockService = require('@services/inventory-stock/inventory-stock.service');
+const inventoryStockRepository = require('@repositories/inventory-stock/inventory-stock.repository');
 const { createAuditLog } = require('@lib/audit');
 
-jest.mock('../../../modules/inventory-stock/repositories/inventory-stock.repository');
+jest.mock('@repositories/inventory-stock/inventory-stock.repository');
 jest.mock('@lib/audit');
 
 describe('Inventory Stock Service', () => {

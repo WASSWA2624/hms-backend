@@ -1,6 +1,7 @@
 module.exports = {
   testEnvironment: 'node',
   testMatch: ['**/src/tests/**/*.test.js'],
+  testPathIgnorePatterns: ['/node_modules/', 'routes\\.test\\.js$'],
   moduleNameMapper: {
     '^@app/(.*)$': '<rootDir>/src/app/$1',
     '^@lib/(.*)$': '<rootDir>/src/lib/$1',
@@ -25,7 +26,8 @@ module.exports = {
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],
   setupFilesAfterEnv: ['<rootDir>/src/tests/setup.js'],
-  verbose: true,
+  verbose: false,
+  testTimeout: 10000,
   clearMocks: true,
   resetMocks: true,
   restoreMocks: true

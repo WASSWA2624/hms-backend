@@ -3,11 +3,11 @@
  * @module tests/modules/stock-movement/controllers
  */
 
-const stockMovementController = require('../../../modules/stock-movement/controllers/stock-movement.controller');
-const stockMovementService = require('../../../modules/stock-movement/services/stock-movement.service');
+const stockMovementController = require('@controllers/stock-movement/stock-movement.controller');
+const stockMovementService = require('@services/stock-movement/stock-movement.service');
 const { sendSuccess, sendPaginated, sendNoContent } = require('@lib/response');
 
-jest.mock('../../../modules/stock-movement/services/stock-movement.service');
+jest.mock('@services/stock-movement/stock-movement.service');
 jest.mock('@lib/response');
 
 describe('Stock Movement Controller', () => {

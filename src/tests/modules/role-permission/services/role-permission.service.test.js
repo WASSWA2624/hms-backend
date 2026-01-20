@@ -25,6 +25,7 @@ const {
 describe('Role-Permission Service', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    createAuditLog.mockResolvedValue({});
   });
 
   describe('listRolePermissions', () => {

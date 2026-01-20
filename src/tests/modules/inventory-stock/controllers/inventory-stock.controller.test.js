@@ -3,11 +3,11 @@
  * @module tests/modules/inventory-stock/controllers
  */
 
-const inventoryStockController = require('../../../modules/inventory-stock/controllers/inventory-stock.controller');
-const inventoryStockService = require('../../../modules/inventory-stock/services/inventory-stock.service');
+const inventoryStockController = require('@controllers/inventory-stock/inventory-stock.controller');
+const inventoryStockService = require('@services/inventory-stock/inventory-stock.service');
 const { sendSuccess, sendPaginated, sendNoContent } = require('@lib/response');
 
-jest.mock('../../../modules/inventory-stock/services/inventory-stock.service');
+jest.mock('@services/inventory-stock/inventory-stock.service');
 jest.mock('@lib/response');
 
 describe('Inventory Stock Controller', () => {

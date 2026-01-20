@@ -15,7 +15,7 @@ const prisma = require('@prisma/client');
 jest.mock('../../../../modules/triage-assessment/repositories/triage-assessment.repository');
 jest.mock('@lib/audit');
 jest.mock('@prisma/client', () => ({
-  $transaction: jest.fn((callback) => callback())
+  $transaction: jest.fn(async (callback) => await callback())
 }));
 
 describe('Triage Assessment Service', () => {
@@ -24,6 +24,7 @@ describe('Triage Assessment Service', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     createAuditLog.mockResolvedValue({});
+    prisma.$transaction.mockImplementation(async (callback) => await callback());
   });
 
   describe('listTriageAssessments', () => {

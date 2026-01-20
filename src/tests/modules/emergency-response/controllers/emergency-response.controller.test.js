@@ -7,7 +7,7 @@
 
 const emergencyResponseController = require('../../../../modules/emergency-response/controllers/emergency-response.controller');
 const emergencyResponseService = require('../../../../modules/emergency-response/services/emergency-response.service');
-const { sendSuccess, sendCreated, sendDeleted } = require('@lib/response');
+const { sendSuccess, sendNoContent } = require('@lib/response');
 
 // Mock dependencies
 jest.mock('../../../../modules/emergency-response/services/emergency-response.service');
@@ -75,7 +75,7 @@ describe('Emergency Response Controller', () => {
 
       await emergencyResponseController.createEmergencyResponse(mockReq, mockRes);
 
-      expect(sendCreated).toHaveBeenCalled();
+      expect(sendSuccess).toHaveBeenCalledWith(mockRes, 201, expect.any(String), mockCreated);
     });
   });
 
@@ -101,7 +101,7 @@ describe('Emergency Response Controller', () => {
 
       await emergencyResponseController.deleteEmergencyResponse(mockReq, mockRes);
 
-      expect(sendDeleted).toHaveBeenCalled();
+      expect(sendNoContent).toHaveBeenCalledWith(mockRes);
     });
   });
 });

@@ -7,7 +7,7 @@
 
 const emergencyCaseController = require('../../../../modules/emergency-case/controllers/emergency-case.controller');
 const emergencyCaseService = require('../../../../modules/emergency-case/services/emergency-case.service');
-const { sendSuccess, sendCreated, sendDeleted } = require('@lib/response');
+const { sendSuccess, sendPaginated, sendNoContent } = require('@lib/response');
 
 // Mock dependencies
 jest.mock('../../../../modules/emergency-case/services/emergency-case.service');
@@ -53,17 +53,17 @@ describe('Emergency Case Controller', () => {
         'created_at',
         'desc'
       );
-      expect(sendSuccess).toHaveBeenCalledWith(
+      expect(sendPaginated).toHaveBeenCalledWith(
         mockRes,
         'messages.emergency_case.list.success',
         mockResult.items,
         {
-          pagination: {
-            page: 1,
-            limit: 20,
-            total: 2,
-            totalPages: 1
-          }
+          page: 1,
+          limit: 20,
+          total: 2,
+          totalPages: 1,
+          hasNextPage: false,
+          hasPreviousPage: false
         }
       );
     });
@@ -124,6 +124,7 @@ describe('Emergency Case Controller', () => {
       expect(emergencyCaseService.getEmergencyCaseById).toHaveBeenCalledWith('test-id');
       expect(sendSuccess).toHaveBeenCalledWith(
         mockRes,
+        200,
         'messages.emergency_case.get.success',
         mockCase
       );
@@ -149,8 +150,9 @@ describe('Emergency Case Controller', () => {
         caseData,
         mockReq.user
       );
-      expect(sendCreated).toHaveBeenCalledWith(
+      expect(sendSuccess).toHaveBeenCalledWith(
         mockRes,
+        201,
         'messages.emergency_case.create.success',
         mockCreated
       );
@@ -175,6 +177,7 @@ describe('Emergency Case Controller', () => {
       );
       expect(sendSuccess).toHaveBeenCalledWith(
         mockRes,
+        200,
         'messages.emergency_case.update.success',
         mockUpdated
       );
@@ -192,10 +195,7 @@ describe('Emergency Case Controller', () => {
         'test-id',
         mockReq.user
       );
-      expect(sendDeleted).toHaveBeenCalledWith(
-        mockRes,
-        'messages.emergency_case.delete.success'
-      );
+      expect(sendNoContent).toHaveBeenCalledWith(mockRes);
     });
   });
 });

@@ -7,7 +7,7 @@
  * Per prisma.mdc: All mutations call createAuditLog.
  */
 
-const postOpNoteRepository = require('../repositories/post-op-note.repository');
+const postOpNoteRepository = require('@repositories/post-op-note/post-op-note.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 
@@ -32,7 +32,17 @@ const listpostOpNotes = async (filters, page, limit, sortBy, order, userId, ipAd
     const whereClause = {};
     
     if (filters.theatre_case_id) whereClause.theatre_case_id = filters.theatre_case_id;
+    if (filters.encounter_id) whereClause.encounter_id = filters.encounter_id;
     if (filters.note) whereClause.note = filters.note;
+    if (filters.notes) whereClause.notes = filters.notes;
+    if (filters.status) whereClause.status = filters.status;
+    
+    // Date range filters
+    if (filters.scheduled_from || filters.scheduled_to) {
+      whereClause.scheduled_at = {};
+      if (filters.scheduled_from) whereClause.scheduled_at.gte = new Date(filters.scheduled_from);
+      if (filters.scheduled_to) whereClause.scheduled_at.lte = new Date(filters.scheduled_to);
+    }
 
     const [postOpNotes, total] = await Promise.all([
       postOpNoteRepository.findMany(whereClause, skip, limit, orderBy),

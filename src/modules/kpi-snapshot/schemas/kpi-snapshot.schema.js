@@ -23,7 +23,7 @@ const {
 const createKpiSnapshotSchema = z.object({
   tenant_id: uuidSchema,
   name: z.string().trim().min(1).max(255),
-  value: z.string().regex(/^\d+(\.\d{1,4})?$/, 'Must be a valid decimal number with up to 4 decimal places').trim(),
+  value: z.string().trim().regex(/^\d+(\.\d{1,4})?$/, 'Must be a valid decimal number with up to 4 decimal places'),
   recorded_at: isoDateSchema.optional()
 });
 
@@ -34,7 +34,7 @@ const createKpiSnapshotSchema = z.object({
  */
 const updateKpiSnapshotSchema = z.object({
   name: z.string().trim().min(1).max(255).optional(),
-  value: z.string().regex(/^\d+(\.\d{1,4})?$/, 'Must be a valid decimal number with up to 4 decimal places').trim().optional(),
+  value: z.string().trim().regex(/^\d+(\.\d{1,4})?$/, 'Must be a valid decimal number with up to 4 decimal places').optional(),
   recorded_at: isoDateSchema.optional()
 });
 
