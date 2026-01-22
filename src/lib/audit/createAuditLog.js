@@ -23,17 +23,19 @@ try {
  * Create audit log entry (non-blocking)
  * 
  * @param {Object} auditData - Audit log data
+ * @param {string} auditData.tenant_id - Tenant ID (required)
  * @param {string} [auditData.user_id] - User ID who performed the action
  * @param {string} auditData.action - Action type (e.g., 'create', 'update', 'delete')
  * @param {string} auditData.entity - Entity type (e.g., 'user', 'product', 'order')
  * @param {string} auditData.entity_id - Entity ID
  * @param {Object} [auditData.diff] - Before/after changes (JSON object)
- * @param {string} [auditData.ip] - IP address of the request
+ * @param {string} [auditData.ip_address] - IP address of the request
+ * @param {string} [auditData.ip] - IP address (alias for ip_address)
  * @returns {Promise<void>} Resolves when audit log is created (or fails silently)
  */
 const createAuditLog = async (auditData) => {
   // Validate required fields
-  if (!auditData || !auditData.action || !auditData.entity || !auditData.entity_id) {
+  if (!auditData || !auditData.tenant_id || !auditData.action || !auditData.entity || !auditData.entity_id) {
     logger.warn('Invalid audit log data: missing required fields', { auditData });
     return;
   }
@@ -55,12 +57,13 @@ const createAuditLog = async (auditData) => {
       try {
         await prisma.audit_log.create({
           data: {
+            tenant_id: auditData.tenant_id,
             user_id: auditData.user_id || null,
             action: auditData.action,
             entity: auditData.entity,
             entity_id: auditData.entity_id,
-            diff: auditData.diff || null,
-            ip: auditData.ip || null,
+            diff_json: auditData.diff || null,
+            ip_address: auditData.ip_address || auditData.ip || null,
             created_at: new Date()
           }
         });

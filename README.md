@@ -107,6 +107,11 @@ This script will:
    ```bash
    npx prisma generate
    ```
+8. (Optional) Create default user accounts:
+   ```bash
+   npm run setup:accounts
+   ```
+   This creates default accounts for all user types. See `scripts/README.md` for details.
 
 ### Development
 
@@ -139,6 +144,22 @@ The following health check endpoints are available at the root level (not under 
 - `GET /live` - Liveness check (returns 200 if application process is alive)
 
 These endpoints are public and do not require authentication. They are used for monitoring and container orchestration.
+
+## Scripts
+
+Utility scripts are located in the `scripts/` directory. See `scripts/README.md` for detailed documentation.
+
+### Setup Default Accounts
+
+Create default user accounts for all user types (SUPER_ADMIN, TENANT_ADMIN, DOCTOR, NURSE, etc.):
+
+```bash
+npm run setup:accounts
+```
+
+**⚠️ Security Note**: All accounts are created with a default password. Change passwords immediately after first login!
+
+For more information, see `scripts/README.md`.
 
 ## Testing
 

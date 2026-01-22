@@ -924,7 +924,8 @@ model user_profile {
   user_id       String    @db.VarChar(36)
   facility_id   String?   @db.VarChar(36)
   first_name    String    @db.VarChar(120)
-  last_name     String    @db.VarChar(120)
+  middle_name   String?   @db.VarChar(120)
+  last_name     String?   @db.VarChar(120)
   gender        Gender?
   date_of_birth DateTime?
   created_at    DateTime  @default(now())

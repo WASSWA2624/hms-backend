@@ -23,7 +23,8 @@ const createUserProfileSchema = z.object({
   user_id: uuidSchema,
   facility_id: uuidSchema.optional().nullable(),
   first_name: z.string().trim().min(1).max(120),
-  last_name: z.string().trim().min(1).max(120),
+  middle_name: z.string().trim().min(1).max(120).optional().nullable(),
+  last_name: z.string().trim().min(1).max(120).optional().nullable(),
   gender: z.enum(['MALE', 'FEMALE', 'OTHER', 'UNKNOWN']).optional().nullable(),
   date_of_birth: z.string().datetime().optional().nullable()
 });
@@ -36,7 +37,8 @@ const createUserProfileSchema = z.object({
 const updateUserProfileSchema = z.object({
   facility_id: uuidSchema.optional().nullable(),
   first_name: z.string().trim().min(1).max(120).optional(),
-  last_name: z.string().trim().min(1).max(120).optional(),
+  middle_name: z.string().trim().min(1).max(120).optional().nullable(),
+  last_name: z.string().trim().min(1).max(120).optional().nullable(),
   gender: z.enum(['MALE', 'FEMALE', 'OTHER', 'UNKNOWN']).optional().nullable(),
   date_of_birth: z.string().datetime().optional().nullable()
 });

@@ -76,7 +76,8 @@ router.get(
  * @bodyParams {string} user_id - User ID (required, UUID)
  * @bodyParams {string} [facility_id] - Facility ID (UUID)
  * @bodyParams {string} first_name - First name (required, max 120 chars)
- * @bodyParams {string} last_name - Last name (required, max 120 chars)
+ * @bodyParams {string} [middle_name] - Middle name (optional, max 120 chars)
+ * @bodyParams {string} [last_name] - Last name (optional, max 120 chars)
  * @bodyParams {string} [gender] - Gender (MALE/FEMALE/OTHER/UNKNOWN)
  * @bodyParams {string} [date_of_birth] - Date of birth (ISO datetime)
  * @returns {Object} Created user profile
@@ -102,7 +103,8 @@ router.post(
  * @queryParams None
  * @bodyParams {string} [facility_id] - Facility ID (UUID)
  * @bodyParams {string} [first_name] - First name (max 120 chars)
- * @bodyParams {string} [last_name] - Last name (max 120 chars)
+ * @bodyParams {string} [middle_name] - Middle name (optional, max 120 chars)
+ * @bodyParams {string} [last_name] - Last name (optional, max 120 chars)
  * @bodyParams {string} [gender] - Gender (MALE/FEMALE/OTHER/UNKNOWN)
  * @bodyParams {string} [date_of_birth] - Date of birth (ISO datetime)
  * @returns {Object} Updated user profile

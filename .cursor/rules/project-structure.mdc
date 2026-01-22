@@ -28,6 +28,10 @@ project-root/
 │
 ├── logs/                        # Daily application logs (runtime generated)
 │
+├── scripts/                      # Utility scripts (setup, maintenance, etc.)
+│   ├── README.md                # Scripts documentation
+│   └── *.js                     # Script files
+│
 ├── prisma/                      # (Optional) Prisma ORM files
 │   ├── schema.prisma            # Prisma schema (models, enums, relations)
 │   ├── guide.md                 # Contains commands for prisma
