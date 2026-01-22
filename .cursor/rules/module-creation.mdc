@@ -50,7 +50,8 @@ alwaysApply: true
 4. ### **Service**
    - File: `<module>.service.js`.
    - Only import/use its own repo (no direct DB).
-   - All mutations call `@lib/audit/createAuditLog`.
+   - All mutations **must** call `@lib/audit/createAuditLog` with **required `tenant_id`** parameter.
+   - `tenant_id` **must** be extracted from entity data or existing entity (e.g., `entityData.tenant_id`, `existingEntity.tenant_id`).
    - Use Prisma `$transaction()` for multi-step mutations.
    - Test: `services/<module>.service.test.js`.
 

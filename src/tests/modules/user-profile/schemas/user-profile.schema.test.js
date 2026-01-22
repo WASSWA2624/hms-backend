@@ -43,11 +43,30 @@ describe('User Profile Schemas', () => {
       expect(result.success).toBe(false);
     });
 
-    it('should require last_name', () => {
+    it('should allow optional last_name', () => {
       const data = { ...validData };
       delete data.last_name;
       const result = createUserProfileSchema.safeParse(data);
-      expect(result.success).toBe(false);
+      expect(result.success).toBe(true);
+    });
+
+    it('should allow optional middle_name', () => {
+      const data = { ...validData };
+      data.middle_name = 'Middle';
+      const result = createUserProfileSchema.safeParse(data);
+      expect(result.success).toBe(true);
+    });
+
+    it('should allow nullable middle_name', () => {
+      const data = { ...validData, middle_name: null };
+      const result = createUserProfileSchema.safeParse(data);
+      expect(result.success).toBe(true);
+    });
+
+    it('should allow nullable last_name', () => {
+      const data = { ...validData, last_name: null };
+      const result = createUserProfileSchema.safeParse(data);
+      expect(result.success).toBe(true);
     });
 
     it('should allow optional facility_id', () => {
@@ -134,8 +153,20 @@ describe('User Profile Schemas', () => {
       expect(result.success).toBe(false);
     });
 
-    it('should enforce last_name min length', () => {
+    it('should enforce last_name min length when provided', () => {
       const data = { ...validData, last_name: '' };
+      const result = createUserProfileSchema.safeParse(data);
+      expect(result.success).toBe(false);
+    });
+
+    it('should enforce middle_name min length when provided', () => {
+      const data = { ...validData, middle_name: '' };
+      const result = createUserProfileSchema.safeParse(data);
+      expect(result.success).toBe(false);
+    });
+
+    it('should enforce middle_name max length', () => {
+      const data = { ...validData, middle_name: 'a'.repeat(121) };
       const result = createUserProfileSchema.safeParse(data);
       expect(result.success).toBe(false);
     });
@@ -225,6 +256,8 @@ describe('User Profile Schemas', () => {
     it('should accept nullable fields', () => {
       const result = updateUserProfileSchema.safeParse({
         facility_id: null,
+        middle_name: null,
+        last_name: null,
         gender: null,
         date_of_birth: null
       });

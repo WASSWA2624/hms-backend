@@ -86,6 +86,7 @@ const createSupplier = async (supplierData, auditContext) => {
   
   // Create audit log
   await createAuditLog({
+    tenant_id: supplierData.tenant_id || supplier.tenant_id,
     user_id: auditContext.user_id,
     action: 'CREATE',
     entity: 'supplier',
@@ -117,6 +118,7 @@ const updateSupplier = async (id, updateData, auditContext) => {
   
   // Create audit log
   await createAuditLog({
+    tenant_id: existingSupplier.tenant_id || updatedSupplier.tenant_id,
     user_id: auditContext.user_id,
     action: 'UPDATE',
     entity: 'supplier',
@@ -147,6 +149,7 @@ const deleteSupplier = async (id, auditContext) => {
   
   // Create audit log
   await createAuditLog({
+    tenant_id: existingSupplier.tenant_id,
     user_id: auditContext.user_id,
     action: 'DELETE',
     entity: 'supplier',

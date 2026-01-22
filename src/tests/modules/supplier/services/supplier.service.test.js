@@ -7,12 +7,14 @@
 
 const supplierService = require('@modules/supplier/services/supplier.service');
 const supplierRepository = require('@modules/supplier/repositories/supplier.repository');
-const createAuditLog = require('@lib/audit/createAuditLog');
+const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 
 // Mock dependencies
 jest.mock('@modules/supplier/repositories/supplier.repository');
-jest.mock('@lib/audit/createAuditLog', () => jest.fn().mockResolvedValue({}));
+jest.mock('@lib/audit', () => ({
+  createAuditLog: jest.fn().mockResolvedValue({})
+}));
 
 describe('Supplier Service', () => {
   beforeEach(() => {
@@ -151,6 +153,7 @@ describe('Supplier Service', () => {
       expect(result).toEqual(mockCreatedSupplier);
       expect(supplierRepository.create).toHaveBeenCalledWith(supplierData);
       expect(createAuditLog).toHaveBeenCalledWith({
+        tenant_id: supplierData.tenant_id,
         user_id: mockAuditContext.user_id,
         action: 'CREATE',
         entity: 'supplier',
@@ -165,6 +168,7 @@ describe('Supplier Service', () => {
     it('should update supplier and log audit', async () => {
       const existingSupplier = {
         id: '550e8400-e29b-41d4-a716-446655440000',
+        tenant_id: '660e8400-e29b-41d4-a716-446655440000',
         name: 'Old Name'
       };
 
@@ -186,6 +190,7 @@ describe('Supplier Service', () => {
 
       expect(result).toEqual(updatedSupplier);
       expect(createAuditLog).toHaveBeenCalledWith({
+        tenant_id: existingSupplier.tenant_id,
         user_id: mockAuditContext.user_id,
         action: 'UPDATE',
         entity: 'supplier',
@@ -207,6 +212,7 @@ describe('Supplier Service', () => {
     it('should delete supplier and log audit', async () => {
       const existingSupplier = {
         id: '550e8400-e29b-41d4-a716-446655440000',
+        tenant_id: '660e8400-e29b-41d4-a716-446655440000',
         name: 'Medical Supplies Inc'
       };
 
@@ -225,6 +231,7 @@ describe('Supplier Service', () => {
 
       expect(result).toEqual(deletedSupplier);
       expect(createAuditLog).toHaveBeenCalledWith({
+        tenant_id: existingSupplier.tenant_id,
         user_id: mockAuditContext.user_id,
         action: 'DELETE',
         entity: 'supplier',

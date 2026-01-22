@@ -88,7 +88,7 @@ Defines the required backend stack and patterns for consistent, scalable, mainta
 - Must follow 8-step process in `module-creation.mdc`.
 - Modules: MVC per `project-structure.mdc`.
 - Controllers wrap all functions with `@lib/async/asyncHandler` (no try/catch).
-- Services call `@lib/audit/createAuditLog` for mutations (non-blocking, never throw).
+- Services call `@lib/audit/createAuditLog` for mutations with **required `tenant_id`** parameter (non-blocking, never throw).
 - Use Prisma `$transaction()` for atomic ops.
 
 ---

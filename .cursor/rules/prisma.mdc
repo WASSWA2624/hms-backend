@@ -82,6 +82,11 @@ const prisma = new PrismaClient({ adapter });
 - Production data **must not** be seeded manually
 - Migration files **must** be committed to version control
 - Rollback migrations **should** be tested before production deployment
+- **NPM Scripts** (convenience commands, run from project root):
+  - `npm run prisma:migrate` - Create and apply new migration (`npx prisma migrate dev`)
+  - `npm run prisma:migrate:deploy` - Apply migrations in production (`npx prisma migrate deploy`)
+  - `npm run prisma:generate` - Regenerate Prisma client (`npx prisma generate`)
+  - `npm run prisma:studio` - Open Prisma Studio (`npx prisma studio`)
 
 ## Migration Rollback Strategy
 - **Prisma does not support automatic rollbacks** - migrations are forward-only
@@ -148,9 +153,31 @@ const prisma = new PrismaClient({ adapter });
 
 ## Audit Trail Implementation
 - All mutations (create, update, soft delete) **must** generate audit log entries
-- Audit logs **must** include: `user_id`, `action`, `entity`, `entity_id`, `diff` (before/after), `ip`, `created_at`
+- Audit logs **must** include:
+  - `tenant_id` (required) - Multi-tenant isolation, must be provided by service layer
+  - `user_id` (optional) - User who performed the action
+  - `action` (required) - Action type: 'CREATE', 'UPDATE', 'DELETE', etc.
+  - `entity` (required) - Entity type: 'user', 'product', 'order', etc.
+  - `entity_id` (required) - ID of the affected resource
+  - `diff_json` (optional) - Before/after changes as JSON object (field name is `diff_json` in schema, but can be passed as `diff` parameter)
+  - `ip_address` (optional) - IP address of the request (field name is `ip_address` in schema, but can be passed as `ip` parameter)
+  - `created_at` (auto-generated) - Timestamp
+- Services **must** call `@lib/audit/createAuditLog` with **required `tenant_id`** parameter
+- `tenant_id` **must** be extracted from the entity being modified (e.g., `entityData.tenant_id`, `existingEntity.tenant_id`) or from request context
 - Audit trail creation **should** be handled in service layer, not repositories (repositories remain stateless)
 - Audit trail failures **must not** prevent the primary operation (log errors, don't throw)
+- Example usage:
+  ```javascript
+  await createAuditLog({
+    tenant_id: entityData.tenant_id || existingEntity.tenant_id,
+    user_id: auditContext.user_id,
+    action: 'CREATE',
+    entity: 'supplier',
+    entity_id: createdEntity.id,
+    diff: { after: createdEntity },
+    ip_address: auditContext.ip_address
+  });
+  ```
 
 ## Forbidden Patterns
 - Hard deletes in production (use soft deletes only)
