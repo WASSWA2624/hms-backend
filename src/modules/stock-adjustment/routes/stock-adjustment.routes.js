@@ -4,14 +4,14 @@
 
 const express = require('express');
 const router = express.Router();
-const stockAdjustmentController = require('@modules/stock-adjustment/controllers/stock-adjustment.controller');
+const stockAdjustmentController = require('@controllers/stock-adjustment/stock-adjustment.controller');
 const validate = require('@middlewares/validate.middleware');
 const {
   createStockAdjustmentSchema,
   updateStockAdjustmentSchema,
   stockAdjustmentIdParamsSchema,
   listStockAdjustmentsQuerySchema
-} = require('@modules/stock-adjustment/schemas/stock-adjustment.schema');
+} = require('@validations/stock-adjustment/stock-adjustment.schema');
 
 router.get('/', validate({ query: listStockAdjustmentsQuerySchema }), stockAdjustmentController.listStockAdjustments);
 router.get('/:id', validate({ params: stockAdjustmentIdParamsSchema }), stockAdjustmentController.getStockAdjustment);

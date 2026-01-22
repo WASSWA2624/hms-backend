@@ -10,14 +10,14 @@
 const express = require('express');
 const router = express.Router();
 
-const supplierController = require('@modules/supplier/controllers/supplier.controller');
+const supplierController = require('@controllers/supplier/supplier.controller');
 const validate = require('@middlewares/validate.middleware');
 const {
   createSupplierSchema,
   updateSupplierSchema,
   supplierIdParamsSchema,
   listSuppliersQuerySchema
-} = require('@modules/supplier/schemas/supplier.schema');
+} = require('@validations/supplier/supplier.schema');
 
 /**
  * @route GET /api/v1/suppliers

@@ -168,9 +168,6 @@ apiV1Router.use('/ambulances', require('../modules/ambulance/routes/ambulance.ro
 apiV1Router.use('/ambulance-dispatches', require('../modules/ambulance-dispatch/routes/ambulance-dispatch.routes'));
 apiV1Router.use('/ambulance-trips', require('../modules/ambulance-trip/routes/ambulance-trip.routes'));
 apiV1Router.use('/invoices', require('../modules/invoice/routes/invoice.routes'));
-apiV1Router.use('/invoice-items', require('../modules/invoice-item/routes/invoice-item.routes'));
-apiV1Router.use('/payments', require('../modules/payment/routes/payment.routes'));
-apiV1Router.use('/refunds', require('../modules/refund/routes/refund.routes'));
 apiV1Router.use('/insurance-claims', require('../modules/insurance-claim/routes/insurance-claim.routes'));
 apiV1Router.use('/pre-authorizations', require('../modules/pre-authorization/routes/pre-authorization.routes'));
 apiV1Router.use('/billing-adjustments', require('../modules/billing-adjustment/routes/billing-adjustment.routes'));

@@ -4,14 +4,14 @@
 
 const express = require('express');
 const router = express.Router();
-const goodsReceiptController = require('@modules/goods-receipt/controllers/goods-receipt.controller');
+const goodsReceiptController = require('@controllers/goods-receipt/goods-receipt.controller');
 const validate = require('@middlewares/validate.middleware');
 const {
   createGoodsReceiptSchema,
   updateGoodsReceiptSchema,
   goodsReceiptIdParamsSchema,
   listGoodsReceiptsQuerySchema
-} = require('@modules/goods-receipt/schemas/goods-receipt.schema');
+} = require('@validations/goods-receipt/goods-receipt.schema');
 
 router.get('/', validate({ query: listGoodsReceiptsQuerySchema }), goodsReceiptController.listGoodsReceipts);
 router.get('/:id', validate({ params: goodsReceiptIdParamsSchema }), goodsReceiptController.getGoodsReceipt);

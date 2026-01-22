@@ -26,6 +26,7 @@ try {
     '@middlewares': path.join(__dirname, 'middlewares'),
     '@logs': path.join(process.cwd(), 'logs'),
     '@websockets': path.join(__dirname, 'websockets'),
+    '@modules': path.join(__dirname, 'modules'),
     '@prisma/client': path.join(__dirname, 'prisma', 'client.js')
   });
   
@@ -55,11 +56,12 @@ try {
   throw err;
 }
 
-let PORT, NODE_ENV;
+let PORT, NODE_ENV, HANDLE_SIGINT;
 try {
   const envConfig = require('@config/env');
   PORT = envConfig.PORT;
   NODE_ENV = envConfig.NODE_ENV;
+  HANDLE_SIGINT = envConfig.HANDLE_SIGINT;
 } catch (err) {
   throw err;
 }
@@ -144,18 +146,24 @@ const startServer = () => {
     
     // Listen for termination signals
     process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-    process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+    if (HANDLE_SIGINT) {
+      process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+    } else {
+      process.on('SIGINT', () => {
+        logger.warn('SIGINT received but ignored to keep server running', {
+          pid: process.pid
+        });
+      });
+    }
     
-    // Handle uncaught exceptions
+    // Handle uncaught exceptions (log only; keep server running)
     process.on('uncaughtException', (err) => {
       logger.error('Uncaught exception', { error: err.message, stack: err.stack });
-      gracefulShutdown('uncaughtException');
     });
     
-    // Handle unhandled promise rejections
+    // Handle unhandled promise rejections (log only; keep server running)
     process.on('unhandledRejection', (reason, promise) => {
       logger.error('Unhandled promise rejection', { reason, promise });
-      gracefulShutdown('unhandledRejection');
     });
     
     return server;

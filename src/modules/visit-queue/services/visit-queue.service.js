@@ -7,7 +7,7 @@
  * Per prisma.mdc: Use $transaction for multi-step mutations.
  */
 
-const visitQueueRepository = require('@modules/visit-queue/repositories/visit-queue.repository');
+const visitQueueRepository = require('@repositories/visit-queue/visit-queue.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 

@@ -2,8 +2,8 @@
  * Purchase order service
  */
 
-const purchaseOrderRepository = require('@modules/purchase-order/repositories/purchase-order.repository');
-const createAuditLog = require('@lib/audit/createAuditLog');
+const purchaseOrderRepository = require('@repositories/purchase-order/purchase-order.repository');
+const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 
 const getPurchaseOrderById = async (id) => {

@@ -2,8 +2,8 @@
  * Stock adjustment controller
  */
 
-const stockAdjustmentService = require('@modules/stock-adjustment/services/stock-adjustment.service');
-const asyncHandler = require('@lib/async/asyncHandler');
+const stockAdjustmentService = require('@services/stock-adjustment/stock-adjustment.service');
+const { asyncHandler } = require('@lib/async');
 const { sendSuccess, sendCreated, sendNoContent } = require('@lib/response');
 
 const getStockAdjustment = asyncHandler(async (req, res) => {

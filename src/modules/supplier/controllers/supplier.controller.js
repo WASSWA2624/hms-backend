@@ -7,7 +7,7 @@
  * All handlers must be wrapped with asyncHandler.
  */
 
-const supplierService = require('@modules/supplier/services/supplier.service');
+const supplierService = require('@services/supplier/supplier.service');
 const { asyncHandler } = require('@lib/async');
 const { sendSuccess, sendCreated, sendNoContent } = require('@lib/response');
 

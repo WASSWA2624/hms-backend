@@ -80,6 +80,21 @@ const parseCorsOrigins = (origins) => {
 };
 
 /**
+ * Parse optional boolean env values
+ */
+const parseOptionalBoolean = (value, defaultValue) => {
+  if (value === undefined || value === null || value === '') {
+    return defaultValue;
+  }
+
+  const normalized = String(value).trim().toLowerCase();
+  if (normalized === 'true') return true;
+  if (normalized === 'false') return false;
+
+  throw new Error(`Invalid boolean value: ${value}. Use "true" or "false".`);
+};
+
+/**
  * Build validated environment config
  */
 const buildEnv = () => {
@@ -98,6 +113,10 @@ const buildEnv = () => {
   const STORAGE_PROVIDER = process.env.STORAGE_PROVIDER || 'local';
   const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || null;
   const CSRF_SECRET = process.env.CSRF_SECRET || null;
+  const HANDLE_SIGINT = parseOptionalBoolean(
+    process.env.HANDLE_SIGINT,
+    NODE_ENV !== 'development'
+  );
   const WS_MAX_CONNECTIONS = process.env.WS_MAX_CONNECTIONS ? parseInt(process.env.WS_MAX_CONNECTIONS, 10) : 1000;
   const WS_HEARTBEAT_INTERVAL = process.env.WS_HEARTBEAT_INTERVAL ? parseInt(process.env.WS_HEARTBEAT_INTERVAL, 10) : 30000;
   const WS_HEARTBEAT_TIMEOUT = process.env.WS_HEARTBEAT_TIMEOUT ? parseInt(process.env.WS_HEARTBEAT_TIMEOUT, 10) : 60000;
@@ -161,6 +180,7 @@ const buildEnv = () => {
     STORAGE_PROVIDER,
     ENCRYPTION_KEY,
     CSRF_SECRET,
+    HANDLE_SIGINT,
     WS_MAX_CONNECTIONS,
     WS_HEARTBEAT_INTERVAL,
     WS_HEARTBEAT_TIMEOUT,
@@ -202,6 +222,7 @@ const envKeys = [
   'STORAGE_PROVIDER',
   'ENCRYPTION_KEY',
   'CSRF_SECRET',
+  'HANDLE_SIGINT',
   'WS_MAX_CONNECTIONS',
   'WS_HEARTBEAT_INTERVAL',
   'WS_HEARTBEAT_TIMEOUT',

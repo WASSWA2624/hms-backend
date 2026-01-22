@@ -7,7 +7,7 @@
  * Per module-creation.mdc: All mutations must call audit log.
  */
 
-const emergencyCaseRepository = require('@modules/emergency-case/repositories/emergency-case.repository');
+const emergencyCaseRepository = require('@repositories/emergency-case/emergency-case.repository');
 const { HttpError } = require('@lib/errors');
 const { createAuditLog } = require('@lib/audit');
 const prisma = require('@prisma/client');

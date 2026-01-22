@@ -2,8 +2,8 @@
  * Purchase order controller
  */
 
-const purchaseOrderService = require('@modules/purchase-order/services/purchase-order.service');
-const asyncHandler = require('@lib/async/asyncHandler');
+const purchaseOrderService = require('@services/purchase-order/purchase-order.service');
+const { asyncHandler } = require('@lib/async');
 const { sendSuccess, sendCreated, sendNoContent } = require('@lib/response');
 
 const getPurchaseOrder = asyncHandler(async (req, res) => {

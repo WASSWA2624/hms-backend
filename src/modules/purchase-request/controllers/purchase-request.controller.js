@@ -7,8 +7,8 @@
  * All handlers must be wrapped with asyncHandler.
  */
 
-const purchaseRequestService = require('@modules/purchase-request/services/purchase-request.service');
-const asyncHandler = require('@lib/async/asyncHandler');
+const purchaseRequestService = require('@services/purchase-request/purchase-request.service');
+const { asyncHandler } = require('@lib/async');
 const { sendSuccess, sendCreated, sendNoContent } = require('@lib/response');
 
 /**

@@ -7,7 +7,7 @@
  * Per module-creation.mdc: Use @lib/response/* for output.
  */
 
-const emergencyCaseService = require('@modules/emergency-case/services/emergency-case.service');
+const emergencyCaseService = require('@services/emergency-case/emergency-case.service');
 const { asyncHandler } = require('@lib/async');
 const { sendSuccess, sendPaginated, sendNoContent } = require('@lib/response');
 const { DEFAULT_PAGE, DEFAULT_PAGE_LIMIT } = require('@config/constants');

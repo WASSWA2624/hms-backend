@@ -7,8 +7,8 @@
  * All mutations must create audit logs.
  */
 
-const supplierRepository = require('@modules/supplier/repositories/supplier.repository');
-const createAuditLog = require('@lib/audit/createAuditLog');
+const supplierRepository = require('@repositories/supplier/supplier.repository');
+const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 
 /**

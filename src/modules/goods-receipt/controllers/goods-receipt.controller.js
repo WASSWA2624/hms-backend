@@ -2,8 +2,8 @@
  * Goods receipt controller
  */
 
-const goodsReceiptService = require('@modules/goods-receipt/services/goods-receipt.service');
-const asyncHandler = require('@lib/async/asyncHandler');
+const goodsReceiptService = require('@services/goods-receipt/goods-receipt.service');
+const { asyncHandler } = require('@lib/async');
 const { sendSuccess, sendCreated, sendNoContent } = require('@lib/response');
 
 const getGoodsReceipt = asyncHandler(async (req, res) => {

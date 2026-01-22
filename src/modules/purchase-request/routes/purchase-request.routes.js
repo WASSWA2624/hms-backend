@@ -10,14 +10,14 @@
 const express = require('express');
 const router = express.Router();
 
-const purchaseRequestController = require('@modules/purchase-request/controllers/purchase-request.controller');
+const purchaseRequestController = require('@controllers/purchase-request/purchase-request.controller');
 const validate = require('@middlewares/validate.middleware');
 const {
   createPurchaseRequestSchema,
   updatePurchaseRequestSchema,
   purchaseRequestIdParamsSchema,
   listPurchaseRequestsQuerySchema
-} = require('@modules/purchase-request/schemas/purchase-request.schema');
+} = require('@validations/purchase-request/purchase-request.schema');
 
 /**
  * @route GET /api/v1/purchase-requests

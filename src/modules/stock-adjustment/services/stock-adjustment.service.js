@@ -2,8 +2,8 @@
  * Stock adjustment service
  */
 
-const stockAdjustmentRepository = require('@modules/stock-adjustment/repositories/stock-adjustment.repository');
-const createAuditLog = require('@lib/audit/createAuditLog');
+const stockAdjustmentRepository = require('@repositories/stock-adjustment/stock-adjustment.repository');
+const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 
 const getStockAdjustmentById = async (id) => {

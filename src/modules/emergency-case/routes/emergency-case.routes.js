@@ -9,14 +9,14 @@
 
 const express = require('express');
 const router = express.Router();
-const emergencyCaseController = require('@modules/emergency-case/controllers/emergency-case.controller');
-const { validate } = require('@middlewares/validate.middleware');
+const emergencyCaseController = require('@controllers/emergency-case/emergency-case.controller');
+const validate = require('@middlewares/validate.middleware');
 const {
   createEmergencyCaseSchema,
   updateEmergencyCaseSchema,
   emergencyCaseIdParamsSchema,
   listEmergencyCasesQuerySchema
-} = require('@modules/emergency-case/schemas/emergency-case.schema');
+} = require('@validations/emergency-case/emergency-case.schema');
 
 /**
  * @route GET /api/v1/emergency-cases

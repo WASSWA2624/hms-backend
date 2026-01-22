@@ -4,14 +4,14 @@
 
 const express = require('express');
 const router = express.Router();
-const purchaseOrderController = require('@modules/purchase-order/controllers/purchase-order.controller');
+const purchaseOrderController = require('@controllers/purchase-order/purchase-order.controller');
 const validate = require('@middlewares/validate.middleware');
 const {
   createPurchaseOrderSchema,
   updatePurchaseOrderSchema,
   purchaseOrderIdParamsSchema,
   listPurchaseOrdersQuerySchema
-} = require('@modules/purchase-order/schemas/purchase-order.schema');
+} = require('@validations/purchase-order/purchase-order.schema');
 
 router.get('/', validate({ query: listPurchaseOrdersQuerySchema }), purchaseOrderController.listPurchaseOrders);
 router.get('/:id', validate({ params: purchaseOrderIdParamsSchema }), purchaseOrderController.getPurchaseOrder);

@@ -2,8 +2,8 @@
  * Goods receipt service
  */
 
-const goodsReceiptRepository = require('@modules/goods-receipt/repositories/goods-receipt.repository');
-const createAuditLog = require('@lib/audit/createAuditLog');
+const goodsReceiptRepository = require('@repositories/goods-receipt/goods-receipt.repository');
+const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 
 const getGoodsReceiptById = async (id) => {

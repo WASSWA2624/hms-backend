@@ -8,10 +8,10 @@
 const { HttpError } = require('@lib/errors');
 
 // Mock dependencies
-jest.mock('@modules/visit-queue/repositories/visit-queue.repository');
+jest.mock('@repositories/visit-queue/visit-queue.repository');
 jest.mock('@lib/audit');
 
-const visitQueueRepository = require('@modules/visit-queue/repositories/visit-queue.repository');
+const visitQueueRepository = require('@repositories/visit-queue/visit-queue.repository');
 const { createAuditLog } = require('@lib/audit');
 const {
   listVisitQueues,
