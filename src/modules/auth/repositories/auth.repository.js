@@ -9,6 +9,25 @@
 const prisma = require('@prisma/client');
 const { HttpError } = require('@lib/errors');
 
+const userInclude = {
+  profile: true,
+  roles: {
+    where: { deleted_at: null },
+    include: {
+      role: {
+        include: {
+          role_permissions: {
+            where: { deleted_at: null },
+            include: {
+              permission: true
+            }
+          }
+        }
+      }
+    }
+  }
+};
+
 /**
  * Find user by email and tenant
  *
@@ -24,24 +43,29 @@ const findUserByEmailAndTenant = async (email, tenantId) => {
         tenant_id: tenantId,
         deleted_at: null
       },
-      include: {
-        profile: true,
-        roles: {
-          where: { deleted_at: null },
-          include: {
-            role: {
-              include: {
-                role_permissions: {
-                  where: { deleted_at: null },
-                  include: {
-                    permission: true
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+      include: userInclude
+    });
+  } catch (error) {
+    throw new HttpError('errors.database.unexpected', 500, [{ originalError: error.message }]);
+  }
+};
+
+/**
+ * Find user by phone and tenant
+ *
+ * @param {string} phone - User phone number
+ * @param {string} tenantId - Tenant ID
+ * @returns {Promise<Object|null>} User object or null
+ */
+const findUserByPhoneAndTenant = async (phone, tenantId) => {
+  try {
+    return await prisma.user.findFirst({
+      where: {
+        phone,
+        tenant_id: tenantId,
+        deleted_at: null
+      },
+      include: userInclude
     });
   } catch (error) {
     throw new HttpError('errors.database.unexpected', 500, [{ originalError: error.message }]);
@@ -379,6 +403,7 @@ const findUserByPhone = async (phone) => {
 
 module.exports = {
   findUserByEmailAndTenant,
+  findUserByPhoneAndTenant,
   findUserById,
   findUserByEmail,
   findUserByPhone,

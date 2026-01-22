@@ -60,6 +60,36 @@ describe('Auth Service', () => {
       }));
     });
 
+    it('should login user with phone number', async () => {
+      const loginData = {
+        phone: '256701234567',
+        password: 'Password123!',
+        tenant_id: 'tenant-123'
+      };
+
+      const mockUser = {
+        id: 'user-123',
+        phone: '256701234567',
+        tenant_id: 'tenant-123',
+        status: 'ACTIVE',
+        password_hash: 'hashedpassword',
+        roles: [{ role: { name: 'DOCTOR' } }]
+      };
+
+      authRepository.findUserByPhoneAndTenant.mockResolvedValue(mockUser);
+      comparePassword.mockResolvedValue(true);
+      generateToken.mockReturnValue('access-token');
+      generateRefreshToken.mockReturnValue('refresh-token');
+      authRepository.createSession.mockResolvedValue({ id: 'session-123' });
+      createAuditLog.mockResolvedValue({});
+
+      const result = await authService.login(loginData);
+
+      expect(result).toHaveProperty('access_token', 'access-token');
+      expect(result).toHaveProperty('refresh_token', 'refresh-token');
+      expect(authRepository.findUserByPhoneAndTenant).toHaveBeenCalledWith('256701234567', 'tenant-123');
+    });
+
     it('should reject login with invalid credentials', async () => {
       const loginData = {
         email: 'test@example.com',
@@ -68,6 +98,23 @@ describe('Auth Service', () => {
       };
 
       authRepository.findUserByEmailAndTenant.mockResolvedValue(null);
+
+      await expect(authService.login(loginData))
+        .rejects
+        .toThrow(HttpError);
+      await expect(authService.login(loginData))
+        .rejects
+        .toMatchObject({ statusCode: 401 });
+    });
+
+    it('should reject login with invalid phone credentials', async () => {
+      const loginData = {
+        phone: '256701234567',
+        password: 'WrongPassword',
+        tenant_id: 'tenant-123'
+      };
+
+      authRepository.findUserByPhoneAndTenant.mockResolvedValue(null);
 
       await expect(authService.login(loginData))
         .rejects
@@ -131,7 +178,7 @@ describe('Auth Service', () => {
         email: 'newuser@example.com',
         password: 'Password123!',
         tenant_id: 'tenant-123',
-        phone: '+1234567890',
+        phone: '256701234567',
         ip_address: '127.0.0.1',
         user_agent: 'Mozilla'
       };
@@ -438,7 +485,7 @@ describe('Auth Service', () => {
     it('should verify phone with valid token', async () => {
       const verifyData = {
         token: 'valid-token',
-        phone: '+1234567890'
+        phone: '256701234567'
       };
 
       const mockToken = {
@@ -446,7 +493,7 @@ describe('Auth Service', () => {
         user_id: 'user-123',
         user: {
           id: 'user-123',
-          phone: '+1234567890',
+          phone: '256701234567',
           tenant_id: 'tenant-123',
           facility_id: 'facility-123'
         }

@@ -16,6 +16,8 @@
   "errors.validation.token.required": "Token is required",
   "errors.validation.token.empty": "Token cannot be empty",
   "errors.validation.phone.min_length": "Phone must be at least {{min}} characters",
+  "errors.validation.phone.format": "Phone must contain digits only",
+  "errors.validation.login.identifier_required": "Email or phone is required",
   "errors.validation.type.invalid": "Type must be email or phone",
   "errors.validation.field.required": "{{field}} is required",
   "errors.auth.required": "Authentication required",

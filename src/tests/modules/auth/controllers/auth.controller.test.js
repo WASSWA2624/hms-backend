@@ -47,8 +47,10 @@ describe('Auth Controller', () => {
 
       expect(authService.login).toHaveBeenCalledWith({
         email: 'test@example.com',
+        phone: undefined,
         password: 'Password123!',
         tenant_id: 'tenant-123',
+        facility_id: undefined,
         ip_address: '127.0.0.1',
         user_agent: 'Mozilla'
       });
@@ -57,6 +59,35 @@ describe('Auth Controller', () => {
         status: 200,
         data: mockResult
       }));
+    });
+
+    it('should login user with phone number', async () => {
+      req.body = {
+        phone: '256701234567',
+        password: 'Password123!',
+        tenant_id: 'tenant-123'
+      };
+
+      const mockResult = {
+        access_token: 'access-token',
+        refresh_token: 'refresh-token',
+        user: { id: 'user-123' }
+      };
+
+      authService.login.mockResolvedValue(mockResult);
+
+      await authController.login(req, res);
+
+      expect(authService.login).toHaveBeenCalledWith({
+        email: undefined,
+        phone: '256701234567',
+        password: 'Password123!',
+        tenant_id: 'tenant-123',
+        facility_id: undefined,
+        ip_address: '127.0.0.1',
+        user_agent: 'Mozilla'
+      });
+      expect(res.status).toHaveBeenCalledWith(200);
     });
   });
 
@@ -197,7 +228,7 @@ describe('Auth Controller', () => {
 
   describe('verifyPhone', () => {
     it('should verify phone successfully', async () => {
-      req.body = { token: 'some-token', phone: '+1234567890' };
+      req.body = { token: 'some-token', phone: '256701234567' };
 
       const mockResult = { message: 'Phone verified' };
       authService.verifyPhone.mockResolvedValue(mockResult);
@@ -206,7 +237,7 @@ describe('Auth Controller', () => {
 
       expect(authService.verifyPhone).toHaveBeenCalledWith({
         token: 'some-token',
-        phone: '+1234567890'
+        phone: '256701234567'
       });
       expect(res.status).toHaveBeenCalledWith(200);
     });

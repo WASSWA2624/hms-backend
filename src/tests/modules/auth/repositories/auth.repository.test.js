@@ -29,6 +29,7 @@ jest.mock('@prisma/client', () => ({
 
 const {
   findUserByEmailAndTenant,
+  findUserByPhoneAndTenant,
   findUserById,
   findUserByEmail,
   findUserByPhone,
@@ -86,6 +87,45 @@ describe('Auth Repository', () => {
       prisma.user.findFirst.mockRejectedValue(new Error('DB error'));
 
       await expect(findUserByEmailAndTenant('test@example.com', 'tenant-123'))
+        .rejects
+        .toThrow(HttpError);
+    });
+  });
+
+  describe('findUserByPhoneAndTenant', () => {
+    it('should find user by phone and tenant', async () => {
+      const mockUser = {
+        id: 'user-123',
+        phone: '256701234567',
+        tenant_id: 'tenant-123'
+      };
+      prisma.user.findFirst.mockResolvedValue(mockUser);
+
+      const result = await findUserByPhoneAndTenant('256701234567', 'tenant-123');
+
+      expect(result).toEqual(mockUser);
+      expect(prisma.user.findFirst).toHaveBeenCalledWith({
+        where: {
+          phone: '256701234567',
+          tenant_id: 'tenant-123',
+          deleted_at: null
+        },
+        include: expect.any(Object)
+      });
+    });
+
+    it('should return null if phone user not found', async () => {
+      prisma.user.findFirst.mockResolvedValue(null);
+
+      const result = await findUserByPhoneAndTenant('256701234567', 'tenant-123');
+
+      expect(result).toBeNull();
+    });
+
+    it('should throw HttpError on database error', async () => {
+      prisma.user.findFirst.mockRejectedValue(new Error('DB error'));
+
+      await expect(findUserByPhoneAndTenant('256701234567', 'tenant-123'))
         .rejects
         .toThrow(HttpError);
     });

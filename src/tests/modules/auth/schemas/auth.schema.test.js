@@ -29,6 +29,27 @@ describe('Auth Schema Validation', () => {
       expect(result.success).toBe(true);
     });
 
+    it('should validate login data with facility_id', () => {
+      const validData = {
+        email: 'user@example.com',
+        password: 'Password123!',
+        tenant_id: '123e4567-e89b-12d3-a456-426614174000',
+        facility_id: '223e4567-e89b-12d3-a456-426614174001'
+      };
+      const result = loginBodySchema.safeParse(validData);
+      expect(result.success).toBe(true);
+    });
+
+    it('should validate login data with phone number', () => {
+      const validData = {
+        phone: '256701234567',
+        password: 'Password123!',
+        tenant_id: '123e4567-e89b-12d3-a456-426614174000'
+      };
+      const result = loginBodySchema.safeParse(validData);
+      expect(result.success).toBe(true);
+    });
+
     it('should reject invalid email', () => {
       const invalidData = {
         email: 'invalid-email',
@@ -59,6 +80,36 @@ describe('Auth Schema Validation', () => {
       expect(result.success).toBe(false);
     });
 
+    it('should reject invalid facility_id format', () => {
+      const invalidData = {
+        email: 'user@example.com',
+        password: 'Password123!',
+        tenant_id: '123e4567-e89b-12d3-a456-426614174000',
+        facility_id: 'not-a-uuid'
+      };
+      const result = loginBodySchema.safeParse(invalidData);
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject when email and phone are missing', () => {
+      const invalidData = {
+        password: 'Password123!',
+        tenant_id: '123e4567-e89b-12d3-a456-426614174000'
+      };
+      const result = loginBodySchema.safeParse(invalidData);
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject phone numbers with plus sign', () => {
+      const invalidData = {
+        phone: '+256701234567',
+        password: 'Password123!',
+        tenant_id: '123e4567-e89b-12d3-a456-426614174000'
+      };
+      const result = loginBodySchema.safeParse(invalidData);
+      expect(result.success).toBe(false);
+    });
+
     it('should lowercase email', () => {
       const data = {
         email: 'USER@EXAMPLE.COM',
@@ -77,7 +128,7 @@ describe('Auth Schema Validation', () => {
         password: 'Password123!',
         tenant_id: '123e4567-e89b-12d3-a456-426614174000',
         facility_id: '223e4567-e89b-12d3-a456-426614174001',
-        phone: '+1234567890'
+        phone: '256701234567'
       };
       const result = registerBodySchema.safeParse(validData);
       expect(result.success).toBe(true);
@@ -166,7 +217,7 @@ describe('Auth Schema Validation', () => {
     it('should validate correct phone verification data', () => {
       const validData = {
         token: 'verification-token-123',
-        phone: '+1234567890'
+        phone: '256701234567'
       };
       const result = verifyPhoneBodySchema.safeParse(validData);
       expect(result.success).toBe(true);
@@ -194,7 +245,7 @@ describe('Auth Schema Validation', () => {
 
     it('should validate phone type verification', () => {
       const validData = {
-        phone: '+1234567890',
+        phone: '256701234567',
         type: 'phone'
       };
       const result = resendVerificationBodySchema.safeParse(validData);

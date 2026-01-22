@@ -17,14 +17,16 @@ const { sendSuccess } = require('@lib/response');
  * @returns {Promise<void>}
  */
 const login = asyncHandler(async (req, res) => {
-  const { email, password, tenant_id } = req.body;
+  const { email, phone, password, tenant_id, facility_id } = req.body;
   const ip_address = req.ip;
   const user_agent = req.get('user-agent');
 
   const result = await authService.login({
     email,
+    phone,
     password,
     tenant_id,
+    facility_id,
     ip_address,
     user_agent
   });

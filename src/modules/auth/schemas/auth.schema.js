@@ -7,11 +7,21 @@
 
 const { z } = require('zod');
 
+const phoneSchema = z
+  .string()
+  .min(10, 'errors.validation.phone.min_length')
+  .regex(/^[0-9]+$/, 'errors.validation.phone.format');
+
 // ==================== Login ====================
 const loginBodySchema = z.object({
-  email: z.string().email('errors.validation.email.format').toLowerCase(),
+  email: z.string().email('errors.validation.email.format').toLowerCase().optional(),
+  phone: phoneSchema.optional(),
   password: z.string().min(8, 'errors.validation.password.min_length'),
-  tenant_id: z.string().uuid('errors.validation.uuid.invalid')
+  tenant_id: z.string().uuid('errors.validation.uuid.invalid'),
+  facility_id: z.string().uuid('errors.validation.uuid.invalid').optional()
+}).refine((data) => Boolean(data.email || data.phone), {
+  message: 'errors.validation.login.identifier_required',
+  path: ['email']
 });
 
 // ==================== Register ====================
@@ -25,7 +35,7 @@ const registerBodySchema = z.object({
     .regex(/[^A-Za-z0-9]/, 'errors.validation.password.special'),
   tenant_id: z.string().uuid('errors.validation.uuid.invalid'),
   facility_id: z.string().uuid('errors.validation.uuid.invalid').optional(),
-  phone: z.string().min(10, 'errors.validation.phone.min_length').optional()
+  phone: phoneSchema.optional()
 });
 
 // ==================== Verify Email ====================
@@ -37,13 +47,13 @@ const verifyEmailBodySchema = z.object({
 // ==================== Verify Phone ====================
 const verifyPhoneBodySchema = z.object({
   token: z.string().min(1, 'errors.validation.token.required'),
-  phone: z.string().min(10, 'errors.validation.phone.min_length')
+  phone: phoneSchema
 });
 
 // ==================== Resend Verification ====================
 const resendVerificationBodySchema = z.object({
   email: z.string().email('errors.validation.email.format').toLowerCase().optional(),
-  phone: z.string().min(10, 'errors.validation.phone.min_length').optional(),
+  phone: phoneSchema.optional(),
   type: z.enum(['email', 'phone'], { required_error: 'errors.validation.type.invalid' })
 });
 

@@ -16,7 +16,8 @@ const crypto = require('crypto');
  * Login user
  *
  * @param {Object} data - Login data
- * @param {string} data.email - User email
+ * @param {string} [data.email] - User email
+ * @param {string} [data.phone] - User phone number (digits only)
  * @param {string} data.password - User password
  * @param {string} data.tenant_id - Tenant ID
  * @param {string} [data.ip_address] - IP address
@@ -24,10 +25,12 @@ const crypto = require('crypto');
  * @returns {Promise<Object>} Access token, refresh token, and user data
  */
 const login = async (data) => {
-  const { email, password, tenant_id, ip_address, user_agent } = data;
+  const { email, phone, password, tenant_id, ip_address, user_agent } = data;
 
-  // Find user by email and tenant
-  const user = await authRepository.findUserByEmailAndTenant(email, tenant_id);
+  // Find user by email/phone and tenant
+  const user = email
+    ? await authRepository.findUserByEmailAndTenant(email, tenant_id)
+    : await authRepository.findUserByPhoneAndTenant(phone, tenant_id);
   if (!user) {
     throw new HttpError('errors.auth.invalid_credentials', 401);
   }

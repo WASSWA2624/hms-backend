@@ -9,7 +9,7 @@ const express = require('express');
 const router = express.Router();
 const authController = require('@controllers/auth/auth.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
-const { authenticate } = require('@middlewares/auth.middleware');
+const { authenticate, requireAuth } = require('@middlewares/auth.middleware');
 const {
   loginBodySchema,
   registerBodySchema,
@@ -37,10 +37,11 @@ router.post(
 /**
  * @route POST /api/v1/auth/register
  * @desc Register new user account
- * @access Public
+ * @access Private (ADMIN)
  */
 router.post(
   '/register',
+  requireAuth('ADMIN'),
   validateRequest({ body: registerBodySchema }),
   authController.register
 );

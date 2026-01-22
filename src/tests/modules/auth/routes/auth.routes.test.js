@@ -11,16 +11,20 @@ jest.mock('@middlewares/validate.middleware', () => ({
 }));
 jest.mock('@middlewares/auth.middleware', () => ({
   authenticate: jest.fn(() => (req, res, next) => {
-    req.user = { id: 'user-123', tenant_id: 'tenant-123' };
+    req.user = { id: 'user-123', tenant_id: 'tenant-123', role: 'ADMIN' };
     next();
-  })
+  }),
+  requireAuth: jest.fn(() => (req, res, next) => {
+    req.user = { id: 'user-123', tenant_id: 'tenant-123', role: 'ADMIN' };
+    next();
+  }),
 }));
 
 const request = require('supertest');
 const express = require('express');
 const authController = require('@controllers/auth/auth.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
-const { authenticate } = require('@middlewares/auth.middleware');
+const { authenticate, requireAuth } = require('@middlewares/auth.middleware');
 
 // Import routes using relative path since @modules alias doesn't exist
 const authRoutes = require('../../../../modules/auth/routes/auth.routes');
@@ -63,6 +67,30 @@ describe('Auth Routes', () => {
       expect(response.status).toBe(200);
       expect(authController.login).toHaveBeenCalled();
       expect(response.body).toHaveProperty('data.access_token');
+    });
+
+    it('should call login controller with phone number', async () => {
+      authController.login.mockImplementation((req, res) => {
+        res.status(200).json({
+          status: 200,
+          message: 'Login successful',
+          data: {
+            access_token: 'token',
+            refresh_token: 'refresh'
+          }
+        });
+      });
+
+      const response = await request(app)
+        .post('/api/v1/auth/login')
+        .send({
+          phone: '256701234567',
+          password: 'Password123!',
+          tenant_id: 'tenant-123'
+        });
+
+      expect(response.status).toBe(200);
+      expect(authController.login).toHaveBeenCalled();
     });
   });
 
@@ -125,7 +153,7 @@ describe('Auth Routes', () => {
         .post('/api/v1/auth/verify-phone')
         .send({
           token: 'verification-token',
-          phone: '+1234567890'
+          phone: '256701234567'
         });
 
       expect(response.status).toBe(200);
