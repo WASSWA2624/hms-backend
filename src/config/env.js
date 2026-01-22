@@ -9,7 +9,9 @@
  */
 
 // Load .env once here (no other file should read process.env)
-require('dotenv').config();
+const path = require('path');
+const { logger } = require('@lib/logging');
+require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 
 /**
  * Required environment variables
@@ -171,7 +173,7 @@ const buildEnv = () => {
     }
   }
 
-  return {
+  const envConfig = {
     DATABASE_URL,
     JWT_SECRET,
     CORS_ORIGINS,
@@ -189,6 +191,21 @@ const buildEnv = () => {
     AWS_REGION,
     AWS_S3_BUCKET
   };
+
+  if (NODE_ENV === 'development') {
+    logger.warn('Environment variables loaded', {
+      nodeEnv: NODE_ENV,
+      port: PORT,
+      corsOrigins: CORS_ORIGINS,
+      storageProvider: STORAGE_PROVIDER,
+      handleSigint: HANDLE_SIGINT,
+      wsMaxConnections: WS_MAX_CONNECTIONS,
+      wsHeartbeatInterval: WS_HEARTBEAT_INTERVAL,
+      wsHeartbeatTimeout: WS_HEARTBEAT_TIMEOUT
+    });
+  }
+
+  return envConfig;
 };
 
 let cachedEnv = null;

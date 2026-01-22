@@ -13,24 +13,80 @@ const { HttpError } = require('@lib/errors');
 const crypto = require('crypto');
 
 /**
+ * Identify users by identifier (email or phone)
+ * Returns list of tenants the user belongs to (without password verification)
+ *
+ * @param {Object} data - Identify data
+ * @param {string} data.identifier - User email or phone
+ * @returns {Promise<Object>} List of users with tenant info
+ */
+const identify = async (data) => {
+  const { identifier } = data;
+
+  // Find all users with matching identifier
+  const users = await authRepository.findUsersByIdentifier(identifier);
+
+  if (users.length === 0) {
+    // Don't reveal if user exists (security best practice)
+    return { users: [] };
+  }
+
+  // Format response with tenant info
+  const tenantInfo = users.map(user => ({
+    tenant_id: user.tenant_id,
+    tenant_name: user.tenant?.name || '',
+    tenant_slug: user.tenant?.slug || null
+  }));
+
+  // Deduplicate tenants (same user might have multiple entries)
+  const uniqueTenants = tenantInfo.filter((tenant, index, self) =>
+    index === self.findIndex(t => t.tenant_id === tenant.tenant_id)
+  );
+
+  return { users: uniqueTenants };
+};
+
+/**
  * Login user
  *
  * @param {Object} data - Login data
  * @param {string} [data.email] - User email
  * @param {string} [data.phone] - User phone number (digits only)
  * @param {string} data.password - User password
- * @param {string} data.tenant_id - Tenant ID
+ * @param {string} [data.tenant_id] - Tenant ID (optional if single user found)
+ * @param {string} [data.facility_id] - Facility ID (optional)
  * @param {string} [data.ip_address] - IP address
  * @param {string} [data.user_agent] - User agent
- * @returns {Promise<Object>} Access token, refresh token, and user data
+ * @returns {Promise<Object>} Access token, refresh token, user data, and facility info
  */
 const login = async (data) => {
-  const { email, phone, password, tenant_id, ip_address, user_agent } = data;
+  const { email, phone, password, tenant_id, facility_id, ip_address, user_agent } = data;
 
-  // Find user by email/phone and tenant
-  const user = email
-    ? await authRepository.findUserByEmailAndTenant(email, tenant_id)
-    : await authRepository.findUserByPhoneAndTenant(phone, tenant_id);
+  let user;
+
+  if (tenant_id) {
+    // Find user by email/phone and tenant
+    user = email
+      ? await authRepository.findUserByEmailAndTenant(email, tenant_id)
+      : await authRepository.findUserByPhoneAndTenant(phone, tenant_id);
+  } else {
+    // If no tenant_id provided, find user by identifier only
+    // This assumes single user (should be handled by identify endpoint first)
+    const identifier = email || phone;
+    const users = await authRepository.findUsersByIdentifier(identifier);
+    
+    if (users.length === 0) {
+      throw new HttpError('errors.auth.invalid_credentials', 401);
+    }
+    
+    if (users.length > 1) {
+      // Multiple users found - tenant selection required
+      throw new HttpError('errors.auth.multiple_tenants', 400);
+    }
+    
+    user = users[0];
+  }
+
   if (!user) {
     throw new HttpError('errors.auth.invalid_credentials', 401);
   }
@@ -46,11 +102,41 @@ const login = async (data) => {
     throw new HttpError('errors.auth.invalid_credentials', 401);
   }
 
+  // Get user's accessible facilities
+  const facilities = await authRepository.getUserFacilities(user.id, user.tenant_id);
+  const hasMultipleFacilities = facilities.length > 1;
+
+  // If facility_id provided, verify user has access to it
+  let selectedFacilityId = facility_id || user.facility_id;
+  if (selectedFacilityId && facilities.length > 0) {
+    const hasAccess = facilities.some(f => f.id === selectedFacilityId);
+    if (!hasAccess) {
+      // If no access to selected facility, use first available or user's default
+      selectedFacilityId = user.facility_id || (facilities.length > 0 ? facilities[0].id : null);
+    }
+  } else if (!selectedFacilityId && facilities.length === 1) {
+    // Auto-select if only one facility
+    selectedFacilityId = facilities[0].id;
+  }
+
+  // If multiple facilities and none selected, return facility selection requirement
+  if (hasMultipleFacilities && !selectedFacilityId) {
+    return {
+      requires_facility_selection: true,
+      facilities: facilities.map(f => ({
+        id: f.id,
+        name: f.name,
+        facility_type: f.facility_type
+      })),
+      tenant_id: user.tenant_id
+    };
+  }
+
   // Generate tokens
   const accessToken = generateToken({
     userId: user.id,
     tenantId: user.tenant_id,
-    facilityId: user.facility_id,
+    facilityId: selectedFacilityId,
     email: user.email,
     roles: user.roles?.map(ur => ur.role.name) || []
   });
@@ -77,7 +163,7 @@ const login = async (data) => {
     entity_id: user.id,
     user_id: user.id,
     tenant_id: user.tenant_id,
-    facility_id: user.facility_id,
+    facility_id: selectedFacilityId,
     ip_address,
     user_agent,
     details: { session_id: session.id }
@@ -89,7 +175,8 @@ const login = async (data) => {
   return {
     access_token: accessToken,
     refresh_token: refreshToken,
-    user: userData
+    user: userData,
+    requires_facility_selection: false
   };
 };
 
@@ -618,6 +705,7 @@ const resetPassword = async (data) => {
 };
 
 module.exports = {
+  identify,
   login,
   register,
   verifyEmail,

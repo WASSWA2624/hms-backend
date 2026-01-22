@@ -10,6 +10,21 @@ const { asyncHandler } = require('@lib/async');
 const { sendSuccess } = require('@lib/response');
 
 /**
+ * Identify users by identifier
+ *
+ * @param {Object} req - Express request
+ * @param {Object} res - Express response
+ * @returns {Promise<void>}
+ */
+const identify = asyncHandler(async (req, res) => {
+  const { identifier } = req.body;
+
+  const result = await authService.identify({ identifier });
+
+  return sendSuccess(res, 200, 'messages.auth.identify.success', result);
+});
+
+/**
  * Login user
  *
  * @param {Object} req - Express request
@@ -218,6 +233,7 @@ const getMe = asyncHandler(async (req, res) => {
 });
 
 module.exports = {
+  identify,
   login,
   register,
   verifyEmail,

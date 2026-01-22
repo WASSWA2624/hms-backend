@@ -401,12 +401,121 @@ const findUserByPhone = async (phone) => {
   }
 };
 
+/**
+ * Find all users by identifier (email or phone) across all tenants
+ *
+ * @param {string} identifier - User email or phone
+ * @returns {Promise<Array>} Array of user objects with tenant info
+ */
+const findUsersByIdentifier = async (identifier) => {
+  try {
+    const isEmail = identifier.includes('@');
+    
+    const users = await prisma.user.findMany({
+      where: {
+        ...(isEmail ? { email: identifier.toLowerCase() } : { phone: identifier }),
+        deleted_at: null,
+        status: 'ACTIVE'
+      },
+      include: {
+        tenant: {
+          select: {
+            id: true,
+            name: true,
+            slug: true
+          }
+        }
+      },
+      orderBy: {
+        created_at: 'desc'
+      }
+    });
+
+    return users;
+  } catch (error) {
+    throw new HttpError('errors.database.unexpected', 500, [{ originalError: error.message }]);
+  }
+};
+
+/**
+ * Get all facilities accessible to a user within a tenant
+ *
+ * @param {string} userId - User ID
+ * @param {string} tenantId - Tenant ID
+ * @returns {Promise<Array>} Array of facility objects
+ */
+const getUserFacilities = async (userId, tenantId) => {
+  try {
+    // Get user's direct facility
+    const user = await prisma.user.findFirst({
+      where: {
+        id: userId,
+        tenant_id: tenantId,
+        deleted_at: null
+      },
+      include: {
+        facility: true
+      }
+    });
+
+    const facilityIds = new Set();
+
+    // Add user's direct facility if exists
+    if (user?.facility_id) {
+      facilityIds.add(user.facility_id);
+    }
+
+    // Get facility IDs from user roles (both from role.facility_id and user_role.facility_id)
+    const userRoles = await prisma.user_role.findMany({
+      where: {
+        user_id: userId,
+        tenant_id: tenantId,
+        deleted_at: null
+      },
+      include: {
+        role: true
+      }
+    });
+
+    // Collect facility IDs from roles and user_role entries
+    userRoles.forEach(ur => {
+      if (ur.facility_id) {
+        facilityIds.add(ur.facility_id);
+      }
+      if (ur.role?.facility_id) {
+        facilityIds.add(ur.role.facility_id);
+      }
+    });
+
+    // If no facilities found, return empty array
+    if (facilityIds.size === 0) {
+      return [];
+    }
+
+    // Fetch all unique facilities
+    const facilities = await prisma.facility.findMany({
+      where: {
+        id: { in: Array.from(facilityIds) },
+        tenant_id: tenantId,
+        deleted_at: null,
+        is_active: true
+      }
+    });
+
+    return facilities;
+  } catch (error) {
+    throw new HttpError('errors.database.unexpected', 500, [{ originalError: error.message }]);
+  }
+};
+
 module.exports = {
   findUserByEmailAndTenant,
   findUserByPhoneAndTenant,
   findUserById,
   findUserByEmail,
   findUserByPhone,
+  findUsersByIdentifier,
+  getUserFacilities,
   createUser,
   updateUserPassword,
   updateUserStatus,

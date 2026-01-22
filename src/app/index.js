@@ -19,7 +19,7 @@
 
 const express = require('express');
 const cors = require('cors');
-const { corsOptions } = require('@config/cors');
+const { getCorsConfig } = require('@config/cors');
 const securityHeaders = require('@middlewares/security.middleware');
 const csrfMiddleware = require('@middlewares/csrf.middleware');
 const i18nMiddleware = require('@middlewares/i18n.middleware');
@@ -44,7 +44,8 @@ const createApp = () => {
     app.use(securityHeaders());
 
     // 2. CORS middleware (handles preflight requests)
-    app.use(cors(corsOptions));
+    // Call getCorsConfig() to ensure fresh closure with current environment values
+    app.use(cors(getCorsConfig()));
     
     // 3. JSON parser middleware
     app.use(express.json());

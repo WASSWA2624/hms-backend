@@ -11,6 +11,7 @@ const authController = require('@controllers/auth/auth.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
 const { authenticate, requireAuth } = require('@middlewares/auth.middleware');
 const {
+  identifyBodySchema,
   loginBodySchema,
   registerBodySchema,
   verifyEmailBodySchema,
@@ -22,6 +23,17 @@ const {
   refreshTokenBodySchema,
   logoutBodySchema
 } = require('@validations/auth/auth.schema');
+
+/**
+ * @route POST /api/v1/auth/identify
+ * @desc Identify users by identifier (email/phone) - returns tenant list
+ * @access Public
+ */
+router.post(
+  '/identify',
+  validateRequest({ body: identifyBodySchema }),
+  authController.identify
+);
 
 /**
  * @route POST /api/v1/auth/login

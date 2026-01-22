@@ -12,12 +12,17 @@ const phoneSchema = z
   .min(10, 'errors.validation.phone.min_length')
   .regex(/^[0-9]+$/, 'errors.validation.phone.format');
 
+// ==================== Identify ====================
+const identifyBodySchema = z.object({
+  identifier: z.string().min(1, 'errors.validation.field.required')
+});
+
 // ==================== Login ====================
 const loginBodySchema = z.object({
   email: z.string().email('errors.validation.email.format').toLowerCase().optional(),
   phone: phoneSchema.optional(),
   password: z.string().min(8, 'errors.validation.password.min_length'),
-  tenant_id: z.string().uuid('errors.validation.uuid.invalid'),
+  tenant_id: z.string().uuid('errors.validation.uuid.invalid').optional(),
   facility_id: z.string().uuid('errors.validation.uuid.invalid').optional()
 }).refine((data) => Boolean(data.email || data.phone), {
   message: 'errors.validation.login.identifier_required',
@@ -107,6 +112,7 @@ const logoutBodySchema = z.object({
 });
 
 module.exports = {
+  identifyBodySchema,
   loginBodySchema,
   registerBodySchema,
   verifyEmailBodySchema,
