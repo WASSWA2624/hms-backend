@@ -106,8 +106,12 @@ const readinessCheck = async () => {
   }
   
   // Determine overall readiness status
-  // Application is ready if all critical checks pass
-  const allChecksPass = Object.values(checks).every((status) => status === 'ok');
+  // For development: Application is ready even if database is unavailable (can reconnect)
+  // For production: Application is only ready if all critical checks pass
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  const allChecksPass = isDevelopment 
+    ? true // In development, always consider ready for faster iteration
+    : Object.values(checks).every((status) => status === 'ok');
   const status = allChecksPass ? 'ready' : 'not_ready';
   
   return {

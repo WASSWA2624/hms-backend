@@ -46,7 +46,7 @@ const getCorsConfig = () => {
       // Allow requests with no origin (mobile apps, Postman, etc.)
       if (!origin) {
         if (NODE_ENV === 'development') {
-          logger.debug('CORS: No origin header, allowing request');
+          logger.info('CORS: No origin header, allowing request');
         }
         return callback(null, true);
       }
