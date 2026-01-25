@@ -1,0 +1,157 @@
+---
+alwaysApply: true
+---
+
+# Offline Support Rules
+## Purpose
+Defines **mandatory standards for offline-first API design** to support clients that operate with intermittent connectivity.
+Ensures:
+- APIs are designed for offline-capable clients
+- Sync strategies are consistent and reliable
+- Conflict resolution is predictable
+- Data integrity is maintained during sync
+Any violation is **invalid**.
+
+## API Design for Offline Support
+- All mutation endpoints **must** return:
+  - Resource version/timestamp (`version`, `updated_at`, or `etag`)
+  - Full resource data after mutation
+- List endpoints **must** support:
+  - `?since=<timestamp>` query parameter for incremental sync
+  - `?limit` and pagination for large datasets
+- GET endpoints **must** support conditional requests:
+  - `If-None-Match: <etag>` header for cache validation
+  - `If-Modified-Since: <timestamp>` header for cache validation
+  - Response: 304 Not Modified if unchanged
+
+## Versioning & Conflict Detection
+- Resources **must** include version fields:
+  - `version` (integer, incremented on each update)
+  - `updated_at` (timestamp, ISO 8601)
+  - `etag` (hash of resource content, optional)
+- Update endpoints **must** accept version in request:
+  - `PUT /resource/:id` body includes `version` or `expected_version`
+  - Server **must** return 409 Conflict if version mismatch
+  - Conflict response **must** include current resource state
+- Conflict resolution **must** be documented per resource type:
+  - Last-write-wins (default for simple resources)
+  - Manual merge required (for complex resources)
+  - Server-side merge (for specific resources)
+
+## Sync Strategies
+- Incremental sync **must** be supported:
+  - `GET /resource?since=<timestamp>` returns only changes since timestamp
+  - Timestamp **must** be ISO 8601 format
+  - Response **must** include `sync_token` for next sync
+- Full sync **must** be supported:
+  - `GET /resource` without `since` returns all resources
+  - Pagination **must** be used for large datasets
+- Sync endpoints **must** be idempotent:
+  - Same `since` timestamp returns same results
+  - Sync operations **must not** have side effects
+
+## Offline Queue & Retry
+- Client-side queue patterns **must** be supported:
+  - POST/PUT/DELETE operations **must** be idempotent when possible
+  - Idempotency keys **must** be supported:
+    - `Idempotency-Key: <uuid>` header
+    - Server **must** return same response for duplicate keys
+    - Keys **must** expire after reasonable time (24-48 hours)
+- Retry logic **must** be documented:
+  - Exponential backoff for failed requests
+  - Maximum retry attempts
+  - Retry-after headers in error responses
+
+## Caching for Offline
+- Cache headers **must** be set appropriately:
+  - `Cache-Control: max-age=<seconds>` for cacheable resources
+  - `ETag` or `Last-Modified` for validation
+  - `Vary: Accept-Language` if i18n is used
+- Cache invalidation **must** be handled:
+  - Mutations invalidate related caches
+  - Cache keys **must** include version/etag
+- Offline-capable resources **must** have longer cache times:
+  - Static resources: long cache (hours/days)
+  - User-specific resources: shorter cache (minutes)
+  - Real-time resources: no cache or very short
+
+## Data Integrity
+- Offline mutations **must** be validated:
+  - Client-side validation (Zod schemas)
+  - Server-side validation (always enforced)
+  - Validation errors **must** be returned with full context
+- Partial updates **must** be supported:
+  - `PATCH` method for partial updates
+  - `PUT` for full replacement (if needed)
+  - Missing fields in PATCH **must not** clear existing values
+- Soft deletes **must** be used (per `prisma.mdc`):
+  - Allows undo/recovery during sync
+  - Deleted resources **must** be included in sync with `deleted: true` flag
+
+## Sync Response Format
+- Sync responses **must** follow standard format (per `response-format.mdc`):
+```javascript
+{
+  "status": 200,
+  "message": "Sync completed",
+  "data": [ /* resources */ ],
+  "sync": {
+    "sync_token": "string",      // Token for next sync
+    "has_more": boolean,          // More data available
+    "timestamp": "ISO 8601"       // Current server time
+  }
+}
+```
+
+## Conflict Response Format
+- Conflict responses **must** include:
+```javascript
+{
+  "status": 409,
+  "message": "Resource conflict detected",
+  "data": null,
+  "errors": [{
+    "field": "version",
+    "message": "Resource was modified by another client",
+    "current_version": number,
+    "expected_version": number,
+    "current_resource": { /* full resource */ }
+  }]
+}
+```
+
+## Performance Considerations
+- Sync endpoints **must** be optimized:
+  - Index on `updated_at` for `since` queries
+  - Batch operations where possible
+  - Compression for large sync responses
+- Sync operations **must** have timeouts:
+  - Client timeout: configurable (default 30s)
+  - Server timeout: prevent long-running syncs
+  - Pagination **must** be used to limit response size
+
+## Testing
+- Offline support **must** be tested:
+  - Version conflict detection
+  - Incremental sync with `since` parameter
+  - Idempotency key handling
+  - Cache validation (304 responses)
+  - Conflict resolution flows
+- Tests **must** simulate:
+  - Network failures
+  - Concurrent updates
+  - Large dataset syncs
+
+## Forbidden Patterns
+- Hard deletes without recovery option
+- Missing version/etag in responses
+- Non-idempotent mutation endpoints
+- Ignoring `If-None-Match` / `If-Modified-Since` headers
+- Returning full datasets without pagination
+- Missing conflict detection in updates
+
+## Enforcement
+❌ Violations are invalid  
+✅ All APIs must support offline-capable clients  
+✅ Sync and conflict resolution must be reliable and predictable  
+All modules **must strictly follow these offline support rules**.

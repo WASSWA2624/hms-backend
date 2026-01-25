@@ -1,0 +1,104 @@
+---
+alwaysApply: true
+---
+
+# Rate Limiting Rules
+## Purpose
+Defines **mandatory rate limiting standards** to prevent abuse and ensure fair resource usage.
+Ensures:
+- API abuse prevention
+- Fair resource distribution
+- DDoS protection
+- Configurable limits per endpoint/user
+Any violation is **invalid**.
+---
+
+## Configuration
+- Rate limiting configuration **must** be defined in `src/config/rateLimit.js` (per `project-structure.mdc`)
+- Rate limiting middleware **must** be applied globally in `src/app/index.js`
+- Configuration **must** be environment-aware (different limits for dev/staging/production)
+---
+
+## Default Limits
+- **Global limit**: 100 requests per 15 minutes per IP (configurable)
+- **Authenticated users**: Higher limits (e.g., 1000 requests per 15 minutes)
+- **Specific endpoints** may have custom limits:
+  - Authentication endpoints: 5 requests per 15 minutes per IP
+  - File upload endpoints: 10 requests per hour per user
+  - Search endpoints: 60 requests per minute per user
+---
+
+## Rate Limit Headers
+- Rate limit responses **must** include standard headers:
+  - `X-RateLimit-Limit`: Maximum requests allowed
+  - `X-RateLimit-Remaining`: Remaining requests in window
+  - `X-RateLimit-Reset`: Unix timestamp when limit resets
+- Exceeding limit **must** return 429 Too Many Requests
+- Error response **must** follow standard format (per `response-format.mdc`)
+---
+
+## Storage & Implementation
+- Rate limit data **should** be stored in Redis for distributed systems
+- In-memory storage **may** be used for single-instance deployments
+- Rate limiting **must** use token bucket or sliding window algorithm
+- Rate limit middleware **must** be applied before route handlers
+---
+
+## Per-User Limits
+- Authenticated users **must** be rate-limited by user ID, not just IP
+- User-based limits **must** be higher than IP-based limits
+- Rate limits **must** reset per user, not globally
+---
+
+## Endpoint-Specific Limits
+- Critical endpoints **must** have stricter limits:
+  - Authentication endpoints: 5 attempts per 15 minutes per IP
+  - Registration endpoints: 3 attempts per hour per IP
+  - Password reset endpoints: 3 attempts per hour per IP
+- File upload endpoints **must** have lower limits to prevent abuse
+- Search endpoints **may** have higher limits for better UX
+---
+
+## Error Response
+- Rate limit exceeded **must** return:
+  - Status: 429 Too Many Requests
+  - Message: "Rate limit exceeded. Please try again later."
+  - Include reset time in response body
+- Response format:
+  ```javascript
+  {
+    "status": 429,
+    "message": "Rate limit exceeded. Please try again later.",
+    "data": null,
+    "errors": [{
+      "field": "rate_limit",
+      "message": "Limit will reset at <timestamp>"
+    }]
+  }
+  ```
+---
+
+## Logging & Monitoring
+- Rate limit violations **must** be logged
+- Repeated violations from same IP/user **must** trigger alerts
+- Rate limit metrics **should** be collected for monitoring
+- Patterns of abuse **must** be flagged for security review
+---
+
+## Testing
+- Rate limiting **must** be tested in integration tests
+- Tests **must** verify limit enforcement and header responses
+- Edge cases (limit reset, concurrent requests) **must** be tested
+---
+
+## Forbidden Patterns
+- Bypassing rate limits for any endpoint
+- Not including rate limit headers in responses
+- Using same limits for all endpoints without consideration
+- Ignoring rate limit violations in logs
+---
+
+## Enforcement
+❌ Violations are invalid  
+✅ Rate limiting must be fair, configurable, and properly monitored  
+All rate limiting **must strictly follow these rules**.

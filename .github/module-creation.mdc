@@ -1,0 +1,124 @@
+---
+alwaysApply: true
+---
+
+# Module Creation Rules
+
+> **Follow this ordered, unskippable, fully tested process for every module.**
+
+---
+
+## Prerequisites
+
+- CommonJS only.
+- Use import aliases (see `import-aliases.mdc`).
+- Kebab-case for folders/files.
+- Define endpoints in `dev-plan/P010_api_endpoints.mdc`.
+- Create test folder/file before any code.
+
+---
+
+## **8-Step Creation Process**
+
+> **Complete each step with corresponding tests before advancing.**
+
+1. ### **Directory Structure**
+   - Create:
+     ```
+     src/modules/<module>/
+       ├── schemas/
+       ├── repositories/
+       ├── services/
+       ├── controllers/
+       └── routes/
+     src/tests/modules/<module>/
+     ```
+   - Files: `<module>.<layer>.js` (e.g. `user.service.js`).
+
+2. ### **Schemas**
+   - Implement `schemas/<module>.schema.js` (Zod).
+   - Export by `validation.mdc` conventions (body, params, query).
+   - Use snake_case fields.
+   - Test: `schemas/<module>.schema.test.js`.
+
+3. ### **Repository**
+   - File: `<module>.repository.js` with `@prisma/client`.
+   - Only: `findById`, `findMany`, `create`, `update`, `softDelete`.
+   - Follow `prisma.mdc` for APIs, errors, soft deletes.
+   - Test: `repositories/<module>.repository.test.js`.
+
+4. ### **Service**
+   - File: `<module>.service.js`.
+   - Only import/use its own repo (no direct DB).
+   - All mutations **must** call `@lib/audit/createAuditLog` with **required `tenant_id`** parameter.
+   - `tenant_id` **must** be extracted from entity data or existing entity (e.g., `entityData.tenant_id`, `existingEntity.tenant_id`).
+   - Use Prisma `$transaction()` for multi-step mutations.
+   - Test: `services/<module>.service.test.js`.
+
+5. ### **Controller**
+   - File: `<module>.controller.js`.
+   - Import the service.
+   - All methods wrapped with `@lib/async/asyncHandler`.
+   - Use `@lib/response/*` for output.
+   - Test: `controllers/<module>.controller.test.js`.
+
+6. ### **Routes**
+   - File: `<module>.routes.js`.
+   - Mount endpoints as per `dev-plan/P010_api_endpoints.mdc`.
+   - Apply all required middlewares.
+   - Query params: snake_case, Zod-validated.
+   - Use pagination/metadata helpers.
+   - Correct HTTP statuses/JSDoc as per specs.
+   - Test: `routes/<module>.routes.test.js`.
+
+7. ### **Mount Module**
+   - In `src/app/router.js`:
+     ```js
+     apiV1Router.use('/<module>', require('../modules/<module>/routes/<module>.routes'))
+     ```
+   - Use relative paths only.
+   - Endpoints: `/api/v1/<module>/*`.
+   - Aliases auto-registered.
+
+8. ### **Test Coverage**
+   - All test files (validation, repo, service, controller, routes) are required and must stay current (per `testing.mdc`).
+   - Mock all externals (Prisma, Storage, WebSocket, etc).
+   - Verify each step/test before next module.
+
+---
+
+## Special Cases
+
+- **Read-only:** Only GET endpoints; mutation code may be skipped but all steps/tests apply.
+- **Storage/Media:** Use `StorageService` (`storage.mdc`).
+- **Nested/WebSockets:** Follow all specs; exhaustively test.
+
+---
+
+## Cross-Module Rules
+
+- Never import another module’s repo/controller directly.
+- Interact only via service layer or shared lib (by alias).
+- Dependencies must exist and be tested first.
+- Explicitly test all cross-module logic.
+
+---
+
+## Forbidden
+
+- Skipping, merging, reordering steps.
+- DB access outside repos.
+- Missing or partial validation/tests.
+- Skipping audit logs for mutations.
+- Relative imports between modules.
+- Hard deletes—**only soft delete**.
+
+---
+
+## Enforcement
+
+- Any violation invalidates the module.
+- Progress only after all required tests pass.
+- **No exceptions.**
+- Strict compliance enforced step-by-step.
+

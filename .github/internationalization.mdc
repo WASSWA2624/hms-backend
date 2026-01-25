@@ -1,0 +1,150 @@
+---
+alwaysApply: true
+---
+
+# Internationalization (i18n) Rules
+## Purpose
+Defines **mandatory standards for multi-language and locale support (Internationalization and Localization)**.
+Ensures:
+- Consistent locale handling across all endpoints, with the locale explicitly included in the response (e.g., via a 'locale' field or header).
+- During development, define and complete the 'en' locale first; implement other locales in the final phase.
+- Locale files must be organized in the `src/locales/` folder, structured as JSON files per locale (e.g., `en.json`).
+- Proper formatting for dates, numbers, and currencies.
+- Support for multiple languages in responses.
+- Right-to-left (RTL) language support where applicable.
+Any violation is **invalid**.
+
+## Development Priority
+During development, the `en` locale **must** be defined and completed first. All other locales will be implemented in the final phase of the development process.
+
+## Locale Folder Structure
+Locale files **must** be organized in the `src/locales/` folder.
+
+## Locale Detection
+- Locale **must** be detected from request headers or query parameters
+- Priority order:
+  1. `Accept-Language` header (RFC 7231)
+  2. `?locale=<code>` query parameter (optional, overrides header)
+  3. Default locale from `@config/constants` (e.g., `DEFAULT_LOCALE = 'en'`)
+- Locale format **must** follow ISO 639-1 (language) and ISO 3166-1 (country): `en-US`, `fr-CA`, `ar-SA`
+- Locale validation **must** use Zod schema from `@lib/validation/zod`
+- Invalid locales **must** fall back to default locale (log warning, don't error)
+
+## Supported Locales
+- Supported locales **must** be defined in `src/config/constants.js`:
+```javascript
+const SUPPORTED_LOCALES = ['en', 'en-US', 'fr', 'fr-CA', 'es', 'ar', 'de', 'zh'];
+const DEFAULT_LOCALE = 'en';
+```
+- Locale support **must** be configurable per environment
+- Adding new locales **must** require:
+  - Translation files/resources
+  - Date/number format validation
+  - Testing for RTL if applicable
+
+## Response Language
+- All user-facing messages **must** be localized:
+  - Error messages
+  - Success messages
+  - Validation error messages
+  - API response messages
+- Translation utilities **must** be centralized in `src/lib/i18n/`
+- Translation files **must** follow structure: `src/locales/<locale>.json`
+- Missing translations **must** fall back to default locale (log warning)
+## Locale in Responses
+- All responses **must** include locale metadata:
+  - Response body: `meta.locale` (required)
+  - Response body: `meta.direction` (`rtl` or `ltr`, required)
+  - Response header: `Content-Language: <locale>` when locale differs from default
+- Locale metadata **must** align with the locale used for translations
+ - **Exception:** `204 No Content` responses have no body; locale metadata is omitted (see `response-format.mdc`)
+
+## Date & Time Formatting
+- All date/time fields in responses **must** be formatted per locale:
+  - Use `Intl.DateTimeFormat` or locale-aware library
+  - ISO 8601 format for API contracts (with timezone)
+  - Locale-specific format for display (if separate display format needed)
+- Timezone **must** be preserved in API responses (UTC recommended)
+- Date parsing **must** handle multiple input formats (ISO 8601, locale-specific)
+- Date validation **must** account for locale-specific date formats
+
+## Number & Currency Formatting
+- Numbers **must** be formatted per locale:
+  - Decimal separators (`.` vs `,`)
+  - Thousand separators (`,` vs `.` vs space)
+  - Currency symbols and placement
+- Currency formatting **must** use `Intl.NumberFormat` with currency code
+- Currency codes **must** follow ISO 4217 (USD, EUR, GBP, etc.)
+- Number parsing **must** handle locale-specific formats
+
+## Right-to-Left (RTL) Support
+- RTL languages **must** be detected and handled:
+  - Arabic (`ar`), Hebrew (`he`), Persian (`fa`), Urdu (`ur`)
+- RTL detection **must** be available in response metadata:
+  - Add `direction: 'rtl' | 'ltr'` to response metadata if needed by clients
+- Text alignment **must** be handled by client, but API **should** indicate direction
+- RTL-aware sorting **may** be required for text fields (document if implemented)
+
+## Translation Key Management
+- Translation keys **must** follow hierarchical structure:
+  - `errors.validation.required`
+  - `messages.user.created`
+  - `labels.common.save`
+- Keys **must** be namespaced by module/feature
+- Translation utilities **must** live in `src/lib/i18n/`:
+  - `translate(key, locale, params)` function
+  - `getLocale(req)` helper
+  - `formatDate(date, locale)` helper
+  - `formatNumber(number, locale, options)` helper
+- Translation files **must** be JSON or structured format
+- Missing keys **must** log warnings in development, fall back to key name or default locale
+
+## Request/Response Headers
+- Locale **must** be included in response headers when different from default:
+  - `Content-Language: <locale>` (RFC 7231)
+- Request locale **must** be logged for audit purposes (sanitized, no PII)
+- Locale changes **must not** affect API versioning
+
+## Validation & Error Messages
+- All validation error messages **must** be localized
+- Zod validation errors **must** be translated using `@lib/i18n/translate`
+- Error message keys **must** follow pattern: `errors.<category>.<code>`
+- Example: `errors.validation.required`, `errors.auth.unauthorized`
+
+## Database Considerations
+- Locale-specific data **may** be stored in database:
+  - Use separate columns: `name_en`, `name_fr`, `description_ar`
+  - Or use JSON columns: `{ en: "...", fr: "...", ar: "..." }`
+  - Or use separate translation tables
+- Choice **must** be consistent across modules
+- Locale fallback **must** be implemented (fall back to default locale if translation missing)
+
+## Performance
+- Translation lookups **must** be cached (in-memory or Redis)
+- Locale detection **must** be fast (< 1ms overhead)
+- Translation files **must** be loaded at startup, not per-request
+- Missing translation warnings **must not** block requests
+
+## Testing
+- i18n **must** be tested:
+  - Locale detection from headers and query params
+  - Translation fallback behavior
+  - Date/number formatting per locale
+  - RTL language handling (if applicable)
+- Tests **must** cover:
+  - All supported locales
+  - Invalid locale handling
+  - Missing translation fallback
+
+## Forbidden Patterns
+- Hardcoding language-specific strings in code
+- Ignoring `Accept-Language` header
+- Returning untranslated error messages
+- Mixing locales in single response
+- Storing locale in session (use request-based detection)
+
+## Enforcement
+❌ Violations are invalid  
+✅ All user-facing content must be localizable  
+✅ Locale handling must be consistent and performant  
+All modules **must strictly follow these internationalization rules**.

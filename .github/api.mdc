@@ -1,0 +1,90 @@
+---
+alwaysApply: true
+---
+
+# API Endpoint Rules
+
+## Purpose
+Defines mandatory API design standards: enforce RESTfulness, predictable and reusable endpoints, strict pagination/filtering/sorting. All deviations are invalid.
+
+---
+
+## Endpoint Structure
+- Base: `/api/v1/<module>/...`
+- All module endpoints must have `/api/v1/` prefix
+- CRUD:
+  - `GET /<resource>`: list
+  - `GET /<resource>/:id`: get one
+  - `POST /<resource>`: create
+  - `PUT /<resource>/:id`: update
+  - `DELETE /<resource>/:id`: soft-delete
+- Nested: `/<resource>/:id/<subresource>`
+
+### System Endpoints (Not under `/api/v1`)
+- System: `GET /health`, `/ready`, `/live` (never under `/api/v1`; see `health-checks.mdc`)
+
+---
+
+## Query Parameters
+- Pagination: `page` (default 1), `limit` (per module default)
+- Filtering: snake_case queries (ex: `/users?status=active&role=admin`)
+- Sorting: `sort_by=<field>&order=asc|desc`; default order required per resource
+
+---
+
+## Request & Response
+- Validate requests via Zod (`@validations/*`)
+- No business logic in routes
+- Must use standard response format (`response-format.mdc`)
+- Errors handled via central middleware
+- Lists (`GET /<resource>`): must paginate using `@lib/response/pagination` (use DEFAULT_PAGE, DEFAULT_PAGE_LIMIT, MAX_PAGE_LIMIT from `@config/constants`); always return pagination metadata
+
+---
+
+## Middleware Order
+1. Validation (Zod)
+2. Auth (JWT)
+3. RBAC
+4. Handler (`@lib/async/asyncHandler`)
+- All handlers must use `asyncHandler`
+
+---
+
+## HTTP Methods & Status
+- `GET`: 200
+- `POST`: 201
+- `PUT`/`PATCH`: 200
+- `DELETE`: 204 (see `response-format.mdc` for exceptions)
+- Client: 400, 401, 403, 404; Server: 500
+
+---
+
+## Versioning & URLs
+- `/api/v1/...` required
+- No breaking changes without version bump
+- Must be backward compatible
+
+---
+
+## Multiplatform Support
+- Must be client-agnostic (Web, Android, iOS, Desktop)
+- Detection: `User-Agent` (analytics) or `X-Platform` (optional)
+- Platform optimizations must be transparent (e.g., compression, pagination cap)
+- Response format and API version same for all platforms; feature flags for platform-specific features
+- CORS per `cors.mdc`; Auth per `auth-security.mdc` (JWT) must be consistent
+
+---
+
+## Forbidden
+- Mixing GET/POST semantics
+- Returning raw DB objects
+- Hardcoded pagination/filters
+- Business logic in routes
+- Platform-specific versions or responses
+- Undocumented/Non-REST verbs (except allowed `POST /<resource>/:id/<action>` in `dev-plan/P010_api_endpoints.mdc` with validation & auth)
+
+---
+
+## Enforcement
+❌ Any violation is invalid  
+✅ Strict compliance required; refactors must improve consistency, usability, and maintainability

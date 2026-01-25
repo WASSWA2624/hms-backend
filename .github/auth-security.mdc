@@ -1,0 +1,61 @@
+---
+alwaysApply: true
+---
+
+# Authentication & Security Rules
+
+## Purpose
+Defines **mandatory authentication, authorization, and security** for protected routes, enforcing RBAC, data safety, external access control, and best practices. Violations are **invalid**.
+---
+
+## Authentication
+- All protected routes: require JWT (signed with `JWT_SECRET` ≥32 chars), access/refresh tokens, expiry in `config/jwt.js`.
+- Passwords: bcryptjs-hashed, never plaintext.
+- MFA (SMS, TOTP via `speakeasy`/`twilio`): **should** be supported.
+- OAuth/social login (**should** be via Google, Microsoft, LinkedIn, etc.): tokens must be encrypted.
+- Strict rate limiting (see `rate-limiting.mdc`) on all auth endpoints.
+---
+
+## Authorization (RBAC)
+- RBAC: enforce via middleware using `config/roles.js` and `config/permissions.js`.
+- Controllers must not bypass RBAC.
+- Public endpoints must be explicit.
+---
+
+## API Keys
+- External access: requires hashed (Argon2id) API keys—no plaintext storage.
+- Validate keys in middleware.
+---
+
+## CSRF & Input Sanitization
+- CSRF protection: required for state changes.
+- Input: must be sanitized (XSS/injection/PHI); use `src/lib/logging/sanitize.js`.
+---
+
+## Sensitive Data Handling
+- Encrypt sensitive data (PII, PHI, financial) at rest/in transit (AES-256).
+- Do not return sensitive errors to clients.
+- Audit logs must record access to sensitive data.
+---
+
+## Password & Key Rules
+- Passwords: ≥8 chars, upper/lowercase, number, symbol.
+- API keys: strong, random, unique.
+- Production keys: key rotation required.
+---
+
+## Security Headers
+- Set via middleware (recommend `helmet.js`):
+  - `Strict-Transport-Security`, `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY|SAMEORIGIN`, `X-XSS-Protection: 1; mode=block`, `Content-Security-Policy` (if applicable), `Referrer-Policy`.
+- Configured in `src/config/security.js`.
+- Enforce stricter settings in production.
+---
+
+## Forbidden Patterns
+- No hardcoded secrets, RBAC skips, sensitive error leaks, unencrypted sensitive data/credentials, weak hashes, missing headers in production, or insecure HTTP (no HTTP→HTTPS redirect).
+---
+
+## Enforcement
+❌ Violations: invalid  
+✅ Refactors: must improve security, compliance, standardization  
+All auth/security logic must fully comply.

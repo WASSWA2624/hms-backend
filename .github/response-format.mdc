@@ -1,0 +1,100 @@
+---
+alwaysApply: true
+---
+
+# Response Format Rules
+## Purpose
+Defines **mandatory API response standards**.
+Ensures:
+- Consistent response structure across all endpoints
+- Clear distinction between success, paginated, and error responses
+- Easier integration for frontend and external clients
+Any violation is **invalid**.
+---
+
+## Success Response
+- Format for single resource or generic success:
+```javascript
+{
+  "status": number,      // HTTP status code, e.g., 200
+  "message": string,     // descriptive success message
+  "data": any,           // resource(s): object, array, string, number
+  "meta": {
+    "locale": string,    // locale code used for this response
+    "direction": string  // "ltr" or "rtl"
+  }
+}
+```
+---
+
+## Paginated Response
+* All list endpoints **must** return:
+```javascript
+{
+  "status": 200,
+  "message": string,
+  "data": [ /* array of resources */ ],
+  "meta": {
+    "locale": string,
+    "direction": string
+  },
+  "pagination": {
+    "page": number,           // current page (from constants: DEFAULT_PAGE)
+    "limit": number,          // items per page (from constants: DEFAULT_PAGE_LIMIT)
+    "total": number,          // total items
+    "totalPages": number,     // total pages
+    "hasNextPage": boolean,
+    "hasPreviousPage": boolean
+  }
+}
+```
+* Pagination defaults **must** come from `@config/constants` (DEFAULT_PAGE, DEFAULT_PAGE_LIMIT, MAX_PAGE_LIMIT) - see `constants-env.mdc`
+---
+
+## Error Response
+* All errors **must** follow this structure:
+```javascript
+{
+  "status": number,          // HTTP error code
+  "message": string,         // user-friendly error message
+  "data": null,
+  "meta": {
+    "locale": string,
+    "direction": string
+  },
+  "errors": array            // array of detailed error info
+}
+```
+* Errors **must not** leak stack traces or sensitive information
+
+## DELETE Response (204 No Content)
+* DELETE operations **must** return 204 (no content) by default
+* DELETE operations returning 204 **must** have an empty response body (null)
+* HTTP 204 No Content means no response body should be sent
+* Locale metadata is omitted for 204 responses (no body)
+* Only error responses (4xx/5xx) should follow the standard error response format
+* Successful DELETE with 204 must not include JSON response structure
+* **Exception:** If a DELETE operation needs to return confirmation data (e.g., deleted resource ID, deletion timestamp), use status 200 with standard success response format. Document the exception in route JSDoc.
+---
+
+## Best Practices
+* Always use response helpers from `src/lib/response/`:
+  - `success.js` → `sendSuccess(res, status, message, data)` for success responses
+  - `pagination.js` → `sendPaginated(res, message, data, pagination)` for paginated responses
+  - `error.js` → `sendError(res, status, message, errors)` for error responses (via error middleware)
+* Standardize messages across modules
+* Include pagination metadata **even if empty results**
+* Maintain same status codes for consistent frontend handling
+---
+
+## Forbidden Patterns
+* Returning inconsistent structures across endpoints
+* Skipping `data` or `pagination` keys
+* Including internal system details in `errors`
+* Hardcoding response formats instead of using helpers
+---
+
+## Enforcement
+❌ Violations are invalid
+✅ Refactors must improve consistency, readability, and reusability
+All modules **must strictly follow these response format rules**.

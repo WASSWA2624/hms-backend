@@ -1,0 +1,236 @@
+---
+alwaysApply: true
+---
+
+# Prisma & Database Rules
+## Purpose
+Defines **mandatory database and Prisma ORM standards** for projects using Prisma.
+If not using Prisma, adapt these patterns to your ORM.
+Ensures:
+- Data integrity
+- Consistency with MVC
+- Reusable and maintainable database access
+- Compliance with normalization and audit requirements
+Any violation of these rules is **invalid**.
+---
+
+## Prisma Schema Rules
+- Models **must** be snake_case
+- Enums **must** be PascalCase
+- Relationships **must** include proper foreign key constraints
+- Indexes **must** be defined for frequently queried fields
+- Avoid redundant data (4NF compliance)
+- Soft deletes **must** be used instead of hard deletes
+- All models with soft deletes **must** include `deleted_at DateTime?` field
+- `deleted_at` fields **must** be indexed for query efficiency
+- Audit trails **must** be included on all mutations
+- Migrations **must** be generated via Prisma only
+---
+
+## Prisma Client Wrapper
+- Prisma client singleton **must** be defined in `src/prisma/client.js` (per `project-structure.mdc`)
+- All repositories **must** import Prisma client using: `const prisma = require('@prisma/client')`
+- The alias `@prisma/client` resolves to `src/prisma/client.js` (per `import-aliases.mdc`)
+- The wrapper **must** handle singleton pattern for development (globalThis) and production instances
+
+## Prisma 7.x Compatibility
+- **Prisma 7.x requires adapter pattern** for database connections
+- The `url` property **must not** be in `datasource` block in `prisma/schema.prisma` (Prisma 7.x requirement)
+- For MySQL/MariaDB, **must** use `@prisma/adapter-mariadb` package
+- **Required dependencies:**
+  - `@prisma/adapter-mariadb` (for MySQL/MariaDB)
+  - `mysql2` (database driver)
+- Prisma client **must** be instantiated with adapter:
+```javascript
+const { PrismaClient } = require('@prisma/client');
+const { PrismaMariaDb } = require('@prisma/adapter-mariadb');
+const mysql = require('mysql2/promise');
+
+// Parse DATABASE_URL and create connection pool
+const connectionPool = mysql.createPool({ /* connection config */ });
+const adapter = new PrismaMariaDb(connectionPool);
+
+const prisma = new PrismaClient({ adapter });
+```
+- Connection string parsing **must** extract: host, port, user, password, database from `DATABASE_URL`
+- Connection pooling **should** be configured with appropriate limits (e.g., `connectionLimit: 10`)
+
+## Data Access Rules
+- Direct database access **must** be encapsulated within repository modules.
+- Direct database client usage in controllers or routes is forbidden.
+- Direct database client usage is allowed only in:
+  - `src/prisma/client.js` (wrapper definition)
+  - Repository files (`src/modules/<module>/repositories/*.js`)
+  - **Exception (transaction orchestration only):** services may call `prisma.$transaction(...)` but must not call `prisma.<model>.*` directly.
+- `$queryRaw` or raw SQL **allowed only** for complex queries, with justification documented in code
+- Repositories **must** expose **stateless functions**
+- Services **must** call repositories for all database operations
+---
+
+## Transaction Handling
+- Transactions **must** be used for operations requiring atomicity (create with relations, multiple updates, etc.)
+- Transactions **must** be executed through Prisma `$transaction()` method
+- Transaction logic may live in services **or** repositories:
+  - Prefer services when orchestration spans multiple repositories.
+  - Repository-scoped transactions are allowed for single-aggregate atomic operations (repositories remain stateless: no shared mutable state).
+- Transaction callbacks **must** handle rollback on errors
+
+## Migration & Seeding
+- All schema changes **must** use Prisma migrations (`prisma migrate dev`)
+- Migration names **must** be descriptive (e.g., `add_soft_delete_to_orders`)
+- Seed scripts **only** for development/test environments (`prisma/seed.js`)
+- Production data **must not** be seeded manually
+- Migration files **must** be committed to version control
+- Rollback migrations **should** be tested before production deployment
+- **NPM Scripts** (convenience commands, run from project root):
+  - `npm run prisma:migrate` - Create and apply new migration (`npx prisma migrate dev`)
+  - `npm run prisma:migrate:deploy` - Apply migrations in production (`npx prisma migrate deploy`)
+  - `npm run prisma:generate` - Regenerate Prisma client (`npx prisma generate`)
+  - `npm run prisma:studio` - Open Prisma Studio (`npx prisma studio`)
+
+## Migration Rollback Strategy
+- **Prisma does not support automatic rollbacks** - migrations are forward-only
+- To rollback a migration:
+  1. Create a new migration that reverses the changes
+  2. Migration name **must** include `rollback_` prefix (e.g., `rollback_add_soft_delete_to_orders`)
+  3. Test rollback migration in development/staging before production
+  4. Document rollback procedure in migration comments
+- **Data migration rollbacks**:
+  - Data transformations **must** be reversible where possible
+  - Backup database before running data migrations
+  - Document rollback SQL scripts for complex data migrations
+- **Production rollback procedure**:
+  1. Assess impact of rollback (data loss, downtime)
+  2. Create rollback migration with reverse changes
+  3. Test rollback in staging environment
+  4. Schedule maintenance window if needed
+  5. Execute rollback migration: `prisma migrate deploy`
+  6. Verify database state after rollback
+- **Emergency rollback**:
+  - Keep previous migration files in version control
+  - Document manual rollback SQL for critical migrations
+  - Rollback **must** be tested in non-production first
+---
+
+## Repository Structure
+- Repository files **must** be located at `src/modules/<module>/repositories/<module>.repository.js`
+- Repository functions **must** be named using verbs: `find*`, `create*`, `update*`, `delete*`, `count*`, etc.
+- Repository functions **must** accept snake_case parameters matching schema field names
+- Repository functions **must** return Prisma model objects or arrays
+- Repository functions **should** accept optional `include` parameter for relations
+- Example function signatures:
+  - `findById(id, include = {})`
+  - `findMany(filters, pagination, include = {})`
+  - `create(data)`
+  - `update(id, data)`
+  - `softDelete(id)`
+
+## Naming Conventions
+- Table & column names: snake_case
+- Enum names: PascalCase
+- Relation fields: descriptive names reflecting foreign relation (snake_case)
+- Pivot tables: `<model1>_<model2>` format (snake_case)
+- Repository function names: camelCase verbs (e.g., `findById`, `createUser`)
+---
+
+## Soft Delete Implementation
+- Repositories **must** automatically filter soft-deleted records (`deleted_at IS NULL`) in all `find*` operations by default
+- Repositories **must** provide optional parameter to include soft-deleted records when explicitly requested (e.g., `includeDeleted: true`)
+- Soft delete operations **must** set `deleted_at` to current timestamp, never hard delete
+- Restore operations **must** set `deleted_at` to `NULL`
+
+## Performance & Optimization
+- Use indexes on frequently filtered or joined columns
+- Avoid N+1 queries via Prisma `include` or `select`
+- Soft delete flags (`deleted_at`) indexed for query efficiency
+- Use transactions for multi-step operations that must be atomic
+- Connection pooling **must** be configured appropriately for production:
+  - Default connection limit: 10 (adjust based on database capacity)
+  - Connection pool configuration **must** be in environment variables
+  - Pool settings **must** prevent connection exhaustion
+- Raw SQL queries **must** use parameterized queries only (Prisma `$queryRaw` with parameters) to prevent SQL injection
+---
+
+## Audit Trail Implementation
+- All mutations (create, update, soft delete) **must** generate audit log entries
+- Audit logs **must** include:
+  - `tenant_id` (required) - Multi-tenant isolation, must be provided by service layer
+  - `user_id` (optional) - User who performed the action
+  - `action` (required) - Action type: 'CREATE', 'UPDATE', 'DELETE', etc.
+  - `entity` (required) - Entity type: 'user', 'product', 'order', etc.
+  - `entity_id` (required) - ID of the affected resource
+  - `diff_json` (optional) - Before/after changes as JSON object (field name is `diff_json` in schema, but can be passed as `diff` parameter)
+  - `ip_address` (optional) - IP address of the request (field name is `ip_address` in schema, but can be passed as `ip` parameter)
+  - `created_at` (auto-generated) - Timestamp
+- Services **must** call `@lib/audit/createAuditLog` with **required `tenant_id`** parameter
+- `tenant_id` **must** be extracted from the entity being modified (e.g., `entityData.tenant_id`, `existingEntity.tenant_id`) or from request context
+- Audit trail creation **should** be handled in service layer, not repositories (repositories remain stateless)
+- Audit trail failures **must not** prevent the primary operation (log errors, don't throw)
+- Example usage:
+  ```javascript
+  await createAuditLog({
+    tenant_id: entityData.tenant_id || existingEntity.tenant_id,
+    user_id: auditContext.user_id,
+    action: 'CREATE',
+    entity: 'supplier',
+    entity_id: createdEntity.id,
+    diff: { after: createdEntity },
+    ip_address: auditContext.ip_address
+  });
+  ```
+
+## Forbidden Patterns
+- Hard deletes in production (use soft deletes only)
+- Direct Prisma access in controllers, routes, or services
+- Circular relationships without necessity
+- Mixing business logic with repository queries
+- Repositories calling services (repositories are data access only)
+- Skipping soft delete filters in default queries
+- Skipping audit logs for mutations
+- Manual schema changes without migrations
+---
+
+## Error Handling
+- Repository functions **must** handle Prisma errors appropriately
+- Unique constraint violations **must** be caught and transformed to user-friendly errors
+- Foreign key violations **must** return 404 or 400 errors (not 500)
+- Prisma validation errors **must** be sanitized before returning to clients
+- Database connection errors **must** be logged but **must not** expose connection strings or credentials
+
+## Schema Feature Coverage
+- The schema includes comprehensive models for:
+  - **Reviews & Ratings**: Multi-dimensional product reviews with verification, media attachments, and vendor responses
+  - **Payment Methods**: Flexible payment method support for orders (cards, wallets, mobile money, bank transfers, purchase orders, net terms, lease-to-own)
+  - **Approval Workflows**: Product and vendor approval workflows with status tracking and history
+  - **Product Compliance**: Certifications (FDA, CE, ISO) and hazard classifications with expiry tracking
+  - **Authentication**: MFA support and OAuth account linking
+  - **Enterprise Features**: Purchase orders, lease agreements, net terms payment options
+  - **Safety & Compliance**: Product recall management with notification tracking
+  - **Search & Discovery**: Saved searches, search history, and wishlist management
+  - **Integrations**: Integration logging for external system API calls
+  - **Referral Program**: User referral codes, referral tracking, and reward management
+  - **Affiliate System**: Affiliate links, commission tracking, and performance analytics
+  - **Loyalty Program**: Points system, tier management, badges, and transaction history
+  - **Support Tickets**: Ticket management with categories, priorities, comments, and history tracking
+  - **Dispute Resolution**: Dispute management with types, status tracking, comments, and resolution workflows
+- All new models follow the same naming conventions, indexing rules, and soft delete patterns
+- New enums follow PascalCase convention
+- All relationships include proper foreign key constraints and cascade rules
+
+## Best Practices
+- Use Prisma's type safety (generate types with `prisma generate`)
+- Validate input data before passing to repositories (use Zod schemas)
+- Use `select` to fetch only required fields (performance optimization)
+- Use `include` strategically to avoid N+1 queries
+- Batch operations when possible (e.g., `createMany`, `updateMany`)
+- Use database indexes for frequently queried fields
+- Consider connection pooling in production environments
+- When implementing new features, check existing schema models for similar patterns before creating new ones
+
+## Enforcement
+❌ Violations are invalid  
+✅ Refactors must improve consistency, normalization, and auditability  
+All database operations **must follow these rules** strictly.
+---
+
+This file ensures **full Prisma compliance** and **centralizes DB rules** independently.

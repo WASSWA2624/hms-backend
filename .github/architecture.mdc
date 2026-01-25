@@ -1,0 +1,99 @@
+---
+alwaysApply: true
+---
+
+# Architecture Rules
+
+## Purpose
+Defines the required backend stack and patterns for consistent, scalable, maintainable code.
+
+---
+
+## Runtime & Platform
+- Must use Node.js.
+- Long-running workers: only if documented.
+- Blocking I/O is disallowed.
+
+---
+
+## Framework
+- Only Express.js allowed for HTTP.
+- Fastify, NestJS, Koa, etc. are prohibited.
+
+---
+
+## Architecture Pattern
+- MVC is mandatory.
+- Request flow: Route → Controller → Service → Repository → Prisma.
+- No skipping layers.
+- Controllers cannot call Prisma/repos.
+- Services must use repos for DB.
+- No business logic in routes.
+
+---
+
+## Database & ORM
+- DB access only in services/repos.
+- Raw SQL only via ORM’s safe method (e.g. `$queryRaw`) with justification.
+- No ORM in routes/controllers.
+- Default stack: MySQL + Prisma (see `prisma.mdc`).
+
+---
+
+## Module System
+- Must use CommonJS (`require`, `module.exports`).
+- ES modules (`import`/`export`) forbidden.
+- All imports/exports use CommonJS syntax.
+- No dynamic imports unless absolutely necessary.
+
+---
+
+## Development Runtime
+- Use Nodemon for development, `node` for production.
+- Scripts:
+  - `"dev": "nodemon src/server.js"`
+  - `"start": "node src/server.js"`
+
+---
+
+## Application Lifecycle
+- Must implement graceful shutdown:
+  - Handle `SIGTERM`/`SIGINT`.
+  - Gracefully close DB, HTTP, and WebSocket connections.
+  - Timeout: 30s default.
+  - Logic lives in `src/server.js`.
+  - Interrupt long ops during shutdown.
+
+---
+
+## Dependency Policy
+- Keep dependencies minimal/lightweight.
+- Prefer Node.js built-ins.
+- All new deps: justify and review (size, maintenance, license).
+- Add single-purpose packages over monoliths.
+- Review process: built-in check → size/deps → license/security → justify in code/PR.
+- Regularly audit via `npm audit`, update vulnerabilities, and pin versions.
+
+---
+
+## Scalability & Stateless Design
+- App must be stateless.
+- Store session data externally if needed.
+- Use JWT for authentication.
+- File uploads: external storage only (e.g. S3).
+
+---
+
+## Module Creation
+- Must follow 8-step process in `module-creation.mdc`.
+- Modules: MVC per `project-structure.mdc`.
+- Controllers wrap all functions with `@lib/async/asyncHandler` (no try/catch).
+- Services call `@lib/audit/createAuditLog` for mutations with **required `tenant_id`** parameter (non-blocking, never throw).
+- Use Prisma `$transaction()` for atomic ops.
+
+---
+
+## Enforcement
+❌ Deviation is invalid  
+✅ Update this file for architectural changes
+---

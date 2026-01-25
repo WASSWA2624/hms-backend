@@ -1,0 +1,68 @@
+---
+alwaysApply: true
+---
+
+# Documentation Rules
+## Purpose
+Defines **mandatory JSDoc standards** for:
+- Routes
+- Controllers
+- Services
+- Utility functions
+Ensures:
+- Clear, consistent documentation
+- Accurate mapping to Prisma schema
+- Easy maintenance and onboarding
+- Compliance with project-wide standards
+Any violation is **invalid**.
+---
+
+## Route Documentation
+- Every route **must** include full JSDoc:
+  - `@description` → purpose of the route
+  - `@method` → HTTP method (GET, POST, PUT, DELETE)
+  - `@route` → path of the endpoint
+  - `@authentication` → required (JWT, API Key, or None)
+  - `@permissions` → role(s) allowed
+  - `@urlParams` → list and type of URL parameters
+  - `@queryParams` → list and type of query parameters
+  - `@bodyParams` → list and type of body parameters
+  - `@returns` → success response schema
+  - `@throws` → possible error responses
+- Documentation **must match Prisma schema exactly**
+- No undocumented parameters or responses allowed
+---
+
+## Function Documentation
+- Every function **must** include:
+  - `@description` → purpose of function
+  - `@param` → each input parameter with type
+  - `@returns` → return type and structure
+  - `@throws` → errors the function may throw
+- Async functions **must** document promise resolution or rejection
+---
+
+## Utility & Shared Code
+- All lib functions must have JSDoc comments
+- Exported constants **must** include description and usage context
+- Validation schemas **must** document expected inputs and constraints
+---
+
+## Best Practices
+- Keep comments concise but clear
+- Avoid redundant comments; describe **why**, not just **what**
+- Update documentation with **every schema or endpoint change**
+- Use consistent naming and terminology across modules
+---
+
+## Forbidden Patterns
+- Missing JSDoc on public module functions
+- Inaccurate or outdated documentation
+- Documenting implementation details instead of behavior
+- Skipping route parameter or response documentation
+---
+
+## Enforcement
+❌ Violations are invalid  
+✅ Refactors must improve clarity, completeness, and accuracy  
+All modules **must strictly follow these documentation rules**.

@@ -1,0 +1,72 @@
+---
+alwaysApply: true
+---
+
+# Compliance Rules
+## Purpose
+Defines **compliance standards** for data protection, privacy, and audit.
+Apply relevant sections based on your regulatory requirements (GDPR, HIPAA, SOX, etc.).
+Ensures:
+- Legal and regulatory adherence (where applicable)
+- Secure handling of sensitive data
+- Full audit trails for critical operations
+- Reusable compliance patterns across modules
+---
+
+## GDPR (General Data Protection Regulation)
+- **If applicable**: Collect only necessary data; explicit consent required
+- **If applicable**: Data subject rights must be implemented (Access, Portability, Erasure)
+- Personal data must be encrypted at rest and in transit
+- Audit trails for GDPR-related operations are mandatory
+---
+
+## HIPAA (Health Information)
+- **If applicable**: PHI (Protected Health Information) must be logged on access
+- **If applicable**: PHI must be encrypted using AES-256 at rest and TLS in transit
+- **If applicable**: Access must be role-based and auditable
+- Logging sensitive events must comply with `error-logging.mdc`
+---
+
+## SOX (Financial Compliance)
+- **If applicable**: All financial-related operations must be logged
+- **If applicable**: Audit trails must be immutable and time-stamped
+- **If applicable**: Role-based approval flows must be implemented
+- **If applicable**: Reports and data exports must maintain integrity
+---
+
+## Encryption Standards
+- AES-256 for data at rest and transit
+- Sensitive keys **must** be stored securely and rotated periodically
+- Passwords hashed with bcryptjs; API keys with Argon2id
+- No sensitive data stored in plaintext
+---
+
+## Audit Trails
+- All mutations **must** generate audit logs
+- Audit logs **must** include:
+  - **Tenant ID** (required) - Multi-tenant isolation
+  - User ID (optional) - User who performed the action
+  - Action type (required) - e.g., 'CREATE', 'UPDATE', 'DELETE'
+  - Entity type (required) - e.g., 'user', 'product', 'order'
+  - Entity ID (required) - ID of the affected resource
+  - Changes made (optional) - Before/after diff as JSON object
+  - IP address (optional) - IP address of the request
+  - Timestamp (auto-generated) - `created_at` field
+- Audit log field names **must** match schema: `tenant_id`, `user_id`, `action`, `entity`, `entity_id`, `diff_json`, `ip_address`, `created_at`
+- Audit logs **must** be immutable and retained as per compliance policy
+- Audit trail utilities **must** live in `src/lib/audit/` (per `project-structure.mdc`)
+- Services **must** call `@lib/audit/createAuditLog` with **required `tenant_id`** parameter (per `prisma.mdc`)
+- Audit log creation **must not** prevent primary operation from completing (log errors, don't throw)
+---
+
+## Forbidden Patterns
+- Skipping encryption for sensitive data (where required)
+- No audit trail for critical operations
+- Hardcoding sensitive data in code
+- Ignoring applicable regulatory requirements
+
+## Enforcement
+❌ Violations are invalid  
+✅ Refactors must improve compliance, security, and auditability  
+All modules **must** adhere strictly to these compliance rules.
+---
