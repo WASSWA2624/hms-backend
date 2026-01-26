@@ -25,6 +25,16 @@ const {
 } = require('@validations/auth/auth.schema');
 
 /**
+ * @route GET /api/v1/auth/csrf-token
+ * @desc Get CSRF token for POST/PUT/DELETE requests
+ * @access Public
+ */
+router.get(
+  '/csrf-token',
+  authController.getCsrfToken
+);
+
+/**
  * @route POST /api/v1/auth/identify
  * @desc Identify users by identifier (email/phone) - returns tenant list
  * @access Public

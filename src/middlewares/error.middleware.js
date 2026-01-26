@@ -13,6 +13,7 @@
 
 const { handleApiError } = require('@lib/errors');
 const { logger } = require('@lib/logging');
+const { createAuditLog } = require('@lib/audit');
 
 /**
  * Error middleware
@@ -32,6 +33,32 @@ const errorMiddleware = (err, req, res, next) => {
     method: req.method,
     ip: req.ip
   });
+  
+  // Log authorization failures for security monitoring
+  if (err.statusCode === 403) {
+    // Log permission denial attempt
+    const userId = req.user?.id || 'unknown';
+    const tenantId = req.user?.tenantId || 'unknown';
+    
+    // Async log audit event (non-blocking)
+    createAuditLog({
+      action: 'PERMISSION_DENIED',
+      entity: 'authorization',
+      entity_id: req.path,
+      user_id: userId,
+      tenant_id: tenantId,
+      facility_id: req.user?.facilityId || null,
+      ip_address: req.ip,
+      user_agent: req.get('user-agent'),
+      details: { 
+        message: err.message,
+        method: req.method,
+        path: req.path
+      }
+    }).catch(auditErr => {
+      logger.error('Failed to log audit event', { error: auditErr.message });
+    });
+  }
   
   // Pass error to centralized error handler
   handleApiError(err, req, res, next);

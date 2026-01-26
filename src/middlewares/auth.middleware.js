@@ -47,17 +47,19 @@ const extractToken = (req) => {
 const authenticate = () => {
   return async (req, res, next) => {
     try {
-      // TESTING MODE: Skip authentication for all users
-      // In production, this should verify JWT tokens
-      req.user = {
-        id: 'test-user-123',
-        email: 'test@example.com',
-        role: 'admin',
-        roles: ['admin'],
-        isTestUser: true
-      };
+      const token = extractToken(req);
       
-      next();
+      if (!token) {
+        return next(new HttpError('errors.auth.missing_token', 401));
+      }
+      
+      try {
+        const decoded = verifyToken(token);
+        req.user = decoded;
+        next();
+      } catch (tokenError) {
+        return next(new HttpError('errors.auth.invalid_token', 401));
+      }
     } catch (err) {
       next(err);
     }
@@ -75,11 +77,36 @@ const authenticate = () => {
 const authorize = (requiredRole, type = 'role') => {
   return (req, res, next) => {
     try {
-      // TESTING MODE: Skip authorization checks for all users
-      // In production, this should enforce RBAC
-      // Grant all permissions to test user
-      req.user = req.user || {};
-      req.user.isAuthorized = true;
+      if (!req.user) {
+        return next(new HttpError('errors.auth.unauthorized', 403));
+      }
+      
+      if (type === 'role') {
+        const userRoles = req.user.roles || [req.user.role];
+        const rolesArray = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
+        
+        const hasRequiredRole = rolesArray.some(role => 
+          userRoles.some(userRole => 
+            String(userRole).toUpperCase() === String(role).toUpperCase()
+          )
+        );
+        
+        if (!hasRequiredRole) {
+          return next(new HttpError('errors.auth.insufficient_permissions', 403));
+        }
+      } else if (type === 'permission') {
+        // Permission-based check
+        const userPermissions = req.user.permissions || [];
+        const permissionsArray = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
+        
+        const hasRequiredPermission = permissionsArray.some(permission => 
+          userPermissions.includes(permission)
+        );
+        
+        if (!hasRequiredPermission) {
+          return next(new HttpError('errors.auth.insufficient_permissions', 403));
+        }
+      }
       
       next();
     } catch (err) {

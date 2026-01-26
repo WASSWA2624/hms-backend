@@ -2,17 +2,21 @@
  * Cross-Site Request Forgery (CSRF) Protection Middleware
  *
  * Enforces CSRF tokens for state-changing requests per auth-security.mdc.
+ * Validates CSRF token from request headers against session token.
  */
 
-const { CSRF_SECRET } = require('@config/env');
 const SecurityConfig = require('@config/security');
 const { HttpError } = require('@lib/errors');
+const { logger } = require('@lib/logging');
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 const CSRF_HEADER = 'x-csrf-token';
+const CSRF_SESSION_KEY = '_csrf';
 
 /**
  * CSRF middleware.
+ * Validates CSRF token for state-changing requests.
+ * Token must be stored in session and sent in x-csrf-token header.
  *
  * @returns {Function} Express middleware
  */
@@ -26,16 +30,36 @@ const csrfMiddleware = () => {
       return next();
     }
 
-    if (!CSRF_SECRET) {
-      return next(new HttpError('errors.csrf.missing', 500));
-    }
-
+    // Get CSRF token from request header
     const token = req.headers[CSRF_HEADER];
     if (!token) {
+      logger.warn('CSRF token missing from request', {
+        method: req.method,
+        path: req.path,
+        ip: req.ip
+      });
       return next(new HttpError('errors.csrf.missing', 403));
     }
 
-    if (token !== CSRF_SECRET) {
+    // Get stored CSRF token from session
+    const sessionToken = req.session?.[CSRF_SESSION_KEY];
+    if (!sessionToken) {
+      logger.warn('CSRF session token not found', {
+        method: req.method,
+        path: req.path,
+        ip: req.ip
+      });
+      return next(new HttpError('errors.csrf.missing', 403));
+    }
+
+    // Validate token matches session token
+    if (token !== sessionToken) {
+      logger.warn('CSRF token validation failed', {
+        method: req.method,
+        path: req.path,
+        ip: req.ip,
+        tokenMatch: token === sessionToken
+      });
       return next(new HttpError('errors.csrf.invalid', 403));
     }
 

@@ -36,7 +36,12 @@ try {
 const createAuditLog = async (auditData) => {
   // Validate required fields
   if (!auditData || !auditData.tenant_id || !auditData.action || !auditData.entity || !auditData.entity_id) {
-    logger.warn('Invalid audit log data: missing required fields', { auditData });
+    logger.warn('Invalid audit log data: missing required fields', { 
+      auditData,
+      passedEntity_id: auditData?.entity_id,
+      passedUserId: auditData?.user_id,
+      allKeys: Object.keys(auditData || {})
+    });
     return;
   }
 

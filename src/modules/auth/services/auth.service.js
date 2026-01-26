@@ -65,6 +65,23 @@ const login = async (data) => {
   let user;
 
   if (tenant_id) {
+    // Validate tenant_id format (basic UUID check)
+    if (!/^[a-f0-9-]+$/i.test(tenant_id)) {
+      // Log suspicious activity
+      await createAuditLog({
+        action: 'LOGIN_INVALID_TENANT',
+        entity: 'user',
+        entity_id: 'unknown',
+        user_id: null,
+        tenant_id: null,
+        facility_id: null,
+        ip_address,
+        user_agent,
+        details: { suspicious: true, tenant_id }
+      });
+      throw new HttpError('errors.auth.invalid_credentials', 401);
+    }
+
     // Find user by email/phone and tenant
     user = email
       ? await authRepository.findUserByEmailAndTenant(email, tenant_id)
@@ -99,6 +116,18 @@ const login = async (data) => {
   // Verify password
   const isPasswordValid = await comparePassword(password, user.password_hash);
   if (!isPasswordValid) {
+    // Log failed login attempt
+    await createAuditLog({
+      action: 'LOGIN_FAILED_INVALID_PASSWORD',
+      entity: 'user',
+      entity_id: user.id,
+      user_id: user.id,
+      tenant_id: user.tenant_id,
+      facility_id: null,
+      ip_address,
+      user_agent,
+      details: { reason: 'invalid_password' }
+    });
     throw new HttpError('errors.auth.invalid_credentials', 401);
   }
 
@@ -111,8 +140,19 @@ const login = async (data) => {
   if (selectedFacilityId && facilities.length > 0) {
     const hasAccess = facilities.some(f => f.id === selectedFacilityId);
     if (!hasAccess) {
-      // If no access to selected facility, use first available or user's default
-      selectedFacilityId = user.facility_id || (facilities.length > 0 ? facilities[0].id : null);
+      // Log unauthorized facility access attempt
+      await createAuditLog({
+        action: 'LOGIN_FAILED_FACILITY_ACCESS',
+        entity: 'user',
+        entity_id: user.id,
+        user_id: user.id,
+        tenant_id: user.tenant_id,
+        facility_id: null,
+        ip_address,
+        user_agent,
+        details: { reason: 'unauthorized_facility', requested_facility_id: selectedFacilityId }
+      });
+      throw new HttpError('errors.auth.unauthorized_facility', 403);
     }
   } else if (!selectedFacilityId && facilities.length === 1) {
     // Auto-select if only one facility
@@ -243,10 +283,21 @@ const refresh = async (data) => {
   // Hash refresh token
   const refreshTokenHash = crypto.createHash('sha256').update(refresh_token).digest('hex');
 
-  // Find session by refresh token
+  // Find session by refresh token with validation
   const session = await authRepository.findSessionByRefreshToken(refreshTokenHash);
   if (!session) {
     throw new HttpError('errors.auth.refresh_token_invalid', 401);
+  }
+
+  // Validate session is not expired
+  if (session.expires_at && new Date() > new Date(session.expires_at)) {
+    await authRepository.revokeSession(session.id);
+    throw new HttpError('errors.auth.session_expired', 401);
+  }
+
+  // Validate session is not revoked
+  if (session.revoked_at) {
+    throw new HttpError('errors.auth.session_revoked', 401);
   }
 
   // Check if user is active

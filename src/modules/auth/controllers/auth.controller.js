@@ -8,6 +8,8 @@
 const authService = require('@services/auth/auth.service');
 const { asyncHandler } = require('@lib/async');
 const { sendSuccess } = require('@lib/response');
+const { HttpError } = require('@lib/errors');
+const { randomBytes } = require('crypto');
 
 /**
  * Identify users by identifier
@@ -32,21 +34,26 @@ const identify = asyncHandler(async (req, res) => {
  * @returns {Promise<void>}
  */
 const login = asyncHandler(async (req, res) => {
-  const { email, phone, password, tenant_id, facility_id } = req.body;
-  const ip_address = req.ip;
-  const user_agent = req.get('user-agent');
+  try {
+    const { email, phone, password, tenant_id, facility_id } = req.body;
+    const ip_address = req.ip;
+    const user_agent = req.get('user-agent');
 
-  const result = await authService.login({
-    email,
-    phone,
-    password,
-    tenant_id,
-    facility_id,
-    ip_address,
-    user_agent
-  });
+    const result = await authService.login({
+      email,
+      phone,
+      password,
+      tenant_id,
+      facility_id,
+      ip_address,
+      user_agent
+    });
 
-  return sendSuccess(res, 200, 'messages.auth.login.success', result);
+    return sendSuccess(res, 200, 'messages.auth.login.success', result);
+  } catch (error) {
+    // Error is handled by global error handler with audit logging
+    throw error;
+  }
 });
 
 /**
@@ -158,9 +165,13 @@ const resetPassword = asyncHandler(async (req, res) => {
  */
 const changePassword = asyncHandler(async (req, res) => {
   const { old_password, new_password } = req.body;
-  const user_id = req.user.userId;
+  const user_id = req.user?.userId || req.user?.id;
   const ip_address = req.ip;
   const user_agent = req.get('user-agent');
+
+  if (!user_id) {
+    throw new HttpError('errors.auth.unauthorized', 401);
+  }
 
   const result = await authService.changePassword({
     user_id,
@@ -203,9 +214,13 @@ const refresh = asyncHandler(async (req, res) => {
  */
 const logout = asyncHandler(async (req, res) => {
   const { refresh_token } = req.body;
-  const user_id = req.user.userId;
+  const user_id = req.user?.userId || req.user?.id;
   const ip_address = req.ip;
   const user_agent = req.get('user-agent');
+
+  if (!user_id) {
+    throw new HttpError('errors.auth.unauthorized', 401);
+  }
 
   const result = await authService.logout({
     user_id,
@@ -225,11 +240,40 @@ const logout = asyncHandler(async (req, res) => {
  * @returns {Promise<void>}
  */
 const getMe = asyncHandler(async (req, res) => {
-  const userId = req.user.userId;
+  const userId = req.user?.userId || req.user?.id;
+
+  if (!userId) {
+    throw new HttpError('errors.auth.unauthorized', 401);
+  }
 
   const result = await authService.getMe(userId);
 
   return sendSuccess(res, 200, 'messages.auth.user_info.retrieved', result);
+});
+
+/**
+ * Get CSRF token
+ * Generates a CSRF token and stores it in session
+ * This token must be sent in x-csrf-token header for state-changing requests
+ *
+ * @param {Object} req - Express request
+ * @param {Object} res - Express response
+ * @returns {Promise<void>}
+ */
+const getCsrfToken = asyncHandler(async (req, res) => {
+  // Generate a secure random token
+  const token = randomBytes(32).toString('hex');
+  
+  // Store token in session
+  if (!req.session) {
+    req.session = {};
+  }
+  req.session._csrf = token;
+  
+  return sendSuccess(res, 200, 'messages.auth.csrf_token.generated', {
+    token,
+    header: 'x-csrf-token'
+  });
 });
 
 module.exports = {
@@ -244,5 +288,6 @@ module.exports = {
   changePassword,
   refresh,
   logout,
-  getMe
+  getMe,
+  getCsrfToken
 };
