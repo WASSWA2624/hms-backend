@@ -258,6 +258,9 @@ alwaysApply: true
 
 #### 14.4 Nurses Time-table Generator (Write-up §5.17)
 14.4.1**: `nurse-roster` - Nurse roster CRUD + publish (roster config, constraints, period)
+14.4.2**: `shift-template` - Shift template CRUD (defines shift types for roster)
+14.4.3**: `roster-day-off` - Roster day-off CRUD (days off constraints)
+14.4.4**: `staff-availability` - Staff availability CRUD (availability constraints)
 
 ---
 
@@ -345,6 +348,6 @@ alwaysApply: true
 
 ---
 
-## Total Module Count: 132 atomic modules
+## Total Module Count: 135 atomic modules
 
 Each module is a complete, independent implementation unit following the 8-step process.
