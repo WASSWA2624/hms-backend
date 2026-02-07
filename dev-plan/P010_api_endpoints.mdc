@@ -848,6 +848,35 @@ GET /live
 ├── PUT /{id}                       // Update shift swap request
 └── DELETE /{id}                    // Soft delete shift swap request
 
+/api/v1/nurse-rosters/
+├── GET /                           // List nurse rosters
+├── POST /                          // Create nurse roster
+├── GET /{id}                       // Get nurse roster by ID
+├── PUT /{id}                       // Update nurse roster
+├── DELETE /{id}                    // Soft delete nurse roster
+└── POST /{id}/publish              // Publish nurse roster
+
+/api/v1/shift-templates/
+├── GET /                           // List shift templates
+├── POST /                          // Create shift template
+├── GET /{id}                       // Get shift template by ID
+├── PUT /{id}                       // Update shift template
+└── DELETE /{id}                    // Soft delete shift template
+
+/api/v1/roster-day-offs/
+├── GET /                           // List roster days off
+├── POST /                          // Create roster day off
+├── GET /{id}                       // Get roster day off by ID
+├── PUT /{id}                       // Update roster day off
+└── DELETE /{id}                    // Soft delete roster day off
+
+/api/v1/staff-availabilities/
+├── GET /                           // List staff availabilities
+├── POST /                          // Create staff availability
+├── GET /{id}                       // Get staff availability by ID
+├── PUT /{id}                       // Update staff availability
+└── DELETE /{id}                    // Soft delete staff availability
+
 /api/v1/payroll-runs/
 ├── GET /                           // List payroll runs
 ├── POST /                          // Create payroll run

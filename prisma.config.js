@@ -5,11 +5,12 @@
  * instead of in schema.prisma. The runtime Prisma client uses the adapter pattern
  * defined in src/prisma/client.js
  *
- * This file is used by Prisma Migrate and other CLI tools
+ * This file is used by Prisma Migrate and other CLI tools.
+ * Load .env directly so Prisma CLI does not pull in app config (e.g. @lib/logging).
  */
-
-// Use validated env config. Must be a relative require (no aliases).
-const { DATABASE_URL } = require('./src/config/env');
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '.env') });
+const DATABASE_URL = process.env.DATABASE_URL;
 // #region agent log
 fetch('http://127.0.0.1:7250/ingest/78423c27-2923-42d5-b202-4e290da986d3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'prisma.config.js:13',message:'prisma config loaded',data:{hasDatabaseUrl: Boolean(DATABASE_URL)},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H3'})}).catch(()=>{});
 // #endregion

@@ -184,6 +184,10 @@ apiV1Router.use('/asset-service-logs', require('../modules/asset-service-log/rou
 apiV1Router.use('/shifts', require('../modules/shift/routes/shift.routes'));
 apiV1Router.use('/shift-assignments', require('../modules/shift-assignment/routes/shift-assignment.routes'));
 apiV1Router.use('/shift-swap-requests', require('../modules/shift-swap-request/routes/shift-swap-request.routes'));
+apiV1Router.use('/nurse-rosters', require('../modules/nurse-roster/routes/nurse-roster.routes'));
+apiV1Router.use('/shift-templates', require('../modules/shift-template/routes/shift-template.routes'));
+apiV1Router.use('/roster-day-offs', require('../modules/roster-day-off/routes/roster-day-off.routes'));
+apiV1Router.use('/staff-availabilities', require('../modules/staff-availability/routes/staff-availability.routes'));
 apiV1Router.use('/notifications', require('../modules/notification/routes/notification.routes'));
 apiV1Router.use('/notification-deliveries', require('../modules/notification-delivery/routes/notification-delivery.routes'));
 apiV1Router.use('/dashboard-widgets', require('../modules/dashboard-widget/routes/dashboard-widget.routes'));
