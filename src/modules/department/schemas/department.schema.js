@@ -24,6 +24,7 @@ const createDepartmentSchema = z.object({
   facility_id: uuidSchema.optional().nullable(),
   branch_id: uuidSchema.optional().nullable(),
   name: z.string().trim().min(1).max(255),
+  short_name: z.string().trim().min(1).max(50).optional().nullable(),
   department_type: z.enum(['CLINICAL', 'ADMINISTRATIVE', 'SUPPORT', 'DIAGNOSTICS', 'OTHER']),
   is_active: z.boolean().optional()
 });
@@ -37,6 +38,7 @@ const updateDepartmentSchema = z.object({
   facility_id: uuidSchema.optional().nullable(),
   branch_id: uuidSchema.optional().nullable(),
   name: z.string().trim().min(1).max(255).optional(),
+  short_name: z.string().trim().min(1).max(50).optional().nullable(),
   department_type: z.enum(['CLINICAL', 'ADMINISTRATIVE', 'SUPPORT', 'DIAGNOSTICS', 'OTHER']).optional(),
   is_active: z.boolean().optional()
 });

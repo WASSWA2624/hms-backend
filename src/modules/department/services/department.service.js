@@ -111,6 +111,7 @@ const getDepartmentById = async (id) => {
  * @param {string} [data.facility_id] - Facility ID
  * @param {string} [data.branch_id] - Branch ID
  * @param {string} data.name - Department name
+ * @param {string} [data.short_name] - Department short name
  * @param {string} data.department_type - Department type
  * @param {boolean} [data.is_active] - Active status
  * @param {Object} context - Request context for audit
@@ -140,6 +141,7 @@ const createDepartment = async (data, context = {}) => {
       facility_id: department.facility_id,
       branch_id: department.branch_id,
       name: department.name,
+      short_name: department.short_name,
       department_type: department.department_type,
       is_active: department.is_active
     }
@@ -156,6 +158,7 @@ const createDepartment = async (data, context = {}) => {
  * @param {string} [data.facility_id] - Facility ID
  * @param {string} [data.branch_id] - Branch ID
  * @param {string} [data.name] - Department name
+ * @param {string} [data.short_name] - Department short name
  * @param {string} [data.department_type] - Department type
  * @param {boolean} [data.is_active] - Active status
  * @param {Object} context - Request context for audit
@@ -192,6 +195,7 @@ const updateDepartment = async (id, data, context = {}) => {
         facility_id: beforeDepartment.facility_id,
         branch_id: beforeDepartment.branch_id,
         name: beforeDepartment.name,
+        short_name: beforeDepartment.short_name,
         department_type: beforeDepartment.department_type,
         is_active: beforeDepartment.is_active
       },
@@ -199,6 +203,7 @@ const updateDepartment = async (id, data, context = {}) => {
         facility_id: department.facility_id,
         branch_id: department.branch_id,
         name: department.name,
+        short_name: department.short_name,
         department_type: department.department_type,
         is_active: department.is_active
       }
@@ -246,6 +251,7 @@ const deleteDepartment = async (id, context = {}) => {
       facility_id: department.facility_id,
       branch_id: department.branch_id,
       name: department.name,
+      short_name: department.short_name,
       department_type: department.department_type
     }
   });

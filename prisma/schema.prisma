@@ -685,6 +685,7 @@ model department {
   facility_id     String?        @db.VarChar(36)
   branch_id       String?        @db.VarChar(36)
   name            String         @db.VarChar(255)
+  short_name      String?        @db.VarChar(50)
   department_type DepartmentType
   is_active       Boolean        @default(true)
   created_at      DateTime       @default(now())
