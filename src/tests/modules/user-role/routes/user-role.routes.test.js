@@ -13,11 +13,15 @@ jest.mock('@middlewares/auth.middleware');
 jest.mock('@middlewares/validate.middleware');
 
 const userRoleController = require('@controllers/user-role/user-role.controller');
-const { authenticate } = require('@middlewares/auth.middleware');
+const { authenticate, requireAuth } = require('@middlewares/auth.middleware');
 const { validateRequest } = require('@middlewares/validate.middleware');
 
 authenticate.mockImplementation(() => (req, res, next) => {
   req.user = { id: 'user-123' };
+  next();
+});
+requireAuth.mockImplementation(() => (req, res, next) => {
+  req.user = { id: 'user-123', roles: ['ADMIN'] };
   next();
 });
 validateRequest.mockImplementation(() => (req, res, next) => next());

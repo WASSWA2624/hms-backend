@@ -11,13 +11,15 @@ const express = require('express');
 const router = express.Router();
 const userController = require('@controllers/user/user.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
-const { authenticate } = require('@middlewares/auth.middleware');
+const { authenticate, requireAuth } = require('@middlewares/auth.middleware');
 const {
   createUserSchema,
   updateUserSchema,
   userIdParamsSchema,
   listUsersQuerySchema
 } = require('@validations/user/user.schema');
+
+const ADMIN_ROLE_SET = ['ADMIN', 'TENANT_ADMIN', 'FACILITY_ADMIN', 'SUPER_ADMIN'];
 
 /**
  * @description List users with pagination and filters
@@ -78,7 +80,8 @@ router.get(
  * @bodyParams {string} [facility_id] - Facility ID (UUID)
  * @bodyParams {string} email - User email (required, valid email format, max 255 chars)
  * @bodyParams {string} [phone] - User phone (max 40 chars)
- * @bodyParams {string} password_hash - Password hash (required, max 255 chars)
+ * @bodyParams {string} password - User password (required when password_hash not provided)
+ * @bodyParams {string} [password_hash] - Password hash or plain password
  * @bodyParams {string} status - User status (required, ACTIVE/INACTIVE/SUSPENDED/PENDING)
  * @returns {Object} Created user
  * @throws 401 Unauthorized
@@ -88,7 +91,7 @@ router.get(
  */
 router.post(
   '/',
-  authenticate(),
+  requireAuth(ADMIN_ROLE_SET),
   validateRequest({ body: createUserSchema }),
   userController.createUser
 );
@@ -115,7 +118,7 @@ router.post(
  */
 router.put(
   '/:id',
-  authenticate(),
+  requireAuth(ADMIN_ROLE_SET),
   validateRequest({ params: userIdParamsSchema, body: updateUserSchema }),
   userController.updateUser
 );
@@ -135,7 +138,7 @@ router.put(
  */
 router.delete(
   '/:id',
-  authenticate(),
+  requireAuth(ADMIN_ROLE_SET),
   validateRequest({ params: userIdParamsSchema }),
   userController.deleteUser
 );

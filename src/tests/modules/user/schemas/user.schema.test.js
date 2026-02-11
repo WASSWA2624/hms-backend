@@ -52,8 +52,17 @@ describe('User Schemas', () => {
     it('should require password_hash', () => {
       const data = { ...validData };
       delete data.password_hash;
+      delete data.password;
       const result = createUserSchema.safeParse(data);
       expect(result.success).toBe(false);
+    });
+
+    it('should accept password when password_hash is omitted', () => {
+      const data = { ...validData };
+      delete data.password_hash;
+      data.password = 'StrongPass123!';
+      const result = createUserSchema.safeParse(data);
+      expect(result.success).toBe(true);
     });
 
     it('should require status', () => {
@@ -136,6 +145,14 @@ describe('User Schemas', () => {
 
     it('should enforce password_hash max length', () => {
       const data = { ...validData, password_hash: 'a'.repeat(256) };
+      const result = createUserSchema.safeParse(data);
+      expect(result.success).toBe(false);
+    });
+
+    it('should enforce password min length when provided', () => {
+      const data = { ...validData };
+      delete data.password_hash;
+      data.password = 'short';
       const result = createUserSchema.safeParse(data);
       expect(result.success).toBe(false);
     });

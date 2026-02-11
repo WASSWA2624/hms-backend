@@ -9,7 +9,29 @@
 
 const userRepository = require('../repositories/user.repository');
 const { createAuditLog } = require('@lib/audit');
+const { hashPassword } = require('@lib/crypto');
 const { HttpError } = require('@lib/errors');
+
+const BCRYPT_PREFIX_REGEX = /^\$2[aby]\$\d{2}\$/;
+
+const normalizeUserPayload = async (data, isUpdate = false) => {
+  const next = { ...(data || {}) };
+  const rawPassword = typeof next.password === 'string' ? next.password.trim() : '';
+  const providedHash = typeof next.password_hash === 'string' ? next.password_hash.trim() : '';
+
+  if (rawPassword) {
+    next.password_hash = await hashPassword(rawPassword);
+  } else if (providedHash) {
+    next.password_hash = BCRYPT_PREFIX_REGEX.test(providedHash)
+      ? providedHash
+      : await hashPassword(providedHash);
+  } else if (!isUpdate) {
+    throw new HttpError('errors.validation.field.required', 400, [{ field: 'password' }]);
+  }
+
+  delete next.password;
+  return next;
+};
 
 /**
  * List users with pagination and filtering
@@ -100,7 +122,8 @@ const getUserById = async (id, userId, ipAddress) => {
  */
 const createUser = async (data, userId, ipAddress) => {
   try {
-    const user = await userRepository.create(data);
+    const normalizedPayload = await normalizeUserPayload(data, false);
+    const user = await userRepository.create(normalizedPayload);
 
     // Create audit log (non-blocking)
     createAuditLog({
@@ -140,7 +163,8 @@ const updateUser = async (id, data, userId, ipAddress) => {
       throw new HttpError('errors.user.not_found', 404);
     }
 
-    const user = await userRepository.update(id, data);
+    const normalizedPayload = await normalizeUserPayload(data, true);
+    const user = await userRepository.update(id, normalizedPayload);
 
     // Create audit log (non-blocking)
     createAuditLog({

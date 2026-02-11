@@ -13,6 +13,8 @@ const {
   listQuerySchema
 } = require('@lib/validation/zod');
 
+const userStatusSchema = z.enum(['ACTIVE', 'INACTIVE', 'SUSPENDED', 'PENDING']);
+
 // ==================== Body Schemas ====================
 
 /**
@@ -24,8 +26,12 @@ const createUserSchema = z.object({
   facility_id: uuidSchema.optional().nullable(),
   email: z.string().trim().email().max(255),
   phone: z.string().trim().min(1).max(40).optional().nullable(),
-  password_hash: z.string().trim().min(1).max(255),
-  status: z.enum(['ACTIVE', 'INACTIVE', 'SUSPENDED', 'PENDING'])
+  password: z.string().trim().min(8).max(255).optional(),
+  password_hash: z.string().trim().min(1).max(255).optional(),
+  status: userStatusSchema
+}).refine((value) => Boolean(value.password || value.password_hash), {
+  message: 'errors.validation.field.required',
+  path: ['password'],
 });
 
 /**
@@ -37,8 +43,9 @@ const updateUserSchema = z.object({
   facility_id: uuidSchema.optional().nullable(),
   email: z.string().trim().email().max(255).optional(),
   phone: z.string().trim().min(1).max(40).optional().nullable(),
+  password: z.string().trim().min(8).max(255).optional(),
   password_hash: z.string().trim().min(1).max(255).optional(),
-  status: z.enum(['ACTIVE', 'INACTIVE', 'SUSPENDED', 'PENDING']).optional()
+  status: userStatusSchema.optional()
 });
 
 // ==================== URL Params ====================
@@ -62,7 +69,7 @@ const listUsersQuerySchema = listQuerySchema.extend({
   tenant_id: uuidSchema.optional(),
   facility_id: uuidSchema.optional(),
   email: z.string().trim().optional(),
-  status: z.enum(['ACTIVE', 'INACTIVE', 'SUSPENDED', 'PENDING']).optional(),
+  status: userStatusSchema.optional(),
   search: z.string().trim().optional()
 });
 

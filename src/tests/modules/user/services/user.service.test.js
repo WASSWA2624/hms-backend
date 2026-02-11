@@ -9,15 +9,18 @@
 const userService = require('@services/user/user.service');
 const userRepository = require('@repositories/user/user.repository');
 const { createAuditLog } = require('@lib/audit');
+const { hashPassword } = require('@lib/crypto');
 const { HttpError } = require('@lib/errors');
 
 // Mock dependencies
 jest.mock('@repositories/user/user.repository');
 jest.mock('@lib/audit');
+jest.mock('@lib/crypto');
 
 describe('User Service', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    hashPassword.mockResolvedValue('$2b$10$hashedpasswordplaceholder');
   });
 
   describe('listUsers', () => {
@@ -233,6 +236,24 @@ describe('User Service', () => {
 
       expect(result).toEqual(createdUser);
       expect(userRepository.create).toHaveBeenCalledWith(userData);
+    });
+
+    it('should hash non-bcrypt password_hash values before persistence', async () => {
+      const plainPasswordPayload = {
+        ...userData,
+        password_hash: 'PlainPassword123!',
+      };
+      userRepository.create.mockResolvedValue(createdUser);
+      createAuditLog.mockResolvedValue(true);
+
+      await userService.createUser(plainPasswordPayload, 'creator-id', '127.0.0.1');
+
+      expect(hashPassword).toHaveBeenCalledWith('PlainPassword123!');
+      expect(userRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          password_hash: '$2b$10$hashedpasswordplaceholder',
+        })
+      );
     });
 
     it('should create audit log for user creation', async () => {

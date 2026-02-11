@@ -10,7 +10,7 @@ const request = require('supertest');
 const express = require('express');
 const userRoutes = require('@routes/user/user.routes');
 const userController = require('@controllers/user/user.controller');
-const { authenticate } = require('@middlewares/auth.middleware');
+const { authenticate, requireAuth } = require('@middlewares/auth.middleware');
 const { validateRequest } = require('@middlewares/validate.middleware');
 
 // Create test app
@@ -30,6 +30,10 @@ describe('User Routes', () => {
     // Mock authenticate middleware to pass through
     authenticate.mockImplementation(() => (req, res, next) => {
       req.user = { id: 'test-user-id' };
+      next();
+    });
+    requireAuth.mockImplementation(() => (req, res, next) => {
+      req.user = { id: 'test-user-id', roles: ['ADMIN'] };
       next();
     });
 
@@ -136,7 +140,7 @@ describe('User Routes', () => {
     it('should apply authentication middleware', async () => {
       await request(app).post('/api/v1/users').send(userData);
 
-      expect(authenticate).toHaveBeenCalled();
+      expect(requireAuth).toHaveBeenCalled();
     });
 
     it('should apply validation middleware for body', async () => {
@@ -176,7 +180,7 @@ describe('User Routes', () => {
     it('should apply authentication middleware', async () => {
       await request(app).put(`/api/v1/users/${userId}`).send(updateData);
 
-      expect(authenticate).toHaveBeenCalled();
+      expect(requireAuth).toHaveBeenCalled();
     });
 
     it('should apply validation middleware for params and body', async () => {
@@ -212,7 +216,7 @@ describe('User Routes', () => {
     it('should apply authentication middleware', async () => {
       await request(app).delete(`/api/v1/users/${userId}`);
 
-      expect(authenticate).toHaveBeenCalled();
+      expect(requireAuth).toHaveBeenCalled();
     });
 
     it('should apply validation middleware for params', async () => {
@@ -239,7 +243,7 @@ describe('User Routes', () => {
     it('should apply middlewares in correct order for POST /', async () => {
       await request(app).post('/api/v1/users').send({});
 
-      expect(authenticate).toHaveBeenCalled();
+      expect(requireAuth).toHaveBeenCalled();
       expect(validateRequest).toHaveBeenCalled();
       expect(userController.createUser).toHaveBeenCalled();
     });
@@ -248,7 +252,7 @@ describe('User Routes', () => {
       const userId = '550e8400-e29b-41d4-a716-446655440000';
       await request(app).put(`/api/v1/users/${userId}`).send({});
 
-      expect(authenticate).toHaveBeenCalled();
+      expect(requireAuth).toHaveBeenCalled();
       expect(validateRequest).toHaveBeenCalled();
       expect(userController.updateUser).toHaveBeenCalled();
     });
@@ -257,7 +261,7 @@ describe('User Routes', () => {
       const userId = '550e8400-e29b-41d4-a716-446655440000';
       await request(app).delete(`/api/v1/users/${userId}`);
 
-      expect(authenticate).toHaveBeenCalled();
+      expect(requireAuth).toHaveBeenCalled();
       expect(validateRequest).toHaveBeenCalled();
       expect(userController.deleteUser).toHaveBeenCalled();
     });

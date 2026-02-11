@@ -11,13 +11,15 @@ const express = require('express');
 const router = express.Router();
 const roleController = require('@controllers/role/role.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
-const { authenticate } = require('@middlewares/auth.middleware');
+const { authenticate, requireAuth } = require('@middlewares/auth.middleware');
 const {
   createRoleSchema,
   updateRoleSchema,
   roleIdParamsSchema,
   listRolesQuerySchema
 } = require('@validations/role/role.schema');
+
+const ADMIN_ROLE_SET = ['ADMIN', 'TENANT_ADMIN', 'FACILITY_ADMIN', 'SUPER_ADMIN'];
 
 /**
  * @description List roles with pagination and filters
@@ -84,7 +86,7 @@ router.get(
  */
 router.post(
   '/',
-  authenticate(),
+  requireAuth(ADMIN_ROLE_SET),
   validateRequest({ body: createRoleSchema }),
   roleController.createRole
 );
@@ -108,7 +110,7 @@ router.post(
  */
 router.put(
   '/:id',
-  authenticate(),
+  requireAuth(ADMIN_ROLE_SET),
   validateRequest({ params: roleIdParamsSchema, body: updateRoleSchema }),
   roleController.updateRole
 );
@@ -128,7 +130,7 @@ router.put(
  */
 router.delete(
   '/:id',
-  authenticate(),
+  requireAuth(ADMIN_ROLE_SET),
   validateRequest({ params: roleIdParamsSchema }),
   roleController.deleteRole
 );
