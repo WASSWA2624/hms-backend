@@ -12,6 +12,8 @@ const phoneSchema = z
   .min(10, 'errors.validation.phone.min_length')
   .regex(/^[0-9]+$/, 'errors.validation.phone.format');
 
+const facilityTypeSchema = z.enum(['HOSPITAL', 'CLINIC', 'LAB', 'PHARMACY', 'OTHER']);
+
 // ==================== Identify ====================
 const identifyBodySchema = z.object({
   identifier: z.string().min(1, 'errors.validation.field.required')
@@ -38,8 +40,9 @@ const registerBodySchema = z.object({
     .regex(/[a-z]/, 'errors.validation.password.lowercase')
     .regex(/[0-9]/, 'errors.validation.password.number')
     .regex(/[^A-Za-z0-9]/, 'errors.validation.password.special'),
-  tenant_id: z.string().uuid('errors.validation.uuid.invalid'),
-  facility_id: z.string().uuid('errors.validation.uuid.invalid').optional(),
+  facility_name: z.string().trim().min(1, 'errors.validation.field.required').max(255),
+  admin_name: z.string().trim().min(1, 'errors.validation.field.required').max(255),
+  facility_type: facilityTypeSchema,
   phone: phoneSchema.optional()
 });
 

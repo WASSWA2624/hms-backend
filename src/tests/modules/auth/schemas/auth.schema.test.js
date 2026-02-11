@@ -126,8 +126,9 @@ describe('Auth Schema Validation', () => {
       const validData = {
         email: 'newuser@example.com',
         password: 'Password123!',
-        tenant_id: '123e4567-e89b-12d3-a456-426614174000',
-        facility_id: '223e4567-e89b-12d3-a456-426614174001',
+        facility_name: 'Mirembe Clinic',
+        admin_name: 'Jane Doe',
+        facility_type: 'CLINIC',
         phone: '256701234567'
       };
       const result = registerBodySchema.safeParse(validData);
@@ -138,7 +139,9 @@ describe('Auth Schema Validation', () => {
       const invalidData = {
         email: 'newuser@example.com',
         password: 'password123!',
-        tenant_id: '123e4567-e89b-12d3-a456-426614174000'
+        facility_name: 'Mirembe Clinic',
+        admin_name: 'Jane Doe',
+        facility_type: 'CLINIC'
       };
       const result = registerBodySchema.safeParse(invalidData);
       expect(result.success).toBe(false);
@@ -148,7 +151,9 @@ describe('Auth Schema Validation', () => {
       const invalidData = {
         email: 'newuser@example.com',
         password: 'PASSWORD123!',
-        tenant_id: '123e4567-e89b-12d3-a456-426614174000'
+        facility_name: 'Mirembe Clinic',
+        admin_name: 'Jane Doe',
+        facility_type: 'CLINIC'
       };
       const result = registerBodySchema.safeParse(invalidData);
       expect(result.success).toBe(false);
@@ -158,7 +163,9 @@ describe('Auth Schema Validation', () => {
       const invalidData = {
         email: 'newuser@example.com',
         password: 'Password!',
-        tenant_id: '123e4567-e89b-12d3-a456-426614174000'
+        facility_name: 'Mirembe Clinic',
+        admin_name: 'Jane Doe',
+        facility_type: 'CLINIC'
       };
       const result = registerBodySchema.safeParse(invalidData);
       expect(result.success).toBe(false);
@@ -168,20 +175,58 @@ describe('Auth Schema Validation', () => {
       const invalidData = {
         email: 'newuser@example.com',
         password: 'Password123',
-        tenant_id: '123e4567-e89b-12d3-a456-426614174000'
+        facility_name: 'Mirembe Clinic',
+        admin_name: 'Jane Doe',
+        facility_type: 'CLINIC'
       };
       const result = registerBodySchema.safeParse(invalidData);
       expect(result.success).toBe(false);
     });
 
-    it('should accept registration without optional fields', () => {
+    it('should accept registration without optional phone', () => {
       const validData = {
         email: 'newuser@example.com',
         password: 'Password123!',
-        tenant_id: '123e4567-e89b-12d3-a456-426614174000'
+        facility_name: 'Mirembe Clinic',
+        admin_name: 'Jane Doe',
+        facility_type: 'CLINIC'
       };
       const result = registerBodySchema.safeParse(validData);
       expect(result.success).toBe(true);
+    });
+
+    it('should reject registration without facility_name', () => {
+      const invalidData = {
+        email: 'newuser@example.com',
+        password: 'Password123!',
+        admin_name: 'Jane Doe',
+        facility_type: 'CLINIC'
+      };
+      const result = registerBodySchema.safeParse(invalidData);
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject registration without admin_name', () => {
+      const invalidData = {
+        email: 'newuser@example.com',
+        password: 'Password123!',
+        facility_name: 'Mirembe Clinic',
+        facility_type: 'CLINIC'
+      };
+      const result = registerBodySchema.safeParse(invalidData);
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject registration with invalid facility_type', () => {
+      const invalidData = {
+        email: 'newuser@example.com',
+        password: 'Password123!',
+        facility_name: 'Mirembe Clinic',
+        admin_name: 'Jane Doe',
+        facility_type: 'INVALID'
+      };
+      const result = registerBodySchema.safeParse(invalidData);
+      expect(result.success).toBe(false);
     });
   });
 

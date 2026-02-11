@@ -96,7 +96,9 @@ describe('Auth Controller', () => {
       req.body = {
         email: 'newuser@example.com',
         password: 'Password123!',
-        tenant_id: 'tenant-123'
+        facility_name: 'Mirembe Clinic',
+        admin_name: 'Jane Doe',
+        facility_type: 'CLINIC'
       };
 
       const mockResult = {
@@ -111,7 +113,9 @@ describe('Auth Controller', () => {
       expect(authService.register).toHaveBeenCalledWith(expect.objectContaining({
         email: 'newuser@example.com',
         password: 'Password123!',
-        tenant_id: 'tenant-123'
+        facility_name: 'Mirembe Clinic',
+        admin_name: 'Jane Doe',
+        facility_type: 'CLINIC'
       }));
       expect(res.status).toHaveBeenCalledWith(201);
       expect(res.json).toHaveBeenCalledWith(expect.objectContaining({

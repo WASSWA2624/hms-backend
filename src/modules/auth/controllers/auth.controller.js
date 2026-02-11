@@ -64,15 +64,16 @@ const login = asyncHandler(async (req, res) => {
  * @returns {Promise<void>}
  */
 const register = asyncHandler(async (req, res) => {
-  const { email, password, tenant_id, facility_id, phone } = req.body;
+  const { email, password, facility_name, admin_name, facility_type, phone } = req.body;
   const ip_address = req.ip;
   const user_agent = req.get('user-agent');
 
   const result = await authService.register({
     email,
     password,
-    tenant_id,
-    facility_id,
+    facility_name,
+    admin_name,
+    facility_type,
     phone,
     ip_address,
     user_agent

@@ -9,7 +9,7 @@ const express = require('express');
 const router = express.Router();
 const authController = require('@controllers/auth/auth.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
-const { authenticate, requireAuth } = require('@middlewares/auth.middleware');
+const { authenticate } = require('@middlewares/auth.middleware');
 const {
   identifyBodySchema,
   loginBodySchema,
@@ -58,12 +58,11 @@ router.post(
 
 /**
  * @route POST /api/v1/auth/register
- * @desc Register new user account
- * @access Private (ADMIN)
+ * @desc Self-register facility owner account and bootstrap tenant workspace
+ * @access Public
  */
 router.post(
   '/register',
-  requireAuth('ADMIN'),
   validateRequest({ body: registerBodySchema }),
   authController.register
 );

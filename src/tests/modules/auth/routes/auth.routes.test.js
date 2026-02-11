@@ -112,7 +112,9 @@ describe('Auth Routes', () => {
         .send({
           email: 'newuser@example.com',
           password: 'Password123!',
-          tenant_id: 'tenant-123'
+          facility_name: 'Mirembe Clinic',
+          admin_name: 'Jane Doe',
+          facility_type: 'CLINIC'
         });
 
       expect(response.status).toBe(201);

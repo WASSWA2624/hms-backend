@@ -8,6 +8,7 @@
 
 const prisma = require('@prisma/client');
 const { HttpError } = require('@lib/errors');
+const crypto = require('crypto');
 
 const userInclude = {
   profile: true,
@@ -26,6 +27,32 @@ const userInclude = {
       }
     }
   }
+};
+
+const normalizeSlug = (value) =>
+  String(value || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .replace(/-{2,}/g, '-');
+
+const buildTenantSlug = (facilityName) => {
+  const base = normalizeSlug(facilityName) || 'hms-tenant';
+  const suffix = crypto.randomBytes(3).toString('hex');
+  const maxBaseLength = 191 - suffix.length - 1;
+  return `${base.slice(0, maxBaseLength)}-${suffix}`;
+};
+
+const splitAdminName = (value) => {
+  const normalized = String(value || '').trim();
+  if (!normalized) {
+    return { first_name: 'Admin', last_name: null };
+  }
+  const [firstName, ...rest] = normalized.split(/\s+/);
+  return {
+    first_name: firstName || 'Admin',
+    last_name: rest.length > 0 ? rest.join(' ') : null,
+  };
 };
 
 /**
@@ -113,6 +140,108 @@ const createUser = async (data) => {
   } catch (error) {
     if (error.code === 'P2002') {
       throw new HttpError('errors.auth.user_exists', 409);
+    }
+    throw new HttpError('errors.database.unexpected', 500, [{ originalError: error.message }]);
+  }
+};
+
+/**
+ * Self-register facility owner and bootstrap tenant workspace.
+ *
+ * @param {Object} data - Registration data
+ * @returns {Promise<Object>} Created user with tenant/facility/profile/roles
+ */
+const registerFacilityOwner = async (data) => {
+  const {
+    email,
+    phone,
+    password_hash,
+    facility_name,
+    facility_type,
+    admin_name,
+    status = 'ACTIVE',
+  } = data;
+  const parsedName = splitAdminName(admin_name);
+
+  try {
+    return await prisma.$transaction(async (tx) => {
+      const tenant = await tx.tenant.create({
+        data: {
+          name: facility_name,
+          slug: buildTenantSlug(facility_name),
+          is_active: true,
+        },
+      });
+
+      const facility = await tx.facility.create({
+        data: {
+          tenant_id: tenant.id,
+          name: facility_name,
+          facility_type,
+          is_active: true,
+        },
+      });
+
+      const role = await tx.role.create({
+        data: {
+          tenant_id: tenant.id,
+          facility_id: facility.id,
+          name: 'ADMIN',
+          description: 'Tenant owner administrator',
+        },
+      });
+
+      const user = await tx.user.create({
+        data: {
+          tenant_id: tenant.id,
+          facility_id: facility.id,
+          email,
+          phone,
+          password_hash,
+          status,
+        },
+      });
+
+      await tx.user_profile.create({
+        data: {
+          user_id: user.id,
+          facility_id: facility.id,
+          first_name: parsedName.first_name,
+          last_name: parsedName.last_name,
+        },
+      });
+
+      await tx.user_role.create({
+        data: {
+          user_id: user.id,
+          role_id: role.id,
+          tenant_id: tenant.id,
+          facility_id: facility.id,
+        },
+      });
+
+      return tx.user.findFirst({
+        where: {
+          id: user.id,
+          deleted_at: null,
+        },
+        include: {
+          profile: true,
+          tenant: true,
+          facility: true,
+          roles: {
+            where: { deleted_at: null },
+            include: { role: true },
+          },
+        },
+      });
+    });
+  } catch (error) {
+    if (error.code === 'P2002') {
+      const target = Array.isArray(error.meta?.target) ? error.meta.target.join(',') : String(error.meta?.target || '');
+      if (target.toLowerCase().includes('email')) {
+        throw new HttpError('errors.auth.user_exists', 409);
+      }
     }
     throw new HttpError('errors.database.unexpected', 500, [{ originalError: error.message }]);
   }
@@ -517,6 +646,7 @@ module.exports = {
   findUsersByIdentifier,
   getUserFacilities,
   createUser,
+  registerFacilityOwner,
   updateUserPassword,
   updateUserStatus,
   createSession,

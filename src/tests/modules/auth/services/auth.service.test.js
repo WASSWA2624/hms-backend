@@ -20,6 +20,7 @@ jest.mock('@lib/audit');
 describe('Auth Service', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    authRepository.getUserFacilities.mockResolvedValue([]);
   });
 
   describe('login', () => {
@@ -27,7 +28,7 @@ describe('Auth Service', () => {
       const loginData = {
         email: 'test@example.com',
         password: 'Password123!',
-        tenant_id: 'tenant-123',
+        tenant_id: '550e8400-e29b-41d4-a716-446655440000',
         ip_address: '127.0.0.1',
         user_agent: 'Mozilla'
       };
@@ -35,7 +36,7 @@ describe('Auth Service', () => {
       const mockUser = {
         id: 'user-123',
         email: 'test@example.com',
-        tenant_id: 'tenant-123',
+        tenant_id: '550e8400-e29b-41d4-a716-446655440000',
         status: 'ACTIVE',
         password_hash: 'hashedpassword',
         roles: [{ role: { name: 'DOCTOR' } }]
@@ -64,13 +65,13 @@ describe('Auth Service', () => {
       const loginData = {
         phone: '256701234567',
         password: 'Password123!',
-        tenant_id: 'tenant-123'
+        tenant_id: '550e8400-e29b-41d4-a716-446655440000'
       };
 
       const mockUser = {
         id: 'user-123',
         phone: '256701234567',
-        tenant_id: 'tenant-123',
+        tenant_id: '550e8400-e29b-41d4-a716-446655440000',
         status: 'ACTIVE',
         password_hash: 'hashedpassword',
         roles: [{ role: { name: 'DOCTOR' } }]
@@ -87,14 +88,17 @@ describe('Auth Service', () => {
 
       expect(result).toHaveProperty('access_token', 'access-token');
       expect(result).toHaveProperty('refresh_token', 'refresh-token');
-      expect(authRepository.findUserByPhoneAndTenant).toHaveBeenCalledWith('256701234567', 'tenant-123');
+      expect(authRepository.findUserByPhoneAndTenant).toHaveBeenCalledWith(
+        '256701234567',
+        '550e8400-e29b-41d4-a716-446655440000'
+      );
     });
 
     it('should reject login with invalid credentials', async () => {
       const loginData = {
         email: 'test@example.com',
         password: 'WrongPassword',
-        tenant_id: 'tenant-123'
+        tenant_id: '550e8400-e29b-41d4-a716-446655440000'
       };
 
       authRepository.findUserByEmailAndTenant.mockResolvedValue(null);
@@ -111,7 +115,7 @@ describe('Auth Service', () => {
       const loginData = {
         phone: '256701234567',
         password: 'WrongPassword',
-        tenant_id: 'tenant-123'
+        tenant_id: '550e8400-e29b-41d4-a716-446655440000'
       };
 
       authRepository.findUserByPhoneAndTenant.mockResolvedValue(null);
@@ -128,7 +132,7 @@ describe('Auth Service', () => {
       const loginData = {
         email: 'test@example.com',
         password: 'Password123!',
-        tenant_id: 'tenant-123'
+        tenant_id: '550e8400-e29b-41d4-a716-446655440000'
       };
 
       const mockUser = {
@@ -151,7 +155,7 @@ describe('Auth Service', () => {
       const loginData = {
         email: 'test@example.com',
         password: 'WrongPassword',
-        tenant_id: 'tenant-123'
+        tenant_id: '550e8400-e29b-41d4-a716-446655440000'
       };
 
       const mockUser = {
@@ -177,7 +181,9 @@ describe('Auth Service', () => {
       const registerData = {
         email: 'newuser@example.com',
         password: 'Password123!',
-        tenant_id: 'tenant-123',
+        facility_name: 'Mirembe Clinic',
+        admin_name: 'Jane Doe',
+        facility_type: 'CLINIC',
         phone: '256701234567',
         ip_address: '127.0.0.1',
         user_agent: 'Mozilla'
@@ -187,12 +193,13 @@ describe('Auth Service', () => {
         id: 'user-123',
         email: 'newuser@example.com',
         tenant_id: 'tenant-123',
-        status: 'PENDING',
+        facility_id: 'facility-123',
+        status: 'ACTIVE',
         password_hash: 'hashedpassword'
       };
 
       hashPassword.mockResolvedValue('hashedpassword');
-      authRepository.createUser.mockResolvedValue(mockUser);
+      authRepository.registerFacilityOwner.mockResolvedValue(mockUser);
       createAuditLog.mockResolvedValue({});
 
       const result = await authService.register(registerData);
@@ -200,6 +207,12 @@ describe('Auth Service', () => {
       expect(result).toHaveProperty('id', 'user-123');
       expect(result).toHaveProperty('email', 'newuser@example.com');
       expect(result).not.toHaveProperty('password_hash');
+      expect(authRepository.registerFacilityOwner).toHaveBeenCalledWith(expect.objectContaining({
+        facility_name: 'Mirembe Clinic',
+        admin_name: 'Jane Doe',
+        facility_type: 'CLINIC',
+        status: 'ACTIVE'
+      }));
       expect(createAuditLog).toHaveBeenCalledWith(expect.objectContaining({
         action: 'USER_REGISTERED'
       }));

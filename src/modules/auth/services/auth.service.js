@@ -221,33 +221,47 @@ const login = async (data) => {
 };
 
 /**
- * Register new user
+ * Register facility owner (self-serve onboarding)
  *
  * @param {Object} data - Registration data
  * @param {string} data.email - User email
  * @param {string} data.password - User password
- * @param {string} data.tenant_id - Tenant ID
- * @param {string} [data.facility_id] - Facility ID
+ * @param {string} data.facility_name - Facility/business name
+ * @param {string} data.admin_name - Admin display name
+ * @param {string} data.facility_type - Facility type enum
  * @param {string} [data.phone] - User phone
  * @param {string} [data.ip_address] - IP address
  * @param {string} [data.user_agent] - User agent
- * @returns {Promise<Object>} Created user data
+ * @returns {Promise<Object>} Created user data (tenant admin)
  */
 const register = async (data) => {
-  const { email, password, tenant_id, facility_id, phone, ip_address, user_agent } = data;
+  const {
+    email,
+    password,
+    facility_name,
+    admin_name,
+    facility_type,
+    phone,
+    ip_address,
+    user_agent,
+  } = data;
 
   // Hash password
   const password_hash = await hashPassword(password);
 
-  // Create user
-  const user = await authRepository.createUser({
+  // Bootstrap tenant/facility and create owner user with ADMIN role in one transaction.
+  const user = await authRepository.registerFacilityOwner({
     email,
-    password_hash,
-    tenant_id,
-    facility_id,
     phone,
-    status: 'PENDING' // Requires email verification
+    password_hash,
+    facility_name,
+    admin_name,
+    facility_type,
+    status: 'ACTIVE',
   });
+  if (!user) {
+    throw new HttpError('errors.database.unexpected', 500);
+  }
 
   // Create audit log
   await createAuditLog({
@@ -255,11 +269,19 @@ const register = async (data) => {
     entity: 'user',
     entity_id: user.id,
     user_id: user.id,
-    tenant_id,
-    facility_id,
+    tenant_id: user.tenant_id,
+    facility_id: user.facility_id,
     ip_address,
     user_agent,
-    details: { email, phone }
+    details: {
+      email,
+      phone,
+      facility_name,
+      facility_type,
+      admin_name,
+      role: 'ADMIN',
+      self_serve: true,
+    }
   });
 
   // Return response without sensitive data
