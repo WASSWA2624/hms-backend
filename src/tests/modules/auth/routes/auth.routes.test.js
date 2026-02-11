@@ -97,6 +97,7 @@ describe('Auth Routes', () => {
   describe('POST /api/v1/auth/register', () => {
     it('should call register controller', async () => {
       authController.register.mockImplementation((req, res) => {
+        expect(req.user).toBeUndefined();
         res.status(201).json({
           status: 201,
           message: 'Registration successful',

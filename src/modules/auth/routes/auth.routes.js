@@ -123,18 +123,6 @@ router.post(
 );
 
 /**
- * @route POST /api/v1/auth/change-password
- * @desc Change password (authenticated)
- * @access Private
- */
-router.post(
-  '/change-password',
-  authenticate(),
-  validateRequest({ body: changePasswordBodySchema }),
-  authController.changePassword
-);
-
-/**
  * @route POST /api/v1/auth/refresh
  * @desc Refresh JWT token
  * @access Public
@@ -145,6 +133,21 @@ router.post(
   authController.refresh
 );
 
+// Private auth routes
+// Keep this after all public endpoints so register/login remain public.
+router.use(authenticate());
+
+/**
+ * @route POST /api/v1/auth/change-password
+ * @desc Change password (authenticated)
+ * @access Private
+ */
+router.post(
+  '/change-password',
+  validateRequest({ body: changePasswordBodySchema }),
+  authController.changePassword
+);
+
 /**
  * @route POST /api/v1/auth/logout
  * @desc Logout and invalidate session
@@ -152,7 +155,6 @@ router.post(
  */
 router.post(
   '/logout',
-  authenticate(),
   validateRequest({ body: logoutBodySchema }),
   authController.logout
 );
@@ -164,7 +166,6 @@ router.post(
  */
 router.get(
   '/me',
-  authenticate(),
   authController.getMe
 );
 
