@@ -504,6 +504,11 @@ const findUserByEmail = async (email) => {
       where: {
         email,
         deleted_at: null
+      },
+      include: {
+        profile: true,
+        tenant: true,
+        facility: true
       }
     });
   } catch (error) {
@@ -523,6 +528,11 @@ const findUserByPhone = async (phone) => {
       where: {
         phone,
         deleted_at: null
+      },
+      include: {
+        profile: true,
+        tenant: true,
+        facility: true
       }
     });
   } catch (error) {

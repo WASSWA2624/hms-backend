@@ -10,7 +10,135 @@ const { hashPassword, comparePassword } = require('@lib/crypto');
 const { generateToken, generateRefreshToken } = require('@lib/jwt');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
+const { sendEmail } = require('@lib/notifications');
+const env = require('@config/env');
 const crypto = require('crypto');
+
+const EMAIL_VERIFICATION_TOKEN_TYPE = 'EMAIL_VERIFICATION';
+const PHONE_VERIFICATION_TOKEN_TYPE = 'PHONE_VERIFICATION';
+const PASSWORD_RESET_TOKEN_TYPE = 'PASSWORD_RESET';
+const EMAIL_VERIFICATION_EXPIRY_MINUTES = 15;
+
+const hashToken = (value) =>
+  crypto.createHash('sha256').update(String(value || '')).digest('hex');
+
+const resolveAccountStatusErrorKey = (status) => {
+  if (status === 'PENDING') return 'errors.auth.account_pending';
+  if (status === 'SUSPENDED') return 'errors.auth.account_suspended';
+  return 'errors.auth.account_inactive';
+};
+
+const resolveFacilityTypeLabel = (facilityType) => {
+  const normalized = String(facilityType || '').trim().toUpperCase();
+  if (normalized === 'HOSPITAL') return 'Hospital';
+  if (normalized === 'CLINIC') return 'Clinic / Medical Centre';
+  if (normalized === 'LAB') return 'Diagnostic Centre / Lab';
+  if (normalized === 'PHARMACY') return 'Pharmacy';
+  return 'Healthcare Facility';
+};
+
+const getBaseAppUrl = () => String(env.APP_PUBLIC_URL || '').replace(/\/+$/, '');
+
+const buildVerifyEmailLink = (token, email) =>
+  `${getBaseAppUrl()}/verify-email?token=${encodeURIComponent(token)}&email=${encodeURIComponent(email)}`;
+
+const createEmailVerificationTokens = async (userId) => {
+  await authRepository.deleteExpiredTokens(userId, EMAIL_VERIFICATION_TOKEN_TYPE);
+
+  const code = crypto.randomInt(0, 1000000).toString().padStart(6, '0');
+  const linkToken = crypto.randomBytes(32).toString('hex');
+  const expiresAt = new Date(Date.now() + EMAIL_VERIFICATION_EXPIRY_MINUTES * 60 * 1000);
+
+  await Promise.all([
+    authRepository.createVerificationToken({
+      user_id: userId,
+      token_hash: hashToken(code),
+      type: EMAIL_VERIFICATION_TOKEN_TYPE,
+      expires_at: expiresAt,
+    }),
+    authRepository.createVerificationToken({
+      user_id: userId,
+      token_hash: hashToken(linkToken),
+      type: EMAIL_VERIFICATION_TOKEN_TYPE,
+      expires_at: expiresAt,
+    }),
+  ]);
+
+  return { code, linkToken, expiresAt };
+};
+
+const buildVerificationEmailMessage = ({
+  email,
+  adminName,
+  facilityName,
+  facilityType,
+  code,
+  verifyLink,
+  plainPassword,
+}) => {
+  const safeAdminName = String(adminName || 'there').trim() || 'there';
+  const safeFacilityName = String(facilityName || 'your facility').trim() || 'your facility';
+  const typeLabel = resolveFacilityTypeLabel(facilityType);
+  const passwordLine = plainPassword
+    ? `Temporary record (not recommended): Password used during signup: ${plainPassword}\n`
+    : '';
+
+  const subject = 'Confirm your Hospital Management System account';
+  const text =
+    `Hello ${safeAdminName},\n\n` +
+    `Thanks for registering ${safeFacilityName} (${typeLabel}) on Hospital Management System.\n\n` +
+    `Your email verification code: ${code}\n` +
+    `This code expires in ${EMAIL_VERIFICATION_EXPIRY_MINUTES} minutes.\n\n` +
+    `You can also verify by clicking this link:\n` +
+    `${verifyLink}\n\n` +
+    `If you did not request this account, ignore this email.\n\n` +
+    passwordLine +
+    `Regards,\nHospital Management System`;
+
+  const htmlPasswordLine = plainPassword
+    ? `<p><strong>Temporary record (not recommended):</strong> Password used during signup: <code>${plainPassword}</code></p>`
+    : '';
+  const html =
+    `<p>Hello ${safeAdminName},</p>` +
+    `<p>Thanks for registering <strong>${safeFacilityName}</strong> (${typeLabel}) on Hospital Management System.</p>` +
+    `<p>Your email verification code: <strong>${code}</strong></p>` +
+    `<p>This code expires in <strong>${EMAIL_VERIFICATION_EXPIRY_MINUTES} minutes</strong>.</p>` +
+    `<p><a href="${verifyLink}">Verify email now</a></p>` +
+    `<p>If you did not request this account, ignore this email.</p>` +
+    htmlPasswordLine +
+    `<p>Regards,<br/>Hospital Management System</p>`;
+
+  return { subject, text, html };
+};
+
+const sendVerificationEmail = async ({
+  email,
+  adminName,
+  facilityName,
+  facilityType,
+  code,
+  linkToken,
+  plainPassword,
+}) => {
+  const verifyLink = buildVerifyEmailLink(linkToken, email);
+  const includePassword = Boolean(env.ALLOW_PLAINTEXT_PASSWORD_EMAIL);
+  const payload = buildVerificationEmailMessage({
+    email,
+    adminName,
+    facilityName,
+    facilityType,
+    code,
+    verifyLink,
+    plainPassword: includePassword ? plainPassword : null,
+  });
+
+  return sendEmail({
+    to: email,
+    subject: payload.subject,
+    text: payload.text,
+    html: payload.html,
+  });
+};
 
 /**
  * Identify users by identifier (email or phone)
@@ -110,7 +238,7 @@ const login = async (data) => {
 
   // Check if user is active
   if (user.status !== 'ACTIVE') {
-    throw new HttpError('errors.auth.account_inactive', 403);
+    throw new HttpError(resolveAccountStatusErrorKey(user.status), 403);
   }
 
   // Verify password
@@ -246,22 +374,38 @@ const register = async (data) => {
     user_agent,
   } = data;
 
+  const normalizedEmail = String(email || '').trim().toLowerCase();
+
   // Hash password
   const password_hash = await hashPassword(password);
 
   // Bootstrap tenant/facility and create owner user with ADMIN role in one transaction.
   const user = await authRepository.registerFacilityOwner({
-    email,
+    email: normalizedEmail,
     phone,
     password_hash,
     facility_name,
     admin_name,
     facility_type,
-    status: 'ACTIVE',
+    status: 'PENDING',
   });
   if (!user) {
     throw new HttpError('errors.database.unexpected', 500);
   }
+
+  // Create verification code + link tokens (same 15 minute expiry window).
+  const verification = await createEmailVerificationTokens(user.id);
+
+  // Best-effort notification: registration should still succeed even if email is delayed.
+  await sendVerificationEmail({
+    email: normalizedEmail,
+    adminName: admin_name,
+    facilityName: facility_name,
+    facilityType: facility_type,
+    code: verification.code,
+    linkToken: verification.linkToken,
+    plainPassword: password,
+  });
 
   // Create audit log
   await createAuditLog({
@@ -274,20 +418,27 @@ const register = async (data) => {
     ip_address,
     user_agent,
     details: {
-      email,
+      email: normalizedEmail,
       phone,
       facility_name,
       facility_type,
       admin_name,
       role: 'ADMIN',
       self_serve: true,
+      verification_expires_in_minutes: EMAIL_VERIFICATION_EXPIRY_MINUTES,
     }
   });
 
   // Return response without sensitive data
   const { password_hash: _, ...userData } = user;
 
-  return userData;
+  return {
+    user: userData,
+    verification: {
+      email: normalizedEmail,
+      expires_in_minutes: EMAIL_VERIFICATION_EXPIRY_MINUTES,
+    },
+  };
 };
 
 /**
@@ -324,7 +475,7 @@ const refresh = async (data) => {
 
   // Check if user is active
   if (session.user.status !== 'ACTIVE') {
-    throw new HttpError('errors.auth.account_inactive', 403);
+    throw new HttpError(resolveAccountStatusErrorKey(session.user.status), 403);
   }
 
   // Revoke old session
@@ -510,14 +661,15 @@ const getMe = async (userId) => {
  */
 const verifyEmail = async (data) => {
   const { token, email } = data;
+  const normalizedEmail = email ? String(email).trim().toLowerCase() : null;
 
   // Hash token
-  const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+  const tokenHash = hashToken(token);
 
   // Find token
   const verificationToken = await authRepository.findVerificationToken(
     tokenHash,
-    'EMAIL_VERIFICATION'
+    EMAIL_VERIFICATION_TOKEN_TYPE
   );
 
   if (!verificationToken) {
@@ -525,12 +677,21 @@ const verifyEmail = async (data) => {
   }
 
   // If email provided, verify it matches
-  if (email && verificationToken.user.email !== email) {
+  if (normalizedEmail && verificationToken.user.email !== normalizedEmail) {
     throw new HttpError('errors.auth.token_invalid', 400);
+  }
+
+  if (verificationToken.user.status === 'ACTIVE') {
+    throw new HttpError('errors.auth.already_verified', 400);
   }
 
   // Mark token as used
   await authRepository.markTokenAsUsed(verificationToken.id);
+  // Invalidate any other active email verification token for this user.
+  await authRepository.deleteExpiredTokens(
+    verificationToken.user_id,
+    EMAIL_VERIFICATION_TOKEN_TYPE
+  );
 
   // Update user status to ACTIVE
   await authRepository.updateUserStatus(verificationToken.user_id, 'ACTIVE');
@@ -561,12 +722,12 @@ const verifyPhone = async (data) => {
   const { token, phone } = data;
 
   // Hash token
-  const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+  const tokenHash = hashToken(token);
 
   // Find token
   const verificationToken = await authRepository.findVerificationToken(
     tokenHash,
-    'PHONE_VERIFICATION'
+    PHONE_VERIFICATION_TOKEN_TYPE
   );
 
   if (!verificationToken) {
@@ -610,21 +771,25 @@ const resendVerification = async (data) => {
   let user;
   let tokenType;
   let identifier;
+  let normalizedEmail = null;
+  let normalizedPhone = null;
 
   if (type === 'email') {
     if (!email) {
       throw new HttpError('errors.validation.email.required', 400);
     }
-    user = await authRepository.findUserByEmail(email);
-    tokenType = 'EMAIL_VERIFICATION';
-    identifier = email;
+    normalizedEmail = String(email).trim().toLowerCase();
+    user = await authRepository.findUserByEmail(normalizedEmail);
+    tokenType = EMAIL_VERIFICATION_TOKEN_TYPE;
+    identifier = normalizedEmail;
   } else if (type === 'phone') {
     if (!phone) {
       throw new HttpError('errors.validation.phone.required', 400);
     }
-    user = await authRepository.findUserByPhone(phone);
-    tokenType = 'PHONE_VERIFICATION';
-    identifier = phone;
+    normalizedPhone = String(phone).replace(/[^\d]/g, '');
+    user = await authRepository.findUserByPhone(normalizedPhone);
+    tokenType = PHONE_VERIFICATION_TOKEN_TYPE;
+    identifier = normalizedPhone;
   }
 
   if (!user) {
@@ -636,27 +801,33 @@ const resendVerification = async (data) => {
     throw new HttpError('errors.auth.already_verified', 400);
   }
 
-  // Delete old tokens
-  await authRepository.deleteExpiredTokens(user.id, tokenType);
+  if (type === 'email') {
+    const tokens = await createEmailVerificationTokens(user.id);
+    await sendVerificationEmail({
+      email: normalizedEmail || user.email,
+      adminName:
+        user.profile?.first_name ||
+        user.profile?.last_name ||
+        user.email ||
+        'Admin',
+      facilityName: user.facility?.name || user.tenant?.name || 'your facility',
+      facilityType: user.facility?.facility_type || 'OTHER',
+      code: tokens.code,
+      linkToken: tokens.linkToken,
+      plainPassword: null,
+    });
+  } else {
+    await authRepository.deleteExpiredTokens(user.id, tokenType);
+    const token = crypto.randomInt(0, 1000000).toString().padStart(6, '0');
+    const expiresAt = new Date(Date.now() + EMAIL_VERIFICATION_EXPIRY_MINUTES * 60 * 1000);
 
-  // Generate new token (6-digit code)
-  const token = Math.floor(100000 + Math.random() * 900000).toString();
-  const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
-
-  // Create new token
-  const expiresAt = new Date();
-  expiresAt.setMinutes(expiresAt.getMinutes() + 30); // 30 minutes expiry
-
-  await authRepository.createVerificationToken({
-    user_id: user.id,
-    token_hash: tokenHash,
-    type: tokenType,
-    expires_at: expiresAt
-  });
-
-  // TODO: Send verification email/SMS with token
-  // This would integrate with an email/SMS service
-  console.log(`Verification token for ${identifier}: ${token}`);
+    await authRepository.createVerificationToken({
+      user_id: user.id,
+      token_hash: hashToken(token),
+      type: tokenType,
+      expires_at: expiresAt,
+    });
+  }
 
   // Create audit log
   await createAuditLog({
@@ -692,11 +863,11 @@ const forgotPassword = async (data) => {
   }
 
   // Delete old password reset tokens
-  await authRepository.deleteExpiredTokens(user.id, 'PASSWORD_RESET');
+  await authRepository.deleteExpiredTokens(user.id, PASSWORD_RESET_TOKEN_TYPE);
 
   // Generate reset token
   const token = crypto.randomBytes(32).toString('hex');
-  const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+  const tokenHash = hashToken(token);
 
   // Create token
   const expiresAt = new Date();
@@ -705,13 +876,11 @@ const forgotPassword = async (data) => {
   await authRepository.createVerificationToken({
     user_id: user.id,
     token_hash: tokenHash,
-    type: 'PASSWORD_RESET',
+    type: PASSWORD_RESET_TOKEN_TYPE,
     expires_at: expiresAt
   });
 
-  // TODO: Send password reset email with token
-  // This would integrate with an email service
-  console.log(`Password reset token for ${email}: ${token}`);
+  // TODO: Send password reset email with token via email provider.
 
   // Create audit log
   await createAuditLog({
@@ -739,12 +908,12 @@ const resetPassword = async (data) => {
   const { token, new_password } = data;
 
   // Hash token
-  const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+  const tokenHash = hashToken(token);
 
   // Find token
   const resetToken = await authRepository.findVerificationToken(
     tokenHash,
-    'PASSWORD_RESET'
+    PASSWORD_RESET_TOKEN_TYPE
   );
 
   if (!resetToken) {

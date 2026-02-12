@@ -115,6 +115,16 @@ const buildEnv = () => {
   const STORAGE_PROVIDER = process.env.STORAGE_PROVIDER || 'local';
   const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || null;
   const CSRF_SECRET = process.env.CSRF_SECRET || null;
+  const APP_PUBLIC_URL = process.env.APP_PUBLIC_URL || 'http://localhost:8081';
+  const SMTP_HOST = process.env.SMTP_HOST || null;
+  const SMTP_PORT = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : null;
+  const SMTP_USER = process.env.SMTP_USER || null;
+  const SMTP_PASS = process.env.SMTP_PASS || null;
+  const SMTP_FROM = process.env.SMTP_FROM || null;
+  const ALLOW_PLAINTEXT_PASSWORD_EMAIL = parseOptionalBoolean(
+    process.env.ALLOW_PLAINTEXT_PASSWORD_EMAIL,
+    true
+  );
   const HANDLE_SIGINT = parseOptionalBoolean(
     process.env.HANDLE_SIGINT,
     NODE_ENV !== 'development'
@@ -141,6 +151,10 @@ const buildEnv = () => {
     throw new Error(
       `Invalid PORT: ${rawPort}. Must be a number between 1 and 65535.`
     );
+  }
+
+  if (SMTP_PORT !== null && (isNaN(SMTP_PORT) || SMTP_PORT < 1 || SMTP_PORT > 65535)) {
+    throw new Error(`Invalid SMTP_PORT: ${process.env.SMTP_PORT}. Must be a number between 1 and 65535.`);
   }
 
   if (CSRF_SECRET && CSRF_SECRET.length < 32) {
@@ -182,6 +196,13 @@ const buildEnv = () => {
     STORAGE_PROVIDER,
     ENCRYPTION_KEY,
     CSRF_SECRET,
+    APP_PUBLIC_URL,
+    SMTP_HOST,
+    SMTP_PORT,
+    SMTP_USER,
+    SMTP_PASS,
+    SMTP_FROM,
+    ALLOW_PLAINTEXT_PASSWORD_EMAIL,
     HANDLE_SIGINT,
     WS_MAX_CONNECTIONS,
     WS_HEARTBEAT_INTERVAL,
@@ -198,6 +219,7 @@ const buildEnv = () => {
       port: PORT,
       corsOrigins: CORS_ORIGINS,
       storageProvider: STORAGE_PROVIDER,
+      appPublicUrl: APP_PUBLIC_URL,
       handleSigint: HANDLE_SIGINT,
       wsMaxConnections: WS_MAX_CONNECTIONS,
       wsHeartbeatInterval: WS_HEARTBEAT_INTERVAL,
@@ -239,6 +261,13 @@ const envKeys = [
   'STORAGE_PROVIDER',
   'ENCRYPTION_KEY',
   'CSRF_SECRET',
+  'APP_PUBLIC_URL',
+  'SMTP_HOST',
+  'SMTP_PORT',
+  'SMTP_USER',
+  'SMTP_PASS',
+  'SMTP_FROM',
+  'ALLOW_PLAINTEXT_PASSWORD_EMAIL',
   'HANDLE_SIGINT',
   'WS_MAX_CONNECTIONS',
   'WS_HEARTBEAT_INTERVAL',

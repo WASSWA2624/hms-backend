@@ -4,23 +4,31 @@
  * @module tests/modules/auth/services
  */
 
+// Mock dependencies
+jest.mock('@repositories/auth/auth.repository');
+jest.mock('@lib/crypto');
+jest.mock('@lib/jwt');
+jest.mock('@lib/audit');
+jest.mock('@lib/notifications');
+jest.mock('@config/env', () => ({
+  JWT_SECRET: '12345678901234567890123456789012',
+  APP_PUBLIC_URL: 'http://localhost:8081',
+  ALLOW_PLAINTEXT_PASSWORD_EMAIL: false,
+}));
+
 const authService = require('@services/auth/auth.service');
 const authRepository = require('@repositories/auth/auth.repository');
 const { hashPassword, comparePassword } = require('@lib/crypto');
 const { generateToken, generateRefreshToken } = require('@lib/jwt');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
-
-// Mock dependencies
-jest.mock('@repositories/auth/auth.repository');
-jest.mock('@lib/crypto');
-jest.mock('@lib/jwt');
-jest.mock('@lib/audit');
+const { sendEmail } = require('@lib/notifications');
 
 describe('Auth Service', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     authRepository.getUserFacilities.mockResolvedValue([]);
+    sendEmail.mockResolvedValue({ sent: true, provider: 'smtp' });
   });
 
   describe('login', () => {
@@ -194,25 +202,29 @@ describe('Auth Service', () => {
         email: 'newuser@example.com',
         tenant_id: 'tenant-123',
         facility_id: 'facility-123',
-        status: 'ACTIVE',
+        status: 'PENDING',
         password_hash: 'hashedpassword'
       };
 
       hashPassword.mockResolvedValue('hashedpassword');
       authRepository.registerFacilityOwner.mockResolvedValue(mockUser);
+      authRepository.createVerificationToken.mockResolvedValue({});
       createAuditLog.mockResolvedValue({});
 
       const result = await authService.register(registerData);
 
-      expect(result).toHaveProperty('id', 'user-123');
-      expect(result).toHaveProperty('email', 'newuser@example.com');
-      expect(result).not.toHaveProperty('password_hash');
+      expect(result).toHaveProperty('user.id', 'user-123');
+      expect(result).toHaveProperty('user.email', 'newuser@example.com');
+      expect(result).toHaveProperty('verification.expires_in_minutes', 15);
+      expect(result.user).not.toHaveProperty('password_hash');
       expect(authRepository.registerFacilityOwner).toHaveBeenCalledWith(expect.objectContaining({
         facility_name: 'Mirembe Clinic',
         admin_name: 'Jane Doe',
         facility_type: 'CLINIC',
-        status: 'ACTIVE'
+        status: 'PENDING'
       }));
+      expect(authRepository.createVerificationToken).toHaveBeenCalledTimes(2);
+      expect(sendEmail).toHaveBeenCalledTimes(1);
       expect(createAuditLog).toHaveBeenCalledWith(expect.objectContaining({
         action: 'USER_REGISTERED'
       }));
@@ -473,12 +485,14 @@ describe('Auth Service', () => {
       authRepository.findVerificationToken.mockResolvedValue(mockToken);
       authRepository.markTokenAsUsed.mockResolvedValue({});
       authRepository.updateUserStatus.mockResolvedValue({});
+      authRepository.deleteExpiredTokens.mockResolvedValue({});
       createAuditLog.mockResolvedValue({});
 
       const result = await authService.verifyEmail(verifyData);
 
       expect(result).toHaveProperty('message');
       expect(authRepository.markTokenAsUsed).toHaveBeenCalledWith('token-123');
+      expect(authRepository.deleteExpiredTokens).toHaveBeenCalledWith('user-123', 'EMAIL_VERIFICATION');
       expect(authRepository.updateUserStatus).toHaveBeenCalledWith('user-123', 'ACTIVE');
       expect(createAuditLog).toHaveBeenCalledWith(expect.objectContaining({
         action: 'EMAIL_VERIFIED'
@@ -538,18 +552,21 @@ describe('Auth Service', () => {
         email: 'test@example.com',
         status: 'PENDING',
         tenant_id: 'tenant-123',
-        facility_id: 'facility-123'
+        facility_id: 'facility-123',
+        profile: { first_name: 'Test' },
+        facility: { name: 'City Hospital', facility_type: 'HOSPITAL' },
+        tenant: { name: 'City Hospital' }
       };
 
       authRepository.findUserByEmail.mockResolvedValue(mockUser);
-      authRepository.deleteExpiredTokens.mockResolvedValue({});
       authRepository.createVerificationToken.mockResolvedValue({});
       createAuditLog.mockResolvedValue({});
 
       const result = await authService.resendVerification(resendData);
 
       expect(result).toHaveProperty('message');
-      expect(authRepository.createVerificationToken).toHaveBeenCalled();
+      expect(authRepository.createVerificationToken).toHaveBeenCalledTimes(2);
+      expect(sendEmail).toHaveBeenCalledTimes(1);
       expect(createAuditLog).toHaveBeenCalledWith(expect.objectContaining({
         action: 'VERIFICATION_RESENT'
       }));

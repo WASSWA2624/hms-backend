@@ -471,7 +471,8 @@ describe('Auth Repository', () => {
         where: {
           email: 'test@example.com',
           deleted_at: null
-        }
+        },
+        include: expect.any(Object)
       });
     });
   });
@@ -491,7 +492,8 @@ describe('Auth Repository', () => {
         where: {
           phone: '+1234567890',
           deleted_at: null
-        }
+        },
+        include: expect.any(Object)
       });
     });
   });
