@@ -12,6 +12,7 @@
 const jwt = require('jsonwebtoken');
 const jwtConfig = require('@config/jwt');
 const { JWT_SECRET } = require('@config/env');
+const crypto = require('crypto');
 
 /**
  * Generate refresh token
@@ -34,8 +35,21 @@ const generateRefreshToken = (payload, expiresIn = null) => {
     expiresIn: expiration,
     algorithm: algorithm
   };
-  
-  return jwt.sign(payload, JWT_SECRET, options);
+
+  const normalizedPayload =
+    payload && typeof payload === 'object' && !Array.isArray(payload)
+      ? { ...payload }
+      : {};
+
+  // Ensure refresh tokens are unique even when payload is omitted.
+  if (!normalizedPayload.jti) {
+    normalizedPayload.jti = crypto.randomBytes(16).toString('hex');
+  }
+  if (!normalizedPayload.type) {
+    normalizedPayload.type = 'refresh';
+  }
+
+  return jwt.sign(normalizedPayload, JWT_SECRET, options);
 };
 
 module.exports = { generateRefreshToken };

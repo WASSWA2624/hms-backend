@@ -17,7 +17,7 @@ const userInclude = {
     include: {
       role: {
         include: {
-          role_permissions: {
+          permissions: {
             where: { deleted_at: null },
             include: {
               permission: true
@@ -313,7 +313,7 @@ const findSessionByRefreshToken = async (refreshTokenHash) => {
               include: {
                 role: {
                   include: {
-                    role_permissions: {
+                    permissions: {
                       where: { deleted_at: null },
                       include: {
                         permission: true
