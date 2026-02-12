@@ -18,6 +18,8 @@ const EMAIL_VERIFICATION_TOKEN_TYPE = 'EMAIL_VERIFICATION';
 const PHONE_VERIFICATION_TOKEN_TYPE = 'PHONE_VERIFICATION';
 const PASSWORD_RESET_TOKEN_TYPE = 'PASSWORD_RESET';
 const EMAIL_VERIFICATION_EXPIRY_MINUTES = 15;
+const MAX_LOCATION_LENGTH = 255;
+const MAX_INTERESTS_LENGTH = 2000;
 
 const hashToken = (value) =>
   crypto.createHash('sha256').update(String(value || '')).digest('hex');
@@ -140,6 +142,272 @@ const sendVerificationEmail = async ({
   });
 };
 
+const resolveAdminDisplayName = (user, fallbackName) => {
+  const first = String(user?.profile?.first_name || '').trim();
+  const last = String(user?.profile?.last_name || '').trim();
+  const fullName = `${first} ${last}`.trim();
+  if (fullName) return fullName;
+
+  const fallback = String(fallbackName || '').trim();
+  if (fallback) return fallback;
+
+  if (user?.email && user.email.includes('@')) {
+    return user.email.split('@')[0];
+  }
+
+  return 'Admin';
+};
+
+const normalizeComparableText = (value) =>
+  String(value || '')
+    .trim()
+    .replace(/\s+/g, ' ')
+    .toLowerCase();
+
+const normalizeComparableEnum = (value) =>
+  String(value || '')
+    .trim()
+    .toUpperCase();
+
+const normalizeOptionalText = (value, maxLength) => {
+  if (value === undefined || value === null) return null;
+  const normalized = String(value).trim();
+  if (!normalized) return null;
+  if (typeof maxLength === 'number' && maxLength > 0) {
+    return normalized.slice(0, maxLength);
+  }
+  return normalized;
+};
+
+const normalizeCommaSeparatedInterests = (value) => {
+  const normalized = normalizeOptionalText(value, MAX_INTERESTS_LENGTH * 2);
+  if (!normalized) return null;
+
+  const normalizedDelimiters = normalized
+    .replace(/[\r\n;|]+/g, ',')
+    .replace(/\s+/g, ' ');
+
+  const items = normalizedDelimiters
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  if (items.length === 0) return null;
+  return items.join(', ').slice(0, MAX_INTERESTS_LENGTH);
+};
+
+const normalizeLocaleValue = (value) => {
+  const normalized = normalizeOptionalText(value, 64);
+  if (!normalized) return null;
+  const primary = normalized.split(',')[0]?.trim();
+  return primary ? primary.slice(0, 32) : null;
+};
+
+const extractUtmContext = (referer) => {
+  const normalizedReferer = normalizeOptionalText(referer, 2048);
+  if (!normalizedReferer) return {};
+
+  try {
+    const parsed = new URL(normalizedReferer);
+    return {
+      utm_source: normalizeOptionalText(parsed.searchParams.get('utm_source'), 255),
+      utm_medium: normalizeOptionalText(parsed.searchParams.get('utm_medium'), 255),
+      utm_campaign: normalizeOptionalText(parsed.searchParams.get('utm_campaign'), 255),
+      utm_term: normalizeOptionalText(parsed.searchParams.get('utm_term'), 255),
+      utm_content: normalizeOptionalText(parsed.searchParams.get('utm_content'), 255),
+      referer_host: normalizeOptionalText(parsed.host, 255),
+      referer_path: normalizeOptionalText(parsed.pathname, 255),
+    };
+  } catch {
+    return {};
+  }
+};
+
+const compactObject = (value) => {
+  if (!value || typeof value !== 'object') return null;
+  const compacted = Object.fromEntries(
+    Object.entries(value).filter(([, item]) => item !== undefined && item !== null && item !== '')
+  );
+  return Object.keys(compacted).length > 0 ? compacted : null;
+};
+
+const persistRegistrationFollowUp = async ({
+  user,
+  normalizedEmail,
+  phone,
+  admin_name,
+  facility_name,
+  facility_type,
+  location,
+  interests,
+  request_context,
+  facility_details_differ,
+  account_already_active,
+  existing_email,
+  registration_attempt_increment = 1,
+}) => {
+  if (!user?.id || !normalizedEmail) return;
+
+  const utmContext = extractUtmContext(request_context?.referer);
+  const followUpMetadata = compactObject({
+    existing_email: existing_email ? true : undefined,
+    account_already_active: account_already_active ? true : undefined,
+    facility_details_differ: facility_details_differ ? true : undefined,
+    registration_channel: normalizeOptionalText(request_context?.origin, 255),
+    device_hints: compactObject({
+      sec_ch_ua: normalizeOptionalText(request_context?.sec_ch_ua, 255),
+      sec_ch_ua_mobile: normalizeOptionalText(request_context?.sec_ch_ua_mobile, 32),
+    }),
+    utm: compactObject({
+      source: utmContext.utm_source,
+      medium: utmContext.utm_medium,
+      campaign: utmContext.utm_campaign,
+      term: utmContext.utm_term,
+      content: utmContext.utm_content,
+    }),
+  });
+
+  try {
+    await authRepository.upsertRegistrationFollowUp({
+      user_id: user.id,
+      tenant_id: user.tenant_id || null,
+      facility_id: user.facility_id || null,
+      email: normalizedEmail,
+      phone: normalizeOptionalText(phone || user.phone, 40),
+      admin_name: normalizeOptionalText(
+        admin_name || resolveAdminDisplayName(user, admin_name),
+        255
+      ),
+      facility_name: normalizeOptionalText(
+        facility_name || user?.facility?.name || user?.tenant?.name,
+        255
+      ),
+      facility_type: normalizeComparableEnum(
+        facility_type || user?.facility?.facility_type || ''
+      ) || null,
+      location: normalizeOptionalText(location, MAX_LOCATION_LENGTH),
+      interests: normalizeCommaSeparatedInterests(interests),
+      account_status: user.status || 'PENDING',
+      locale: normalizeLocaleValue(request_context?.locale),
+      timezone: normalizeOptionalText(request_context?.timezone, 64),
+      ip_address: normalizeOptionalText(request_context?.ip_address, 45),
+      user_agent: normalizeOptionalText(request_context?.user_agent, 255),
+      device_platform: normalizeOptionalText(request_context?.platform, 64),
+      referral_source: normalizeOptionalText(
+        request_context?.referer || request_context?.origin || utmContext.referer_host,
+        255
+      ),
+      campaign: normalizeOptionalText(utmContext.utm_campaign, 255),
+      follow_up_metadata: followUpMetadata,
+      registration_attempt_increment,
+    });
+  } catch {
+    // Tracking is best-effort and must not block registration.
+  }
+};
+
+const hasFacilityDetailsDifference = (user, facility_name, facility_type) => {
+  const incomingName = normalizeComparableText(facility_name);
+  const incomingType = normalizeComparableEnum(facility_type);
+
+  const existingName = normalizeComparableText(
+    user?.facility?.name || user?.tenant?.name || ''
+  );
+  const existingType = normalizeComparableEnum(user?.facility?.facility_type || '');
+
+  const nameDiffers = Boolean(incomingName && existingName && incomingName !== existingName);
+  const typeDiffers = Boolean(incomingType && existingType && incomingType !== existingType);
+
+  return nameDiffers || typeDiffers;
+};
+
+const buildRegisterResponse = (user, normalizedEmail, verification = {}) => {
+  const { password_hash: _, ...userData } = user;
+  return {
+    user: userData,
+    verification: {
+      email: normalizedEmail,
+      expires_in_minutes: EMAIL_VERIFICATION_EXPIRY_MINUTES,
+      ...verification,
+    },
+  };
+};
+
+const handleExistingEmailRegistration = async ({
+  user,
+  normalizedEmail,
+  admin_name,
+  facility_name,
+  facility_type,
+  location,
+  interests,
+  accountAlreadyActive,
+  ip_address,
+  user_agent,
+  request_context,
+}) => {
+  const facilityDetailsDiffer = hasFacilityDetailsDifference(
+    user,
+    facility_name,
+    facility_type
+  );
+  const verification = await createEmailVerificationTokens(user.id);
+  await sendVerificationEmail({
+    email: normalizedEmail,
+    adminName: resolveAdminDisplayName(user, admin_name),
+    facilityName: user.facility?.name || user.tenant?.name || facility_name,
+    facilityType: user.facility?.facility_type || facility_type || 'OTHER',
+    code: verification.code,
+    linkToken: verification.linkToken,
+    plainPassword: null,
+  });
+
+  await persistRegistrationFollowUp({
+    user,
+    normalizedEmail,
+    phone: user.phone,
+    admin_name,
+    facility_name: user.facility?.name || user.tenant?.name || facility_name,
+    facility_type: user.facility?.facility_type || facility_type || 'OTHER',
+    location,
+    interests,
+    request_context: {
+      ...request_context,
+      ip_address,
+      user_agent,
+    },
+    facility_details_differ: facilityDetailsDiffer,
+    account_already_active: Boolean(accountAlreadyActive),
+    existing_email: true,
+    registration_attempt_increment: 1,
+  });
+
+  await createAuditLog({
+    action: 'USER_REGISTERED_EXISTING_EMAIL',
+    entity: 'user',
+    entity_id: user.id,
+    user_id: user.id,
+    tenant_id: user.tenant_id,
+    facility_id: user.facility_id,
+    ip_address,
+    user_agent,
+    details: {
+      email: normalizedEmail,
+      verification_expires_in_minutes: EMAIL_VERIFICATION_EXPIRY_MINUTES,
+      email_already_used: true,
+      account_already_active: Boolean(accountAlreadyActive),
+      verification_resent: true,
+      facility_details_differ: facilityDetailsDiffer,
+    },
+  });
+
+  return buildRegisterResponse(user, normalizedEmail, {
+    email_already_used: true,
+    account_already_active: Boolean(accountAlreadyActive),
+    facility_details_differ: facilityDetailsDiffer,
+  });
+};
+
 /**
  * Identify users by identifier (email or phone)
  * Returns list of tenants the user belongs to (without password verification)
@@ -156,22 +424,61 @@ const identify = async (data) => {
 
   if (users.length === 0) {
     // Don't reveal if user exists (security best practice)
-    return { users: [] };
+    return {
+      users: [],
+      summary: {
+        active_count: 0,
+        pending_count: 0,
+        suspended_count: 0,
+        inactive_count: 0,
+        has_active: false,
+        has_pending: false,
+      },
+    };
   }
 
-  // Format response with tenant info
-  const tenantInfo = users.map(user => ({
-    tenant_id: user.tenant_id,
-    tenant_name: user.tenant?.name || '',
-    tenant_slug: user.tenant?.slug || null
-  }));
+  const statusRank = {
+    ACTIVE: 4,
+    PENDING: 3,
+    SUSPENDED: 2,
+    INACTIVE: 1,
+  };
 
-  // Deduplicate tenants (same user might have multiple entries)
-  const uniqueTenants = tenantInfo.filter((tenant, index, self) =>
-    index === self.findIndex(t => t.tenant_id === tenant.tenant_id)
-  );
+  const tenantMap = new Map();
+  for (const user of users) {
+    const tenantId = user.tenant_id;
+    if (!tenantId) continue;
 
-  return { users: uniqueTenants };
+    const nextEntry = {
+      tenant_id: tenantId,
+      tenant_name: user.tenant?.name || '',
+      tenant_slug: user.tenant?.slug || null,
+      status: user.status || 'INACTIVE',
+    };
+
+    const current = tenantMap.get(tenantId);
+    if (!current || (statusRank[nextEntry.status] || 0) > (statusRank[current.status] || 0)) {
+      tenantMap.set(tenantId, nextEntry);
+    }
+  }
+
+  const uniqueTenants = Array.from(tenantMap.values());
+  const active_count = users.filter((user) => user.status === 'ACTIVE').length;
+  const pending_count = users.filter((user) => user.status === 'PENDING').length;
+  const suspended_count = users.filter((user) => user.status === 'SUSPENDED').length;
+  const inactive_count = users.filter((user) => user.status === 'INACTIVE').length;
+
+  return {
+    users: uniqueTenants,
+    summary: {
+      active_count,
+      pending_count,
+      suspended_count,
+      inactive_count,
+      has_active: active_count > 0,
+      has_pending: pending_count > 0,
+    },
+  };
 };
 
 /**
@@ -219,17 +526,32 @@ const login = async (data) => {
     // This assumes single user (should be handled by identify endpoint first)
     const identifier = email || phone;
     const users = await authRepository.findUsersByIdentifier(identifier);
-    
+
     if (users.length === 0) {
       throw new HttpError('errors.auth.invalid_credentials', 401);
     }
-    
-    if (users.length > 1) {
-      // Multiple users found - tenant selection required
+
+    const activeUsers = users.filter((candidate) => candidate.status === 'ACTIVE');
+    const pendingUsers = users.filter((candidate) => candidate.status === 'PENDING');
+    const suspendedUsers = users.filter((candidate) => candidate.status === 'SUSPENDED');
+
+    if (activeUsers.length > 1) {
+      // Multiple active users found - tenant selection required
       throw new HttpError('errors.auth.multiple_tenants', 400);
     }
-    
-    user = users[0];
+
+    if (activeUsers.length === 1) {
+      user = activeUsers[0];
+    } else if (pendingUsers.length > 0) {
+      throw new HttpError('errors.auth.account_pending', 403, [{
+        reason: 'email_verification_required',
+        identifier_type: email ? 'email' : 'phone',
+      }]);
+    } else if (suspendedUsers.length > 0) {
+      throw new HttpError('errors.auth.account_suspended', 403);
+    } else {
+      throw new HttpError('errors.auth.account_inactive', 403);
+    }
   }
 
   if (!user) {
@@ -358,8 +680,11 @@ const login = async (data) => {
  * @param {string} data.admin_name - Admin display name
  * @param {string} data.facility_type - Facility type enum
  * @param {string} [data.phone] - User phone
+ * @param {string} [data.location] - User-provided location text
+ * @param {string} [data.interests] - User-provided interests text
  * @param {string} [data.ip_address] - IP address
  * @param {string} [data.user_agent] - User agent
+ * @param {Object} [data.request_context] - Request metadata (locale/timezone/platform/origin)
  * @returns {Promise<Object>} Created user data (tenant admin)
  */
 const register = async (data) => {
@@ -370,25 +695,96 @@ const register = async (data) => {
     admin_name,
     facility_type,
     phone,
+    location,
+    interests,
     ip_address,
     user_agent,
+    request_context,
   } = data;
 
   const normalizedEmail = String(email || '').trim().toLowerCase();
 
+  const existingUser = await authRepository.findUserByEmail(normalizedEmail);
+  if (existingUser) {
+    if (existingUser.status === 'PENDING') {
+      return handleExistingEmailRegistration({
+        user: existingUser,
+        normalizedEmail,
+        admin_name,
+        facility_name,
+        facility_type,
+        accountAlreadyActive: false,
+        ip_address,
+        user_agent,
+        location,
+        interests,
+        request_context,
+      });
+    }
+
+    if (existingUser.status === 'ACTIVE') {
+      return handleExistingEmailRegistration({
+        user: existingUser,
+        normalizedEmail,
+        admin_name,
+        facility_name,
+        facility_type,
+        accountAlreadyActive: true,
+        ip_address,
+        user_agent,
+        location,
+        interests,
+        request_context,
+      });
+    }
+
+    throw new HttpError(resolveAccountStatusErrorKey(existingUser.status), 403);
+  }
+
   // Hash password
   const password_hash = await hashPassword(password);
 
-  // Bootstrap tenant/facility and create owner user with ADMIN role in one transaction.
-  const user = await authRepository.registerFacilityOwner({
-    email: normalizedEmail,
-    phone,
-    password_hash,
-    facility_name,
-    admin_name,
-    facility_type,
-    status: 'PENDING',
-  });
+  let user;
+  try {
+    // Bootstrap tenant/facility and create owner user with ADMIN role in one transaction.
+    user = await authRepository.registerFacilityOwner({
+      email: normalizedEmail,
+      phone,
+      password_hash,
+      facility_name,
+      admin_name,
+      facility_type,
+      status: 'PENDING',
+    });
+  } catch (error) {
+    const isDuplicateEmail =
+      error instanceof HttpError &&
+      error.statusCode === 409 &&
+      error.messageKey === 'errors.auth.user_exists';
+
+    if (!isDuplicateEmail) {
+      throw error;
+    }
+
+    const racedUser = await authRepository.findUserByEmail(normalizedEmail);
+    if (racedUser?.status === 'PENDING' || racedUser?.status === 'ACTIVE') {
+      return handleExistingEmailRegistration({
+        user: racedUser,
+        normalizedEmail,
+        admin_name,
+        facility_name,
+        facility_type,
+        accountAlreadyActive: racedUser.status === 'ACTIVE',
+        ip_address,
+        user_agent,
+        location,
+        interests,
+        request_context,
+      });
+    }
+
+    throw error;
+  }
   if (!user) {
     throw new HttpError('errors.database.unexpected', 500);
   }
@@ -405,6 +801,24 @@ const register = async (data) => {
     code: verification.code,
     linkToken: verification.linkToken,
     plainPassword: password,
+  });
+
+  await persistRegistrationFollowUp({
+    user,
+    normalizedEmail,
+    phone,
+    admin_name,
+    facility_name,
+    facility_type,
+    location,
+    interests,
+    request_context: {
+      ...request_context,
+      ip_address,
+      user_agent,
+    },
+    existing_email: false,
+    registration_attempt_increment: 1,
   });
 
   // Create audit log
@@ -429,16 +843,7 @@ const register = async (data) => {
     }
   });
 
-  // Return response without sensitive data
-  const { password_hash: _, ...userData } = user;
-
-  return {
-    user: userData,
-    verification: {
-      email: normalizedEmail,
-      expires_in_minutes: EMAIL_VERIFICATION_EXPIRY_MINUTES,
-    },
-  };
+  return buildRegisterResponse(user, normalizedEmail);
 };
 
 /**
@@ -681,9 +1086,7 @@ const verifyEmail = async (data) => {
     throw new HttpError('errors.auth.token_invalid', 400);
   }
 
-  if (verificationToken.user.status === 'ACTIVE') {
-    throw new HttpError('errors.auth.already_verified', 400);
-  }
+  const alreadyActive = verificationToken.user.status === 'ACTIVE';
 
   // Mark token as used
   await authRepository.markTokenAsUsed(verificationToken.id);
@@ -693,12 +1096,20 @@ const verifyEmail = async (data) => {
     EMAIL_VERIFICATION_TOKEN_TYPE
   );
 
-  // Update user status to ACTIVE
-  await authRepository.updateUserStatus(verificationToken.user_id, 'ACTIVE');
+  if (!alreadyActive) {
+    // Update user status to ACTIVE for first-time verification.
+    await authRepository.updateUserStatus(verificationToken.user_id, 'ACTIVE');
+  }
+
+  try {
+    await authRepository.updateRegistrationFollowUpStatus(verificationToken.user_id, 'ACTIVE');
+  } catch {
+    // Tracking is best-effort and must not block email verification.
+  }
 
   // Create audit log
   await createAuditLog({
-    action: 'EMAIL_VERIFIED',
+    action: alreadyActive ? 'EMAIL_VERIFIED_ALREADY_ACTIVE' : 'EMAIL_VERIFIED',
     entity: 'user',
     entity_id: verificationToken.user_id,
     user_id: verificationToken.user_id,
@@ -707,7 +1118,10 @@ const verifyEmail = async (data) => {
     details: { email: verificationToken.user.email }
   });
 
-  return { message: 'messages.auth.email_verified.success' };
+  return {
+    message: 'messages.auth.email_verified.success',
+    already_active: alreadyActive,
+  };
 };
 
 /**
@@ -796,8 +1210,9 @@ const resendVerification = async (data) => {
     throw new HttpError('errors.auth.user_not_found', 404);
   }
 
-  // Check if user is already active
-  if (user.status === 'ACTIVE') {
+  // Allow email verification resend even for ACTIVE users so duplicate-registration
+  // flows can proceed with the same "check email and continue" path.
+  if (user.status === 'ACTIVE' && type !== 'email') {
     throw new HttpError('errors.auth.already_verified', 400);
   }
 

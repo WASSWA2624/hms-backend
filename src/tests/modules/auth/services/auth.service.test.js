@@ -182,6 +182,27 @@ describe('Auth Service', () => {
         .rejects
         .toMatchObject({ statusCode: 401 });
     });
+
+    it('should require email verification for pending user when tenant is not provided', async () => {
+      const loginData = {
+        email: 'pending@example.com',
+        password: 'Password123!',
+      };
+
+      authRepository.findUsersByIdentifier.mockResolvedValue([
+        {
+          id: 'user-pending-1',
+          email: 'pending@example.com',
+          tenant_id: 'tenant-123',
+          status: 'PENDING',
+          password_hash: 'hashedpassword',
+        },
+      ]);
+
+      await expect(authService.login(loginData))
+        .rejects
+        .toMatchObject({ statusCode: 403, messageKey: 'errors.auth.account_pending' });
+    });
   });
 
   describe('register', () => {
@@ -193,6 +214,7 @@ describe('Auth Service', () => {
         admin_name: 'Jane Doe',
         facility_type: 'CLINIC',
         phone: '256701234567',
+        interests: 'Billing; Telemedicine\nEMR',
         ip_address: '127.0.0.1',
         user_agent: 'Mozilla'
       };
@@ -207,6 +229,7 @@ describe('Auth Service', () => {
       };
 
       hashPassword.mockResolvedValue('hashedpassword');
+      authRepository.findUserByEmail.mockResolvedValue(null);
       authRepository.registerFacilityOwner.mockResolvedValue(mockUser);
       authRepository.createVerificationToken.mockResolvedValue({});
       createAuditLog.mockResolvedValue({});
@@ -225,8 +248,111 @@ describe('Auth Service', () => {
       }));
       expect(authRepository.createVerificationToken).toHaveBeenCalledTimes(2);
       expect(sendEmail).toHaveBeenCalledTimes(1);
+      expect(authRepository.upsertRegistrationFollowUp).toHaveBeenCalledWith(
+        expect.objectContaining({
+          user_id: 'user-123',
+          email: 'newuser@example.com',
+          account_status: 'PENDING',
+          interests: 'Billing, Telemedicine, EMR',
+        })
+      );
       expect(createAuditLog).toHaveBeenCalledWith(expect.objectContaining({
         action: 'USER_REGISTERED'
+      }));
+    });
+
+    it('should resend verification when email already exists in pending state', async () => {
+      const registerData = {
+        email: 'pending@example.com',
+        password: 'Password123!',
+        facility_name: 'City Hospital',
+        admin_name: 'Jane Doe',
+        facility_type: 'HOSPITAL',
+        phone: '256701234567',
+        ip_address: '127.0.0.1',
+        user_agent: 'Mozilla'
+      };
+
+      const existingPendingUser = {
+        id: 'user-pending-123',
+        email: 'pending@example.com',
+        tenant_id: 'tenant-123',
+        facility_id: 'facility-123',
+        status: 'PENDING',
+        password_hash: 'existing-hash',
+        profile: { first_name: 'Jane', last_name: 'Doe' },
+        tenant: { name: 'City Hospital' },
+        facility: { name: 'City Hospital', facility_type: 'HOSPITAL' }
+      };
+
+      authRepository.findUserByEmail.mockResolvedValue(existingPendingUser);
+      authRepository.createVerificationToken.mockResolvedValue({});
+      createAuditLog.mockResolvedValue({});
+
+      const result = await authService.register(registerData);
+
+      expect(result).toHaveProperty('user.id', 'user-pending-123');
+      expect(result).toHaveProperty('verification.email', 'pending@example.com');
+      expect(result).toHaveProperty('verification.email_already_used', true);
+      expect(result).toHaveProperty('verification.expires_in_minutes', 15);
+      expect(hashPassword).not.toHaveBeenCalled();
+      expect(authRepository.registerFacilityOwner).not.toHaveBeenCalled();
+      expect(authRepository.createVerificationToken).toHaveBeenCalledTimes(2);
+      expect(sendEmail).toHaveBeenCalledTimes(1);
+      expect(authRepository.upsertRegistrationFollowUp).toHaveBeenCalledWith(
+        expect.objectContaining({
+          user_id: 'user-pending-123',
+          email: 'pending@example.com',
+          account_status: 'PENDING',
+        })
+      );
+      expect(createAuditLog).toHaveBeenCalledWith(expect.objectContaining({
+        action: 'USER_REGISTERED_EXISTING_EMAIL'
+      }));
+    });
+
+    it('should continue registration when existing email is already active', async () => {
+      const registerData = {
+        email: 'existing@example.com',
+        password: 'Password123!',
+        facility_name: 'Different Facility Name',
+        admin_name: 'Jane Doe',
+        facility_type: 'CLINIC',
+      };
+
+      authRepository.findUserByEmail.mockResolvedValue({
+        id: 'user-active-123',
+        email: 'existing@example.com',
+        tenant_id: 'tenant-123',
+        facility_id: 'facility-123',
+        status: 'ACTIVE',
+        profile: { first_name: 'Jane', last_name: 'Doe' },
+        tenant: { name: 'City Hospital' },
+        facility: { name: 'City Hospital', facility_type: 'HOSPITAL' },
+      });
+      authRepository.createVerificationToken.mockResolvedValue({});
+      createAuditLog.mockResolvedValue({});
+
+      const result = await authService.register(registerData);
+
+      expect(result).toHaveProperty('user.id', 'user-active-123');
+      expect(result).toHaveProperty('verification.email_already_used', true);
+      expect(result).toHaveProperty('verification.account_already_active', true);
+      expect(result).toHaveProperty('verification.facility_details_differ', true);
+      expect(hashPassword).not.toHaveBeenCalled();
+      expect(authRepository.registerFacilityOwner).not.toHaveBeenCalled();
+      expect(authRepository.createVerificationToken).toHaveBeenCalledTimes(2);
+      expect(sendEmail).toHaveBeenCalledTimes(1);
+      expect(authRepository.upsertRegistrationFollowUp).toHaveBeenCalledWith(
+        expect.objectContaining({
+          user_id: 'user-active-123',
+          email: 'existing@example.com',
+          account_status: 'ACTIVE',
+          registration_attempt_increment: 1,
+        })
+      );
+      expect(createAuditLog).toHaveBeenCalledWith(expect.objectContaining({
+        action: 'USER_REGISTERED_EXISTING_EMAIL'
       }));
     });
   });
@@ -494,6 +620,7 @@ describe('Auth Service', () => {
       expect(authRepository.markTokenAsUsed).toHaveBeenCalledWith('token-123');
       expect(authRepository.deleteExpiredTokens).toHaveBeenCalledWith('user-123', 'EMAIL_VERIFICATION');
       expect(authRepository.updateUserStatus).toHaveBeenCalledWith('user-123', 'ACTIVE');
+      expect(authRepository.updateRegistrationFollowUpStatus).toHaveBeenCalledWith('user-123', 'ACTIVE');
       expect(createAuditLog).toHaveBeenCalledWith(expect.objectContaining({
         action: 'EMAIL_VERIFIED'
       }));
@@ -505,6 +632,42 @@ describe('Auth Service', () => {
       await expect(authService.verifyEmail({ token: 'invalid-token' }))
         .rejects
         .toThrow(HttpError);
+    });
+
+    it('should allow verify token for already active email', async () => {
+      const verifyData = {
+        token: 'active-token',
+        email: 'verified@example.com'
+      };
+
+      const mockToken = {
+        id: 'token-active-123',
+        user_id: 'user-active-123',
+        user: {
+          id: 'user-active-123',
+          email: 'verified@example.com',
+          status: 'ACTIVE',
+          tenant_id: 'tenant-123',
+          facility_id: 'facility-123'
+        }
+      };
+
+      authRepository.findVerificationToken.mockResolvedValue(mockToken);
+      authRepository.markTokenAsUsed.mockResolvedValue({});
+      authRepository.deleteExpiredTokens.mockResolvedValue({});
+      createAuditLog.mockResolvedValue({});
+
+      const result = await authService.verifyEmail(verifyData);
+
+      expect(result).toHaveProperty('message');
+      expect(result).toHaveProperty('already_active', true);
+      expect(authRepository.markTokenAsUsed).toHaveBeenCalledWith('token-active-123');
+      expect(authRepository.deleteExpiredTokens).toHaveBeenCalledWith('user-active-123', 'EMAIL_VERIFICATION');
+      expect(authRepository.updateUserStatus).not.toHaveBeenCalled();
+      expect(authRepository.updateRegistrationFollowUpStatus).toHaveBeenCalledWith('user-active-123', 'ACTIVE');
+      expect(createAuditLog).toHaveBeenCalledWith(expect.objectContaining({
+        action: 'EMAIL_VERIFIED_ALREADY_ACTIVE'
+      }));
     });
   });
 
@@ -572,15 +735,39 @@ describe('Auth Service', () => {
       }));
     });
 
-    it('should reject if user already verified', async () => {
+    it('should resend email verification even if user is already active', async () => {
       const mockUser = {
         id: 'user-123',
-        status: 'ACTIVE'
+        email: 'test@example.com',
+        status: 'ACTIVE',
+        tenant_id: 'tenant-123',
+        facility_id: 'facility-123',
+        profile: { first_name: 'Test' },
+        facility: { name: 'City Hospital', facility_type: 'HOSPITAL' },
+        tenant: { name: 'City Hospital' }
       };
 
       authRepository.findUserByEmail.mockResolvedValue(mockUser);
+      authRepository.createVerificationToken.mockResolvedValue({});
+      createAuditLog.mockResolvedValue({});
 
-      await expect(authService.resendVerification({ email: 'test@example.com', type: 'email' }))
+      const result = await authService.resendVerification({ email: 'test@example.com', type: 'email' });
+
+      expect(result).toHaveProperty('message');
+      expect(authRepository.createVerificationToken).toHaveBeenCalledTimes(2);
+      expect(sendEmail).toHaveBeenCalledTimes(1);
+    });
+
+    it('should reject phone resend if user is already active', async () => {
+      const mockUser = {
+        id: 'user-123',
+        phone: '256701234567',
+        status: 'ACTIVE'
+      };
+
+      authRepository.findUserByPhone.mockResolvedValue(mockUser);
+
+      await expect(authService.resendVerification({ phone: '256701234567', type: 'phone' }))
         .rejects
         .toThrow(HttpError);
     });

@@ -135,6 +135,20 @@ describe('Auth Schema Validation', () => {
       expect(result.success).toBe(true);
     });
 
+    it('should accept optional location and interests for follow-up tracking', () => {
+      const validData = {
+        email: 'newuser@example.com',
+        password: 'Password123!',
+        facility_name: 'Mirembe Clinic',
+        admin_name: 'Jane Doe',
+        facility_type: 'CLINIC',
+        location: 'Kampala, Uganda',
+        interests: 'Telemedicine, Billing automation, Inventory tracking'
+      };
+      const result = registerBodySchema.safeParse(validData);
+      expect(result.success).toBe(true);
+    });
+
     it('should reject password without uppercase', () => {
       const invalidData = {
         email: 'newuser@example.com',
@@ -224,6 +238,19 @@ describe('Auth Schema Validation', () => {
         facility_name: 'Mirembe Clinic',
         admin_name: 'Jane Doe',
         facility_type: 'INVALID'
+      };
+      const result = registerBodySchema.safeParse(invalidData);
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject registration when interests exceed max length', () => {
+      const invalidData = {
+        email: 'newuser@example.com',
+        password: 'Password123!',
+        facility_name: 'Mirembe Clinic',
+        admin_name: 'Jane Doe',
+        facility_type: 'CLINIC',
+        interests: 'a'.repeat(2001),
       };
       const result = registerBodySchema.safeParse(invalidData);
       expect(result.success).toBe(false);

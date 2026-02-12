@@ -163,6 +163,19 @@ const defaultErrorKeyByStatus = {
   503: 'errors.service.unavailable'
 };
 
+const toErrorCode = (message, statusCode) => {
+  if (isTranslationKey(message)) {
+    const key = String(message).split('.').pop() || 'unknown_error';
+    return key.toUpperCase().replace(/-/g, '_');
+  }
+  if (statusCode >= 500) return 'SERVER_ERROR';
+  if (statusCode === 401) return 'UNAUTHORIZED';
+  if (statusCode === 403) return 'FORBIDDEN';
+  if (statusCode === 404) return 'NOT_FOUND';
+  if (statusCode === 409) return 'CONFLICT';
+  return 'UNKNOWN_ERROR';
+};
+
 const resolveMessage = (message, locale, statusCode) => {
   if (isTranslationKey(message)) {
     return translate(message, locale);
@@ -247,6 +260,7 @@ const handleApiError = (err, req, res, next) => {
   // Return standardized error response per response-format.mdc
   res.status(statusCode).json({
     status: statusCode,
+    code: toErrorCode(message, statusCode),
     message: resolvedMessage,
     data: null,
     meta,

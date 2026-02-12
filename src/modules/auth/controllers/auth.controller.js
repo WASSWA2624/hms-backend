@@ -11,6 +11,16 @@ const { sendSuccess } = require('@lib/response');
 const { HttpError } = require('@lib/errors');
 const { randomBytes } = require('crypto');
 
+const getRegistrationRequestContext = (req) => ({
+  locale: req.get('x-locale') || req.get('accept-language') || null,
+  timezone: req.get('x-timezone') || null,
+  platform: req.get('x-platform') || req.get('sec-ch-ua-platform') || null,
+  referer: req.get('referer') || req.get('referrer') || null,
+  origin: req.get('origin') || null,
+  sec_ch_ua: req.get('sec-ch-ua') || null,
+  sec_ch_ua_mobile: req.get('sec-ch-ua-mobile') || null,
+});
+
 /**
  * Identify users by identifier
  *
@@ -64,9 +74,10 @@ const login = asyncHandler(async (req, res) => {
  * @returns {Promise<void>}
  */
 const register = asyncHandler(async (req, res) => {
-  const { email, password, facility_name, admin_name, facility_type, phone } = req.body;
+  const { email, password, facility_name, admin_name, facility_type, phone, location, interests } = req.body;
   const ip_address = req.ip;
   const user_agent = req.get('user-agent');
+  const request_context = getRegistrationRequestContext(req);
 
   const result = await authService.register({
     email,
@@ -75,8 +86,11 @@ const register = asyncHandler(async (req, res) => {
     admin_name,
     facility_type,
     phone,
+    location,
+    interests,
     ip_address,
-    user_agent
+    user_agent,
+    request_context,
   });
 
   return sendSuccess(res, 201, 'messages.auth.register.success', result);

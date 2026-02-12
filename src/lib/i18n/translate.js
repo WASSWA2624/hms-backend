@@ -76,12 +76,26 @@ const resolveLocale = (locale) => {
     return DEFAULT_LOCALE;
   }
 
-  const trimmed = locale.trim();
-  if (SUPPORTED_LOCALES.includes(trimmed)) {
-    return trimmed;
+  const trimmed = locale.trim().replace(/_/g, '-');
+  if (!trimmed) {
+    return DEFAULT_LOCALE;
   }
 
-  const base = trimmed.split('-')[0];
+  const parts = trimmed.split('-').filter(Boolean);
+  if (!parts.length) {
+    return DEFAULT_LOCALE;
+  }
+
+  const normalized = [
+    parts[0].toLowerCase(),
+    parts[1] ? parts[1].toUpperCase() : null
+  ].filter(Boolean).join('-');
+
+  if (SUPPORTED_LOCALES.includes(normalized)) {
+    return normalized;
+  }
+
+  const base = normalized.split('-')[0];
   if (SUPPORTED_LOCALES.includes(base)) {
     return base;
   }
@@ -136,15 +150,14 @@ const translate = (key, locale, params = {}) => {
 };
 
 /**
- * Apply Content-Language header if locale differs from default.
+ * Apply Content-Language header using resolved locale.
  *
  * @param {Object} res - Express response
  * @param {string} locale - Resolved locale
  */
 const applyLocaleHeader = (res, locale) => {
-  if (locale && locale !== DEFAULT_LOCALE) {
-    res.setHeader('Content-Language', locale);
-  }
+  const resolvedLocale = resolveLocale(locale);
+  res.setHeader('Content-Language', resolvedLocale);
 };
 
 /**

@@ -469,6 +469,109 @@ const deleteExpiredTokens = async (userId, type) => {
 };
 
 /**
+ * Create or update registration follow-up tracking profile.
+ *
+ * @param {Object} data - Tracking data
+ * @returns {Promise<Object|null>} Upserted profile or null when model not available
+ */
+const upsertRegistrationFollowUp = async (data) => {
+  const delegate = prisma?.registration_follow_up;
+  if (!delegate || typeof delegate.upsert !== 'function') {
+    return null;
+  }
+
+  const parsedIncrement = Number(data?.registration_attempt_increment);
+  const attemptsIncrement = Number.isFinite(parsedIncrement) ? Math.trunc(parsedIncrement) : 1;
+  const createAttempts = attemptsIncrement > 0 ? attemptsIncrement : 1;
+  const shouldIncrementAttempts = attemptsIncrement > 0;
+  const now = new Date();
+
+  const payload = {
+    tenant_id: data?.tenant_id || null,
+    facility_id: data?.facility_id || null,
+    email: data?.email,
+    phone: data?.phone || null,
+    admin_name: data?.admin_name || null,
+    facility_name: data?.facility_name || null,
+    facility_type: data?.facility_type || null,
+    location: data?.location || null,
+    interests: data?.interests || null,
+    account_status: data?.account_status,
+    locale: data?.locale || null,
+    timezone: data?.timezone || null,
+    ip_address: data?.ip_address || null,
+    user_agent: data?.user_agent || null,
+    device_platform: data?.device_platform || null,
+    referral_source: data?.referral_source || null,
+    campaign: data?.campaign || null,
+    follow_up_metadata: data?.follow_up_metadata || null,
+  };
+
+  try {
+    return await delegate.upsert({
+      where: { user_id: data.user_id },
+      create: {
+        ...payload,
+        user_id: data.user_id,
+        registration_attempts: createAttempts,
+        first_registered_at: now,
+        last_registration_attempt_at: now,
+      },
+      update: {
+        ...payload,
+        last_registration_attempt_at: now,
+        updated_at: now,
+        ...(shouldIncrementAttempts
+          ? {
+              registration_attempts: {
+                increment: attemptsIncrement,
+              },
+            }
+          : {}),
+      },
+    });
+  } catch (error) {
+    if (error?.code === 'P2021' || error?.code === 'P2022') {
+      // Table/column may be missing before migration is applied.
+      return null;
+    }
+    throw new HttpError('errors.database.unexpected', 500, [{ originalError: error.message }]);
+  }
+};
+
+/**
+ * Update registration follow-up account status without mutating other profile fields.
+ *
+ * @param {string} userId - User ID
+ * @param {string} accountStatus - User status enum value
+ * @returns {Promise<Object|null>} Update result or null when model not available
+ */
+const updateRegistrationFollowUpStatus = async (userId, accountStatus) => {
+  const delegate = prisma?.registration_follow_up;
+  if (!delegate || typeof delegate.updateMany !== 'function') {
+    return null;
+  }
+
+  try {
+    return await delegate.updateMany({
+      where: {
+        user_id: userId,
+        deleted_at: null,
+      },
+      data: {
+        account_status: accountStatus,
+        updated_at: new Date(),
+      },
+    });
+  } catch (error) {
+    if (error?.code === 'P2021' || error?.code === 'P2022') {
+      return null;
+    }
+    throw new HttpError('errors.database.unexpected', 500, [{ originalError: error.message }]);
+  }
+};
+
+/**
  * Update user status
  *
  * @param {string} userId - User ID
@@ -512,7 +615,13 @@ const findUserByEmail = async (email) => {
       }
     });
   } catch (error) {
-    throw new HttpError('errors.database.unexpected', 500, [{ originalError: error.message }]);
+    throw new HttpError('errors.database.unexpected', 500, [{
+      originalError: error.message,
+      errorCode: error?.code || null,
+      errorName: error?.name || null,
+      meta: error?.meta || null,
+      operation: 'findUsersByIdentifier',
+    }]);
   }
 };
 
@@ -553,8 +662,7 @@ const findUsersByIdentifier = async (identifier) => {
     const users = await prisma.user.findMany({
       where: {
         ...(isEmail ? { email: identifier.toLowerCase() } : { phone: identifier }),
-        deleted_at: null,
-        status: 'ACTIVE'
+        deleted_at: null
       },
       include: {
         tenant: {
@@ -666,5 +774,7 @@ module.exports = {
   createVerificationToken,
   findVerificationToken,
   markTokenAsUsed,
-  deleteExpiredTokens
+  deleteExpiredTokens,
+  upsertRegistrationFollowUp,
+  updateRegistrationFollowUpStatus,
 };

@@ -73,7 +73,9 @@ const getCorsConfig = () => {
           nodeEnv: NODE_ENV
         });
         // CORS middleware expects Error object, not HttpError
-        callback(new Error('CORS: Origin not allowed'));
+        const corsError = new Error('CORS: Origin not allowed');
+        corsError.statusCode = 403;
+        callback(corsError);
       }
     },
     credentials: true,
@@ -82,7 +84,14 @@ const getCorsConfig = () => {
       'Content-Type',
       'Authorization',
       'X-Requested-With',
-      'X-CSRF-Token'
+      'X-CSRF-Token',
+      'Accept-Language',
+      'X-Locale',
+      'X-Timezone',
+      'X-Platform',
+      'Sec-CH-UA',
+      'Sec-CH-UA-Mobile',
+      'Sec-CH-UA-Platform'
     ],
     exposedHeaders: [
       'X-RateLimit-Limit',

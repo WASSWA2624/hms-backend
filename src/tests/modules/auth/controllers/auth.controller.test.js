@@ -23,7 +23,8 @@ describe('Auth Controller', () => {
     };
     res = {
       status: jest.fn().mockReturnThis(),
-      json: jest.fn().mockReturnThis()
+      json: jest.fn().mockReturnThis(),
+      setHeader: jest.fn(),
     };
   });
 
@@ -98,7 +99,9 @@ describe('Auth Controller', () => {
         password: 'Password123!',
         facility_name: 'Mirembe Clinic',
         admin_name: 'Jane Doe',
-        facility_type: 'CLINIC'
+        facility_type: 'CLINIC',
+        location: 'Kampala, Uganda',
+        interests: 'Telemedicine'
       };
 
       const mockResult = {
@@ -115,7 +118,10 @@ describe('Auth Controller', () => {
         password: 'Password123!',
         facility_name: 'Mirembe Clinic',
         admin_name: 'Jane Doe',
-        facility_type: 'CLINIC'
+        facility_type: 'CLINIC',
+        location: 'Kampala, Uganda',
+        interests: 'Telemedicine',
+        request_context: expect.any(Object),
       }));
       expect(res.status).toHaveBeenCalledWith(201);
       expect(res.json).toHaveBeenCalledWith(expect.objectContaining({

@@ -10,6 +10,7 @@
  */
 
 const { logger } = require('@lib/logging');
+const VALID_AUDIT_ACTIONS = new Set(['CREATE', 'UPDATE', 'DELETE', 'ACCESS', 'EXPORT', 'LOGIN', 'LOGOUT']);
 
 // Prisma may not be available during initial setup
 let prisma = null;
@@ -56,6 +57,14 @@ const createAuditLog = async (auditData) => {
   }
 
   try {
+    const rawAction = String(auditData.action || '').trim().toUpperCase();
+    const action = VALID_AUDIT_ACTIONS.has(rawAction) ? rawAction : 'ACCESS';
+    const detailsPayload = auditData.diff || auditData.details || null;
+    const diffJson =
+      action === rawAction || !detailsPayload
+        ? detailsPayload
+        : { ...(typeof detailsPayload === 'object' ? detailsPayload : { details: detailsPayload }), original_action: rawAction };
+
     // Create audit log entry asynchronously (non-blocking)
     // Use setImmediate to ensure it doesn't block the main operation
     setImmediate(async () => {
@@ -64,10 +73,10 @@ const createAuditLog = async (auditData) => {
           data: {
             tenant_id: auditData.tenant_id,
             user_id: auditData.user_id || null,
-            action: auditData.action,
+            action,
             entity: auditData.entity,
             entity_id: auditData.entity_id,
-            diff_json: auditData.diff || null,
+            diff_json: diffJson,
             ip_address: auditData.ip_address || auditData.ip || null,
             created_at: new Date()
           }

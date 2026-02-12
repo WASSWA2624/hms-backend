@@ -43,7 +43,9 @@ const registerBodySchema = z.object({
   facility_name: z.string().trim().min(1, 'errors.validation.field.required').max(255),
   admin_name: z.string().trim().min(1, 'errors.validation.field.required').max(255),
   facility_type: facilityTypeSchema,
-  phone: phoneSchema.optional()
+  phone: phoneSchema.optional(),
+  location: z.string().trim().max(255).optional(),
+  interests: z.string().trim().max(2000).optional(),
 });
 
 // ==================== Verify Email ====================

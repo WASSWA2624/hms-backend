@@ -25,10 +25,21 @@ const { createAuditLog } = require('@lib/audit');
  * @param {Function} next - Express next function
  */
 const errorMiddleware = (err, req, res, next) => {
+  const details = Array.isArray(err?.errors) ? err.errors : [];
+  const diagnosticDetails = details
+    .filter((item) => item && typeof item === 'object')
+    .map((item) => ({
+      ...item,
+      originalError: item.originalError ? String(item.originalError) : undefined,
+    }));
+
   // Log error for debugging (sanitized)
   logger.error('Error caught by error middleware', {
     error: err.message,
+    messageKey: err?.messageKey,
+    statusCode: err?.statusCode || err?.status,
     stack: err.stack, // Stack trace logged but not sent to client
+    details: diagnosticDetails.length > 0 ? diagnosticDetails : undefined,
     path: req.path,
     method: req.method,
     ip: req.ip
@@ -42,7 +53,7 @@ const errorMiddleware = (err, req, res, next) => {
     
     // Async log audit event (non-blocking)
     createAuditLog({
-      action: 'PERMISSION_DENIED',
+      action: 'ACCESS',
       entity: 'authorization',
       entity_id: req.path,
       user_id: userId,
@@ -51,6 +62,7 @@ const errorMiddleware = (err, req, res, next) => {
       ip_address: req.ip,
       user_agent: req.get('user-agent'),
       details: { 
+        original_action: 'PERMISSION_DENIED',
         message: err.message,
         method: req.method,
         path: req.path

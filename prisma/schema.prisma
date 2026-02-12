@@ -651,6 +651,7 @@ model tenant {
   dashboards                      dashboard_widget[]
   kpi_snapshots                   kpi_snapshot[]
   analytics_events                analytics_event[]
+  registration_follow_ups         registration_follow_up[]
   staff_profiles                  staff_profile[]
   shifts                          shift[]
   shift_templates                 shift_template[]
@@ -707,6 +708,7 @@ model facility {
   visit_queue_entries    visit_queue[]
   emergency_cases        emergency_case[]
   user_profiles          user_profile[]
+  registration_follow_ups registration_follow_up[]
   shifts                 shift[]
   nurse_rosters          nurse_roster[]
   shift_templates       shift_template[]
@@ -991,6 +993,7 @@ model user {
   report_runs                report_run[]
   report_definitions_created report_definition[]
   purchase_requests          purchase_request[]
+  registration_follow_ups    registration_follow_up[]
 
   @@unique([tenant_id, email])
   @@index([tenant_id])
@@ -1041,6 +1044,48 @@ model user_session {
 
   @@index([user_id])
   @@index([expires_at])
+  @@index([deleted_at])
+}
+
+model registration_follow_up {
+  id                           String       @id @default(uuid()) @db.VarChar(36)
+  user_id                      String       @db.VarChar(36)
+  tenant_id                    String?      @db.VarChar(36)
+  facility_id                  String?      @db.VarChar(36)
+  email                        String       @db.VarChar(255)
+  phone                        String?      @db.VarChar(40)
+  admin_name                   String?      @db.VarChar(255)
+  facility_name                String?      @db.VarChar(255)
+  facility_type                FacilityType?
+  location                     String?      @db.VarChar(255)
+  interests                    String?      @db.Text
+  account_status               UserStatus
+  locale                       String?      @db.VarChar(32)
+  timezone                     String?      @db.VarChar(64)
+  ip_address                   String?      @db.VarChar(45)
+  user_agent                   String?      @db.VarChar(255)
+  device_platform              String?      @db.VarChar(64)
+  referral_source              String?      @db.VarChar(255)
+  campaign                     String?      @db.VarChar(255)
+  follow_up_metadata           Json?
+  registration_attempts        Int          @default(1)
+  first_registered_at          DateTime     @default(now())
+  last_registration_attempt_at DateTime     @default(now())
+  created_at                   DateTime     @default(now())
+  updated_at                   DateTime     @updatedAt
+  deleted_at                   DateTime?
+  version                      Int          @default(1)
+
+  user     user      @relation(fields: [user_id], references: [id])
+  tenant   tenant?   @relation(fields: [tenant_id], references: [id])
+  facility facility? @relation(fields: [facility_id], references: [id])
+
+  @@unique([user_id])
+  @@index([tenant_id])
+  @@index([facility_id])
+  @@index([email])
+  @@index([account_status])
+  @@index([last_registration_attempt_at])
   @@index([deleted_at])
 }
 

@@ -8,7 +8,7 @@ jest.mock('@lib/logging', () => ({
 
 const { DEFAULT_LOCALE } = require('@config/constants');
 const { getLocale } = require('@lib/i18n/getLocale');
-const { translate, resolveLocale, getDirection, getResponseMeta } = require('@lib/i18n');
+const { translate, resolveLocale, getDirection, getResponseMeta, applyLocaleHeader } = require('@lib/i18n');
 
 describe('i18n utilities', () => {
   test('resolves locale from query param', () => {
@@ -16,9 +16,29 @@ describe('i18n utilities', () => {
     expect(getLocale(req)).toBe('en-US');
   });
 
+  test('normalizes query locale casing', () => {
+    const req = { query: { locale: 'en-us' }, headers: {} };
+    expect(getLocale(req)).toBe('en-US');
+  });
+
+  test('resolves locale from x-locale header', () => {
+    const req = { query: {}, headers: { 'x-locale': 'en-us' } };
+    expect(getLocale(req)).toBe('en-US');
+  });
+
   test('resolves locale from Accept-Language header', () => {
     const req = { query: {}, headers: { 'accept-language': 'en-US,en;q=0.8' } };
     expect(getLocale(req)).toBe('en-US');
+  });
+
+  test('skips unsupported locale candidates in Accept-Language', () => {
+    const req = { query: {}, headers: { 'accept-language': 'fr-FR,en-US;q=0.8,en;q=0.7' } };
+    expect(getLocale(req)).toBe('en-US');
+  });
+
+  test('falls back to default locale when Accept-Language is wildcard', () => {
+    const req = { query: {}, headers: { 'accept-language': '*' } };
+    expect(getLocale(req)).toBe(DEFAULT_LOCALE);
   });
 
   test('falls back to default locale on invalid locale', () => {
@@ -34,6 +54,7 @@ describe('i18n utilities', () => {
   test('resolveLocale handles base locale fallback', () => {
     expect(resolveLocale('en-US')).toBe('en-US');
     expect(resolveLocale('en-GB')).toBe('en');
+    expect(resolveLocale('en_us')).toBe('en-US');
   });
 
   test('getDirection returns rtl for rtl locales', () => {
@@ -44,5 +65,16 @@ describe('i18n utilities', () => {
   test('getResponseMeta reads from res.locals', () => {
     const res = { locals: { locale: 'en-US', direction: 'ltr' } };
     expect(getResponseMeta(res)).toEqual({ locale: 'en-US', direction: 'ltr' });
+  });
+
+  test('applyLocaleHeader always sets content-language with resolved locale', () => {
+    const headers = {};
+    const res = {
+      setHeader: (name, value) => {
+        headers[name] = value;
+      }
+    };
+    applyLocaleHeader(res, 'en-us');
+    expect(headers['Content-Language']).toBe('en-US');
   });
 });

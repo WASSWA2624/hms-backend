@@ -34,6 +34,12 @@ describe('CORS config', () => {
     expect(corsOptions.methods).toContain('OPTIONS');
     expect(corsOptions.allowedHeaders).toContain('Content-Type');
     expect(corsOptions.allowedHeaders).toContain('Authorization');
+    expect(corsOptions.allowedHeaders).toContain('X-Locale');
+    expect(corsOptions.allowedHeaders).toContain('X-Timezone');
+    expect(corsOptions.allowedHeaders).toContain('X-Platform');
+    expect(corsOptions.allowedHeaders).toContain('Sec-CH-UA');
+    expect(corsOptions.allowedHeaders).toContain('Sec-CH-UA-Mobile');
+    expect(corsOptions.allowedHeaders).toContain('Sec-CH-UA-Platform');
   });
 
   test('allows requests with no origin', (done) => {
