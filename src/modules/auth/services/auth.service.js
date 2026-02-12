@@ -10,9 +10,12 @@ const { hashPassword, comparePassword } = require('@lib/crypto');
 const { generateToken, generateRefreshToken } = require('@lib/jwt');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
+const { translate, resolveLocale } = require('@lib/i18n');
 const { sendEmail } = require('@lib/notifications');
 const env = require('@config/env');
 const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
 
 const EMAIL_VERIFICATION_TOKEN_TYPE = 'EMAIL_VERIFICATION';
 const PHONE_VERIFICATION_TOKEN_TYPE = 'PHONE_VERIFICATION';
@@ -30,19 +33,30 @@ const resolveAccountStatusErrorKey = (status) => {
   return 'errors.auth.account_inactive';
 };
 
-const resolveFacilityTypeLabel = (facilityType) => {
+const APP_DISPLAY_NAME = 'Hospital Management System';
+const EMAIL_LOGO_CID = 'hms-app-logo';
+const EMAIL_LOGO_PATHS = [
+  path.resolve(__dirname, '../../../../../hms-frontend/public/logo-light.png'),
+  path.resolve(__dirname, '../../../../../hms-frontend/assets/logo-light.png'),
+  path.resolve(__dirname, '../../../../public/logo-light.png'),
+];
+
+const resolveFacilityTypeLabel = (facilityType, locale = 'en') => {
   const normalized = String(facilityType || '').trim().toUpperCase();
-  if (normalized === 'HOSPITAL') return 'Hospital';
-  if (normalized === 'CLINIC') return 'Clinic / Medical Centre';
-  if (normalized === 'LAB') return 'Diagnostic Centre / Lab';
-  if (normalized === 'PHARMACY') return 'Pharmacy';
-  return 'Healthcare Facility';
+  if (normalized === 'HOSPITAL') return translate('labels.facility_type.hospital', locale);
+  if (normalized === 'CLINIC') return translate('labels.facility_type.clinic', locale);
+  if (normalized === 'LAB') return translate('labels.facility_type.lab', locale);
+  if (normalized === 'PHARMACY') return translate('labels.facility_type.pharmacy', locale);
+  return translate('labels.facility_type.other', locale);
 };
 
 const getBaseAppUrl = () => String(env.APP_PUBLIC_URL || '').replace(/\/+$/, '');
 
 const buildVerifyEmailLink = (token, email) =>
   `${getBaseAppUrl()}/verify-email?token=${encodeURIComponent(token)}&email=${encodeURIComponent(email)}`;
+
+const buildCopyHelperLink = ({ email, action, value }) =>
+  `${getBaseAppUrl()}/verify-email?email=${encodeURIComponent(email)}&reason=pending_verification&copy_action=${encodeURIComponent(action)}&copy_value=${encodeURIComponent(value)}`;
 
 const createEmailVerificationTokens = async (userId) => {
   await authRepository.deleteExpiredTokens(userId, EMAIL_VERIFICATION_TOKEN_TYPE);
@@ -69,6 +83,74 @@ const createEmailVerificationTokens = async (userId) => {
   return { code, linkToken, expiresAt };
 };
 
+const escapeHtml = (value) =>
+  String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
+const resolveEmailLogoAsset = () => {
+  const logoPath = EMAIL_LOGO_PATHS.find((candidatePath) => {
+    try {
+      return fs.existsSync(candidatePath) && fs.statSync(candidatePath).isFile();
+    } catch {
+      return false;
+    }
+  });
+
+  if (!logoPath) {
+    return { logoSrc: null, attachments: [] };
+  }
+
+  return {
+    logoSrc: `cid:${EMAIL_LOGO_CID}`,
+    attachments: [
+      {
+        filename: path.basename(logoPath),
+        path: logoPath,
+        cid: EMAIL_LOGO_CID,
+        contentDisposition: 'inline',
+      },
+    ],
+  };
+};
+
+const resolveExpiryDate = (value) => {
+  const candidate = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(candidate.getTime())) {
+    return null;
+  }
+  return candidate;
+};
+
+const formatExpiryCountdown = (expiresAt) => {
+  const remainingSeconds = Math.max(
+    0,
+    Math.ceil((expiresAt.getTime() - Date.now()) / 1000)
+  );
+  const minutes = Math.floor(remainingSeconds / 60);
+  const seconds = remainingSeconds % 60;
+  return `${minutes}:${String(seconds).padStart(2, '0')}`;
+};
+
+const formatExpiryDateTime = (expiresAt, locale) => {
+  try {
+    return new Intl.DateTimeFormat(locale || 'en', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      second: '2-digit',
+      timeZoneName: 'short',
+    }).format(expiresAt);
+  } catch {
+    return expiresAt.toISOString();
+  }
+};
+
 const buildVerificationEmailMessage = ({
   email,
   adminName,
@@ -77,40 +159,208 @@ const buildVerificationEmailMessage = ({
   code,
   verifyLink,
   plainPassword,
+  expiresAt,
+  locale,
 }) => {
+  const resolvedLocale = resolveLocale(locale);
+  const resolvedExpiresAt =
+    resolveExpiryDate(expiresAt) ||
+    new Date(Date.now() + EMAIL_VERIFICATION_EXPIRY_MINUTES * 60 * 1000);
+  const expiryCountdown = formatExpiryCountdown(resolvedExpiresAt);
+  const expiryAtFormatted = formatExpiryDateTime(resolvedExpiresAt, resolvedLocale);
   const safeAdminName = String(adminName || 'there').trim() || 'there';
   const safeFacilityName = String(facilityName || 'your facility').trim() || 'your facility';
-  const typeLabel = resolveFacilityTypeLabel(facilityType);
+  const typeLabel = resolveFacilityTypeLabel(facilityType, resolvedLocale);
   const passwordLine = plainPassword
-    ? `Temporary record (not recommended): Password used during signup: ${plainPassword}\n`
+    ? `${translate('messages.auth.email_verification.password_notice', resolvedLocale)} ${plainPassword}\n`
     : '';
+  const subject = translate('messages.auth.email_verification.subject', resolvedLocale);
+  const preheader = translate('messages.auth.email_verification.preheader', resolvedLocale, {
+    app_name: APP_DISPLAY_NAME,
+  });
+  const greeting = translate('messages.auth.email_verification.greeting', resolvedLocale, {
+    name: safeAdminName,
+  });
+  const intro = translate('messages.auth.email_verification.intro', resolvedLocale, {
+    facility: safeFacilityName,
+    facility_type: typeLabel,
+    app_name: APP_DISPLAY_NAME,
+  });
+  const codeLabel = translate('messages.auth.email_verification.code_label', resolvedLocale);
+  const expiryLine = translate('messages.auth.email_verification.code_expiry', resolvedLocale, {
+    countdown: expiryCountdown,
+    minutes: EMAIL_VERIFICATION_EXPIRY_MINUTES,
+  });
+  const expiryAtLine = translate('messages.auth.email_verification.code_expiry_at', resolvedLocale, {
+    expires_at: expiryAtFormatted,
+  });
+  const actionLabel = translate('messages.auth.email_verification.action', resolvedLocale);
+  const copyCodeActionLabel = translate(
+    'messages.auth.email_verification.copy_code_action',
+    resolvedLocale
+  );
+  const copyLinkActionLabel = translate(
+    'messages.auth.email_verification.copy_link_action',
+    resolvedLocale
+  );
+  const fallbackLabel = translate('messages.auth.email_verification.fallback', resolvedLocale);
+  const ignoreLine = translate('messages.auth.email_verification.ignore', resolvedLocale);
+  const noReplyLine = translate('messages.auth.email_verification.no_reply', resolvedLocale);
+  const signature = translate('messages.auth.email_verification.signature', resolvedLocale, {
+    app_name: APP_DISPLAY_NAME,
+  });
+  const logoAlt = translate('messages.auth.email_verification.logo_alt', resolvedLocale, {
+    app_name: APP_DISPLAY_NAME,
+  });
+  const { logoSrc, attachments } = resolveEmailLogoAsset();
 
-  const subject = 'Confirm your Hospital Management System account';
   const text =
-    `Hello ${safeAdminName},\n\n` +
-    `Thanks for registering ${safeFacilityName} (${typeLabel}) on Hospital Management System.\n\n` +
-    `Your email verification code: ${code}\n` +
-    `This code expires in ${EMAIL_VERIFICATION_EXPIRY_MINUTES} minutes.\n\n` +
-    `You can also verify by clicking this link:\n` +
-    `${verifyLink}\n\n` +
-    `If you did not request this account, ignore this email.\n\n` +
+    `${subject}\n\n` +
+    `${greeting}\n\n` +
+    `${intro}\n\n` +
+    `${codeLabel}: ${code}\n` +
+    `${expiryLine}\n` +
+    `${expiryAtLine}\n\n` +
+    `${actionLabel}: ${verifyLink}\n\n` +
+    `${fallbackLabel}: ${verifyLink}\n\n` +
+    `${ignoreLine}\n` +
+    `${noReplyLine}\n\n` +
     passwordLine +
-    `Regards,\nHospital Management System`;
+    `${signature}`;
 
-  const htmlPasswordLine = plainPassword
-    ? `<p><strong>Temporary record (not recommended):</strong> Password used during signup: <code>${plainPassword}</code></p>`
+  const safeGreeting = escapeHtml(greeting);
+  const safeIntro = escapeHtml(intro);
+  const safeCodeLabel = escapeHtml(codeLabel);
+  const safeExpiryLine = escapeHtml(expiryLine);
+  const safeExpiryAtLine = escapeHtml(expiryAtLine);
+  const safeActionLabel = escapeHtml(actionLabel);
+  const safeFallbackLabel = escapeHtml(fallbackLabel);
+  const safeIgnoreLine = escapeHtml(ignoreLine);
+  const safeNoReplyLine = escapeHtml(noReplyLine);
+  const safeSignature = escapeHtml(signature);
+  const safeSignatureHtml = safeSignature.replace(/\n/g, '<br />');
+  const safeLogoAlt = escapeHtml(logoAlt);
+  const safeLogoSrc = logoSrc ? escapeHtml(logoSrc) : '';
+  const logoHeaderCell = logoSrc
+    ? `<td style="padding:0 16px 0 0;vertical-align:middle;width:64px;">
+        <img src="${safeLogoSrc}" alt="${safeLogoAlt}" width="52" height="52" style="display:block;width:52px;height:52px;border:0;outline:none;text-decoration:none;background:#ffffff;border-radius:12px;padding:4px;" />
+      </td>`
     : '';
-  const html =
-    `<p>Hello ${safeAdminName},</p>` +
-    `<p>Thanks for registering <strong>${safeFacilityName}</strong> (${typeLabel}) on Hospital Management System.</p>` +
-    `<p>Your email verification code: <strong>${code}</strong></p>` +
-    `<p>This code expires in <strong>${EMAIL_VERIFICATION_EXPIRY_MINUTES} minutes</strong>.</p>` +
-    `<p><a href="${verifyLink}">Verify email now</a></p>` +
-    `<p>If you did not request this account, ignore this email.</p>` +
-    htmlPasswordLine +
-    `<p>Regards,<br/>Hospital Management System</p>`;
+  const safeCode = escapeHtml(code);
+  const safeLink = escapeHtml(verifyLink);
+  const copyCodeLink = buildCopyHelperLink({
+    email,
+    action: 'code',
+    value: code,
+  });
+  const copyLinkLink = buildCopyHelperLink({
+    email,
+    action: 'link',
+    value: verifyLink,
+  });
+  const safeCopyCodeLink = escapeHtml(copyCodeLink);
+  const safeCopyLinkLink = escapeHtml(copyLinkLink);
+  const safeCopyCodeActionLabel = escapeHtml(copyCodeActionLabel);
+  const safeCopyLinkActionLabel = escapeHtml(copyLinkActionLabel);
+  const htmlPasswordLine = plainPassword
+    ? `<p style="margin:0 0 20px;font-size:13px;line-height:20px;color:#b45309;background:#fff8eb;border:1px solid #fcd34d;border-radius:10px;padding:12px 14px;"><strong>${escapeHtml(translate('messages.auth.email_verification.password_notice', resolvedLocale))}</strong> <code style="font-family:Consolas,Monaco,'Courier New',monospace;">${escapeHtml(plainPassword)}</code></p>`
+    : '';
 
-  return { subject, text, html };
+  const html = `<!doctype html>
+<html lang="${escapeHtml(resolvedLocale)}">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>${escapeHtml(subject)}</title>
+</head>
+<body style="margin:0;padding:0;background:#f2f5fb;">
+  <div style="display:none!important;opacity:0;color:transparent;height:0;width:0;overflow:hidden;visibility:hidden;mso-hide:all;">
+    ${escapeHtml(preheader)}
+  </div>
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f2f5fb;padding:28px 12px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:620px;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #dbe4f3;">
+          <tr>
+            <td style="padding:26px 28px;background:linear-gradient(120deg,#0a66c2,#0b88e6);">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  ${logoHeaderCell}
+                  <td style="vertical-align:middle;">
+                    <p style="margin:0 0 10px;color:#dbeafe;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;font-family:'Segoe UI',Tahoma,Arial,sans-serif;">${escapeHtml(APP_DISPLAY_NAME)}</p>
+                    <h1 style="margin:0;color:#ffffff;font-size:24px;line-height:1.3;font-weight:700;font-family:'Segoe UI',Tahoma,Arial,sans-serif;">${escapeHtml(subject)}</h1>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:28px;font-family:'Segoe UI',Tahoma,Arial,sans-serif;color:#0f172a;">
+              <p style="margin:0 0 14px;font-size:18px;line-height:26px;font-weight:600;">${safeGreeting}</p>
+              <p style="margin:0 0 18px;font-size:15px;line-height:24px;color:#1e293b;">${safeIntro}</p>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:0 0 20px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;">
+                <tr>
+                  <td style="padding:14px 16px 6px;font-size:13px;line-height:18px;color:#1d4ed8;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">
+                    ${safeCodeLabel}
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:0 16px 8px;font-family:Consolas,Monaco,'Courier New',monospace;font-size:32px;line-height:38px;font-weight:700;color:#0f172a;letter-spacing:0.08em;">
+                    ${safeCode}
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:0 16px 4px;font-size:13px;line-height:20px;color:#334155;">
+                    ${safeExpiryLine}
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:0 16px 14px;font-size:12px;line-height:18px;color:#475569;">
+                    ${safeExpiryAtLine}
+                  </td>
+                </tr>
+              </table>
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 0 18px;">
+                <tr>
+                  <td align="center" bgcolor="#0b88e6" style="border-radius:10px;">
+                    <a href="${safeLink}" style="display:inline-block;padding:12px 18px;font-size:14px;font-weight:700;line-height:20px;color:#ffffff;text-decoration:none;font-family:'Segoe UI',Tahoma,Arial,sans-serif;">
+                      ${safeActionLabel}
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 0 18px;">
+                <tr>
+                  <td align="center" style="padding:0 8px 8px 0;">
+                    <a href="${safeCopyCodeLink}" style="display:inline-block;padding:10px 14px;font-size:13px;font-weight:700;line-height:18px;color:#0b66c3;text-decoration:none;font-family:'Segoe UI',Tahoma,Arial,sans-serif;background:#e6f2ff;border:1px solid #93c5fd;border-radius:8px;">
+                      ${safeCopyCodeActionLabel}
+                    </a>
+                  </td>
+                  <td align="center" style="padding:0 0 8px 8px;">
+                    <a href="${safeCopyLinkLink}" style="display:inline-block;padding:10px 14px;font-size:13px;font-weight:700;line-height:18px;color:#0b66c3;text-decoration:none;font-family:'Segoe UI',Tahoma,Arial,sans-serif;background:#e6f2ff;border:1px solid #93c5fd;border-radius:8px;">
+                      ${safeCopyLinkActionLabel}
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              <p style="margin:0 0 16px;font-size:13px;line-height:20px;color:#334155;">
+                ${safeFallbackLabel}<br />
+                <a href="${safeLink}" style="color:#0b66c3;word-break:break-word;">${safeLink}</a>
+              </p>
+              <p style="margin:0 0 8px;font-size:13px;line-height:20px;color:#475569;">${safeIgnoreLine}</p>
+              <p style="margin:0 0 20px;font-size:13px;line-height:20px;color:#64748b;">${safeNoReplyLine}</p>
+              ${htmlPasswordLine}
+              <p style="margin:0;font-size:14px;line-height:22px;color:#0f172a;">${safeSignatureHtml}</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+  return { subject, text, html, attachments };
 };
 
 const sendVerificationEmail = async ({
@@ -121,6 +371,8 @@ const sendVerificationEmail = async ({
   code,
   linkToken,
   plainPassword,
+  expiresAt,
+  locale,
 }) => {
   const verifyLink = buildVerifyEmailLink(linkToken, email);
   const includePassword = Boolean(env.ALLOW_PLAINTEXT_PASSWORD_EMAIL);
@@ -132,6 +384,8 @@ const sendVerificationEmail = async ({
     code,
     verifyLink,
     plainPassword: includePassword ? plainPassword : null,
+    expiresAt,
+    locale,
   });
 
   return sendEmail({
@@ -139,6 +393,7 @@ const sendVerificationEmail = async ({
     subject: payload.subject,
     text: payload.text,
     html: payload.html,
+    attachments: payload.attachments,
   });
 };
 
@@ -373,6 +628,8 @@ const handleExistingEmailRegistration = async ({
     code: verification.code,
     linkToken: verification.linkToken,
     plainPassword: null,
+    expiresAt: verification.expiresAt,
+    locale: request_context?.locale,
   });
   ensureEmailDelivered(deliveryResult, 'register_existing_email');
 
@@ -814,6 +1071,8 @@ const register = async (data) => {
     code: verification.code,
     linkToken: verification.linkToken,
     plainPassword: password,
+    expiresAt: verification.expiresAt,
+    locale: request_context?.locale,
   });
   ensureEmailDelivered(deliveryResult, 'register_new_user');
 
@@ -1194,7 +1453,7 @@ const verifyPhone = async (data) => {
  * @returns {Promise<Object>} Success message
  */
 const resendVerification = async (data) => {
-  const { email, phone, type } = data;
+  const { email, phone, type, request_context } = data;
 
   let user;
   let tokenType;
@@ -1244,6 +1503,8 @@ const resendVerification = async (data) => {
       code: tokens.code,
       linkToken: tokens.linkToken,
       plainPassword: null,
+      expiresAt: tokens.expiresAt,
+      locale: request_context?.locale,
     });
     ensureEmailDelivered(deliveryResult, 'resend_verification');
   } else {

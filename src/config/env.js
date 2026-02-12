@@ -121,6 +121,9 @@ const buildEnv = () => {
   const SMTP_USER = process.env.SMTP_USER || null;
   const SMTP_PASS = process.env.SMTP_PASS || null;
   const SMTP_FROM = process.env.SMTP_FROM || null;
+  const SMTP_FROM_NAME = process.env.SMTP_FROM_NAME || 'Hospital Management System';
+  const SMTP_REPLY_TO = process.env.SMTP_REPLY_TO || null;
+  const SMTP_NO_REPLY_ADDRESS = process.env.SMTP_NO_REPLY_ADDRESS || null;
   const ALLOW_PLAINTEXT_PASSWORD_EMAIL = parseOptionalBoolean(
     process.env.ALLOW_PLAINTEXT_PASSWORD_EMAIL,
     true
@@ -202,6 +205,9 @@ const buildEnv = () => {
     SMTP_USER,
     SMTP_PASS,
     SMTP_FROM,
+    SMTP_FROM_NAME,
+    SMTP_REPLY_TO,
+    SMTP_NO_REPLY_ADDRESS,
     ALLOW_PLAINTEXT_PASSWORD_EMAIL,
     HANDLE_SIGINT,
     WS_MAX_CONNECTIONS,
@@ -267,6 +273,9 @@ const envKeys = [
   'SMTP_USER',
   'SMTP_PASS',
   'SMTP_FROM',
+  'SMTP_FROM_NAME',
+  'SMTP_REPLY_TO',
+  'SMTP_NO_REPLY_ADDRESS',
   'ALLOW_PLAINTEXT_PASSWORD_EMAIL',
   'HANDLE_SIGINT',
   'WS_MAX_CONNECTIONS',

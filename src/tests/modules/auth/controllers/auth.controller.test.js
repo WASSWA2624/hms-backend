@@ -265,7 +265,8 @@ describe('Auth Controller', () => {
       expect(authService.resendVerification).toHaveBeenCalledWith({
         email: 'test@example.com',
         phone: undefined,
-        type: 'email'
+        type: 'email',
+        request_context: expect.any(Object)
       });
       expect(res.status).toHaveBeenCalledWith(200);
     });

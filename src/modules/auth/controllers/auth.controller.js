@@ -12,7 +12,7 @@ const { HttpError } = require('@lib/errors');
 const { randomBytes } = require('crypto');
 
 const getRegistrationRequestContext = (req) => ({
-  locale: req.get('x-locale') || req.get('accept-language') || null,
+  locale: req.locale || req.get('x-locale') || req.get('accept-language') || null,
   timezone: req.get('x-timezone') || null,
   platform: req.get('x-platform') || req.get('sec-ch-ua-platform') || null,
   referer: req.get('referer') || req.get('referrer') || null,
@@ -135,8 +135,9 @@ const verifyPhone = asyncHandler(async (req, res) => {
  */
 const resendVerification = asyncHandler(async (req, res) => {
   const { email, phone, type } = req.body;
+  const request_context = getRegistrationRequestContext(req);
 
-  const result = await authService.resendVerification({ email, phone, type });
+  const result = await authService.resendVerification({ email, phone, type, request_context });
 
   return sendSuccess(res, 200, 'messages.auth.verification_sent.success', result);
 });
