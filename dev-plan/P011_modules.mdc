@@ -10,6 +10,20 @@ alwaysApply: true
 
 **Compliance:** All modules must follow `internationalization.mdc` - use translation keys (no hardcoded strings) and add keys to `src/locales/en.json` before completion.
 
+## Implementation status snapshot (2026-02-12)
+
+- Planned atomic modules: **144**
+- Fully implemented (all 5 module layers present): **140/144**
+- Pending module implementations:
+  - `invoice-item`
+  - `payment`
+  - `pharmacy-order-item`
+  - `refund`
+- Group completion highlights:
+  - Group 10 (Pharmacy): 6/7 complete
+  - Group 13 (Billing, Payments & Insurance): 6/9 complete
+  - All other module groups in this file are fully implemented.
+
 ---
 
 ### Module Group 1: Auth, Sessions, Tenancy & Core Access
@@ -348,6 +362,6 @@ alwaysApply: true
 
 ---
 
-## Total Module Count: 135 atomic modules
+## Total Module Count: 144 atomic modules
 
 Each module is a complete, independent implementation unit following the 8-step process.

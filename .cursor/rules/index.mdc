@@ -3,39 +3,43 @@ alwaysApply: true
 ---
 
 # Backend Rules Index (Express.js)
-All code must follow these 24 rules; noncompliance is invalid.
 
-## 11–14. Security & Ops
-- `auth-security.mdc`: JWT, RBAC, API keys, CSRF, hashing, sanitize.
-- `cors.mdc`: CORS config, origins, security.
-- `rate-limiting.mdc`: Rate limits, DDoS, abuse prevention.
-- `health-checks.mdc`: Health/live/readiness endpoints.
+This file is the entry point for backend standards. Every implementation must comply with all linked rules.
 
-## 15. Realtime
-- `websockets.mdc`: WebSocket standards, events, auth, audit.
+## Foundation
+- `architecture.mdc`: service boundaries, layering, and backend architecture decisions.
+- `project-structure.mdc`: canonical folder/file structure and ownership rules.
+- `coding-standards.mdc`: naming, formatting, module conventions, and consistency.
+- `import-aliases.mdc`: required alias usage and import boundaries.
+- `module-creation.mdc`: mandatory module implementation workflow.
 
-## 16. Database
-- `prisma.mdc`: Prisma/ORM usage, DB ops.
+## API & Contracts
+- `api.mdc`: REST endpoint structure, middleware order, and HTTP behavior.
+- `api-versioning.mdc`: version strategy and backward compatibility expectations.
+- `response-format.mdc`: canonical success/error response envelope.
+- `validation.mdc`: Zod schema requirements and request validation flow.
 
-## 17. Storage
-- `storage.mdc`: Centralized storage, multi-provider, secure files.
+## Security & Reliability
+- `auth-security.mdc`: JWT, RBAC, API key, CSRF, and credential controls.
+- `cors.mdc`: CORS policy and origin governance.
+- `rate-limiting.mdc`: abuse prevention, limits, and protections.
+- `health-checks.mdc`: `/health`, `/live`, `/ready` conventions.
+- `error-logging.mdc`: centralized error handling and safe logging.
+- `constants-env.mdc`: environment validation and constants policy.
 
-## 18. Error & Logging
-- `error-logging.mdc`: Error handling, logs, no leaks.
+## Data & Platform
+- `prisma.mdc`: ORM usage, migrations, and data-access requirements.
+- `storage.mdc`: storage abstraction and provider behavior.
+- `websockets.mdc`: realtime gateway/event conventions and auth.
+- `performance.mdc`: query limits, pagination, and optimization expectations.
+- `offline-support.mdc`: sync semantics, idempotency, and conflict handling.
+- `internationalization.mdc`: locale handling and translation requirements.
 
-## 19–20. Compliance & Env
-- `compliance.mdc`: GDPR, HIPAA, audit, encrypt.
-- `constants-env.mdc`: Config/constants/env validation.
+## Governance
+- `compliance.mdc`: auditability, privacy, and regulatory requirements.
+- `documentation.mdc`: JSDoc/API documentation requirements.
+- `testing.mdc`: required test layers, mocking rules, and CI expectations.
 
-## 21–22. Docs & Tests
-- `documentation.mdc`: JSDoc for routes/functions.
-- `testing.mdc`: Jest tests, no prod DB.
-
-## 23. Performance
-- `performance.mdc`: Query limits, pagination, caching, optimize.
-
-## 24–25. i18n & Offline
-- `internationalization.mdc`: Multi-lang, locale, formatting, RTL.
-- `offline-support.mdc`: Offline-first, sync, conflict resolution.
-
----
+## Notes
+- `index.mdc` is a TOC/meta file. Authoritative rules are in the linked `.mdc` files.
+- Delivery sequencing and phase progress are tracked in `hms-backend/dev-plan/`.
