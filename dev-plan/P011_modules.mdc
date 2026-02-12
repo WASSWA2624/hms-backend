@@ -13,15 +13,11 @@ alwaysApply: true
 ## Implementation status snapshot (2026-02-12)
 
 - Planned atomic modules: **144**
-- Fully implemented (all 5 module layers present): **140/144**
-- Pending module implementations:
-  - `invoice-item`
-  - `payment`
-  - `pharmacy-order-item`
-  - `refund`
+- Fully implemented (all 5 module layers present): **144/144**
+- Pending module implementations: **None**
 - Group completion highlights:
-  - Group 10 (Pharmacy): 6/7 complete
-  - Group 13 (Billing, Payments & Insurance): 6/9 complete
+  - Group 10 (Pharmacy): 7/7 complete
+  - Group 13 (Billing, Payments & Insurance): 9/9 complete
   - All other module groups in this file are fully implemented.
 
 ---

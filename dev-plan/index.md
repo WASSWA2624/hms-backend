@@ -44,8 +44,8 @@ This plan is chronological and additive. Foundational phases ensure a minimal, r
 
 - Foundational phases are present and running in the current codebase.
 - Phase 10 endpoint reference is in active use for module routing.
-- Phase 11 module implementation status is **140/144 complete**.
-- Pending module implementations: `invoice-item`, `payment`, `pharmacy-order-item`, `refund`.
+- Phase 11 module implementation status is **144/144 complete**.
+- Pending module implementations: **None**.
 - Module progress detail is maintained in `P011_modules.mdc`.
 
 ## References
