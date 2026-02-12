@@ -56,10 +56,11 @@ try {
   throw err;
 }
 
-let PORT, NODE_ENV, HANDLE_SIGINT;
+let PORT, HOST, NODE_ENV, HANDLE_SIGINT;
 try {
   const envConfig = require('@config/env');
   PORT = envConfig.PORT;
+  HOST = envConfig.HOST;
   NODE_ENV = envConfig.NODE_ENV;
   HANDLE_SIGINT = envConfig.HANDLE_SIGINT;
 } catch (err) {
@@ -85,9 +86,10 @@ const startServer = () => {
     const app = createApp();
     
     // Start HTTP server
-    const server = app.listen(PORT, () => {
+    const server = app.listen(PORT, HOST, () => {
       logger.info(`Server started successfully`, {
         port: PORT,
+        host: HOST,
         environment: NODE_ENV,
         nodeVersion: process.version
       });

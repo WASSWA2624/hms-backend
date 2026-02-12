@@ -112,6 +112,7 @@ const buildEnv = () => {
 
   const rawPort = process.env.PORT;
   const PORT = rawPort ? parseInt(rawPort, 10) : 3000;
+  const HOST = process.env.HOST || '0.0.0.0';
   const STORAGE_PROVIDER = process.env.STORAGE_PROVIDER || 'local';
   const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || null;
   const CSRF_SECRET = process.env.CSRF_SECRET || null;
@@ -196,6 +197,7 @@ const buildEnv = () => {
     CORS_ORIGINS,
     NODE_ENV,
     PORT,
+    HOST,
     STORAGE_PROVIDER,
     ENCRYPTION_KEY,
     CSRF_SECRET,
@@ -223,6 +225,7 @@ const buildEnv = () => {
     logger.warn('Environment variables loaded', {
       nodeEnv: NODE_ENV,
       port: PORT,
+      host: HOST,
       corsOrigins: CORS_ORIGINS,
       storageProvider: STORAGE_PROVIDER,
       appPublicUrl: APP_PUBLIC_URL,
@@ -264,6 +267,7 @@ const envKeys = [
   'CORS_ORIGINS',
   'NODE_ENV',
   'PORT',
+  'HOST',
   'STORAGE_PROVIDER',
   'ENCRYPTION_KEY',
   'CSRF_SECRET',

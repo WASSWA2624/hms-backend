@@ -10,6 +10,19 @@ const { CORS_ORIGINS, NODE_ENV } = require('@config/env');
 const { HttpError } = require('@lib/errors');
 const { logger } = require('@lib/logging');
 
+const PRIVATE_IPV4_REGEX = /^(10\.\d{1,3}\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3})$/;
+
+const isPrivateNetworkOrigin = (origin) => {
+  try {
+    const { protocol, hostname } = new URL(origin);
+    if (!['http:', 'https:'].includes(protocol)) return false;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') return true;
+    return PRIVATE_IPV4_REGEX.test(hostname);
+  } catch (_) {
+    return false;
+  }
+};
+
 /**
  * Get CORS configuration
  * 
@@ -56,10 +69,11 @@ const getCorsConfig = () => {
       
       // Check if origin is in allowed list (check both original and normalized)
       const isAllowed = allowedOrigins.includes(origin) || allowedOrigins.includes(normalizedOrigin);
+      const isDevPrivateOrigin = NODE_ENV === 'development' && isPrivateNetworkOrigin(normalizedOrigin);
       
-      if (isAllowed) {
+      if (isAllowed || isDevPrivateOrigin) {
         if (NODE_ENV === 'development') {
-          logger.info('CORS origin allowed', { origin, normalizedOrigin });
+          logger.info('CORS origin allowed', { origin, normalizedOrigin, isDevPrivateOrigin });
         }
         callback(null, true);
       } else {
