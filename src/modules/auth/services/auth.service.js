@@ -142,6 +142,19 @@ const sendVerificationEmail = async ({
   });
 };
 
+const ensureEmailDelivered = (deliveryResult, context) => {
+  if (deliveryResult?.sent) {
+    return;
+  }
+
+  throw new HttpError('errors.auth.email_delivery_unavailable', 503, [
+    {
+      context: context || 'verification_email',
+      provider: deliveryResult?.provider || 'unknown',
+    },
+  ]);
+};
+
 const resolveAdminDisplayName = (user, fallbackName) => {
   const first = String(user?.profile?.first_name || '').trim();
   const last = String(user?.profile?.last_name || '').trim();
@@ -352,7 +365,7 @@ const handleExistingEmailRegistration = async ({
     facility_type
   );
   const verification = await createEmailVerificationTokens(user.id);
-  await sendVerificationEmail({
+  const deliveryResult = await sendVerificationEmail({
     email: normalizedEmail,
     adminName: resolveAdminDisplayName(user, admin_name),
     facilityName: user.facility?.name || user.tenant?.name || facility_name,
@@ -361,6 +374,7 @@ const handleExistingEmailRegistration = async ({
     linkToken: verification.linkToken,
     plainPassword: null,
   });
+  ensureEmailDelivered(deliveryResult, 'register_existing_email');
 
   await persistRegistrationFollowUp({
     user,
@@ -792,8 +806,7 @@ const register = async (data) => {
   // Create verification code + link tokens (same 15 minute expiry window).
   const verification = await createEmailVerificationTokens(user.id);
 
-  // Best-effort notification: registration should still succeed even if email is delayed.
-  await sendVerificationEmail({
+  const deliveryResult = await sendVerificationEmail({
     email: normalizedEmail,
     adminName: admin_name,
     facilityName: facility_name,
@@ -802,6 +815,7 @@ const register = async (data) => {
     linkToken: verification.linkToken,
     plainPassword: password,
   });
+  ensureEmailDelivered(deliveryResult, 'register_new_user');
 
   await persistRegistrationFollowUp({
     user,
@@ -1218,7 +1232,7 @@ const resendVerification = async (data) => {
 
   if (type === 'email') {
     const tokens = await createEmailVerificationTokens(user.id);
-    await sendVerificationEmail({
+    const deliveryResult = await sendVerificationEmail({
       email: normalizedEmail || user.email,
       adminName:
         user.profile?.first_name ||
@@ -1231,6 +1245,7 @@ const resendVerification = async (data) => {
       linkToken: tokens.linkToken,
       plainPassword: null,
     });
+    ensureEmailDelivered(deliveryResult, 'resend_verification');
   } else {
     await authRepository.deleteExpiredTokens(user.id, tokenType);
     const token = crypto.randomInt(0, 1000000).toString().padStart(6, '0');

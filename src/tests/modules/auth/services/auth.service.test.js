@@ -758,6 +758,32 @@ describe('Auth Service', () => {
       expect(sendEmail).toHaveBeenCalledTimes(1);
     });
 
+    it('should fail resend when verification email cannot be delivered', async () => {
+      const mockUser = {
+        id: 'user-123',
+        email: 'test@example.com',
+        status: 'PENDING',
+        tenant_id: 'tenant-123',
+        facility_id: 'facility-123',
+        profile: { first_name: 'Test' },
+        facility: { name: 'City Hospital', facility_type: 'HOSPITAL' },
+        tenant: { name: 'City Hospital' }
+      };
+
+      authRepository.findUserByEmail.mockResolvedValue(mockUser);
+      authRepository.createVerificationToken.mockResolvedValue({});
+      sendEmail.mockResolvedValueOnce({ sent: false, provider: 'skipped' });
+
+      await expect(authService.resendVerification({ email: 'test@example.com', type: 'email' }))
+        .rejects
+        .toMatchObject({
+          messageKey: 'errors.auth.email_delivery_unavailable',
+          statusCode: 503
+        });
+
+      expect(createAuditLog).not.toHaveBeenCalled();
+    });
+
     it('should reject phone resend if user is already active', async () => {
       const mockUser = {
         id: 'user-123',

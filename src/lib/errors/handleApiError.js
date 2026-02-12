@@ -126,8 +126,14 @@ const decodePrismaError = (error) => {
  * @returns {Object} Formatted validation errors
  */
 const formatValidationErrors = (error, locale) => {
-  if (error.name === 'ZodError' && error.errors) {
-    const errors = error.errors.map((err) => ({
+  const issues = Array.isArray(error?.issues)
+    ? error.issues
+    : Array.isArray(error?.errors)
+    ? error.errors
+    : null;
+
+  if (error?.name === 'ZodError' && issues) {
+    const errors = issues.map((err) => ({
       field: err.path.join('.'),
       message: translate('errors.validation.invalid', locale, {
         field: err.path.join('.')

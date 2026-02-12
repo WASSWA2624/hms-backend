@@ -40,6 +40,7 @@
   "errors.auth.session_not_found": "Session not found",
   "errors.auth.multiple_tenants": "Multiple tenants found. Select a tenant to continue.",
   "errors.auth.unauthorized_facility": "You do not have access to the selected facility",
+  "errors.auth.email_delivery_unavailable": "Unable to send verification email right now. Please try again later.",
   "errors.cors.forbidden": "Origin not allowed by CORS policy",
   "errors.rate_limit.exceeded": "Rate limit exceeded. Please try again later.",
   "errors.rate_limit.reset": "Limit will reset at {{reset_at}}",
