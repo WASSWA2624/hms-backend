@@ -55,6 +55,17 @@ const splitAdminName = (value) => {
   };
 };
 
+const isMissingSchemaArtifactError = (error) =>
+  error?.code === 'P2021' || error?.code === 'P2022';
+
+const sortUsersByCreatedAtDesc = (users = []) => {
+  return [...users].sort((left, right) => {
+    const leftTs = left?.created_at ? new Date(left.created_at).getTime() : 0;
+    const rightTs = right?.created_at ? new Date(right.created_at).getTime() : 0;
+    return rightTs - leftTs;
+  });
+};
+
 /**
  * Find user by email and tenant
  *
@@ -656,12 +667,16 @@ const findUserByPhone = async (phone) => {
  * @returns {Promise<Array>} Array of user objects with tenant info
  */
 const findUsersByIdentifier = async (identifier) => {
+  const normalizedIdentifier = String(identifier || '').trim();
+  const isEmail = normalizedIdentifier.includes('@');
+  const baseWhere = isEmail
+    ? { email: normalizedIdentifier.toLowerCase() }
+    : { phone: normalizedIdentifier };
+
   try {
-    const isEmail = identifier.includes('@');
-    
     const users = await prisma.user.findMany({
       where: {
-        ...(isEmail ? { email: identifier.toLowerCase() } : { phone: identifier }),
+        ...baseWhere,
         deleted_at: null
       },
       include: {
@@ -680,6 +695,44 @@ const findUsersByIdentifier = async (identifier) => {
 
     return users;
   } catch (error) {
+    if (isMissingSchemaArtifactError(error)) {
+      try {
+        const legacyUsers = await prisma.user.findMany({
+          where: baseWhere,
+          include: {
+            tenant: {
+              select: {
+                id: true,
+                name: true,
+              }
+            }
+          }
+        });
+
+        const filteredLegacyUsers = legacyUsers.filter((user) =>
+          !Object.prototype.hasOwnProperty.call(user, 'deleted_at') || user.deleted_at === null
+        );
+
+        return sortUsersByCreatedAtDesc(filteredLegacyUsers);
+      } catch (legacyError) {
+        if (isMissingSchemaArtifactError(legacyError)) {
+          try {
+            const minimalUsers = await prisma.user.findMany({
+              where: baseWhere,
+            });
+
+            const filteredMinimalUsers = minimalUsers.filter((user) =>
+              !Object.prototype.hasOwnProperty.call(user, 'deleted_at') || user.deleted_at === null
+            );
+
+            return sortUsersByCreatedAtDesc(filteredMinimalUsers);
+          } catch (minimalError) {
+            throw new HttpError('errors.database.unexpected', 500, [{ originalError: minimalError.message }]);
+          }
+        }
+        throw new HttpError('errors.database.unexpected', 500, [{ originalError: legacyError.message }]);
+      }
+    }
     throw new HttpError('errors.database.unexpected', 500, [{ originalError: error.message }]);
   }
 };

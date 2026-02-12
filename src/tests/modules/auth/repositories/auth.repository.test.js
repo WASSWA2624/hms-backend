@@ -10,6 +10,7 @@ const { HttpError } = require('@lib/errors');
 jest.mock('@prisma/client', () => ({
   user: {
     findFirst: jest.fn(),
+    findMany: jest.fn(),
     create: jest.fn(),
     update: jest.fn()
   },
@@ -33,6 +34,7 @@ const {
   findUserById,
   findUserByEmail,
   findUserByPhone,
+  findUsersByIdentifier,
   createUser,
   updateUserPassword,
   updateUserStatus,
@@ -494,6 +496,99 @@ describe('Auth Repository', () => {
           deleted_at: null
         },
         include: expect.any(Object)
+      });
+    });
+  });
+
+  describe('findUsersByIdentifier', () => {
+    it('should query by normalized email with tenant projection', async () => {
+      const mockUsers = [
+        {
+          id: 'user-1',
+          email: 'test@example.com',
+          tenant_id: 'tenant-1',
+          tenant: { id: 'tenant-1', name: 'Tenant 1', slug: 'tenant-1' },
+        },
+      ];
+      prisma.user.findMany.mockResolvedValue(mockUsers);
+
+      const result = await findUsersByIdentifier('TEST@EXAMPLE.COM');
+
+      expect(result).toEqual(mockUsers);
+      expect(prisma.user.findMany).toHaveBeenCalledWith({
+        where: {
+          email: 'test@example.com',
+          deleted_at: null,
+        },
+        include: {
+          tenant: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+            },
+          },
+        },
+        orderBy: {
+          created_at: 'desc',
+        },
+      });
+    });
+
+    it('should fallback when optional schema fields are missing', async () => {
+      const missingColumnError = new Error('Column `tenant.slug` does not exist');
+      missingColumnError.code = 'P2022';
+      prisma.user.findMany
+        .mockRejectedValueOnce(missingColumnError)
+        .mockResolvedValueOnce([
+          {
+            id: 'user-1',
+            email: 'test@example.com',
+            tenant_id: 'tenant-1',
+            tenant: { id: 'tenant-1', name: 'Tenant 1' },
+          },
+        ]);
+
+      const result = await findUsersByIdentifier('TEST@EXAMPLE.COM');
+
+      expect(result).toEqual([
+        {
+          id: 'user-1',
+          email: 'test@example.com',
+          tenant_id: 'tenant-1',
+          tenant: { id: 'tenant-1', name: 'Tenant 1' },
+        },
+      ]);
+      expect(prisma.user.findMany).toHaveBeenNthCalledWith(1, {
+        where: {
+          email: 'test@example.com',
+          deleted_at: null,
+        },
+        include: {
+          tenant: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+            },
+          },
+        },
+        orderBy: {
+          created_at: 'desc',
+        },
+      });
+      expect(prisma.user.findMany).toHaveBeenNthCalledWith(2, {
+        where: {
+          email: 'test@example.com',
+        },
+        include: {
+          tenant: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
       });
     });
   });
