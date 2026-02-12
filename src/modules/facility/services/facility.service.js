@@ -10,6 +10,20 @@
 const facilityRepository = require('@repositories/facility/facility.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
+const { DEFAULT_PAGE, DEFAULT_PAGE_LIMIT, MAX_PAGE_LIMIT } = require('@config/constants');
+
+const toPositiveInt = (value, fallback, max = Number.POSITIVE_INFINITY) => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return fallback;
+  const normalized = Math.trunc(parsed);
+  if (normalized <= 0) return fallback;
+  return Math.min(normalized, max);
+};
+
+const normalizeSortOrder = (value) => {
+  const normalized = String(value || 'desc').toLowerCase();
+  return normalized === 'asc' ? 'asc' : 'desc';
+};
 
 /**
  * List facilities with pagination and filters
@@ -26,6 +40,13 @@ const { HttpError } = require('@lib/errors');
  * @returns {Promise<Object>} Paginated facilities
  */
 const listFacilities = async (filters = {}, page = 1, limit = 20, sort_by = 'created_at', order = 'desc') => {
+  const resolvedPage = toPositiveInt(page, DEFAULT_PAGE);
+  const resolvedLimit = toPositiveInt(limit, DEFAULT_PAGE_LIMIT, MAX_PAGE_LIMIT);
+  const resolvedSortBy = typeof sort_by === 'string' && sort_by.trim()
+    ? sort_by.trim()
+    : 'created_at';
+  const resolvedOrder = normalizeSortOrder(order);
+
   // Build repository filters
   const repoFilters = {};
 
@@ -43,32 +64,32 @@ const listFacilities = async (filters = {}, page = 1, limit = 20, sort_by = 'cre
 
   // Handle search filter
   if (filters.search) {
-    repoFilters.name = { contains: filters.search, mode: 'insensitive' };
+    repoFilters.name = { contains: filters.search };
   }
 
   // Calculate pagination
-  const skip = (page - 1) * limit;
+  const skip = (resolvedPage - 1) * resolvedLimit;
 
   // Build sort order
   const orderBy = {};
-  orderBy[sort_by] = order;
+  orderBy[resolvedSortBy] = resolvedOrder;
 
   // Fetch facilities and count
   const [facilities, total] = await Promise.all([
-    facilityRepository.findMany(repoFilters, skip, limit, orderBy),
+    facilityRepository.findMany(repoFilters, skip, resolvedLimit, orderBy),
     facilityRepository.count(repoFilters)
   ]);
 
   // Calculate pagination metadata
-  const totalPages = Math.ceil(total / limit);
-  const hasNextPage = page < totalPages;
-  const hasPreviousPage = page > 1;
+  const totalPages = Math.ceil(total / resolvedLimit);
+  const hasNextPage = resolvedPage < totalPages;
+  const hasPreviousPage = resolvedPage > 1;
 
   return {
     facilities,
     pagination: {
-      page,
-      limit,
+      page: resolvedPage,
+      limit: resolvedLimit,
       total,
       totalPages,
       hasNextPage,
@@ -239,6 +260,13 @@ const deleteFacility = async (id, context = {}) => {
  * @returns {Promise<Object>} Paginated branches
  */
 const getFacilityBranches = async (facilityId, page = 1, limit = 20, sort_by = 'created_at', order = 'desc') => {
+  const resolvedPage = toPositiveInt(page, DEFAULT_PAGE);
+  const resolvedLimit = toPositiveInt(limit, DEFAULT_PAGE_LIMIT, MAX_PAGE_LIMIT);
+  const resolvedSortBy = typeof sort_by === 'string' && sort_by.trim()
+    ? sort_by.trim()
+    : 'created_at';
+  const resolvedOrder = normalizeSortOrder(order);
+
   // Check if facility exists
   const facility = await facilityRepository.findById(facilityId);
   
@@ -247,28 +275,28 @@ const getFacilityBranches = async (facilityId, page = 1, limit = 20, sort_by = '
   }
 
   // Calculate pagination
-  const skip = (page - 1) * limit;
+  const skip = (resolvedPage - 1) * resolvedLimit;
 
   // Build sort order
   const orderBy = {};
-  orderBy[sort_by] = order;
+  orderBy[resolvedSortBy] = resolvedOrder;
 
   // Fetch branches and count
   const [branches, total] = await Promise.all([
-    facilityRepository.findBranches(facilityId, skip, limit, orderBy),
+    facilityRepository.findBranches(facilityId, skip, resolvedLimit, orderBy),
     facilityRepository.countBranches(facilityId)
   ]);
 
   // Calculate pagination metadata
-  const totalPages = Math.ceil(total / limit);
-  const hasNextPage = page < totalPages;
-  const hasPreviousPage = page > 1;
+  const totalPages = Math.ceil(total / resolvedLimit);
+  const hasNextPage = resolvedPage < totalPages;
+  const hasPreviousPage = resolvedPage > 1;
 
   return {
     branches,
     pagination: {
-      page,
-      limit,
+      page: resolvedPage,
+      limit: resolvedLimit,
       total,
       totalPages,
       hasNextPage,
