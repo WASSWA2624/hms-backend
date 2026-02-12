@@ -11,6 +11,8 @@ const sessionRepository = require('@repositories/user-session/user-session.repos
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 
+const resolveRequesterUserId = (context = {}) => context.user_id || context.userId || null;
+
 /**
  * List user sessions with pagination and filters
  *
@@ -21,15 +23,24 @@ const { HttpError } = require('@lib/errors');
  * @param {number} limit - Items per page
  * @param {string} [sort_by] - Field to sort by
  * @param {string} [order] - Sort order (asc/desc)
+ * @param {Object} [context] - Request context
+ * @param {string} [context.user_id] - Requesting user ID
  * @returns {Promise<Object>} Paginated sessions
  */
-const listSessions = async (filters = {}, page = 1, limit = 20, sort_by = 'created_at', order = 'desc') => {
+const listSessions = async (filters = {}, page = 1, limit = 20, sort_by = 'created_at', order = 'desc', context = {}) => {
+  const requesterUserId = resolveRequesterUserId(context);
+  if (!requesterUserId) {
+    throw new HttpError('errors.auth.unauthorized', 401);
+  }
+
   // Build repository filters
   const repoFilters = {};
 
-  if (filters.user_id) {
-    repoFilters.user_id = filters.user_id;
+  // Session endpoints are scoped to the authenticated user.
+  if (filters.user_id && filters.user_id !== requesterUserId) {
+    throw new HttpError('errors.auth.forbidden', 403);
   }
+  repoFilters.user_id = requesterUserId;
 
   // Handle is_active filter
   if (filters.is_active !== undefined) {
@@ -86,10 +97,19 @@ const listSessions = async (filters = {}, page = 1, limit = 20, sort_by = 'creat
  * @param {string} id - Session ID
  * @returns {Promise<Object>} Session data
  */
-const getSessionById = async (id) => {
+const getSessionById = async (id, context = {}) => {
+  const requesterUserId = resolveRequesterUserId(context);
+  if (!requesterUserId) {
+    throw new HttpError('errors.auth.unauthorized', 401);
+  }
+
   const session = await sessionRepository.findById(id);
   
   if (!session) {
+    throw new HttpError('errors.session.not_found', 404);
+  }
+
+  if (session.user_id !== requesterUserId) {
     throw new HttpError('errors.session.not_found', 404);
   }
 
@@ -112,10 +132,19 @@ const getSessionById = async (id) => {
  * @returns {Promise<void>}
  */
 const revokeSession = async (id, context = {}) => {
+  const requesterUserId = resolveRequesterUserId(context);
+  if (!requesterUserId) {
+    throw new HttpError('errors.auth.unauthorized', 401);
+  }
+
   // Check if session exists
   const session = await sessionRepository.findById(id);
   
   if (!session) {
+    throw new HttpError('errors.session.not_found', 404);
+  }
+
+  if (session.user_id !== requesterUserId) {
     throw new HttpError('errors.session.not_found', 404);
   }
 
@@ -132,14 +161,14 @@ const revokeSession = async (id, context = {}) => {
     action: 'SESSION_REVOKED',
     entity: 'user_session',
     entity_id: id,
-    user_id: context.user_id || session.user_id,
+    user_id: requesterUserId,
     tenant_id: context.tenant_id,
     facility_id: context.facility_id,
     ip_address: context.ip_address,
     user_agent: context.user_agent,
     details: {
       revoked_session_user_id: session.user_id,
-      revoked_by_self: context.user_id === session.user_id
+      revoked_by_self: requesterUserId === session.user_id
     }
   });
 };

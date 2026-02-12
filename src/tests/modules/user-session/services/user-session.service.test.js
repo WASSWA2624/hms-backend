@@ -20,6 +20,8 @@ const {
 } = require('@services/user-session/user-session.service');
 
 describe('User Session Service', () => {
+  const requesterContext = { user_id: 'user-123' };
+
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -33,7 +35,7 @@ describe('User Session Service', () => {
       sessionRepository.findMany.mockResolvedValue(mockSessions);
       sessionRepository.count.mockResolvedValue(10);
 
-      const result = await listSessions({}, 1, 20);
+      const result = await listSessions({}, 1, 20, 'created_at', 'desc', requesterContext);
 
       expect(result.sessions).toEqual(mockSessions);
       expect(result.pagination).toEqual({
@@ -45,7 +47,7 @@ describe('User Session Service', () => {
         hasPreviousPage: false
       });
       expect(sessionRepository.findMany).toHaveBeenCalledWith(
-        {},
+        { user_id: 'user-123' },
         0,
         20,
         { created_at: 'desc' }
@@ -57,7 +59,14 @@ describe('User Session Service', () => {
       sessionRepository.findMany.mockResolvedValue(mockSessions);
       sessionRepository.count.mockResolvedValue(1);
 
-      const result = await listSessions({ user_id: 'user-123' }, 1, 20);
+      const result = await listSessions(
+        { user_id: 'user-123' },
+        1,
+        20,
+        'created_at',
+        'desc',
+        requesterContext
+      );
 
       expect(result.sessions).toEqual(mockSessions);
       expect(sessionRepository.findMany).toHaveBeenCalledWith(
@@ -73,7 +82,14 @@ describe('User Session Service', () => {
       sessionRepository.findMany.mockResolvedValue(mockSessions);
       sessionRepository.count.mockResolvedValue(1);
 
-      const result = await listSessions({ is_active: 'true' }, 1, 20);
+      const result = await listSessions(
+        { is_active: 'true' },
+        1,
+        20,
+        'created_at',
+        'desc',
+        requesterContext
+      );
 
       expect(result.sessions).toEqual(mockSessions);
       expect(sessionRepository.findMany).toHaveBeenCalledWith(
@@ -92,7 +108,14 @@ describe('User Session Service', () => {
       sessionRepository.findMany.mockResolvedValue(mockSessions);
       sessionRepository.count.mockResolvedValue(1);
 
-      const result = await listSessions({ is_active: 'false' }, 1, 20);
+      const result = await listSessions(
+        { is_active: 'false' },
+        1,
+        20,
+        'created_at',
+        'desc',
+        requesterContext
+      );
 
       expect(result.sessions).toEqual(mockSessions);
       expect(sessionRepository.findMany).toHaveBeenCalledWith(
@@ -110,10 +133,10 @@ describe('User Session Service', () => {
       sessionRepository.findMany.mockResolvedValue(mockSessions);
       sessionRepository.count.mockResolvedValue(0);
 
-      await listSessions({}, 1, 20, 'expires_at', 'asc');
+      await listSessions({}, 1, 20, 'expires_at', 'asc', requesterContext);
 
       expect(sessionRepository.findMany).toHaveBeenCalledWith(
-        {},
+        { user_id: 'user-123' },
         0,
         20,
         { expires_at: 'asc' }
@@ -125,7 +148,7 @@ describe('User Session Service', () => {
       sessionRepository.findMany.mockResolvedValue(mockSessions);
       sessionRepository.count.mockResolvedValue(50);
 
-      const result = await listSessions({}, 2, 20);
+      const result = await listSessions({}, 2, 20, 'created_at', 'desc', requesterContext);
 
       expect(result.pagination).toEqual({
         page: 2,
@@ -135,6 +158,25 @@ describe('User Session Service', () => {
         hasNextPage: true,
         hasPreviousPage: true
       });
+    });
+
+    it('should throw HttpError when context user is missing', async () => {
+      await expect(listSessions({}, 1, 20)).rejects.toThrow(HttpError);
+      expect(sessionRepository.findMany).not.toHaveBeenCalled();
+    });
+
+    it('should reject mismatched user_id filter', async () => {
+      await expect(
+        listSessions(
+          { user_id: 'another-user' },
+          1,
+          20,
+          'created_at',
+          'desc',
+          requesterContext
+        )
+      ).rejects.toThrow(HttpError);
+      expect(sessionRepository.findMany).not.toHaveBeenCalled();
     });
   });
 
@@ -148,7 +190,7 @@ describe('User Session Service', () => {
       };
       sessionRepository.findById.mockResolvedValue(mockSession);
 
-      const result = await getSessionById('session-123');
+      const result = await getSessionById('session-123', requesterContext);
 
       expect(result.id).toBe('session-123');
       expect(result.is_active).toBe(true);
@@ -164,7 +206,7 @@ describe('User Session Service', () => {
       };
       sessionRepository.findById.mockResolvedValue(mockSession);
 
-      const result = await getSessionById('session-123');
+      const result = await getSessionById('session-123', requesterContext);
 
       expect(result.is_active).toBe(false);
     });
@@ -178,7 +220,7 @@ describe('User Session Service', () => {
       };
       sessionRepository.findById.mockResolvedValue(mockSession);
 
-      const result = await getSessionById('session-123');
+      const result = await getSessionById('session-123', requesterContext);
 
       expect(result.is_active).toBe(false);
     });
@@ -186,9 +228,21 @@ describe('User Session Service', () => {
     it('should throw HttpError if session not found', async () => {
       sessionRepository.findById.mockResolvedValue(null);
 
-      await expect(getSessionById('session-123'))
+      await expect(getSessionById('session-123', requesterContext))
         .rejects
         .toThrow(HttpError);
+    });
+
+    it('should throw HttpError for non-owned sessions', async () => {
+      const mockSession = {
+        id: 'session-123',
+        user_id: 'different-user',
+        revoked_at: null,
+        expires_at: new Date(Date.now() + 86400000)
+      };
+      sessionRepository.findById.mockResolvedValue(mockSession);
+
+      await expect(getSessionById('session-123', requesterContext)).rejects.toThrow(HttpError);
     });
   });
 
@@ -227,7 +281,7 @@ describe('User Session Service', () => {
     it('should throw HttpError if session not found', async () => {
       sessionRepository.findById.mockResolvedValue(null);
 
-      await expect(revokeSession('session-123'))
+      await expect(revokeSession('session-123', requesterContext))
         .rejects
         .toThrow(HttpError);
     });
@@ -240,7 +294,7 @@ describe('User Session Service', () => {
       };
       sessionRepository.findById.mockResolvedValue(mockSession);
 
-      await expect(revokeSession('session-123'))
+      await expect(revokeSession('session-123', requesterContext))
         .rejects
         .toThrow(HttpError);
     });
@@ -256,7 +310,7 @@ describe('User Session Service', () => {
       createAuditLog.mockResolvedValue({});
 
       const context = {
-        user_id: 'admin-456',
+        user_id: 'user-123',
         tenant_id: 'tenant-123',
         facility_id: 'facility-123',
         ip_address: '192.168.1.1',
@@ -268,10 +322,10 @@ describe('User Session Service', () => {
       expect(createAuditLog).toHaveBeenCalledWith(
         expect.objectContaining({
           action: 'SESSION_REVOKED',
-          user_id: 'admin-456',
+          user_id: 'user-123',
           details: expect.objectContaining({
             revoked_session_user_id: 'user-123',
-            revoked_by_self: false
+            revoked_by_self: true
           })
         })
       );
@@ -300,6 +354,18 @@ describe('User Session Service', () => {
           })
         })
       );
+    });
+
+    it('should throw HttpError when revoking session owned by another user', async () => {
+      const mockSession = {
+        id: 'session-123',
+        user_id: 'other-user',
+        revoked_at: null
+      };
+      sessionRepository.findById.mockResolvedValue(mockSession);
+
+      await expect(revokeSession('session-123', requesterContext)).rejects.toThrow(HttpError);
+      expect(sessionRepository.softDelete).not.toHaveBeenCalled();
     });
   });
 });

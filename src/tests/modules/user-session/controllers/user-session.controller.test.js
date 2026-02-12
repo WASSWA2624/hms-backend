@@ -74,7 +74,8 @@ describe('User Session Controller', () => {
         1,
         20,
         undefined,
-        undefined
+        undefined,
+        { user_id: 'user-123' }
       );
       expect(sendPaginated).toHaveBeenCalledWith(
         res,
@@ -115,7 +116,8 @@ describe('User Session Controller', () => {
         1,
         20,
         undefined,
-        undefined
+        undefined,
+        { user_id: 'user-123' }
       );
     });
 
@@ -150,7 +152,8 @@ describe('User Session Controller', () => {
         1,
         20,
         'expires_at',
-        'asc'
+        'asc',
+        { user_id: 'user-123' }
       );
     });
   });
@@ -171,7 +174,10 @@ describe('User Session Controller', () => {
 
       await getSessionById(req, res);
 
-      expect(sessionService.getSessionById).toHaveBeenCalledWith('session-123');
+      expect(sessionService.getSessionById).toHaveBeenCalledWith(
+        'session-123',
+        { user_id: 'user-123' }
+      );
       expect(sendSuccess).toHaveBeenCalledWith(
         res,
         200,

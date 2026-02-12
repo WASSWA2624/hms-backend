@@ -20,17 +20,22 @@ const { sendSuccess, sendPaginated, sendNoContent } = require('@lib/response');
  */
 const listSessions = asyncHandler(async (req, res) => {
   const { page, limit, sort_by, order, user_id, is_active } = req.query;
+  const requesterUserId = req.user?.userId || req.user?.id;
 
   const filters = {};
   if (user_id) filters.user_id = user_id;
   if (is_active) filters.is_active = is_active;
+  const context = {
+    user_id: requesterUserId,
+  };
 
   const result = await sessionService.listSessions(
     filters,
     page,
     limit,
     sort_by,
-    order
+    order,
+    context
   );
 
   return sendPaginated(
@@ -50,8 +55,11 @@ const listSessions = asyncHandler(async (req, res) => {
  */
 const getSessionById = asyncHandler(async (req, res) => {
   const { id } = req.params;
+  const requesterUserId = req.user?.userId || req.user?.id;
 
-  const session = await sessionService.getSessionById(id);
+  const session = await sessionService.getSessionById(id, {
+    user_id: requesterUserId,
+  });
 
   return sendSuccess(res, 200, 'messages.session.get.success', session);
 });
@@ -65,12 +73,13 @@ const getSessionById = asyncHandler(async (req, res) => {
  */
 const revokeSession = asyncHandler(async (req, res) => {
   const { id } = req.params;
+  const requesterUserId = req.user?.userId || req.user?.id;
   
   // Build context for audit log
   const context = {
-    user_id: req.user?.id,
-    tenant_id: req.user?.tenant_id,
-    facility_id: req.user?.facility_id,
+    user_id: requesterUserId,
+    tenant_id: req.user?.tenantId || req.user?.tenant_id,
+    facility_id: req.user?.facilityId || req.user?.facility_id,
     ip_address: req.ip,
     user_agent: req.get('user-agent')
   };
