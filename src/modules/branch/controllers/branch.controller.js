@@ -10,6 +10,12 @@
 const branchService = require('@services/branch/branch.service');
 const { asyncHandler } = require('@lib/async');
 const { sendSuccess, sendPaginated, sendNoContent } = require('@lib/response');
+const { DEFAULT_PAGE, DEFAULT_PAGE_LIMIT } = require('@config/constants');
+
+const toPositiveInt = (value, fallback) => {
+  const parsed = Number.parseInt(value, 10);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+};
 
 /**
  * List branches with pagination
@@ -20,6 +26,8 @@ const { sendSuccess, sendPaginated, sendNoContent } = require('@lib/response');
  */
 const listBranches = asyncHandler(async (req, res) => {
   const { page, limit, sort_by, order, tenant_id, facility_id, is_active, search } = req.query;
+  const normalizedPage = toPositiveInt(page, DEFAULT_PAGE);
+  const normalizedLimit = toPositiveInt(limit, DEFAULT_PAGE_LIMIT);
 
   const filters = {};
   if (tenant_id) filters.tenant_id = tenant_id;
@@ -29,8 +37,8 @@ const listBranches = asyncHandler(async (req, res) => {
 
   const result = await branchService.listBranches(
     filters,
-    page,
-    limit,
+    normalizedPage,
+    normalizedLimit,
     sort_by,
     order
   );

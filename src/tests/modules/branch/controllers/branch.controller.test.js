@@ -162,6 +162,39 @@ describe('Branch Controller', () => {
         'asc'
       );
     });
+
+    it('should coerce string pagination params to numbers', async () => {
+      const mockResult = {
+        branches: [],
+        pagination: {
+          page: 2,
+          limit: 20,
+          total: 0,
+          totalPages: 0,
+          hasNextPage: false,
+          hasPreviousPage: true
+        }
+      };
+      branchService.listBranches.mockResolvedValue(mockResult);
+      sendPaginated.mockImplementation((res, message, data, pagination) => {
+        res.status(200).json({ message, data, pagination });
+      });
+
+      req.query = {
+        page: '2',
+        limit: '20'
+      };
+
+      await listBranches(req, res);
+
+      expect(branchService.listBranches).toHaveBeenCalledWith(
+        {},
+        2,
+        20,
+        undefined,
+        undefined
+      );
+    });
   });
 
   describe('getBranchById', () => {
