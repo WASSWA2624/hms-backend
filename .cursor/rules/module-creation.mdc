@@ -42,7 +42,7 @@ alwaysApply: true
    - Test: `schemas/<module>.schema.test.js`.
 
 3. ### **Repository**
-   - File: `<module>.repository.js` with `@prisma/client`.
+   - File: `<module>.repository.js` with `@prisma`.
    - Only: `findById`, `findMany`, `create`, `update`, `softDelete`.
    - Follow `prisma.mdc` for APIs, errors, soft deletes.
    - Test: `repositories/<module>.repository.test.js`.
@@ -59,7 +59,7 @@ alwaysApply: true
    - File: `<module>.controller.js`.
    - Import the service.
    - All methods wrapped with `@lib/async/asyncHandler`.
-   - Use `@lib/response/*` for output.
+   - Use `@lib/response` helpers for output.
    - Test: `controllers/<module>.controller.test.js`.
 
 6. ### **Routes**
@@ -74,10 +74,10 @@ alwaysApply: true
 7. ### **Mount Module**
    - In `src/app/router.js`:
      ```js
-     apiV1Router.use('/<module>', require('../modules/<module>/routes/<module>.routes'))
+     apiVersionRouter.use('/<module>', require('../modules/<module>/routes/<module>.routes'))
      ```
-   - Use relative paths only.
-   - Endpoints: `/api/v1/<module>/*`.
+   - Router mounting in `src/app/router.js` may use the documented relative-path exception from `import-aliases.mdc`.
+   - Endpoints: `/api/v<version>/<module>/*` (initial release: `/api/v1/<module>/*`).
    - Aliases auto-registered.
 
 8. ### **Test Coverage**

@@ -21,11 +21,13 @@ Any violation is **invalid**.
 ---
 
 ## Providers & Implementations
-- Must support multiple providers:
+- Must support configurable providers:
   - `LocalStorageService` → local folder (e.g., `public/` or `uploads/`)
   - `S3StorageService` → AWS S3
   - Optional: GCP, Azure, or other cloud providers
+- Active provider **must** be selected from environment configuration (example: `STORAGE_PROVIDER=local|s3`).
 - Switching providers **must** be possible by changing environment configuration only.
+- Local folder storage is valid when explicitly configured; external providers are also valid when explicitly configured.
 - Provider implementations **must** live in `src/lib/storage/` with the following structure:
 ```
 src/lib/storage/

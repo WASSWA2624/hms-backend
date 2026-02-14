@@ -29,8 +29,8 @@ Any violation of these rules is **invalid**.
 
 ## Prisma Client Wrapper
 - Prisma client singleton **must** be defined in `src/prisma/client.js` (per `project-structure.mdc`)
-- All repositories **must** import Prisma client using: `const prisma = require('@prisma/client')`
-- The alias `@prisma/client` resolves to `src/prisma/client.js` (per `import-aliases.mdc`)
+- All repositories **must** import Prisma client wrapper using: `const prisma = require('@prisma')`
+- The alias `@prisma` resolves to `src/prisma/client.js` (per `import-aliases.mdc`)
 - The wrapper **must** handle singleton pattern for development (globalThis) and production instances
 
 ## Prisma 7.x Compatibility

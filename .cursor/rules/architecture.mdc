@@ -80,7 +80,7 @@ Defines the required backend stack and patterns for consistent, scalable, mainta
 - App must be stateless.
 - Store session data externally if needed.
 - Use JWT for authentication.
-- File uploads: external storage only (e.g. S3).
+- File uploads must go through `StorageService` (`storage.mdc`); provider is environment-configurable (`local` or external such as S3).
 
 ---
 

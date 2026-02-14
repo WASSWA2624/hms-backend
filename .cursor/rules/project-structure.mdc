@@ -118,23 +118,27 @@ project-root/
 
 - Root: only config/tooling files.
 - All code in `src/`, entry: `server.js`.
-- One domain = one module; modules isolated, no cross-module imports.
+- One domain = one module; modules are isolated from direct controller/repository coupling.
+- No cross-module relative imports; cross-module usage is allowed only via service/lib aliases (see `import-aliases.mdc`).
 - Shared code in `lib/` only.
 - Module names: kebab-case. Module files: `<module>.routes.js`, `.controller.js`, `.service.js`, `.repository.js`, `.schema.js`.
 - Layers: Routes (map), Controllers (HTTP), Services (business logic), Repositories (DB/ORM). WebSockets: only in `websockets/`, called via services.
 - Any dir with >1 util/helper: must have `index.js` barrel exporting all via `module.exports`.
-- Barrel imports required (`require('@lib/foo')`), never direct subfile (e.g., `.../success`).
+- Prefer barrel imports (`require('@lib/foo')`); direct subfile imports are allowed only for explicitly documented stable entrypoints.
 - Required barrel files: all `src/lib/*` subdirs, `src/config/`, any multi-file utility dir.
 - No barrel needed for module subdirs (routes, controllers, etc.).
 - `lib/`: only stateless, reusable utils.
 - `config/`: only config/constants.
 - `middlewares/`: global middleware, barrel optional.
+- `src/locales/`: required when internationalization is enabled (see `internationalization.mdc`).
+- `src/lib/aliases/`, `src/lib/health/`, and `src/lib/i18n/`: required when their corresponding rules/features are enabled.
 
 ## Forbidden
 
 - Business logic in routes/controllers.
 - DB access outside repositories/services.
-- Cross-module imports.
+- Cross-module relative imports.
+- Cross-module direct imports to another module's controllers/repositories.
 - Feature logic in `lib/`.
 - Circular deps.
 - WebSockets in controllers/routes.

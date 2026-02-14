@@ -95,6 +95,10 @@ Any violation is **invalid**.
   "status": 200,
   "message": "Sync completed",
   "data": [ /* resources */ ],
+  "meta": {
+    "locale": "en",
+    "direction": "ltr"
+  },
   "sync": {
     "sync_token": "string",      // Token for next sync
     "has_more": boolean,          // More data available
@@ -110,6 +114,10 @@ Any violation is **invalid**.
   "status": 409,
   "message": "Resource conflict detected",
   "data": null,
+  "meta": {
+    "locale": "en",
+    "direction": "ltr"
+  },
   "errors": [{
     "field": "version",
     "message": "Resource was modified by another client",

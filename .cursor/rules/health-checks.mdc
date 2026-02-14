@@ -14,6 +14,7 @@ Any violation is **invalid**.
 ---
 
 ## Required Endpoints
+- Health endpoints are system operational endpoints and may use specialized response schemas from this file (see exception in `response-format.mdc`).
 - **Health Check**: `GET /health` (public, no authentication)
   - Returns 200 if application is running
   - Returns 503 if application is unhealthy

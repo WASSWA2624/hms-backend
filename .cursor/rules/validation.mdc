@@ -19,7 +19,7 @@ Zod-based validation is mandatory for strict input checking, data integrity, reu
 - Schemas reside in `@validations/*` → `src/modules/<module>/schemas/`
 - Each module: schemas in `src/modules/<module>/schemas/<module>.schema.js`
 - Export separate schemas for body, params, and query (e.g., `CreateUserSchema`, `UserIdParamsSchema`, `ListUsersQuerySchema`)
-- Reusable validators: `src/lib/validation/zod.js`; import shared utilities from `@lib/validation/zod`
+- Reusable validators: `src/lib/validation/`; import shared utilities from `@lib/validation`
 
 ---
 

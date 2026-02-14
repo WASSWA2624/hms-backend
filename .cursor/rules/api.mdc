@@ -10,8 +10,8 @@ Defines mandatory API design standards: enforce RESTfulness, predictable and reu
 ---
 
 ## Endpoint Structure
-- Base: `/api/v1/<module>/...`
-- All module endpoints must have `/api/v1/` prefix
+- Base: `/api/v<version>/<module>/...` (initial release: `v1`)
+- All module endpoints must have `/api/v<version>/` prefix
 - CRUD:
   - `GET /<resource>`: list
   - `GET /<resource>/:id`: get one
@@ -37,7 +37,7 @@ Defines mandatory API design standards: enforce RESTfulness, predictable and reu
 - No business logic in routes
 - Must use standard response format (`response-format.mdc`)
 - Errors handled via central middleware
-- Lists (`GET /<resource>`): must paginate using `@lib/response/pagination` (use DEFAULT_PAGE, DEFAULT_PAGE_LIMIT, MAX_PAGE_LIMIT from `@config/constants`); always return pagination metadata
+- Lists (`GET /<resource>`): must paginate using `@lib/response` pagination helpers (use DEFAULT_PAGE, DEFAULT_PAGE_LIMIT, MAX_PAGE_LIMIT from `@config/constants`); always return pagination metadata
 
 ---
 
@@ -60,7 +60,7 @@ Defines mandatory API design standards: enforce RESTfulness, predictable and reu
 ---
 
 ## Versioning & URLs
-- `/api/v1/...` required
+- `/api/v<version>/...` required (initial release: `/api/v1/...`)
 - No breaking changes without version bump
 - Must be backward compatible
 

@@ -31,7 +31,7 @@ Any violation is **invalid**.
 - All list endpoints **must** implement pagination (per `response-format.mdc`)
 - Default pagination values **must** come from `@config/constants` (DEFAULT_PAGE, DEFAULT_PAGE_LIMIT, MAX_PAGE_LIMIT) - see `constants-env.mdc`
 - Response must include pagination metadata (per `response-format.mdc`)
-- Use standardized pagination helpers (`@lib/response/pagination`)
+- Use standardized pagination helpers from `@lib/response`
 ---
 
 ## Caching

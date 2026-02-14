@@ -21,7 +21,7 @@ Enforces mandatory import aliasing for no cross-module relative imports, consist
 | `@middlewares/*`  | `src/middlewares`                       | `require('@middlewares/validate.middleware')`         |
 | `@config/*`       | `src/config`                            | `require('@config/index')`                           |
 | `@validations/*`  | `src/modules/<module>/schemas`          | `require('@validations/user/user.schema')`           |
-| `@prisma/client`  | `src/prisma/client.js`                  | `require('@prisma/client')`                          |
+| `@prisma`         | `src/prisma/client.js`                  | `require('@prisma')`                                 |
 | `@logs/*`         | `logs`                                  | `require('@logs/logger')`                            |
 
 **Alias Rules:**
@@ -44,7 +44,7 @@ Enforces mandatory import aliasing for no cross-module relative imports, consist
       "@lib/*": ["src/lib/*"],
       "@middlewares/*": ["src/middlewares/*"],
       "@config/*": ["src/config/*"],
-      "@prisma/client": ["src/prisma/client.js"],
+      "@prisma": ["src/prisma/client.js"],
       "@logs/*": ["logs/*"]
     }
   }
@@ -60,7 +60,7 @@ require('module-alias').addAliases({
   '@lib': path.join(__dirname, 'lib'),
   '@config': path.join(__dirname, 'config'),
   '@middlewares': path.join(__dirname, 'middlewares'),
-  '@prisma/client': path.join(__dirname, 'prisma', 'client.js'),
+  '@prisma': path.join(__dirname, 'prisma', 'client.js'),
   '@logs': path.join(process.cwd(), 'logs')
 });
 // Module-scoped aliases auto-registered via registerAllModuleAliases()
@@ -82,10 +82,10 @@ registerModuleAliases('user');
 ## Barrel File Requirements
 
 - Any directory with multiple helpers/utilities **must** have an `index.js` barrel file with aggregated `module.exports`.
-- Always import via barrel if present (e.g., `require('@lib/response')` not individual file).
-- Required barrels: all `src/lib/*` subdirs (crypto, jwt, errors, response, async, validation, dates, logging, audit, websocket, storage, health), and `src/config/`.
+- Prefer barrel imports when a barrel exists (e.g., `require('@lib/response')`).
+- Required barrels: all `src/lib/*` subdirs (crypto, jwt, errors, response, async, validation, dates, logging, audit, websocket, storage, health, i18n, aliases), and `src/config/`.
 - No barrels required for module routes/controllers/services/repos/schemas.
-- Do not import files directly if a barrel exists.
+- Direct subfile imports are allowed only for explicitly documented stable entrypoints (example: `@lib/async/asyncHandler`, `@lib/audit/createAuditLog`).
 
 ---
 
@@ -93,7 +93,7 @@ registerModuleAliases('user');
 
 - No cross-module relative imports.  
   - Exception: `src/app/router.js` may use relative `require('../modules/...')` only to mount routes.
-- Always use aliases for all local/external modules.
+- Use aliases for local internal modules; external npm packages must use package names.
 - Barrels are mandatory for utility directories.
 - Cross-module access allowed only via services or lib, not direct to controllers/repos.
 - Import paths must be static.
@@ -102,7 +102,7 @@ registerModuleAliases('user');
 
 ## Forbidden
 
-- Mixing relative and alias imports
+- Mixing relative and alias imports outside documented exceptions
 - Hardcoded paths bypassing aliases
 - Cross-module direct imports to repos/controllers
 - Dynamic imports without an alias

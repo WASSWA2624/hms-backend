@@ -25,6 +25,7 @@ Any violation is **invalid**.
   }
 }
 ```
+- **Exception:** System health endpoints (`GET /health`, `GET /ready`, `GET /live`) may use operational payloads defined in `health-checks.mdc`.
 ---
 
 ## Paginated Response

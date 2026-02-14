@@ -27,7 +27,7 @@ Locale files **must** be organized in the `src/locales/` folder.
   2. `?locale=<code>` query parameter (optional, overrides header)
   3. Default locale from `@config/constants` (e.g., `DEFAULT_LOCALE = 'en'`)
 - Locale format **must** follow ISO 639-1 (language) and ISO 3166-1 (country): `en-US`, `fr-CA`, `ar-SA`
-- Locale validation **must** use Zod schema from `@lib/validation/zod`
+- Locale validation **must** use Zod schema from `@lib/validation`
 - Invalid locales **must** fall back to default locale (log warning, don't error)
 
 ## Supported Locales
@@ -107,7 +107,7 @@ const DEFAULT_LOCALE = 'en';
 
 ## Validation & Error Messages
 - All validation error messages **must** be localized
-- Zod validation errors **must** be translated using `@lib/i18n/translate`
+- Zod validation errors **must** be translated using `@lib/i18n` translation utilities
 - Error message keys **must** follow pattern: `errors.<category>.<code>`
 - Example: `errors.validation.required`, `errors.auth.unauthorized`
 

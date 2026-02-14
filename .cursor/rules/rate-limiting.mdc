@@ -70,6 +70,10 @@ Any violation is **invalid**.
     "status": 429,
     "message": "Rate limit exceeded. Please try again later.",
     "data": null,
+    "meta": {
+      "locale": "en",
+      "direction": "ltr"
+    },
     "errors": [{
       "field": "rate_limit",
       "message": "Limit will reset at <timestamp>"
