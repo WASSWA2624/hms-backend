@@ -2,7 +2,7 @@
 
 ### Step 8.1: Enforce pagination
 #### Step 8.1.1: Verify pagination helper usage (read-only)
-- Verify all list endpoints use pagination helpers from `@lib/response/pagination`
+- Verify all list endpoints use pagination helpers from `@lib/response`
 - **Verification**: No list endpoint hand-rolls pagination metadata.
 
 #### Step 8.1.2: Verify pagination defaults (read-only)
@@ -84,23 +84,23 @@
 - **Verification**: `npm run dev` and `npm start` work as intended.
 
 #### Step 8.5.6: Verify API versioning (read-only)
-- Verify `/api/v1/` prefix on all API module endpoints
-- **Verification**: All API module endpoints are mounted under `/api/v1/` only.
+- Verify `/api/v<version>/` prefix on all API module endpoints
+- **Verification**: All API module endpoints are mounted under `/api/v<version>/` (initial release: `/api/v1/`).
 
 #### Step 8.5.7: Verify health endpoints are unversioned (read-only)
 - Verify health endpoints remain unversioned: `/health`, `/ready`, `/live`
-- **Verification**: Health endpoints are not mounted under `/api/v1` and return correct schemas.
+- **Verification**: Health endpoints are not mounted under `/api/v<version>` and return correct schemas.
 
 ## Verification Checklist (run after each phase)
 
 - [ ] All files follow CommonJS (`require`/`module.exports`)
 - [ ] All imports use aliases from `import-aliases.mdc` (no relative imports across modules)
-- [ ] All API module endpoints use `/api/v1/` prefix per `dev-plan/P010_api_endpoints.mdc`
+- [ ] All API module endpoints use `/api/v<version>/` prefix (initial release: `/api/v1/`) per `dev-plan/P010_api_endpoints.mdc`
 - [ ] Health endpoints exist at root: `GET /health`, `GET /ready`, `GET /live` (unversioned) per `health-checks.mdc`
-- [ ] All responses use helpers from `@lib/response/*` per `response-format.mdc`
+- [ ] All responses use helpers from `@lib/response` per `response-format.mdc`
 - [ ] All validations use Zod schemas from `@validations/*` per `validation.mdc`
 - [ ] All mutations create audit logs (non-blocking) per `prisma.mdc` and `compliance.mdc`
-- [ ] All logs sanitize sensitive data using `@lib/logging/sanitize` per `error-logging.mdc`
+- [ ] All logs sanitize sensitive data using `@lib/logging` utilities per `error-logging.mdc`
 - [ ] All repositories filter soft deletes by default (`deleted_at IS NULL`) per `prisma.mdc`
 - [ ] All services call repositories (no direct Prisma access) per `architecture.mdc`
 - [ ] All controllers use response helpers (no direct DB access) per `architecture.mdc`

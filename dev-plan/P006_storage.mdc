@@ -57,7 +57,7 @@
 - **Verification**: No non-config module reads `process.env`.
 
 #### Step 6.4.3: Verify log sanitization (read-only)
-- Ensure logs use `@lib/logging/sanitize` and never log secrets
+- Ensure logs use `@lib/logging` utilities (including sanitize behavior) and never log secrets
 - **Verification**: Logs contain no tokens/passwords/API keys.
 
 ### Step 6.5: Add storage audit logs (task-atomic sub-steps)

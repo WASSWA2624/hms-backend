@@ -20,8 +20,8 @@ Defines mandatory API design standards: enforce RESTfulness, predictable and reu
   - `DELETE /<resource>/:id`: soft-delete
 - Nested: `/<resource>/:id/<subresource>`
 
-### System Endpoints (Not under `/api/v1`)
-- System: `GET /health`, `/ready`, `/live` (never under `/api/v1`; see `health-checks.mdc`)
+### System Endpoints (Not under `/api/v<version>`)
+- System: `GET /health`, `/ready`, `/live` (never under `/api/v<version>`; see `health-checks.mdc`)
 
 ---
 

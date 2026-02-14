@@ -14,9 +14,9 @@ Enforces mandatory import aliasing for no cross-module relative imports, consist
 | Alias             | Points To                               | Example Usage                                        |
 |-------------------|-----------------------------------------|------------------------------------------------------|
 | `@app/*`          | `src/app`                               | `require('@app/router')`                             |
-| `@controllers/*`  | `src/modules/<module>/controllers`      | `require('@controllers/user/UserController')`        |
-| `@services/*`     | `src/modules/<module>/services`         | `require('@services/user/UserService')`              |
-| `@repositories/*` | `src/modules/<module>/repositories`     | `require('@repositories/user/UserRepository')`       |
+| `@controllers/*`  | `src/modules/<module>/controllers`      | `require('@controllers/user/user.controller')`       |
+| `@services/*`     | `src/modules/<module>/services`         | `require('@services/user/user.service')`             |
+| `@repositories/*` | `src/modules/<module>/repositories`     | `require('@repositories/user/user.repository')`      |
 | `@lib/*`          | `src/lib`                               | `require('@lib/async')`                              |
 | `@middlewares/*`  | `src/middlewares`                       | `require('@middlewares/validate.middleware')`         |
 | `@config/*`       | `src/config`                            | `require('@config/index')`                           |
@@ -25,7 +25,7 @@ Enforces mandatory import aliasing for no cross-module relative imports, consist
 | `@logs/*`         | `logs`                                  | `require('@logs/logger')`                            |
 
 **Alias Rules:**
-- Module aliases (`@controllers/*`, etc.) require module name (e.g. `@controllers/user/UserController`) → `src/modules/user/controllers/UserController.js`
+- Module aliases (`@controllers/*`, etc.) require module name and kebab-case filenames (e.g. `@controllers/user/user.controller` -> `src/modules/user/controllers/user.controller.js`)
 - Global aliases (`@lib/*`, `@config/*`, etc.) map to `src/<folder>/*`
 
 ---
@@ -114,3 +114,4 @@ registerModuleAliases('user');
 ❌ Violations are invalid  
 ✅ Refactors centralize imports, improve clarity and isolation  
 All modules **must** follow these import alias rules.
+

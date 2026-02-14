@@ -37,8 +37,8 @@
 ### Step 5.6: WebSocket event emission in services (task-atomic sub-steps)
 
 #### Step 5.6.1: Use centralized events
-- Update services to emit WebSocket events using events from `@lib/websocket/events`
-- **Verification**: Event names used in emissions come from `@lib/websocket/events`.
+- Update services to emit WebSocket events using `@lib/websocket` exports (event names remain centralized in `src/lib/websocket/events.js`)
+- **Verification**: Event names used in emissions are defined in centralized event definitions and accessed via `@lib/websocket`.
 
 #### Step 5.6.2: Enforce service-only emission rule (read-only)
 - Confirm only services emit WebSocket events (controllers must not emit)

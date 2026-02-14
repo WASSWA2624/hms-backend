@@ -14,7 +14,7 @@ alwaysApply: true
   - `translate(key, locale, params)`
   - `formatDate(date, locale)`
   - `formatNumber(number, locale, options)`
-- **Verification**: Helpers can be imported from `@lib/i18n/*`
+- **Verification**: Helpers can be imported from `@lib/i18n`
 
 ### Step 4.2.1: Load translations at startup
 - Load translation files once at boot (no per-request disk reads)
@@ -23,11 +23,11 @@ alwaysApply: true
 
 ### Step 4.3: Locale validation + defaults
 - Add `DEFAULT_LOCALE` and `SUPPORTED_LOCALES` to `src/config/constants.js`
-- Validate locale via Zod in `@lib/validation/zod`
+- Validate locale via Zod in `@lib/validation`
 - **Verification**: Invalid locale falls back to default and logs a warning
 
 ### Step 4.3.1: Localize error and validation messages
-- Route all error and validation messages through `@lib/i18n/translate`
+- Route all error and validation messages through `@lib/i18n` translation utilities
 - Ensure Zod validation errors are translated with `errors.*` keys
 - **Verification**: Error/validation responses are localized and include `meta.locale`.
 

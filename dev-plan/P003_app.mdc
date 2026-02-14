@@ -24,7 +24,7 @@
 ### Step 3.2: Mount router
 #### Step 3.2.1: Verify router mounting (read-only)
 - Verify `src/app/index.js` mounts `src/app/router.js`
-- **Verification**: API module routes are accessible at `/api/v1/*` (health endpoints remain unversioned).
+- **Verification**: API module routes are accessible at `/api/v<version>/*` (initial release: `/api/v1/*`; health endpoints remain unversioned).
 
 ### Step 3.3: API versioning middleware (task-atomic sub-steps)
 #### Step 3.3.1: Add deprecation headers support

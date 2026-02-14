@@ -106,7 +106,7 @@ alwaysApply: true
 ### Step 1.7: Validation utilities
 #### Step 1.7.1: Create reusable Zod validators
 - Create `src/lib/validation/zod.js` (reusable Zod validators: email, UUID, common patterns)
-- **Verification**: Validators can be imported from `@lib/validation/zod`.
+- **Verification**: Validators can be imported from `@lib/validation`.
 
 #### Step 1.7.2: Create validation barrel export
 - Create/maintain `src/lib/validation/index.js`
@@ -135,6 +135,13 @@ alwaysApply: true
 - Create/maintain `src/lib/websocket/index.js`
 - **Verification**: `require('@lib/websocket')` exposes events (and emit helpers if present).
 
+### Step 1.9.2: Module alias registration utilities
+- Create `src/lib/aliases/registerModuleAliases.js` with:
+  - `registerModuleAliases(moduleName)`
+  - `registerAllModuleAliases()`
+- Create `src/lib/aliases/index.js` barrel export
+- **Verification**: `require('@lib/aliases')` resolves and exposes module-scoped alias registration helpers.
+
 ### Step 1.10: Storage abstraction - base
 - Create `src/lib/storage/StorageService.js` (abstract base class/interface)
 - **Verification**: StorageService defines required methods (upload, delete, get, etc.)
@@ -162,7 +169,7 @@ alwaysApply: true
 
 ### Step 1.16: Error middleware
 - Create `src/middlewares/error.middleware.js` (uses handleApiError, catches all errors)
-- **Verification**: Middleware uses `@lib/errors/handleApiError`
+- **Verification**: Middleware uses `@lib/errors` exports (including `handleApiError`).
 
 ### Step 1.17: Validation middleware
 - Create `src/middlewares/validate.middleware.js` (executes Zod validation, uses `@validations/*`)
@@ -286,20 +293,20 @@ alwaysApply: true
 
 #### Step 1.30.3: Mount router
 - Mount routes from `src/app/router.js`
-- **Verification**: API module routes resolve under `/api/v1/*` (health endpoints remain unversioned).
+- **Verification**: API module routes resolve under `/api/v<version>/*` (initial release: `/api/v1/*`; health endpoints remain unversioned).
 
 #### Step 1.30.4: Apply error middleware last
 - Apply error middleware (must be last)
 - **Verification**: Errors propagate to centralized handler and responses match `response-format.mdc`.
 
 ### Step 1.31: Root router
-- Create `src/app/router.js` (mounts all module routes under `/api/v1/`)
+- Create `src/app/router.js` (mounts all module routes under `/api/v<version>/`; initial release uses `/api/v1/`)
 - **Verification**: Router exports Express router, ready for module mounting
 
 ### Step 1.32: Health check endpoints
-- Add `GET /health` route in `src/app/router.js` (public, no auth, uses `@lib/health/healthCheck`)
-- Add `GET /ready` route in `src/app/router.js` (public, no auth, uses `@lib/health/readinessCheck`)
-- Add `GET /live` route in `src/app/router.js` (public, no auth, uses `@lib/health/livenessCheck`)
+- Add `GET /health` route in `src/app/router.js` (public, no auth, uses `@lib/health` exports)
+- Add `GET /ready` route in `src/app/router.js` (public, no auth, uses `@lib/health` exports)
+- Add `GET /live` route in `src/app/router.js` (public, no auth, uses `@lib/health` exports)
 - All health endpoints return correct format per `health-checks.mdc`, no authentication required
 - **Verification**: Health endpoints return correct format, respond within 100ms, no sensitive info exposed
 
@@ -311,8 +318,8 @@ alwaysApply: true
 #### Step 1.33.2: Register runtime aliases first (mandatory)
 - First executable line: `require('module-alias/register')`
 - Register global aliases using `module-alias.addAliases()`:
-  - `@app`, `@lib`, `@config`, `@middlewares`, `@prisma/client`, `@logs`
-- Call `registerAllModuleAliases()` from `@lib/aliases/registerModuleAliases`
+  - `@app`, `@lib`, `@config`, `@middlewares`, `@prisma`, `@logs`
+- Call `registerAllModuleAliases()` from `@lib/aliases`
 - **Verification**: Aliases resolve at runtime; server starts without relative cross-module imports.
 
 #### Step 1.33.3: Load and validate env early (mandatory)

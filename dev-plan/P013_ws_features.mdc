@@ -18,7 +18,7 @@ alwaysApply: true
   - Emergency dispatch (case assigned, ambulance dispatched, arrival updates)
   - Billing & payments (invoice issued, payment received, refund processed)
   - Notifications/messages (new notification, conversation message)
-- **Verification**: All event names are defined in `@lib/websocket/events.js`
+- **Verification**: All event names are defined in `src/lib/websocket/events.js` and exposed via `@lib/websocket`
 
 ### Step 13.2: Emit events from services only
 - Emit events in service layer only (no controller emissions)

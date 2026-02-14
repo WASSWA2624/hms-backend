@@ -6,7 +6,7 @@ alwaysApply: true
 
 **Rule:** Every module follows the 8-step pattern in `module-creation.mdc`. Each module is a separate, atomic task.
 
-**Scope:** Use the HMS endpoint map in `P010_api_endpoints.mdc` (sections 0–24) and models in `P009_models.mdc`. The legacy appendix in `P010_api_endpoints.mdc` is out of scope for HMS.
+**Scope:** Use the HMS endpoint map in `P010_api_endpoints.mdc` (sections 0–24) and models in `P009_models.mdc`.
 
 **Compliance:** All modules must follow `internationalization.mdc` - use translation keys (no hardcoded strings) and add keys to `src/locales/en.json` before completion.
 

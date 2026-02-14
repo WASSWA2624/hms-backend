@@ -91,7 +91,7 @@ alwaysApply: true
 - **Verification**: All listed directories exist.
 
 #### Step 0.3.2: Create `src/lib/` subfolders
-- Under `src/lib/`: `crypto/`, `jwt/`, `errors/`, `response/`, `async/`, `validation/`, `dates/`, `logging/`, `audit/`, `websocket/`, `storage/`, `health/`
+- Under `src/lib/`: `crypto/`, `jwt/`, `errors/`, `response/`, `async/`, `validation/`, `dates/`, `logging/`, `audit/`, `websocket/`, `storage/`, `health/`, `i18n/`, `aliases/`
 - **Verification**: All listed `src/lib/*` directories exist.
 
 #### Step 0.3.3: Create required barrel files (`index.js`) (task-atomic sub-steps)
@@ -119,7 +119,7 @@ alwaysApply: true
 - **Verification**: `src/app/index.js` exists.
 
 ##### Step 0.3.5.3: Create root router
-- Create `src/app/router.js` (mounts `/api/v1/*` modules + system health endpoints per `health-checks.mdc`)
+- Create `src/app/router.js` (mounts `/api/v<version>/*` modules; initial release is `/api/v1/*`; plus system health endpoints per `health-checks.mdc`)
 - **Verification**: `src/app/router.js` exists.
 
 ##### Step 0.3.5.4: Create auth middleware stub
@@ -150,7 +150,7 @@ alwaysApply: true
   - `@lib/*` → `src/lib/*`
   - `@middlewares/*` → `src/middlewares/*`
   - `@config/*` → `src/config/*`
-  - `@prisma/client` → `src/prisma/client.js`
+  - `@prisma` → `src/prisma/client.js`
   - `@logs/*` → `logs/*`
 - **Verification**: `jsconfig.json` exists and contains these paths.
 
@@ -159,7 +159,7 @@ alwaysApply: true
 - **Verification**: Note exists in this plan (no code change).
 
 #### Step 0.4.3: Ensure runtime alias registration is planned (mandatory)
-- In `src/server.js`, ensure `require('module-alias/register')` is the very first require, then register base aliases (`@app`, `@lib`, `@config`, `@middlewares`, `@prisma/client`, `@logs`) and call `registerAllModuleAliases()` (per `import-aliases.mdc`).
+- In `src/server.js`, ensure `require('module-alias/register')` is the very first require, then register base aliases (`@app`, `@lib`, `@config`, `@middlewares`, `@prisma`, `@logs`) and call `registerAllModuleAliases()` (per `import-aliases.mdc`).
 - **Verification**: Plan explicitly calls out "alias registration must be first" and includes module-scoped alias registration.
 
 ### Step 0.5: Initialize Prisma (task-atomic sub-steps)
@@ -235,10 +235,10 @@ alwaysApply: true
 | Config is centralized | `src/config/env.js` exists and is the **only** place reading `process.env` | `src/config/env.js` + repo grep |
 | CORS rule ready | `cors` dependency installed and `src/config/cors.js` stub exists | `package.json`, `src/config/cors.js` |
 | Jest configured | `jest.config.js` exists and points to `src/tests/setup.js` | `jest.config.js` |
-| Aliases (IDE) | `jsconfig.json` paths include `@app`, `@lib`, `@config`, `@middlewares`, `@prisma/client`, `@logs` | `jsconfig.json` |
+| Aliases (IDE) | `jsconfig.json` paths include `@app`, `@lib`, `@config`, `@middlewares`, `@prisma`, `@logs` | `jsconfig.json` |
 | Aliases (runtime) | `src/server.js` registers `module-alias` **first**, then base aliases + `registerAllModuleAliases()` | `src/server.js` |
 | Required folder structure | `src/app`, `src/modules`, `src/lib`, `src/config`, `src/middlewares`, `src/tests`, `src/prisma` exist | `src/` tree |
-| Lib barrel files | `src/lib/index.js` exists and every `src/lib/*/index.js` exists (including `health/`) | `src/lib/**/index.js` |
-| Router planned | `src/app/router.js` exists and is responsible for mounting `/api/v1/*` and system health endpoints | `src/app/router.js` |
+| Lib barrel files | `src/lib/index.js` exists and every `src/lib/*/index.js` exists (including `health/`, `i18n/`, `aliases/`) | `src/lib/**/index.js` |
+| Router planned | `src/app/router.js` exists and is responsible for mounting `/api/v<version>/*` (initial release: `/api/v1/*`) and system health endpoints | `src/app/router.js` |
 | Prisma guide | `prisma/guide.md` exists | `prisma/guide.md` |
 | Versioned docs | `CHANGELOG.md` and `docs/api/v1/openapi.yaml` exist | project root, `docs/api/v1/` |
