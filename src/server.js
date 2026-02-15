@@ -87,6 +87,8 @@ const startServer = () => {
     
     // Start HTTP server
     const server = app.listen(PORT, HOST, () => {
+      const startupHost = HOST === '0.0.0.0' ? 'localhost' : HOST;
+      console.log(`[startup] backend listening on http://${startupHost}:${PORT}`);
       logger.info(`Server started successfully`, {
         port: PORT,
         host: HOST,
@@ -167,6 +169,7 @@ const startServer = () => {
     
     return server;
   } catch (err) {
+    console.error('[startup] Failed to start server:', err.message);
     logger.error('Failed to start server', { error: err.message, stack: err.stack });
     process.exit(1);
   }

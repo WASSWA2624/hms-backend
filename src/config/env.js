@@ -140,7 +140,7 @@ const buildEnv = () => {
   );
   const HANDLE_SIGINT = parseOptionalBoolean(
     process.env.HANDLE_SIGINT,
-    NODE_ENV !== 'development'
+    true
   );
   const WS_MAX_CONNECTIONS = process.env.WS_MAX_CONNECTIONS ? parseInt(process.env.WS_MAX_CONNECTIONS, 10) : 1000;
   const WS_HEARTBEAT_INTERVAL = process.env.WS_HEARTBEAT_INTERVAL ? parseInt(process.env.WS_HEARTBEAT_INTERVAL, 10) : 30000;
