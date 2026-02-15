@@ -108,9 +108,7 @@ const createAppointment = async (data, userId, ipAddress) => {
       entity_id: appointment.id,
       diff: { after: appointment },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return appointment;
   } catch (error) {
@@ -148,9 +146,7 @@ const updateAppointment = async (id, data, userId, ipAddress) => {
       entity_id: appointment.id,
       diff: { before, after: appointment },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return appointment;
   } catch (error) {
@@ -187,9 +183,7 @@ const deleteAppointment = async (id, userId, ipAddress) => {
       entity_id: id,
       diff: { before },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
@@ -242,9 +236,7 @@ const cancelAppointment = async (id, reason, userId, ipAddress) => {
       entity_id: appointment.id,
       diff: { before, after: appointment },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return appointment;
   } catch (error) {

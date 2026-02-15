@@ -11,7 +11,12 @@
 // Load .env once here (no other file should read process.env)
 const path = require('path');
 const { logger } = require('@lib/logging');
-require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
+require('dotenv').config({
+  path: path.resolve(__dirname, '../../.env'),
+  // Dotenv's runtime tips are useful for local manual runs, but they add heavy
+  // noise/overhead during automated test runs.
+  quiet: process.env.NODE_ENV === 'test' || process.env.DOTENV_QUIET === 'true'
+});
 
 /**
  * Required environment variables

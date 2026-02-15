@@ -151,8 +151,9 @@ const resendVerification = asyncHandler(async (req, res) => {
  */
 const forgotPassword = asyncHandler(async (req, res) => {
   const { email, tenant_id } = req.body;
+  const request_context = getRegistrationRequestContext(req);
 
-  const result = await authService.forgotPassword({ email, tenant_id });
+  const result = await authService.forgotPassword({ email, tenant_id, request_context });
 
   return sendSuccess(res, 200, 'messages.auth.password_reset.email_sent', result);
 });

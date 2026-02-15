@@ -12,6 +12,7 @@ const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 const { translate, resolveLocale } = require('@lib/i18n');
 const { sendEmail } = require('@lib/notifications');
+const { logger } = require('@lib/logging');
 const env = require('@config/env');
 const crypto = require('crypto');
 const fs = require('fs');
@@ -56,6 +57,9 @@ const getBaseAppUrl = () => String(env.APP_PUBLIC_URL || '').replace(/\/+$/, '')
 
 const buildVerifyEmailLink = (token, email) =>
   `${getBaseAppUrl()}/verify-email?token=${encodeURIComponent(token)}&email=${encodeURIComponent(email)}`;
+
+const buildResetPasswordLink = (token, email) =>
+  `${getBaseAppUrl()}/reset-password?token=${encodeURIComponent(token)}&email=${encodeURIComponent(email)}`;
 
 const buildCopyHelperLink = ({ email, action, value }) =>
   `${getBaseAppUrl()}/verify-email?email=${encodeURIComponent(email)}&reason=pending_verification&copy_action=${encodeURIComponent(action)}&copy_value=${encodeURIComponent(value)}`;
@@ -398,6 +402,51 @@ const sendVerificationEmail = async ({
     text: payload.text,
     html: payload.html,
     attachments: payload.attachments,
+  });
+};
+
+const sendPasswordResetEmail = async ({
+  email,
+  resetToken,
+  expiresAt,
+  locale,
+}) => {
+  const resolvedLocale = resolveLocale(locale);
+  const link = buildResetPasswordLink(resetToken, email);
+  const expiryDate = resolveExpiryDate(expiresAt) || new Date(Date.now() + 60 * 60 * 1000);
+  const expiresAtLabel = formatExpiryDateTime(expiryDate, resolvedLocale);
+  const subject = `${APP_DISPLAY_NAME} password reset request`;
+  const text = [
+    `A password reset was requested for ${APP_DISPLAY_NAME}.`,
+    '',
+    `Reset link: ${link}`,
+    `Expires at: ${expiresAtLabel}`,
+    '',
+    'If you did not request this, you can ignore this email.',
+  ].join('\n');
+  const html = `<!doctype html>
+<html lang="${escapeHtml(resolvedLocale)}">
+<head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /></head>
+<body style="font-family:Segoe UI,Tahoma,Arial,sans-serif;background:#f4f7fb;padding:20px;">
+  <div style="max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #dbe4f3;border-radius:12px;padding:24px;">
+    <h1 style="margin:0 0 12px;font-size:22px;color:#0f172a;">Password reset</h1>
+    <p style="margin:0 0 14px;color:#1e293b;line-height:1.5;">
+      A password reset was requested for <strong>${escapeHtml(APP_DISPLAY_NAME)}</strong>.
+    </p>
+    <p style="margin:0 0 16px;">
+      <a href="${escapeHtml(link)}" style="display:inline-block;background:#0b88e6;color:#ffffff;text-decoration:none;padding:10px 16px;border-radius:8px;font-weight:700;">Reset password</a>
+    </p>
+    <p style="margin:0 0 10px;color:#334155;word-break:break-word;">${escapeHtml(link)}</p>
+    <p style="margin:0;color:#475569;font-size:13px;">Expires at: ${escapeHtml(expiresAtLabel)}</p>
+  </div>
+</body>
+</html>`;
+
+  return sendEmail({
+    to: email,
+    subject,
+    text,
+    html,
   });
 };
 
@@ -1547,7 +1596,7 @@ const resendVerification = async (data) => {
  * @returns {Promise<Object>} Success message
  */
 const forgotPassword = async (data) => {
-  const { email, tenant_id } = data;
+  const { email, tenant_id, request_context } = data;
 
   // Find user
   const user = await authRepository.findUserByEmailAndTenant(email, tenant_id);
@@ -1575,7 +1624,22 @@ const forgotPassword = async (data) => {
     expires_at: expiresAt
   });
 
-  // TODO: Send password reset email with token via email provider.
+  const deliveryResult = await sendPasswordResetEmail({
+    email: user.email,
+    resetToken: token,
+    expiresAt,
+    locale: request_context?.locale,
+  });
+
+  // Keep response generic to avoid account enumeration side effects,
+  // but still emit a warning for operational visibility.
+  if (!deliveryResult?.sent) {
+    logger.warn('Password reset email was not delivered', {
+      provider: deliveryResult?.provider || 'unknown',
+      tenant_id: user.tenant_id,
+      user_id: user.id,
+    });
+  }
 
   // Create audit log
   await createAuditLog({

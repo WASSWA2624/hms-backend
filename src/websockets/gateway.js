@@ -314,10 +314,6 @@ const handlePong = (ws, payload) => {
       pendingPings.delete(ws);
       updateLastActivity(ws);
       
-      logger.info('Pong received from connection', {
-        userId: connectionUsers.get(ws),
-        pingId: pending.pingId
-      });
     } else {
       // Pong received but no pending ping (client-initiated pong)
       updateLastActivity(ws);
@@ -356,11 +352,6 @@ const sendPing = (ws) => {
     // Track pending ping
     pendingPings.set(ws, {
       sentAt: Date.now(),
-      pingId
-    });
-
-    logger.info('Ping sent to connection', {
-      userId: connectionUsers.get(ws),
       pingId
     });
 
@@ -457,24 +448,16 @@ const checkDeadConnections = () => {
  */
 const heartbeatTick = () => {
   try {
-    let pingCount = 0;
-
     // Send ping to all authenticated connections
     authenticatedConnections.forEach((isAuthenticated, ws) => {
       if (isAuthenticated && ws.readyState === ws.OPEN) {
-        if (sendPing(ws)) {
-          pingCount++;
-        }
+        sendPing(ws);
       }
     });
 
     // Check for dead connections
     checkDeadConnections();
 
-    logger.info('Heartbeat tick completed', {
-      pingsSent: pingCount,
-      activeConnections: userConnections.size
-    });
   } catch (err) {
     logger.error('Error in heartbeat tick', {
       error: err.message,
@@ -498,13 +481,15 @@ const startHeartbeat = () => {
     heartbeatInterval = setInterval(() => {
       heartbeatTick();
     }, HEARTBEAT_INTERVAL);
+    if (typeof heartbeatInterval.unref === 'function') {
+      heartbeatInterval.unref();
+    }
 
     logger.info('Heartbeat mechanism started', {
       interval: HEARTBEAT_INTERVAL,
       timeout: HEARTBEAT_TIMEOUT
     });
 
-    console.log(`💓 WebSocket heartbeat started (interval: ${HEARTBEAT_INTERVAL}ms, timeout: ${HEARTBEAT_TIMEOUT}ms)`);
   } catch (err) {
     logger.error('Failed to start heartbeat', {
       error: err.message,
@@ -1129,7 +1114,6 @@ const initializeGateway = () => {
       heartbeatTimeout: HEARTBEAT_TIMEOUT
     });
 
-    console.log(`🚪 WebSocket gateway initialized (max connections: ${MAX_CONNECTIONS})`);
   } catch (err) {
     logger.error('Failed to initialize WebSocket gateway', {
       error: err.message,

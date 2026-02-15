@@ -55,8 +55,8 @@ const listTenants = async (filters = {}, page = 1, limit = 20, sort_by = 'create
   // Handle search filter
   if (filters.search) {
     repoFilters.OR = [
-      { name: { contains: filters.search } },
-      { slug: { contains: filters.search } }
+      { name: { contains: filters.search, mode: 'insensitive' } },
+      { slug: { contains: filters.search, mode: 'insensitive' } }
     ];
   }
 

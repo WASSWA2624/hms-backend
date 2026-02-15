@@ -9,6 +9,12 @@
 
 const { getCurrentISO } = require('@lib/dates');
 const { logger } = require('@lib/logging');
+const { DATABASE_URL, NODE_ENV } = require('@config/env');
+
+const READINESS_CACHE_TTL_MS = 5000;
+
+let lastDatabaseCheckAt = 0;
+let lastDatabaseCheckResult = null;
 
 /**
  * Check database connectivity using MySQL connection pool directly
@@ -40,7 +46,6 @@ const checkDatabaseDirect = async () => {
   // Fallback: Test database connection directly using mysql2
   // This avoids Prisma's pool issues and provides a reliable connectivity check
   try {
-    const { DATABASE_URL } = require('@config/env');
     const mysql = require('mysql2/promise');
     
     const urlObj = new URL(DATABASE_URL);
@@ -82,7 +87,15 @@ const checkDatabaseDirect = async () => {
  * @returns {Promise<{status: string, error?: string}>} Database check result
  */
 const checkDatabase = async () => {
-  return await checkDatabaseDirect();
+  const now = Date.now();
+  if (lastDatabaseCheckResult && now - lastDatabaseCheckAt < READINESS_CACHE_TTL_MS) {
+    return lastDatabaseCheckResult;
+  }
+
+  const result = await checkDatabaseDirect();
+  lastDatabaseCheckAt = now;
+  lastDatabaseCheckResult = result;
+  return result;
 };
 
 /**
@@ -108,7 +121,7 @@ const readinessCheck = async () => {
   // Determine overall readiness status
   // For development: Application is ready even if database is unavailable (can reconnect)
   // For production: Application is only ready if all critical checks pass
-  const isDevelopment = process.env.NODE_ENV === 'development';
+  const isDevelopment = NODE_ENV === 'development';
   const allChecksPass = isDevelopment 
     ? true // In development, always consider ready for faster iteration
     : Object.values(checks).every((status) => status === 'ok');

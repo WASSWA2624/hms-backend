@@ -101,9 +101,7 @@ const createFormularyItem = async (data, userId, ipAddress) => {
       entity_id: formularyItem.id,
       diff: { after: formularyItem },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return formularyItem;
   } catch (error) {
@@ -141,9 +139,7 @@ const updateFormularyItem = async (id, data, userId, ipAddress) => {
       entity_id: formularyItem.id,
       diff: { before, after: formularyItem },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return formularyItem;
   } catch (error) {
@@ -180,9 +176,7 @@ const deleteFormularyItem = async (id, userId, ipAddress) => {
       entity_id: id,
       diff: { before },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * WebSocket Server Entry Point
  * 
  * WebSocket server initialization per websockets.mdc
@@ -67,8 +67,6 @@ const initializeWebSocketServer = (server) => {
       port: PORT,
       clientTracking: wss.options.clientTracking
     });
-
-    console.log(`🔌 WebSocket server initialized on port ${PORT}`);
 
     return wss;
   } catch (err) {
@@ -158,4 +156,5 @@ module.exports = {
   isInitialized,
   closeWebSocketServer
 };
+
 

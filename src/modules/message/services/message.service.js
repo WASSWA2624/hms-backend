@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Message service
  *
  * @module modules/message/services
@@ -88,9 +88,8 @@ const createMessage = async (data, user) => {
       ip_address: user?.ip,
       user_agent: user?.user_agent
     });
-  } catch (error) {
-    // Log error but don't fail the operation
-    console.error('Audit log creation failed:', error);
+  } catch {
+    // Audit failures are intentionally ignored to keep write paths non-blocking.
   }
 
   return message;
@@ -123,8 +122,8 @@ const updateMessage = async (id, data, user) => {
       ip_address: user?.ip,
       user_agent: user?.user_agent
     });
-  } catch (error) {
-    console.error('Audit log creation failed:', error);
+  } catch {
+    // Audit failures are intentionally ignored to keep write paths non-blocking.
   }
 
   return updatedMessage;
@@ -155,8 +154,8 @@ const deleteMessage = async (id, user) => {
       ip_address: user?.ip,
       user_agent: user?.user_agent
     });
-  } catch (error) {
-    console.error('Audit log creation failed:', error);
+  } catch {
+    // Audit failures are intentionally ignored to keep write paths non-blocking.
   }
 
   return deletedMessage;
@@ -169,3 +168,4 @@ module.exports = {
   updateMessage,
   deleteMessage
 };
+

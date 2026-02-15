@@ -104,9 +104,7 @@ const createEncounter = async (data, userId, ipAddress) => {
       entity_id: encounter.id,
       diff: { after: encounter },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return encounter;
   } catch (error) {
@@ -144,9 +142,7 @@ const updateEncounter = async (id, data, userId, ipAddress) => {
       entity_id: encounter.id,
       diff: { before, after: encounter },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return encounter;
   } catch (error) {
@@ -183,9 +179,7 @@ const deleteEncounter = async (id, userId, ipAddress) => {
       entity_id: id,
       diff: { before },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);

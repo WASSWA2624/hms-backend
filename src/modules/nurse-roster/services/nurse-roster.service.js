@@ -78,9 +78,7 @@ const createNurseRoster = async (data, userId, ipAddress) => {
       tenant_id: roster.tenant_id,
       diff: { after: roster },
       ip_address: ipAddress
-    }).catch((err) => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return roster;
   } catch (error) {
@@ -107,9 +105,7 @@ const updateNurseRoster = async (id, data, userId, ipAddress) => {
       tenant_id: roster.tenant_id,
       diff: { before, after: roster },
       ip_address: ipAddress
-    }).catch((err) => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return roster;
   } catch (error) {
@@ -136,9 +132,7 @@ const deleteNurseRoster = async (id, userId, ipAddress) => {
       tenant_id: before.tenant_id,
       diff: { before },
       ip_address: ipAddress
-    }).catch((err) => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
@@ -170,9 +164,7 @@ const publishNurseRoster = async (id, notifyStaff, userId, ipAddress) => {
       tenant_id: roster.tenant_id,
       diff: { before, after: roster, metadata: { notifyStaff } },
       ip_address: ipAddress
-    }).catch((err) => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return roster;
   } catch (error) {

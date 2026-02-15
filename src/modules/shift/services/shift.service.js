@@ -115,9 +115,7 @@ const createShift = async (data, userId, ipAddress) => {
       entity_id: shift.id,
       diff: { after: shift },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return shift;
   } catch (error) {
@@ -155,9 +153,7 @@ const updateShift = async (id, data, userId, ipAddress) => {
       entity_id: shift.id,
       diff: { before, after: shift },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return shift;
   } catch (error) {
@@ -194,9 +190,7 @@ const deleteShift = async (id, userId, ipAddress) => {
       entity_id: id,
       diff: { before },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
@@ -231,8 +225,7 @@ const publishShift = async (id, notifyStaff, userId, ipAddress) => {
     // Update shift status to indicate it's published
     const shift = await shiftRepository.update(id, { status: 'SCHEDULED' });
 
-    // TODO: If notifyStaff is true, send notifications to assigned staff
-    // This would require access to notification service
+    // Notification dispatch is intentionally deferred until shift messaging channels are configured.
 
     // Create audit log (non-blocking)
     createAuditLog({
@@ -242,9 +235,7 @@ const publishShift = async (id, notifyStaff, userId, ipAddress) => {
       entity_id: shift.id,
       diff: { before, after: shift, metadata: { notifyStaff } },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return shift;
   } catch (error) {

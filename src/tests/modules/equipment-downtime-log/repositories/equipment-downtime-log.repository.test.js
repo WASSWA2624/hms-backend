@@ -1,5 +1,11 @@
-describe('EquipmentDowntimeLog repository', () => {
-  it('placeholder repository test', () => {
-    expect(true).toBe(true);
+const subject = require('@repositories/equipment-downtime-log/equipment-downtime-log.repository');
+
+describe('equipment-downtime-log.repository contract', () => {
+  it('exports repository functions', () => {
+    expect(subject).toBeDefined();
+    expect(typeof subject).toBe('object');
+    const keys = Object.keys(subject);
+    expect(keys.length).toBeGreaterThan(0);
+    keys.forEach((key) => expect(typeof subject[key]).toBe('function'));
   });
 });

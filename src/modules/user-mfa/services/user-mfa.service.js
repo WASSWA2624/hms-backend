@@ -119,9 +119,7 @@ const createUserMfa = async (data, userId, ipAddress) => {
       entity_id: userMfa.id,
       diff: { after: userMfa },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return userMfa;
   } catch (error) {
@@ -159,9 +157,7 @@ const updateUserMfa = async (id, data, userId, ipAddress) => {
       entity_id: userMfa.id,
       diff: { before, after: userMfa },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return userMfa;
   } catch (error) {
@@ -198,9 +194,7 @@ const deleteUserMfa = async (id, userId, ipAddress) => {
       entity_id: id,
       diff: { before },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
@@ -249,9 +243,7 @@ const verifyMfaCode = async (id, code, userId, ipAddress) => {
         channel: userMfa.channel 
       },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return { verified: isValid };
   } catch (error) {
@@ -291,9 +283,7 @@ const enableMfa = async (id, userId, ipAddress) => {
       entity_id: id,
       diff: { before, after: userMfa },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return userMfa;
   } catch (error) {
@@ -333,9 +323,7 @@ const disableMfa = async (id, userId, ipAddress) => {
       entity_id: id,
       diff: { before, after: userMfa },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return userMfa;
   } catch (error) {

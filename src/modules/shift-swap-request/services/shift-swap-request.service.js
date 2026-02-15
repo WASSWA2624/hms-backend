@@ -70,7 +70,7 @@ const createShiftSwapRequest = async (data, userId, ipAddress) => {
       entity_id: shiftSwapRequest.id,
       diff: { after: shiftSwapRequest },
       ip_address: ipAddress
-    }).catch(err => console.error('Failed to create audit log:', err));
+    }).catch(() => {});
     return shiftSwapRequest;
   } catch (error) {
     if (error instanceof HttpError) throw error;
@@ -92,7 +92,7 @@ const updateShiftSwapRequest = async (id, data, userId, ipAddress) => {
       entity_id: shiftSwapRequest.id,
       diff: { before, after: shiftSwapRequest },
       ip_address: ipAddress
-    }).catch(err => console.error('Failed to create audit log:', err));
+    }).catch(() => {});
     return shiftSwapRequest;
   } catch (error) {
     if (error instanceof HttpError) throw error;
@@ -114,7 +114,7 @@ const deleteShiftSwapRequest = async (id, userId, ipAddress) => {
       entity_id: id,
       diff: { before },
       ip_address: ipAddress
-    }).catch(err => console.error('Failed to create audit log:', err));
+    }).catch(() => {});
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);

@@ -100,9 +100,7 @@ const createLabSample = async (data, userId, ipAddress) => {
       entity_id: labSample.id,
       diff: { after: labSample },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return labSample;
   } catch (error) {
@@ -140,9 +138,7 @@ const updateLabSample = async (id, data, userId, ipAddress) => {
       entity_id: labSample.id,
       diff: { before, after: labSample },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return labSample;
   } catch (error) {
@@ -179,9 +175,7 @@ const deleteLabSample = async (id, userId, ipAddress) => {
       entity_id: id,
       diff: { before },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);

@@ -15,6 +15,10 @@ const { sanitize } = require('@lib/logging/sanitize');
 // Ensure logs directory exists (per project-structure.mdc: logs/)
 const LOGS_DIR = path.join(process.cwd(), 'logs');
 
+let activeDate = null;
+let activeStream = null;
+let streamErrored = false;
+
 /**
  * Ensure logs directory exists
  */
@@ -24,15 +28,41 @@ const ensureLogsDirectory = () => {
   }
 };
 
+const getToday = () => new Date().toISOString().split('T')[0];
+
+const getLogFilePath = (dateStr) => path.join(LOGS_DIR, `${dateStr}.txt`);
+
 /**
- * Get today's log file path
- * 
- * @returns {string} Path to today's log file
+ * Lazily rotate stream when calendar date changes.
+ * Using a write stream avoids synchronous disk writes on every log call.
  */
-const getLogFilePath = () => {
-  const today = new Date();
-  const dateStr = today.toISOString().split('T')[0]; // YYYY-MM-DD
-  return path.join(LOGS_DIR, `${dateStr}.txt`);
+const getActiveStream = () => {
+  const today = getToday();
+
+  if (activeStream && activeDate === today && !streamErrored) {
+    return activeStream;
+  }
+
+  if (activeStream) {
+    activeStream.end();
+    activeStream = null;
+  }
+
+  ensureLogsDirectory();
+  activeDate = today;
+  streamErrored = false;
+
+  activeStream = fs.createWriteStream(getLogFilePath(today), {
+    flags: 'a',
+    encoding: 'utf8'
+  });
+
+  activeStream.on('error', (err) => {
+    streamErrored = true;
+    console.error('Logger stream error:', err.message);
+  });
+
+  return activeStream;
 };
 
 /**
@@ -74,16 +104,14 @@ const formatLogEntry = (level, message, data = null) => {
  * @param {any} [data] - Optional data
  */
 const writeLog = (level, message, data = null) => {
+  const logEntry = formatLogEntry(level, message, data);
+
   try {
-    ensureLogsDirectory();
-    const logFilePath = getLogFilePath();
-    const logEntry = formatLogEntry(level, message, data);
-    
-    // Append to log file (create if doesn't exist)
-    fs.appendFileSync(logFilePath, logEntry, 'utf8');
+    const stream = getActiveStream();
+    stream.write(logEntry);
   } catch (err) {
-    // If logging fails, write to console as fallback
-    // This prevents logging errors from crashing the application
+    // If logging fails, write to console as fallback.
+    // Logging must never take down the request path.
     console.error('Failed to write log:', err.message);
     console.error(`[${level.toUpperCase()}] ${message}`, data);
   }

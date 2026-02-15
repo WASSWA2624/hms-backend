@@ -97,9 +97,7 @@ const createWardRound = async (data, userId, ipAddress) => {
       entity_id: wardRound.id,
       diff: { after: wardRound },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return wardRound;
   } catch (error) {
@@ -135,9 +133,7 @@ const updateWardRound = async (id, data, userId, ipAddress) => {
       entity_id: wardRound.id,
       diff: { before, after: wardRound },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return wardRound;
   } catch (error) {
@@ -172,9 +168,7 @@ const deleteWardRound = async (id, userId, ipAddress) => {
       entity_id: id,
       diff: { before },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);

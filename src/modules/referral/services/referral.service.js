@@ -102,9 +102,7 @@ const createReferral = async (data, userId, ipAddress) => {
       entity_id: referral.id,
       diff: { after: referral },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return referral;
   } catch (error) {
@@ -142,9 +140,7 @@ const updateReferral = async (id, data, userId, ipAddress) => {
       entity_id: referral.id,
       diff: { before, after: referral },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return referral;
   } catch (error) {
@@ -181,9 +177,7 @@ const deleteReferral = async (id, userId, ipAddress) => {
       entity_id: id,
       diff: { before },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);

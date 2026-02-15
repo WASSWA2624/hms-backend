@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Module subscription service
  *
  * @module modules/module-subscription/services
@@ -107,10 +107,7 @@ const createModuleSubscription = async (data, context) => {
     diff_json: { after: moduleSubscription },
     ip_address: context.ip,
     tenant_id: context.tenant_id
-  }).catch(err => {
-    // Log error but don't throw (per error-logging.mdc)
-    console.error('Audit log failed:', err);
-  });
+  }).catch(() => {});
 
   return moduleSubscription;
 };
@@ -143,10 +140,7 @@ const updateModuleSubscription = async (id, data, context) => {
     diff_json: { before: existingModuleSubscription, after: updatedModuleSubscription },
     ip_address: context.ip,
     tenant_id: context.tenant_id
-  }).catch(err => {
-    // Log error but don't throw (per error-logging.mdc)
-    console.error('Audit log failed:', err);
-  });
+  }).catch(() => {});
 
   return updatedModuleSubscription;
 };
@@ -179,10 +173,7 @@ const deleteModuleSubscription = async (id, context) => {
     diff_json: { before: existingModuleSubscription },
     ip_address: context.ip,
     tenant_id: context.tenant_id
-  }).catch(err => {
-    // Log error but don't throw (per error-logging.mdc)
-    console.error('Audit log failed:', err);
-  });
+  }).catch(() => {});
 
   return deletedModuleSubscription;
 };
@@ -194,3 +185,6 @@ module.exports = {
   updateModuleSubscription,
   deleteModuleSubscription
 };
+
+
+

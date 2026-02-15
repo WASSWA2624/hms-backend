@@ -140,9 +140,7 @@ const createApiKey = async (data, userId, ipAddress) => {
       entity_id: apiKey.id,
       diff: { after: { ...apiKey, key_hash: '[REDACTED]' } },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     // Remove key_hash from response and include plain key (only time it's shown)
     const { key_hash, ...sanitizedApiKey } = apiKey;
@@ -189,9 +187,7 @@ const updateApiKey = async (id, data, userId, ipAddress) => {
         after: { ...apiKey, key_hash: '[REDACTED]' }
       },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     // Remove sensitive key_hash from response
     const { key_hash, ...sanitizedApiKey } = apiKey;
@@ -231,9 +227,7 @@ const deleteApiKey = async (id, userId, ipAddress) => {
       entity_id: id,
       diff: { before: { ...before, key_hash: '[REDACTED]' } },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);

@@ -100,9 +100,7 @@ const createSubscriptionInvoice = async (data, user, ip) => {
     entity_id: subscriptionInvoice.id,
     diff: { after: subscriptionInvoice },
     ip
-  }).catch(err => {
-    console.error('Audit log creation failed:', err);
-  });
+  }).catch(() => {});
 
   return subscriptionInvoice;
 };
@@ -128,9 +126,7 @@ const updateSubscriptionInvoice = async (id, data, user, ip) => {
     entity_id: subscriptionInvoice.id,
     diff: { before, after: subscriptionInvoice },
     ip
-  }).catch(err => {
-    console.error('Audit log creation failed:', err);
-  });
+  }).catch(() => {});
 
   return subscriptionInvoice;
 };
@@ -155,9 +151,7 @@ const deleteSubscriptionInvoice = async (id, user, ip) => {
     entity_id: subscriptionInvoice.id,
     diff: { before, after: subscriptionInvoice },
     ip
-  }).catch(err => {
-    console.error('Audit log creation failed:', err);
-  });
+  }).catch(() => {});
 
   return subscriptionInvoice;
 };

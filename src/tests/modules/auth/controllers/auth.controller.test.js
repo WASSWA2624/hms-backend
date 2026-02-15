@@ -283,7 +283,8 @@ describe('Auth Controller', () => {
 
       expect(authService.forgotPassword).toHaveBeenCalledWith({
         email: 'test@example.com',
-        tenant_id: 'tenant-123'
+        tenant_id: 'tenant-123',
+        request_context: expect.any(Object),
       });
       expect(res.status).toHaveBeenCalledWith(200);
     });

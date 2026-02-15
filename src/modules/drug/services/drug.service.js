@@ -111,9 +111,7 @@ const createDrug = async (data, userId, ipAddress) => {
       entity_id: drug.id,
       diff: { after: drug },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return drug;
   } catch (error) {
@@ -151,9 +149,7 @@ const updateDrug = async (id, data, userId, ipAddress) => {
       entity_id: drug.id,
       diff: { before, after: drug },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return drug;
   } catch (error) {
@@ -190,9 +186,7 @@ const deleteDrug = async (id, userId, ipAddress) => {
       entity_id: id,
       diff: { before },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);

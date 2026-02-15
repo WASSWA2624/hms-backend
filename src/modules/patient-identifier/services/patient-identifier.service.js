@@ -103,9 +103,7 @@ const createPatientIdentifier = async (data, userId, ipAddress) => {
       entity_id: patientIdentifier.id,
       diff: { after: patientIdentifier },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return patientIdentifier;
   } catch (error) {
@@ -143,9 +141,7 @@ const updatePatientIdentifier = async (id, data, userId, ipAddress) => {
       entity_id: patientIdentifier.id,
       diff: { before, after: patientIdentifier },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return patientIdentifier;
   } catch (error) {
@@ -182,9 +178,7 @@ const deletePatientIdentifier = async (id, userId, ipAddress) => {
       entity_id: id,
       diff: { before },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);

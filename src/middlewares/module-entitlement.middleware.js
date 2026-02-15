@@ -8,6 +8,7 @@ const prisma = require('@prisma/client');
 const { HttpError } = require('@lib/errors');
 
 const CACHE_TTL_MS = 60 * 1000;
+const CACHE_MAX_ENTRIES = 5000;
 
 const entitlementCache = new Map();
 const moduleExistenceCache = new Map();
@@ -82,6 +83,29 @@ const IRREGULAR_PATH_SEGMENTS = {
   diagnoses: 'diagnosis'
 };
 
+const trimExpiredEntries = (cache) => {
+  const now = Date.now();
+  for (const [key, entry] of cache.entries()) {
+    if (!entry || entry.expiresAt <= now) {
+      cache.delete(key);
+    }
+  }
+};
+
+const enforceCacheLimit = (cache) => {
+  if (cache.size <= CACHE_MAX_ENTRIES) return;
+
+  trimExpiredEntries(cache);
+  if (cache.size <= CACHE_MAX_ENTRIES) return;
+
+  // Remove oldest entries first (Map iteration order is insertion order)
+  while (cache.size > CACHE_MAX_ENTRIES) {
+    const oldestKey = cache.keys().next().value;
+    if (!oldestKey) break;
+    cache.delete(oldestKey);
+  }
+};
+
 const getCached = (cache, key) => {
   const cached = cache.get(key);
   if (!cached) return null;
@@ -97,6 +121,7 @@ const setCached = (cache, key, value) => {
     value,
     expiresAt: Date.now() + CACHE_TTL_MS
   });
+  enforceCacheLimit(cache);
 };
 
 const normalizeSegmentToModuleSlug = (segment) => {

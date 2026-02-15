@@ -133,9 +133,7 @@ const createUser = async (data, userId, ipAddress) => {
       entity_id: user.id,
       diff: { after: user },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return user;
   } catch (error) {
@@ -174,9 +172,7 @@ const updateUser = async (id, data, userId, ipAddress) => {
       entity_id: user.id,
       diff: { before, after: user },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return user;
   } catch (error) {
@@ -213,9 +209,7 @@ const deleteUser = async (id, userId, ipAddress) => {
       entity_id: id,
       diff: { before },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);

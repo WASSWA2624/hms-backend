@@ -111,9 +111,7 @@ const createInventoryItem = async (data, userId, ipAddress) => {
       entity_id: inventoryItem.id,
       diff: { after: inventoryItem },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return inventoryItem;
   } catch (error) {
@@ -151,9 +149,7 @@ const updateInventoryItem = async (id, data, userId, ipAddress) => {
       entity_id: inventoryItem.id,
       diff: { before, after: inventoryItem },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return inventoryItem;
   } catch (error) {
@@ -190,9 +186,7 @@ const deleteInventoryItem = async (id, userId, ipAddress) => {
       entity_id: id,
       diff: { before },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);

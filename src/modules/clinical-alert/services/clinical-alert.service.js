@@ -100,9 +100,7 @@ const createClinicalAlert = async (data, userId, ipAddress) => {
       entity_id: clinicalAlert.id,
       diff: { after: clinicalAlert },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return clinicalAlert;
   } catch (error) {
@@ -140,9 +138,7 @@ const updateClinicalAlert = async (id, data, userId, ipAddress) => {
       entity_id: clinicalAlert.id,
       diff: { before, after: clinicalAlert },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return clinicalAlert;
   } catch (error) {
@@ -179,9 +175,7 @@ const deleteClinicalAlert = async (id, userId, ipAddress) => {
       entity_id: id,
       diff: { before },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);

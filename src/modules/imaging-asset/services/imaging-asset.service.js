@@ -100,9 +100,7 @@ const createImagingAsset = async (data, userId, ipAddress) => {
       entity_id: imagingAsset.id,
       diff: { after: imagingAsset },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return imagingAsset;
   } catch (error) {
@@ -140,9 +138,7 @@ const updateImagingAsset = async (id, data, userId, ipAddress) => {
       entity_id: imagingAsset.id,
       diff: { before, after: imagingAsset },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return imagingAsset;
   } catch (error) {
@@ -179,9 +175,7 @@ const deleteImagingAsset = async (id, userId, ipAddress) => {
       entity_id: id,
       diff: { before },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);

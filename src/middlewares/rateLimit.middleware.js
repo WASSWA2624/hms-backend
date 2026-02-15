@@ -19,6 +19,15 @@ const { logger } = require('@lib/logging');
 // In-memory rate limit store (for single-instance deployments)
 // In production with multiple instances, use Redis
 const rateLimitStore = new Map();
+const MAX_RATE_LIMIT_KEYS = 50000;
+
+const pruneOldestEntries = (targetSize) => {
+  while (rateLimitStore.size > targetSize) {
+    const oldestKey = rateLimitStore.keys().next().value;
+    if (!oldestKey) break;
+    rateLimitStore.delete(oldestKey);
+  }
+};
 
 /**
  * Get client identifier (IP address or user ID)
@@ -60,6 +69,11 @@ const cleanExpiredEntries = () => {
     } else {
       rateLimitStore.set(key, { ...value, timestamps });
     }
+  }
+
+  // Guard against unbounded memory usage with very high cardinality keys.
+  if (rateLimitStore.size > MAX_RATE_LIMIT_KEYS) {
+    pruneOldestEntries(MAX_RATE_LIMIT_KEYS);
   }
 };
 
@@ -107,6 +121,9 @@ const rateLimit = (options = {}) => {
     entry.timestamps = timestamps;
     entry.windowMs = windowMs;
     rateLimitStore.set(key, entry);
+    if (rateLimitStore.size > MAX_RATE_LIMIT_KEYS) {
+      cleanExpiredEntries();
+    }
 
     const remaining = Math.max(0, max - timestamps.length);
     const resetTime = timestamps.length > 0 ? timestamps[0] + windowMs : now + windowMs;

@@ -111,9 +111,7 @@ const createStaffProfile = async (data, userId, ipAddress) => {
       entity_id: staffProfile.id,
       diff: { after: staffProfile },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return staffProfile;
   } catch (error) {
@@ -151,9 +149,7 @@ const updateStaffProfile = async (id, data, userId, ipAddress) => {
       entity_id: staffProfile.id,
       diff: { before, after: staffProfile },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return staffProfile;
   } catch (error) {
@@ -190,9 +186,7 @@ const deleteStaffProfile = async (id, userId, ipAddress) => {
       entity_id: id,
       diff: { before },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);

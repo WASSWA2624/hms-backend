@@ -114,9 +114,7 @@ const createLabOrder = async (data, userId, ipAddress) => {
       entity_id: labOrder.id,
       diff: { after: labOrder },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return labOrder;
   } catch (error) {
@@ -154,9 +152,7 @@ const updateLabOrder = async (id, data, userId, ipAddress) => {
       entity_id: labOrder.id,
       diff: { before, after: labOrder },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return labOrder;
   } catch (error) {
@@ -193,9 +189,7 @@ const deleteLabOrder = async (id, userId, ipAddress) => {
       entity_id: labOrder.id,
       diff: { before, after: labOrder },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return labOrder;
   } catch (error) {

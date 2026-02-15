@@ -91,9 +91,7 @@ const createBreachNotification = async (data, tenantId, userId, ipAddress) => {
       entity_id: breachNotification.id,
       diff: { after: breachNotification },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return breachNotification;
   } catch (error) {
@@ -125,9 +123,7 @@ const updateBreachNotification = async (id, data, userId, ipAddress) => {
       entity_id: breachNotification.id,
       diff: { before, after: breachNotification },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return breachNotification;
   } catch (error) {
@@ -168,9 +164,7 @@ const resolveBreachNotification = async (id, resolvedAt, userId, ipAddress) => {
       entity_id: breachNotification.id,
       diff: { before, after: breachNotification },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return breachNotification;
   } catch (error) {
@@ -202,9 +196,7 @@ const deleteBreachNotification = async (id, userId, ipAddress) => {
       entity_id: id,
       diff: { before },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);

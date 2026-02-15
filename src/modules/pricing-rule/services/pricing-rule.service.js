@@ -109,9 +109,7 @@ const createPricingRule = async (data, userId, ipAddress) => {
       entity_id: pricingRule.id,
       diff: { after: pricingRule },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return pricingRule;
   } catch (error) {
@@ -149,9 +147,7 @@ const updatePricingRule = async (id, data, userId, ipAddress) => {
       entity_id: pricingRule.id,
       diff: { before, after: pricingRule },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return pricingRule;
   } catch (error) {
@@ -188,9 +184,7 @@ const deletePricingRule = async (id, userId, ipAddress) => {
       entity_id: id,
       diff: { before },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);

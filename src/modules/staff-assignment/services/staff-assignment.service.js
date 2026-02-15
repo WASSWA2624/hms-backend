@@ -101,9 +101,7 @@ const createStaffAssignment = async (data, userId, ipAddress) => {
       entity_id: staffAssignment.id,
       diff: { after: staffAssignment },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return staffAssignment;
   } catch (error) {
@@ -141,9 +139,7 @@ const updateStaffAssignment = async (id, data, userId, ipAddress) => {
       entity_id: staffAssignment.id,
       diff: { before, after: staffAssignment },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return staffAssignment;
   } catch (error) {
@@ -180,9 +176,7 @@ const deleteStaffAssignment = async (id, userId, ipAddress) => {
       entity_id: id,
       diff: { before },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);

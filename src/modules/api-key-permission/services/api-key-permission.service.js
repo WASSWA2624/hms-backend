@@ -100,9 +100,7 @@ const createApiKeyPermission = async (data, userId, ipAddress) => {
       entity_id: apiKeyPermission.id,
       diff: { after: apiKeyPermission },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return apiKeyPermission;
   } catch (error) {
@@ -140,9 +138,7 @@ const updateApiKeyPermission = async (id, data, userId, ipAddress) => {
       entity_id: apiKeyPermission.id,
       diff: { before, after: apiKeyPermission },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return apiKeyPermission;
   } catch (error) {
@@ -179,9 +175,7 @@ const deleteApiKeyPermission = async (id, userId, ipAddress) => {
       entity_id: id,
       diff: { before },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);

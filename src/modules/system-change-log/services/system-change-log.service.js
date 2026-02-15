@@ -92,9 +92,7 @@ const createSystemChangeLog = async (data, tenantId, userId, ipAddress) => {
       entity_id: systemChangeLog.id,
       diff: { after: systemChangeLog },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return systemChangeLog;
   } catch (error) {
@@ -126,9 +124,7 @@ const updateSystemChangeLog = async (id, data, userId, ipAddress) => {
       entity_id: systemChangeLog.id,
       diff: { before, after: systemChangeLog },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return systemChangeLog;
   } catch (error) {
@@ -178,9 +174,7 @@ const approveSystemChangeLog = async (id, approvalNotes, userId, ipAddress) => {
       entity_id: systemChangeLog.id,
       diff: { before, after: systemChangeLog },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return systemChangeLog;
   } catch (error) {
@@ -230,9 +224,7 @@ const implementSystemChangeLog = async (id, implementationNotes, userId, ipAddre
       entity_id: systemChangeLog.id,
       diff: { before, after: systemChangeLog },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return systemChangeLog;
   } catch (error) {
@@ -264,9 +256,7 @@ const deleteSystemChangeLog = async (id, userId, ipAddress) => {
       entity_id: id,
       diff: { before },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);

@@ -111,9 +111,7 @@ const createSubscription = async (data, user, ip) => {
     entity_id: subscription.id,
     diff: { after: subscription },
     ip
-  }).catch(err => {
-    console.error('Audit log creation failed:', err);
-  });
+  }).catch(() => {});
 
   return subscription;
 };
@@ -139,9 +137,7 @@ const updateSubscription = async (id, data, user, ip) => {
     entity_id: subscription.id,
     diff: { before, after: subscription },
     ip
-  }).catch(err => {
-    console.error('Audit log creation failed:', err);
-  });
+  }).catch(() => {});
 
   return subscription;
 };
@@ -175,9 +171,7 @@ const cancelSubscription = async (id, user, ip) => {
     entity_id: subscription.id,
     diff: { before, after: subscription },
     ip
-  }).catch(err => {
-    console.error('Audit log creation failed:', err);
-  });
+  }).catch(() => {});
 
   return subscription;
 };
@@ -211,9 +205,7 @@ const reactivateSubscription = async (id, user, ip) => {
     entity_id: subscription.id,
     diff: { before, after: subscription },
     ip
-  }).catch(err => {
-    console.error('Audit log creation failed:', err);
-  });
+  }).catch(() => {});
 
   return subscription;
 };
@@ -238,9 +230,7 @@ const deleteSubscription = async (id, user, ip) => {
     entity_id: subscription.id,
     diff: { before, after: subscription },
     ip
-  }).catch(err => {
-    console.error('Audit log creation failed:', err);
-  });
+  }).catch(() => {});
 
   return subscription;
 };

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Server Entry Point
  *
  * HTTP server bootstrap per architecture.mdc
@@ -93,12 +93,6 @@ const startServer = () => {
         environment: NODE_ENV,
         nodeVersion: process.version
       });
-      
-      console.log(`🚀 Server running on port ${PORT}`);
-      console.log(`📝 Environment: ${NODE_ENV}`);
-      console.log(`🌐 Health check: http://localhost:${PORT}/health`);
-      console.log(`✅ Readiness check: http://localhost:${PORT}/ready`);
-      console.log(`💓 Liveness check: http://localhost:${PORT}/live`);
     });
     
     // Graceful shutdown handling
@@ -140,10 +134,13 @@ const startServer = () => {
       });
 
       // Force close after 30 seconds
-      setTimeout(() => {
+      const forcedShutdownTimer = setTimeout(() => {
         logger.error('Forced shutdown after timeout');
         process.exit(1);
       }, 30000);
+      if (typeof forcedShutdownTimer.unref === 'function') {
+        forcedShutdownTimer.unref();
+      }
     };
     
     // Listen for termination signals
@@ -171,7 +168,6 @@ const startServer = () => {
     return server;
   } catch (err) {
     logger.error('Failed to start server', { error: err.message, stack: err.stack });
-    console.error('❌ Failed to start server:', err.message);
     process.exit(1);
   }
 };
@@ -182,4 +178,5 @@ if (require.main === module) {
 }
 
 module.exports = { startServer };
+
 

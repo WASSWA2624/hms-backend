@@ -149,12 +149,9 @@ describe('Shift Service', () => {
       shiftRepository.create.mockResolvedValue(mockShift);
       createAuditLog.mockRejectedValue(new Error('Audit error'));
 
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
       const result = await shiftService.createShift(mockData, userId, ipAddress);
 
       expect(result).toEqual(mockShift);
-      expect(consoleErrorSpy).toHaveBeenCalled();
-      consoleErrorSpy.mockRestore();
     });
 
     it('should throw HttpError on repository error', async () => {

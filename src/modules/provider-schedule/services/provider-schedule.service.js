@@ -102,9 +102,7 @@ const createProviderSchedule = async (data, userId, ipAddress) => {
       entity_id: schedule.id,
       diff: { after: schedule },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return schedule;
   } catch (error) {
@@ -142,9 +140,7 @@ const updateProviderSchedule = async (id, data, userId, ipAddress) => {
       entity_id: schedule.id,
       diff: { before, after: schedule },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return schedule;
   } catch (error) {
@@ -181,9 +177,7 @@ const deleteProviderSchedule = async (id, userId, ipAddress) => {
       entity_id: id,
       diff: { before },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);

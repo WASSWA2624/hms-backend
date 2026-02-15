@@ -822,6 +822,10 @@ describe('Auth Service', () => {
 
       expect(result).toHaveProperty('message');
       expect(authRepository.createVerificationToken).toHaveBeenCalled();
+      expect(sendEmail).toHaveBeenCalledWith(expect.objectContaining({
+        to: 'test@example.com',
+        subject: expect.stringContaining('password reset')
+      }));
       expect(createAuditLog).toHaveBeenCalledWith(expect.objectContaining({
         action: 'PASSWORD_RESET_REQUESTED'
       }));
@@ -837,6 +841,34 @@ describe('Auth Service', () => {
 
       expect(result).toHaveProperty('message');
       expect(authRepository.createVerificationToken).not.toHaveBeenCalled();
+    });
+
+    it('should return success even when reset email delivery fails', async () => {
+      const forgotData = {
+        email: 'test@example.com',
+        tenant_id: 'tenant-123'
+      };
+
+      const mockUser = {
+        id: 'user-123',
+        email: 'test@example.com',
+        tenant_id: 'tenant-123',
+        facility_id: 'facility-123'
+      };
+
+      authRepository.findUserByEmailAndTenant.mockResolvedValue(mockUser);
+      authRepository.deleteExpiredTokens.mockResolvedValue({});
+      authRepository.createVerificationToken.mockResolvedValue({});
+      sendEmail.mockResolvedValue({ sent: false, provider: 'skipped' });
+      createAuditLog.mockResolvedValue({});
+
+      const result = await authService.forgotPassword(forgotData);
+
+      expect(result).toHaveProperty('message');
+      expect(sendEmail).toHaveBeenCalled();
+      expect(createAuditLog).toHaveBeenCalledWith(expect.objectContaining({
+        action: 'PASSWORD_RESET_REQUESTED'
+      }));
     });
   });
 

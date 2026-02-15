@@ -1,4 +1,4 @@
-/**
+﻿/**
  * License service
  *
  * @module modules/license/services
@@ -107,10 +107,7 @@ const createLicense = async (data, context) => {
     diff_json: { after: license },
     ip_address: context.ip,
     tenant_id: context.tenant_id
-  }).catch(err => {
-    // Log error but don't throw (per error-logging.mdc)
-    console.error('Audit log failed:', err);
-  });
+  }).catch(() => {});
 
   return license;
 };
@@ -143,10 +140,7 @@ const updateLicense = async (id, data, context) => {
     diff_json: { before: existingLicense, after: updatedLicense },
     ip_address: context.ip,
     tenant_id: context.tenant_id
-  }).catch(err => {
-    // Log error but don't throw (per error-logging.mdc)
-    console.error('Audit log failed:', err);
-  });
+  }).catch(() => {});
 
   return updatedLicense;
 };
@@ -179,10 +173,7 @@ const deleteLicense = async (id, context) => {
     diff_json: { before: existingLicense },
     ip_address: context.ip,
     tenant_id: context.tenant_id
-  }).catch(err => {
-    // Log error but don't throw (per error-logging.mdc)
-    console.error('Audit log failed:', err);
-  });
+  }).catch(() => {});
 
   return deletedLicense;
 };
@@ -194,3 +185,6 @@ module.exports = {
   updateLicense,
   deleteLicense
 };
+
+
+

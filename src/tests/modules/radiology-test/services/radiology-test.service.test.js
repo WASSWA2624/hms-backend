@@ -290,12 +290,9 @@ describe('Radiology Test Service', () => {
       radiologyTestRepository.create.mockResolvedValue(mockCreatedRadiologyTest);
       createAuditLog.mockRejectedValue(new Error('Audit Error'));
 
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
-
       const result = await radiologyTestService.createRadiologyTest(createData, 'user-id', '127.0.0.1');
 
       expect(result).toEqual(mockCreatedRadiologyTest);
-      consoleSpy.mockRestore();
     });
 
     it('should handle repository errors', async () => {
@@ -383,12 +380,9 @@ describe('Radiology Test Service', () => {
       radiologyTestRepository.update.mockResolvedValue(mockUpdatedRadiologyTest);
       createAuditLog.mockRejectedValue(new Error('Audit Error'));
 
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
-
       const result = await radiologyTestService.updateRadiologyTest(radiologyTestId, updateData, 'user-id', '127.0.0.1');
 
       expect(result).toEqual(mockUpdatedRadiologyTest);
-      consoleSpy.mockRestore();
     });
 
     it('should handle repository errors', async () => {
@@ -466,12 +460,9 @@ describe('Radiology Test Service', () => {
       radiologyTestRepository.softDelete.mockResolvedValue({});
       createAuditLog.mockRejectedValue(new Error('Audit Error'));
 
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
-
       await radiologyTestService.deleteRadiologyTest(radiologyTestId, 'user-id', '127.0.0.1');
 
       expect(radiologyTestRepository.softDelete).toHaveBeenCalledWith(radiologyTestId);
-      consoleSpy.mockRestore();
     });
 
     it('should handle repository errors', async () => {

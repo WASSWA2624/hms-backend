@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Module service
  *
  * @module modules/module/services
@@ -101,10 +101,7 @@ const createModule = async (data, context) => {
     diff_json: { after: module },
     ip_address: context.ip,
     tenant_id: context.tenant_id
-  }).catch(err => {
-    // Log error but don't throw (per error-logging.mdc)
-    console.error('Audit log failed:', err);
-  });
+  }).catch(() => {});
 
   return module;
 };
@@ -137,10 +134,7 @@ const updateModule = async (id, data, context) => {
     diff_json: { before: existingModule, after: updatedModule },
     ip_address: context.ip,
     tenant_id: context.tenant_id
-  }).catch(err => {
-    // Log error but don't throw (per error-logging.mdc)
-    console.error('Audit log failed:', err);
-  });
+  }).catch(() => {});
 
   return updatedModule;
 };
@@ -173,10 +167,7 @@ const deleteModule = async (id, context) => {
     diff_json: { before: existingModule },
     ip_address: context.ip,
     tenant_id: context.tenant_id
-  }).catch(err => {
-    // Log error but don't throw (per error-logging.mdc)
-    console.error('Audit log failed:', err);
-  });
+  }).catch(() => {});
 
   return deletedModule;
 };
@@ -188,3 +179,6 @@ module.exports = {
   updateModule,
   deleteModule
 };
+
+
+

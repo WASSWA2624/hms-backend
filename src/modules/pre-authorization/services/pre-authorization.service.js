@@ -114,9 +114,7 @@ const createPreAuthorization = async (data, userId, ipAddress) => {
       entity_id: preAuthorization.id,
       diff: { after: preAuthorization },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return preAuthorization;
   } catch (error) {
@@ -154,9 +152,7 @@ const updatePreAuthorization = async (id, data, userId, ipAddress) => {
       entity_id: preAuthorization.id,
       diff: { before, after: preAuthorization },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return preAuthorization;
   } catch (error) {
@@ -193,9 +189,7 @@ const deletePreAuthorization = async (id, userId, ipAddress) => {
       entity_id: id,
       diff: { before },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);

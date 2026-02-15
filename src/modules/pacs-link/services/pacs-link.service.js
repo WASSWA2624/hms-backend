@@ -100,9 +100,7 @@ const createPacsLink = async (data, userId, ipAddress) => {
       entity_id: pacsLink.id,
       diff: { after: pacsLink },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return pacsLink;
   } catch (error) {
@@ -140,9 +138,7 @@ const updatePacsLink = async (id, data, userId, ipAddress) => {
       entity_id: pacsLink.id,
       diff: { before, after: pacsLink },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return pacsLink;
   } catch (error) {
@@ -179,9 +175,7 @@ const deletePacsLink = async (id, userId, ipAddress) => {
       entity_id: id,
       diff: { before },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);

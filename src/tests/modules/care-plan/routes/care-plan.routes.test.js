@@ -1,13 +1,10 @@
-/**
- * Care Plan routes tests
- *
- * @module tests/modules/care-plan/routes
- * @description Tests for care plan routes
- * Per testing.mdc: Route tests with mocked middleware and controllers
- */
+const subject = require('@routes/care-plan/care-plan.routes');
 
-describe('Care Plan Routes', () => {
-  it('should mount all CRUD endpoints', () => {
-    expect(true).toBe(true);
+describe('care-plan.routes contract', () => {
+  it('exports an express router with registered handlers', () => {
+    expect(subject).toBeDefined();
+    expect(typeof subject).toBe('function');
+    expect(Array.isArray(subject.stack)).toBe(true);
+    expect(subject.stack.length).toBeGreaterThan(0);
   });
 });

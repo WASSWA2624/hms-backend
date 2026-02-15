@@ -101,9 +101,7 @@ const createCarePlan = async (data, userId, ipAddress) => {
       entity_id: carePlan.id,
       diff: { after: carePlan },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return carePlan;
   } catch (error) {
@@ -141,9 +139,7 @@ const updateCarePlan = async (id, data, userId, ipAddress) => {
       entity_id: carePlan.id,
       diff: { before, after: carePlan },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
 
     return carePlan;
   } catch (error) {
@@ -180,9 +176,7 @@ const deleteCarePlan = async (id, userId, ipAddress) => {
       entity_id: id,
       diff: { before },
       ip_address: ipAddress
-    }).catch(err => {
-      console.error('Failed to create audit log:', err);
-    });
+    }).catch(() => {});
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
