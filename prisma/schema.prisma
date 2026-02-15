@@ -668,6 +668,21 @@ model tenant {
   consents                        consent[]
   terms_acceptances               terms_acceptance[]
   api_keys                        api_key[]
+  equipment_categories            equipment_category[]
+  equipment_registries            equipment_registry[]
+  equipment_location_histories    equipment_location_history[]
+  equipment_maintenance_plans     equipment_maintenance_plan[]
+  equipment_work_orders           equipment_work_order[]
+  equipment_calibration_logs      equipment_calibration_log[]
+  equipment_safety_test_logs      equipment_safety_test_log[]
+  equipment_downtime_logs         equipment_downtime_log[]
+  equipment_spare_parts           equipment_spare_part[]
+  equipment_warranty_contracts    equipment_warranty_contract[]
+  equipment_service_providers     equipment_service_provider[]
+  equipment_incident_reports      equipment_incident_report[]
+  equipment_recall_notices        equipment_recall_notice[]
+  equipment_utilization_snapshots equipment_utilization_snapshot[]
+  equipment_disposal_transfers    equipment_disposal_transfer[]
 
   @@unique([slug])
   @@index([deleted_at])
@@ -3383,6 +3398,507 @@ model asset_service_log {
 
   @@index([asset_id])
   @@index([serviced_at])
+  @@index([deleted_at])
+}
+
+model equipment_category {
+  id          String    @id @default(uuid()) @db.VarChar(36)
+  tenant_id   String    @db.VarChar(36)
+  name        String    @db.VarChar(255)
+  code        String?   @db.VarChar(80)
+  risk_class  String?   @db.VarChar(80)
+  description String?   @db.Text
+  is_active   Boolean   @default(true)
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+  deleted_at  DateTime?
+  version     Int       @default(1)
+
+  tenant               tenant                @relation(fields: [tenant_id], references: [id])
+  equipment_registries equipment_registry[]
+
+  @@unique([tenant_id, name])
+  @@index([tenant_id])
+  @@index([code])
+  @@index([deleted_at])
+}
+
+model equipment_registry {
+  id                   String    @id @default(uuid()) @db.VarChar(36)
+  tenant_id            String    @db.VarChar(36)
+  equipment_category_id String?  @db.VarChar(36)
+  facility_id          String?   @db.VarChar(36)
+  asset_id             String?   @db.VarChar(36)
+  name                 String?   @db.VarChar(255)
+  description          String?   @db.Text
+  equipment_name       String    @db.VarChar(255)
+  equipment_code       String?   @db.VarChar(120)
+  serial_number        String?   @db.VarChar(120)
+  manufacturer         String?   @db.VarChar(255)
+  model_number         String?   @db.VarChar(120)
+  qr_code              String?   @db.VarChar(255)
+  barcode              String?   @db.VarChar(255)
+  status               String    @db.VarChar(60)
+  criticality_level    String?   @db.VarChar(60)
+  commissioning_date   DateTime?
+  purchase_date        DateTime?
+  usage_hours          Int       @default(0)
+  last_service_at      DateTime?
+  next_service_due_at  DateTime?
+  created_at           DateTime  @default(now())
+  updated_at           DateTime  @updatedAt
+  deleted_at           DateTime?
+  version              Int       @default(1)
+
+  tenant                         tenant                         @relation(fields: [tenant_id], references: [id])
+  category                       equipment_category?            @relation(fields: [equipment_category_id], references: [id])
+  location_history_entries       equipment_location_history[]
+  maintenance_plans              equipment_maintenance_plan[]
+  equipment_work_orders          equipment_work_order[]
+  calibration_logs               equipment_calibration_log[]
+  safety_test_logs               equipment_safety_test_log[]
+  downtime_logs                  equipment_downtime_log[]
+  spare_parts                    equipment_spare_part[]
+  warranty_contracts             equipment_warranty_contract[]
+  incident_reports               equipment_incident_report[]
+  recall_notices                 equipment_recall_notice[]
+  utilization_snapshots          equipment_utilization_snapshot[]
+  disposal_transfers             equipment_disposal_transfer[]
+
+  @@index([tenant_id])
+  @@index([equipment_category_id])
+  @@index([equipment_code])
+  @@index([serial_number])
+  @@index([status])
+  @@index([deleted_at])
+}
+
+model equipment_location_history {
+  id                    String    @id @default(uuid()) @db.VarChar(36)
+  tenant_id             String    @db.VarChar(36)
+  equipment_registry_id String    @db.VarChar(36)
+  name                  String?   @db.VarChar(255)
+  description           String?   @db.Text
+  from_location         String?   @db.VarChar(255)
+  to_location           String    @db.VarChar(255)
+  moved_by_user_id      String?   @db.VarChar(36)
+  moved_at              DateTime  @default(now())
+  reason                String?   @db.VarChar(255)
+  notes                 String?   @db.Text
+  created_at            DateTime  @default(now())
+  updated_at            DateTime  @updatedAt
+  deleted_at            DateTime?
+  version               Int       @default(1)
+
+  tenant             tenant             @relation(fields: [tenant_id], references: [id])
+  equipment_registry equipment_registry @relation(fields: [equipment_registry_id], references: [id])
+
+  @@index([tenant_id])
+  @@index([equipment_registry_id])
+  @@index([moved_by_user_id])
+  @@index([moved_at])
+  @@index([deleted_at])
+}
+
+model equipment_maintenance_plan {
+  id                   String    @id @default(uuid()) @db.VarChar(36)
+  tenant_id            String    @db.VarChar(36)
+  equipment_registry_id String   @db.VarChar(36)
+  name                 String?   @db.VarChar(255)
+  description          String?   @db.Text
+  plan_name            String    @db.VarChar(255)
+  maintenance_type     String    @db.VarChar(60)
+  status               String?   @db.VarChar(60)
+  is_active            Boolean   @default(true)
+  interval_days        Int?
+  interval_usage_hours Int?
+  sla_hours            Int?
+  checklist_json       Json?
+  last_run_at          DateTime?
+  next_due_at          DateTime?
+  created_at           DateTime  @default(now())
+  updated_at           DateTime  @updatedAt
+  deleted_at           DateTime?
+  version              Int       @default(1)
+
+  tenant               tenant                 @relation(fields: [tenant_id], references: [id])
+  equipment_registry   equipment_registry     @relation(fields: [equipment_registry_id], references: [id])
+  equipment_work_orders equipment_work_order[]
+
+  @@index([tenant_id])
+  @@index([equipment_registry_id])
+  @@index([maintenance_type])
+  @@index([status])
+  @@index([is_active])
+  @@index([next_due_at])
+  @@index([deleted_at])
+}
+
+model equipment_work_order {
+  id                       String    @id @default(uuid()) @db.VarChar(36)
+  tenant_id                String    @db.VarChar(36)
+  equipment_registry_id    String    @db.VarChar(36)
+  maintenance_plan_id      String?   @db.VarChar(36)
+  maintenance_request_id   String?   @db.VarChar(36)
+  name                     String?   @db.VarChar(255)
+  description              String?   @db.Text
+  title                    String    @db.VarChar(255)
+  priority                 String    @db.VarChar(40)
+  status                   String    @db.VarChar(60)
+  issue_source             String?   @db.VarChar(60)
+  reported_by_user_id      String?   @db.VarChar(36)
+  assigned_engineer_user_id String?  @db.VarChar(36)
+  opened_at                DateTime  @default(now())
+  acknowledged_at          DateTime?
+  started_at               DateTime?
+  completed_at             DateTime?
+  closed_at                DateTime?
+  resolution_notes         String?   @db.Text
+  downtime_started_at      DateTime?
+  downtime_ended_at        DateTime?
+  estimated_cost           Decimal?  @db.Decimal(12, 2)
+  actual_cost              Decimal?  @db.Decimal(12, 2)
+  created_at               DateTime  @default(now())
+  updated_at               DateTime  @updatedAt
+  deleted_at               DateTime?
+  version                  Int       @default(1)
+
+  tenant               tenant                    @relation(fields: [tenant_id], references: [id])
+  equipment_registry   equipment_registry        @relation(fields: [equipment_registry_id], references: [id])
+  maintenance_plan     equipment_maintenance_plan? @relation(fields: [maintenance_plan_id], references: [id])
+  calibration_logs     equipment_calibration_log[]
+  safety_test_logs     equipment_safety_test_log[]
+  downtime_logs        equipment_downtime_log[]
+  incident_reports     equipment_incident_report[]
+
+  @@index([tenant_id])
+  @@index([equipment_registry_id])
+  @@index([maintenance_plan_id])
+  @@index([status])
+  @@index([priority])
+  @@index([assigned_engineer_user_id])
+  @@index([opened_at])
+  @@index([deleted_at])
+}
+
+model equipment_calibration_log {
+  id                      String    @id @default(uuid()) @db.VarChar(36)
+  tenant_id               String    @db.VarChar(36)
+  equipment_registry_id   String    @db.VarChar(36)
+  equipment_work_order_id String?   @db.VarChar(36)
+  name                    String?   @db.VarChar(255)
+  description             String?   @db.Text
+  calibrated_by_user_id   String?   @db.VarChar(36)
+  calibrated_at           DateTime  @default(now())
+  result                  String    @db.VarChar(40)
+  certificate_number      String?   @db.VarChar(120)
+  certificate_url         String?   @db.VarChar(255)
+  expires_at              DateTime?
+  notes                   String?   @db.Text
+  created_at              DateTime  @default(now())
+  updated_at              DateTime  @updatedAt
+  deleted_at              DateTime?
+  version                 Int       @default(1)
+
+  tenant               tenant              @relation(fields: [tenant_id], references: [id])
+  equipment_registry   equipment_registry  @relation(fields: [equipment_registry_id], references: [id])
+  equipment_work_order equipment_work_order? @relation(fields: [equipment_work_order_id], references: [id])
+
+  @@index([tenant_id])
+  @@index([equipment_registry_id])
+  @@index([equipment_work_order_id])
+  @@index([calibrated_by_user_id])
+  @@index([result])
+  @@index([calibrated_at])
+  @@index([deleted_at])
+}
+
+model equipment_safety_test_log {
+  id                      String    @id @default(uuid()) @db.VarChar(36)
+  tenant_id               String    @db.VarChar(36)
+  equipment_registry_id   String    @db.VarChar(36)
+  equipment_work_order_id String?   @db.VarChar(36)
+  name                    String?   @db.VarChar(255)
+  description             String?   @db.Text
+  tested_by_user_id       String?   @db.VarChar(36)
+  tested_at               DateTime  @default(now())
+  test_type               String?   @db.VarChar(120)
+  result                  String    @db.VarChar(40)
+  certificate_url         String?   @db.VarChar(255)
+  expires_at              DateTime?
+  notes                   String?   @db.Text
+  created_at              DateTime  @default(now())
+  updated_at              DateTime  @updatedAt
+  deleted_at              DateTime?
+  version                 Int       @default(1)
+
+  tenant               tenant              @relation(fields: [tenant_id], references: [id])
+  equipment_registry   equipment_registry  @relation(fields: [equipment_registry_id], references: [id])
+  equipment_work_order equipment_work_order? @relation(fields: [equipment_work_order_id], references: [id])
+
+  @@index([tenant_id])
+  @@index([equipment_registry_id])
+  @@index([equipment_work_order_id])
+  @@index([tested_by_user_id])
+  @@index([result])
+  @@index([tested_at])
+  @@index([deleted_at])
+}
+
+model equipment_downtime_log {
+  id                      String    @id @default(uuid()) @db.VarChar(36)
+  tenant_id               String    @db.VarChar(36)
+  equipment_registry_id   String    @db.VarChar(36)
+  equipment_work_order_id String?   @db.VarChar(36)
+  name                    String?   @db.VarChar(255)
+  description             String?   @db.Text
+  started_at              DateTime  @default(now())
+  ended_at                DateTime?
+  reason                  String?   @db.VarChar(255)
+  impact_level            String?   @db.VarChar(60)
+  is_clinically_critical  Boolean   @default(false)
+  notes                   String?   @db.Text
+  created_at              DateTime  @default(now())
+  updated_at              DateTime  @updatedAt
+  deleted_at              DateTime?
+  version                 Int       @default(1)
+
+  tenant               tenant              @relation(fields: [tenant_id], references: [id])
+  equipment_registry   equipment_registry  @relation(fields: [equipment_registry_id], references: [id])
+  equipment_work_order equipment_work_order? @relation(fields: [equipment_work_order_id], references: [id])
+
+  @@index([tenant_id])
+  @@index([equipment_registry_id])
+  @@index([equipment_work_order_id])
+  @@index([started_at])
+  @@index([is_clinically_critical])
+  @@index([deleted_at])
+}
+
+model equipment_spare_part {
+  id                    String    @id @default(uuid()) @db.VarChar(36)
+  tenant_id             String    @db.VarChar(36)
+  equipment_registry_id String?   @db.VarChar(36)
+  inventory_item_id     String?   @db.VarChar(36)
+  supplier_id           String?   @db.VarChar(36)
+  name                  String?   @db.VarChar(255)
+  description           String?   @db.Text
+  part_name             String    @db.VarChar(255)
+  part_number           String?   @db.VarChar(120)
+  manufacturer          String?   @db.VarChar(255)
+  quantity_on_hand      Int       @default(0)
+  min_stock_level       Int       @default(0)
+  unit_cost             Decimal?  @db.Decimal(12, 2)
+  expiry_date           DateTime?
+  notes                 String?   @db.Text
+  created_at            DateTime  @default(now())
+  updated_at            DateTime  @updatedAt
+  deleted_at            DateTime?
+  version               Int       @default(1)
+
+  tenant             tenant              @relation(fields: [tenant_id], references: [id])
+  equipment_registry equipment_registry? @relation(fields: [equipment_registry_id], references: [id])
+
+  @@index([tenant_id])
+  @@index([equipment_registry_id])
+  @@index([inventory_item_id])
+  @@index([supplier_id])
+  @@index([part_name])
+  @@index([part_number])
+  @@index([deleted_at])
+}
+
+model equipment_warranty_contract {
+  id                    String    @id @default(uuid()) @db.VarChar(36)
+  tenant_id             String    @db.VarChar(36)
+  equipment_registry_id String    @db.VarChar(36)
+  supplier_id           String?   @db.VarChar(36)
+  name                  String?   @db.VarChar(255)
+  description           String?   @db.Text
+  provider_name         String?   @db.VarChar(255)
+  contract_number       String?   @db.VarChar(120)
+  coverage_details      String?   @db.Text
+  starts_at             DateTime
+  expires_at            DateTime?
+  reminder_days_before  Int?
+  status                String    @db.VarChar(60)
+  is_active             Boolean   @default(true)
+  notes                 String?   @db.Text
+  created_at            DateTime  @default(now())
+  updated_at            DateTime  @updatedAt
+  deleted_at            DateTime?
+  version               Int       @default(1)
+
+  tenant             tenant             @relation(fields: [tenant_id], references: [id])
+  equipment_registry equipment_registry @relation(fields: [equipment_registry_id], references: [id])
+
+  @@index([tenant_id])
+  @@index([equipment_registry_id])
+  @@index([supplier_id])
+  @@index([status])
+  @@index([is_active])
+  @@index([expires_at])
+  @@index([deleted_at])
+}
+
+model equipment_service_provider {
+  id                  String    @id @default(uuid()) @db.VarChar(36)
+  tenant_id           String    @db.VarChar(36)
+  name                String    @db.VarChar(255)
+  description         String?   @db.Text
+  service_scope       String?   @db.Text
+  contact_name        String?   @db.VarChar(255)
+  contact_email       String?   @db.VarChar(255)
+  contact_phone       String?   @db.VarChar(40)
+  sla_hours           Int?
+  contract_start_date DateTime?
+  contract_end_date   DateTime?
+  status              String?   @db.VarChar(60)
+  is_active           Boolean   @default(true)
+  created_at          DateTime  @default(now())
+  updated_at          DateTime  @updatedAt
+  deleted_at          DateTime?
+  version             Int       @default(1)
+
+  tenant                 tenant                  @relation(fields: [tenant_id], references: [id])
+  equipment_recall_notices equipment_recall_notice[]
+
+  @@unique([tenant_id, name])
+  @@index([tenant_id])
+  @@index([status])
+  @@index([is_active])
+  @@index([deleted_at])
+}
+
+model equipment_incident_report {
+  id                      String    @id @default(uuid()) @db.VarChar(36)
+  tenant_id               String    @db.VarChar(36)
+  equipment_registry_id   String?   @db.VarChar(36)
+  equipment_work_order_id String?   @db.VarChar(36)
+  reported_by_user_id     String?   @db.VarChar(36)
+  name                    String?   @db.VarChar(255)
+  title                   String    @db.VarChar(255)
+  description             String?   @db.Text
+  severity                String    @db.VarChar(60)
+  status                  String    @db.VarChar(60)
+  occurred_at             DateTime  @default(now())
+  patient_impact          Boolean   @default(false)
+  hazard_level            String?   @db.VarChar(60)
+  resolved_at             DateTime?
+  root_cause              String?   @db.Text
+  immediate_action        String?   @db.Text
+  created_at              DateTime  @default(now())
+  updated_at              DateTime  @updatedAt
+  deleted_at              DateTime?
+  version                 Int       @default(1)
+
+  tenant               tenant               @relation(fields: [tenant_id], references: [id])
+  equipment_registry   equipment_registry?  @relation(fields: [equipment_registry_id], references: [id])
+  equipment_work_order equipment_work_order? @relation(fields: [equipment_work_order_id], references: [id])
+
+  @@index([tenant_id])
+  @@index([equipment_registry_id])
+  @@index([equipment_work_order_id])
+  @@index([reported_by_user_id])
+  @@index([severity])
+  @@index([status])
+  @@index([patient_impact])
+  @@index([occurred_at])
+  @@index([deleted_at])
+}
+
+model equipment_recall_notice {
+  id                            String    @id @default(uuid()) @db.VarChar(36)
+  tenant_id                     String    @db.VarChar(36)
+  equipment_registry_id         String?   @db.VarChar(36)
+  equipment_service_provider_id String?   @db.VarChar(36)
+  name                          String?   @db.VarChar(255)
+  title                         String    @db.VarChar(255)
+  description                   String?   @db.Text
+  recall_reference              String    @db.VarChar(120)
+  severity                      String    @db.VarChar(60)
+  status                        String    @db.VarChar(60)
+  issued_at                     DateTime  @default(now())
+  due_by                        DateTime?
+  resolved_at                   DateTime?
+  action_taken                  String?   @db.Text
+  created_at                    DateTime  @default(now())
+  updated_at                    DateTime  @updatedAt
+  deleted_at                    DateTime?
+  version                       Int       @default(1)
+
+  tenant                     tenant                     @relation(fields: [tenant_id], references: [id])
+  equipment_registry         equipment_registry?        @relation(fields: [equipment_registry_id], references: [id])
+  equipment_service_provider equipment_service_provider? @relation(fields: [equipment_service_provider_id], references: [id])
+
+  @@unique([tenant_id, recall_reference])
+  @@index([tenant_id])
+  @@index([equipment_registry_id])
+  @@index([equipment_service_provider_id])
+  @@index([severity])
+  @@index([status])
+  @@index([issued_at])
+  @@index([deleted_at])
+}
+
+model equipment_utilization_snapshot {
+  id                    String    @id @default(uuid()) @db.VarChar(36)
+  tenant_id             String    @db.VarChar(36)
+  equipment_registry_id String    @db.VarChar(36)
+  name                  String?   @db.VarChar(255)
+  description           String?   @db.Text
+  captured_at           DateTime  @default(now())
+  usage_hours           Decimal?  @db.Decimal(10, 2)
+  procedure_count       Int       @default(0)
+  uptime_minutes        Int       @default(0)
+  downtime_minutes      Int       @default(0)
+  mttr_minutes          Int?
+  mtbf_minutes          Int?
+  availability_percentage Decimal? @db.Decimal(5, 2)
+  created_at            DateTime  @default(now())
+  updated_at            DateTime  @updatedAt
+  deleted_at            DateTime?
+  version               Int       @default(1)
+
+  tenant             tenant             @relation(fields: [tenant_id], references: [id])
+  equipment_registry equipment_registry @relation(fields: [equipment_registry_id], references: [id])
+
+  @@index([tenant_id])
+  @@index([equipment_registry_id])
+  @@index([captured_at])
+  @@index([deleted_at])
+}
+
+model equipment_disposal_transfer {
+  id                         String    @id @default(uuid()) @db.VarChar(36)
+  tenant_id                  String    @db.VarChar(36)
+  equipment_registry_id      String    @db.VarChar(36)
+  name                       String?   @db.VarChar(255)
+  description                String?   @db.Text
+  action_type                String    @db.VarChar(60)
+  status                     String    @db.VarChar(60)
+  to_facility_id             String?   @db.VarChar(36)
+  to_organization            String?   @db.VarChar(255)
+  reason                     String?   @db.Text
+  approved_by_user_id        String?   @db.VarChar(36)
+  approved_at                DateTime?
+  disposed_or_transferred_at DateTime?
+  certificate_url            String?   @db.VarChar(255)
+  notes                      String?   @db.Text
+  created_at                 DateTime  @default(now())
+  updated_at                 DateTime  @updatedAt
+  deleted_at                 DateTime?
+  version                    Int       @default(1)
+
+  tenant             tenant             @relation(fields: [tenant_id], references: [id])
+  equipment_registry equipment_registry @relation(fields: [equipment_registry_id], references: [id])
+
+  @@index([tenant_id])
+  @@index([equipment_registry_id])
+  @@index([action_type])
+  @@index([status])
+  @@index([to_facility_id])
+  @@index([approved_by_user_id])
   @@index([deleted_at])
 }
 

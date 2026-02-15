@@ -13,6 +13,9 @@ const router = express.Router();
 const { healthCheck, readinessCheck, livenessCheck } = require('@lib/health');
 const { asyncHandler } = require('@lib/async');
 const { sendSuccess } = require('@lib/response');
+const { authenticate } = require('@middlewares/auth.middleware');
+const { hydrateRequestScope, enforceTenantScope } = require('@middlewares/tenant-scope.middleware');
+const { enforceModuleEntitlement } = require('@middlewares/module-entitlement.middleware');
 
 /**
  * @description Health check endpoint (public)
@@ -76,6 +79,13 @@ const apiV1Router = express.Router();
 // Mount module routes under /api/v1/
 // Per module-creation.mdc step 7: Use relative paths to mount modules
 apiV1Router.use('/auth', require('../modules/auth/routes/auth.routes'));
+
+// Global protection for all non-auth API v1 routes.
+apiV1Router.use(authenticate());
+apiV1Router.use(hydrateRequestScope());
+apiV1Router.use(enforceTenantScope());
+apiV1Router.use(enforceModuleEntitlement());
+
 apiV1Router.use('/user-sessions', require('../modules/user-session/routes/user-session.routes'));
 apiV1Router.use('/tenants', require('../modules/tenant/routes/tenant.routes'));
 apiV1Router.use('/facilities', require('../modules/facility/routes/facility.routes'));
@@ -172,6 +182,8 @@ apiV1Router.use('/invoices', require('../modules/invoice/routes/invoice.routes')
 apiV1Router.use('/invoice-items', require('../modules/invoice-item/routes/invoice-item.routes'));
 apiV1Router.use('/payments', require('../modules/payment/routes/payment.routes'));
 apiV1Router.use('/refunds', require('../modules/refund/routes/refund.routes'));
+apiV1Router.use('/pricing-rules', require('../modules/pricing-rule/routes/pricing-rule.routes'));
+apiV1Router.use('/coverage-plans', require('../modules/coverage-plan/routes/coverage-plan.routes'));
 apiV1Router.use('/insurance-claims', require('../modules/insurance-claim/routes/insurance-claim.routes'));
 apiV1Router.use('/pre-authorizations', require('../modules/pre-authorization/routes/pre-authorization.routes'));
 apiV1Router.use('/billing-adjustments', require('../modules/billing-adjustment/routes/billing-adjustment.routes'));
@@ -185,6 +197,21 @@ apiV1Router.use('/housekeeping-schedules', require('../modules/housekeeping-sche
 apiV1Router.use('/maintenance-requests', require('../modules/maintenance-request/routes/maintenance-request.routes'));
 apiV1Router.use('/assets', require('../modules/asset/routes/asset.routes'));
 apiV1Router.use('/asset-service-logs', require('../modules/asset-service-log/routes/asset-service-log.routes'));
+apiV1Router.use('/equipment-categories', require('../modules/equipment-category/routes/equipment-category.routes'));
+apiV1Router.use('/equipment-registries', require('../modules/equipment-registry/routes/equipment-registry.routes'));
+apiV1Router.use('/equipment-location-histories', require('../modules/equipment-location-history/routes/equipment-location-history.routes'));
+apiV1Router.use('/equipment-maintenance-plans', require('../modules/equipment-maintenance-plan/routes/equipment-maintenance-plan.routes'));
+apiV1Router.use('/equipment-work-orders', require('../modules/equipment-work-order/routes/equipment-work-order.routes'));
+apiV1Router.use('/equipment-calibration-logs', require('../modules/equipment-calibration-log/routes/equipment-calibration-log.routes'));
+apiV1Router.use('/equipment-safety-test-logs', require('../modules/equipment-safety-test-log/routes/equipment-safety-test-log.routes'));
+apiV1Router.use('/equipment-downtime-logs', require('../modules/equipment-downtime-log/routes/equipment-downtime-log.routes'));
+apiV1Router.use('/equipment-spare-parts', require('../modules/equipment-spare-part/routes/equipment-spare-part.routes'));
+apiV1Router.use('/equipment-warranty-contracts', require('../modules/equipment-warranty-contract/routes/equipment-warranty-contract.routes'));
+apiV1Router.use('/equipment-service-providers', require('../modules/equipment-service-provider/routes/equipment-service-provider.routes'));
+apiV1Router.use('/equipment-incident-reports', require('../modules/equipment-incident-report/routes/equipment-incident-report.routes'));
+apiV1Router.use('/equipment-recall-notices', require('../modules/equipment-recall-notice/routes/equipment-recall-notice.routes'));
+apiV1Router.use('/equipment-utilization-snapshots', require('../modules/equipment-utilization-snapshot/routes/equipment-utilization-snapshot.routes'));
+apiV1Router.use('/equipment-disposal-transfers', require('../modules/equipment-disposal-transfer/routes/equipment-disposal-transfer.routes'));
 apiV1Router.use('/shifts', require('../modules/shift/routes/shift.routes'));
 apiV1Router.use('/shift-assignments', require('../modules/shift-assignment/routes/shift-assignment.routes'));
 apiV1Router.use('/shift-swap-requests', require('../modules/shift-swap-request/routes/shift-swap-request.routes'));
@@ -194,6 +221,10 @@ apiV1Router.use('/roster-day-offs', require('../modules/roster-day-off/routes/ro
 apiV1Router.use('/staff-availabilities', require('../modules/staff-availability/routes/staff-availability.routes'));
 apiV1Router.use('/notifications', require('../modules/notification/routes/notification.routes'));
 apiV1Router.use('/notification-deliveries', require('../modules/notification-delivery/routes/notification-delivery.routes'));
+apiV1Router.use('/conversations', require('../modules/conversation/routes/conversation.routes'));
+apiV1Router.use('/messages', require('../modules/message/routes/message.routes'));
+apiV1Router.use('/report-definitions', require('../modules/report-definition/routes/report-definition.routes'));
+apiV1Router.use('/report-runs', require('../modules/report-run/routes/report-run.routes'));
 apiV1Router.use('/dashboard-widgets', require('../modules/dashboard-widget/routes/dashboard-widget.routes'));
 apiV1Router.use('/kpi-snapshots', require('../modules/kpi-snapshot/routes/kpi-snapshot.routes'));
 apiV1Router.use('/analytics-events', require('../modules/analytics-event/routes/analytics-event.routes'));

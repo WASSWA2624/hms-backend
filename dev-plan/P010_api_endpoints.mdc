@@ -892,7 +892,7 @@ GET /live
 └── DELETE /{id}                    // Soft delete payroll item
 ```
 
-## 17. Housekeeping & Facilities
+## 17. Housekeeping, Facilities & Biomedical
 ```javascript
 /api/v<version>/housekeeping-tasks/
 ├── GET /                           // List housekeeping tasks
@@ -928,6 +928,110 @@ GET /live
 ├── GET /{id}                       // Get asset service log by ID
 ├── PUT /{id}                       // Update asset service log
 └── DELETE /{id}                    // Soft delete asset service log
+/api/v<version>/equipment-categories/
+GET /                           // List equipment categories
+POST /                          // Create equipment category
+GET /{id}                       // Get equipment category by ID
+PUT /{id}                       // Update equipment category
+DELETE /{id}                    // Soft delete equipment category
+
+/api/v<version>/equipment-registries/
+GET /                           // List equipment registry entries
+POST /                          // Create equipment registry entry
+GET /{id}                       // Get equipment registry entry by ID
+PUT /{id}                       // Update equipment registry entry
+DELETE /{id}                    // Soft delete equipment registry entry
+
+/api/v<version>/equipment-location-histories/
+GET /                           // List equipment location histories
+POST /                          // Create equipment location history
+GET /{id}                       // Get equipment location history by ID
+PUT /{id}                       // Update equipment location history
+DELETE /{id}                    // Soft delete equipment location history
+
+/api/v<version>/equipment-maintenance-plans/
+GET /                           // List equipment maintenance plans
+POST /                          // Create equipment maintenance plan
+GET /{id}                       // Get equipment maintenance plan by ID
+PUT /{id}                       // Update equipment maintenance plan
+DELETE /{id}                    // Soft delete equipment maintenance plan
+
+/api/v<version>/equipment-work-orders/
+GET /                           // List equipment work orders
+POST /                          // Create equipment work order
+GET /{id}                       // Get equipment work order by ID
+PUT /{id}                       // Update equipment work order
+DELETE /{id}                    // Soft delete equipment work order
+
+/api/v<version>/equipment-calibration-logs/
+GET /                           // List equipment calibration logs
+POST /                          // Create equipment calibration log
+GET /{id}                       // Get equipment calibration log by ID
+PUT /{id}                       // Update equipment calibration log
+DELETE /{id}                    // Soft delete equipment calibration log
+
+/api/v<version>/equipment-safety-test-logs/
+GET /                           // List equipment safety test logs
+POST /                          // Create equipment safety test log
+GET /{id}                       // Get equipment safety test log by ID
+PUT /{id}                       // Update equipment safety test log
+DELETE /{id}                    // Soft delete equipment safety test log
+
+/api/v<version>/equipment-downtime-logs/
+GET /                           // List equipment downtime logs
+POST /                          // Create equipment downtime log
+GET /{id}                       // Get equipment downtime log by ID
+PUT /{id}                       // Update equipment downtime log
+DELETE /{id}                    // Soft delete equipment downtime log
+
+/api/v<version>/equipment-spare-parts/
+GET /                           // List equipment spare parts
+POST /                          // Create equipment spare part
+GET /{id}                       // Get equipment spare part by ID
+PUT /{id}                       // Update equipment spare part
+DELETE /{id}                    // Soft delete equipment spare part
+
+/api/v<version>/equipment-warranty-contracts/
+GET /                           // List equipment warranty contracts
+POST /                          // Create equipment warranty contract
+GET /{id}                       // Get equipment warranty contract by ID
+PUT /{id}                       // Update equipment warranty contract
+DELETE /{id}                    // Soft delete equipment warranty contract
+
+/api/v<version>/equipment-service-providers/
+GET /                           // List equipment service providers
+POST /                          // Create equipment service provider
+GET /{id}                       // Get equipment service provider by ID
+PUT /{id}                       // Update equipment service provider
+DELETE /{id}                    // Soft delete equipment service provider
+
+/api/v<version>/equipment-incident-reports/
+GET /                           // List equipment incident reports
+POST /                          // Create equipment incident report
+GET /{id}                       // Get equipment incident report by ID
+PUT /{id}                       // Update equipment incident report
+DELETE /{id}                    // Soft delete equipment incident report
+
+/api/v<version>/equipment-recall-notices/
+GET /                           // List equipment recall notices
+POST /                          // Create equipment recall notice
+GET /{id}                       // Get equipment recall notice by ID
+PUT /{id}                       // Update equipment recall notice
+DELETE /{id}                    // Soft delete equipment recall notice
+
+/api/v<version>/equipment-utilization-snapshots/
+GET /                           // List equipment utilization snapshots
+POST /                          // Create equipment utilization snapshot
+GET /{id}                       // Get equipment utilization snapshot by ID
+PUT /{id}                       // Update equipment utilization snapshot
+DELETE /{id}                    // Soft delete equipment utilization snapshot
+
+/api/v<version>/equipment-disposal-transfers/
+GET /                           // List equipment disposal transfers
+POST /                          // Create equipment disposal transfer
+GET /{id}                       // Get equipment disposal transfer by ID
+PUT /{id}                       // Update equipment disposal transfer
+DELETE /{id}                    // Soft delete equipment disposal transfer
 ```
 
 ## 18. Notifications & Communications
@@ -1124,3 +1228,4 @@ Telemedicine, patient portal, and engagement features reuse existing resources:
 ❌ Any API module endpoint under `/api/v<version>/` that is not defined in this file **invalid**  
 ✅ All refactors must **improve compliance**, never reduce it  
 This file is **non-negotiable** and applies globally.
+

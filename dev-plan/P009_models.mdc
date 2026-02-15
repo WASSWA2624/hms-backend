@@ -105,6 +105,15 @@ alwaysApply: true
 - `housekeeping_task`, `housekeeping_schedule`
 - `maintenance_request`, `asset`, `asset_service_log`
 
+### Step 8.16A: Biomedical engineering & medical equipment suite models
+- `equipment_category`, `equipment_registry`, `equipment_location_history`
+- `equipment_maintenance_plan`, `equipment_work_order`
+- `equipment_calibration_log`, `equipment_safety_test_log`, `equipment_downtime_log`
+- `equipment_spare_part`, `equipment_warranty_contract`, `equipment_service_provider`
+- `equipment_incident_report`, `equipment_recall_notice`
+- `equipment_utilization_snapshot`, `equipment_disposal_transfer`
+- **Verification**: Biomedical models are tenant-scoped, soft-delete capable, and indexed for operational reporting.
+
 ### Step 8.17: Notifications & communications models
 - `notification`, `notification_delivery`, `message`, `conversation`
 - `template`, `template_variable`

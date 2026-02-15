@@ -10,6 +10,7 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "verify:compliance": "node scripts/verify-compliance.js",
+    "verify:writeup-sync": "node scripts/verify-writeup-sync.js",
     "setup:accounts": "node scripts/setup-default-accounts.js",
     "prisma:studio": "prisma studio",
     "prisma:generate": "prisma generate",

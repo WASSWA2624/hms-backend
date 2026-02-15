@@ -10,14 +10,15 @@ alwaysApply: true
 
 **Compliance:** All modules must follow `internationalization.mdc` - use translation keys (no hardcoded strings) and add keys to `src/locales/en.json` before completion.
 
-## Implementation status snapshot (2026-02-12)
+## Implementation status snapshot (2026-02-15)
 
-- Planned atomic modules: **144**
-- Fully implemented (all 5 module layers present): **144/144**
+- Planned atomic modules: **159**
+- Fully implemented (all 5 module layers present): **159/159**
 - Pending module implementations: **None**
 - Group completion highlights:
   - Group 10 (Pharmacy): 7/7 complete
   - Group 13 (Billing, Payments & Insurance): 9/9 complete
+  - Group 15A (Biomedical Engineering): 15/15 complete
   - All other module groups in this file are fully implemented.
 
 ---
@@ -287,6 +288,33 @@ alwaysApply: true
 
 ---
 
+### Module Group 15A: Biomedical Engineering & Medical Equipment Suite
+
+**Scope note:** This suite is a subscription-gated add-on bundle, with basic issue reporting available in free core workflows.
+
+#### 15A.1 Equipment Lifecycle & Registry
+15A.1.1**: `equipment-category` - Equipment category CRUD operations
+15A.1.2**: `equipment-registry` - Equipment registry CRUD operations
+15A.1.3**: `equipment-location-history` - Equipment location history CRUD operations
+15A.1.4**: `equipment-disposal-transfer` - Equipment disposal/transfer CRUD operations
+
+#### 15A.2 Maintenance, Safety & Compliance
+15A.2.1**: `equipment-maintenance-plan` - Preventive maintenance plan CRUD operations
+15A.2.2**: `equipment-work-order` - Corrective maintenance work order CRUD operations
+15A.2.3**: `equipment-calibration-log` - Calibration log CRUD operations
+15A.2.4**: `equipment-safety-test-log` - Safety test log CRUD operations
+15A.2.5**: `equipment-downtime-log` - Downtime log CRUD operations
+15A.2.6**: `equipment-incident-report` - Equipment incident report CRUD operations
+15A.2.7**: `equipment-recall-notice` - Equipment recall notice CRUD operations
+
+#### 15A.3 Vendors, Parts & Utilization
+15A.3.1**: `equipment-spare-part` - Spare part CRUD operations
+15A.3.2**: `equipment-warranty-contract` - Warranty contract CRUD operations
+15A.3.3**: `equipment-service-provider` - Service provider CRUD operations
+15A.3.4**: `equipment-utilization-snapshot` - Utilization snapshot CRUD operations
+
+---
+
 ### Module Group 16: Notifications & Communications
 
 #### 16.1 Notifications
@@ -358,6 +386,6 @@ alwaysApply: true
 
 ---
 
-## Total Module Count: 144 atomic modules
+## Total Module Count: 159 atomic modules
 
 Each module is a complete, independent implementation unit following the 8-step process.

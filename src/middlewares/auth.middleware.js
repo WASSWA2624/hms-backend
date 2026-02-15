@@ -17,6 +17,45 @@ const rolesConfig = require('@config/roles');
 const permissionsConfig = require('@config/permissions');
 
 /**
+ * Normalize decoded JWT payload into a consistent request user object.
+ * This keeps compatibility with code that expects either snake_case or camelCase fields.
+ *
+ * @param {Object} decoded - Decoded JWT payload
+ * @returns {Object} Normalized user context
+ */
+const normalizeUserContext = (decoded = {}) => {
+  const userId = decoded.id || decoded.user_id || decoded.userId || null;
+  const tenantId = decoded.tenant_id || decoded.tenantId || null;
+  const facilityId = decoded.facility_id || decoded.facilityId || null;
+  const branchId = decoded.branch_id || decoded.branchId || null;
+
+  const roles = Array.isArray(decoded.roles)
+    ? decoded.roles
+    : decoded.role
+      ? [decoded.role]
+      : [];
+
+  const permissions = Array.isArray(decoded.permissions)
+    ? decoded.permissions
+    : [];
+
+  return {
+    ...decoded,
+    id: userId,
+    user_id: userId,
+    userId,
+    tenant_id: tenantId,
+    tenantId,
+    facility_id: facilityId,
+    facilityId,
+    branch_id: branchId,
+    branchId,
+    roles,
+    permissions
+  };
+};
+
+/**
  * Extract JWT token from Authorization header
  * 
  * @param {Object} req - Express request object
@@ -47,6 +86,12 @@ const extractToken = (req) => {
 const authenticate = () => {
   return async (req, res, next) => {
     try {
+      // Support idempotent auth middleware usage (global + route-level).
+      if (req.user && (req.user.id || req.user.userId || req.user.user_id)) {
+        req.user = normalizeUserContext(req.user);
+        return next();
+      }
+
       const token = extractToken(req);
       
       if (!token) {
@@ -55,7 +100,7 @@ const authenticate = () => {
       
       try {
         const decoded = verifyToken(token);
-        req.user = decoded;
+        req.user = normalizeUserContext(decoded);
         next();
       } catch (tokenError) {
         return next(new HttpError('errors.auth.invalid_token', 401));
@@ -135,6 +180,7 @@ const requireAuth = (requiredRole = null, type = 'role') => {
 module.exports = {
   authenticate,
   authorize,
-  requireAuth
+  requireAuth,
+  normalizeUserContext
 };
 
