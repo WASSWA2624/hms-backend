@@ -1,0 +1,148 @@
+Steps to review and implement (Phase 015: Performance and Readiness):
+- **8.1-8.5** Execute performance/readiness steps exactly as numbered in `P008_perf.mdc`.
+- Includes pagination enforcement, query optimization, optional caching decision, metrics, and final compliance checks.
+
+Review and implement all missing and non-compliant aspects of the selected Phase 015 unit(s) per:
+- hms-backend/dev-plan/P008_perf.mdc
+
+You must ensure 100% compliance with:
+- All rules in hms-backend/.cursor/rules/*
+- hms-backend/dev-plan/index.md
+- hms-backend/.cursor/commands/backend-rules-dev.md
+- Actual repository architecture and conventions already in hms-backend/src/**
+
+Only implement what is required for the selected Phase 015 unit(s).
+
+---
+
+## Scope
+
+- Harden production readiness and performance baselines after full feature implementation.
+- Verify system-wide contracts and release gates.
+
+---
+
+## Phase Constraints (Mandatory)
+
+- Do NOT introduce risky optimizations without measurable justification.
+- Do NOT skip final compliance checklist items in `P008_perf.mdc`.
+
+---
+
+## Rule Loading Contract (Mandatory)
+
+Before coding, read and apply:
+- `hms-backend/.cursor/rules/index.mdc` (entry point)
+- `hms-backend/.cursor/rules/architecture.mdc`
+- `hms-backend/.cursor/rules/project-structure.mdc`
+- `hms-backend/.cursor/rules/coding-standards.mdc`
+- `hms-backend/.cursor/rules/import-aliases.mdc`
+- `hms-backend/.cursor/rules/module-creation.mdc`
+- `hms-backend/.cursor/rules/api.mdc`
+- `hms-backend/.cursor/rules/api-versioning.mdc`
+- `hms-backend/.cursor/rules/response-format.mdc`
+- `hms-backend/.cursor/rules/validation.mdc`
+- `hms-backend/.cursor/rules/auth-security.mdc`
+- `hms-backend/.cursor/rules/cors.mdc`
+- `hms-backend/.cursor/rules/rate-limiting.mdc`
+- `hms-backend/.cursor/rules/health-checks.mdc`
+- `hms-backend/.cursor/rules/error-logging.mdc`
+- `hms-backend/.cursor/rules/constants-env.mdc`
+- `hms-backend/.cursor/rules/prisma.mdc`
+- `hms-backend/.cursor/rules/storage.mdc`
+- `hms-backend/.cursor/rules/websockets.mdc`
+- `hms-backend/.cursor/rules/performance.mdc`
+- `hms-backend/.cursor/rules/offline-support.mdc`
+- `hms-backend/.cursor/rules/internationalization.mdc`
+- `hms-backend/.cursor/rules/compliance.mdc`
+- `hms-backend/.cursor/rules/documentation.mdc`
+- `hms-backend/.cursor/rules/testing.mdc`
+
+Conflict resolution order:
+- Follow each rule file's declared single source of truth.
+- If still unclear, prioritize: index.mdc references -> specific single-source files -> selected phase plan.
+
+---
+
+## Chronology Contract (Mandatory)
+
+- Respect the chronological sequence in hms-backend/dev-plan/index.md.
+- Foundational phases (0-8) must remain framework/platform foundational and free of app-specific module implementation.
+- App-specific phases (9-15) must not regress foundational contracts already completed.
+
+---
+
+## Step Selection Contract (Mandatory)
+
+- The request can target one or more step IDs, section IDs, or module-group IDs defined in the selected phase file.
+- If specific IDs are selected, implement only those selected IDs.
+- If selected work needs minimal shared prerequisite wiring, implement only the minimum prerequisite changes required.
+- Do NOT auto-implement unselected sibling steps/sections/groups.
+- Apply strict gate execution from the selected phase file: complete each selected unit fully (implementation + tests + compliance checks) before moving to the next selected unit.
+
+---
+
+## Implementation Rules (Mandatory)
+
+### Architecture and Boundaries
+- Keep layer boundaries from `architecture.mdc` and `project-structure.mdc`.
+- Keep runtime code CommonJS (`require/module.exports`) per `coding-standards.mdc`.
+- Use import aliases per import-aliases.mdc; avoid cross-layer relative imports.
+- Never access process.env directly outside config/env modules.
+- Routes -> Controllers -> Services -> Repositories; only repositories access Prisma directly.
+
+### API, Security, and Reliability
+- Preserve API versioning (/api/v1) and unversioned health endpoints (/health, /ready, /live).
+- Use response helpers for success/error/pagination envelopes.
+- Use Zod validation schemas and validation middleware for all inputs.
+- Enforce auth/RBAC/CSRF/rate-limit/security middleware order per rules.
+- Sanitize logs and avoid leaking tokens, credentials, PII, or secrets.
+
+### i18n and Localization
+- Maintain complete en locale first for new keys.
+- Use translation keys in responses/errors; no hardcoded user-facing strings.
+- Keep locale handling in middleware/helpers and response metadata as required.
+
+### Testing and Verification
+- Add/update tests for changed behavior and edge paths.
+- Mock external dependencies (DB, storage, websockets, network) in tests.
+- Run targeted tests/checks relevant to selected steps and report pass/fail.
+
+---
+
+## Step Gate Checklist (Mandatory per selected unit)
+
+1. Implement/fix only selected unit files with compliant structure.
+2. Enforce API, security, i18n, and architecture compliance.
+3. Add/update tests for selected behavior and edge cases.
+4. Run relevant checks/tests and confirm pass/fail status.
+5. Verify no boundary violations.
+6. Verify no unselected-scope creep.
+
+---
+
+## Acceptance Criteria
+
+- 100% compliance with all files in hms-backend/.cursor/rules/*.
+- Selected phase units from the referenced hms-backend/dev-plan/*.mdc are complete and production-ready.
+- Phase chronology and dependency contracts are preserved.
+- Tests and verification gates are satisfied for selected scope.
+- No out-of-scope phase/step work was introduced.
+
+---
+
+## Deliverables
+
+Return ONLY:
+
+1. Implementation files changed for selected phase unit(s).
+2. Related config/route/middleware/export wiring updates required by selected scope only.
+3. Locale key updates required by selected scope (en first).
+4. Tests/verification artifacts for selected unit(s), including commands run and result summary.
+5. A concise compliance report confirming:
+   - selected IDs implemented
+   - rule compliance checks performed
+   - chronology/dependency checks performed
+   - any intentionally deferred work (must be out-of-scope and justified)
+
+Do NOT include files or logic outside selected phase unit(s).

@@ -1,0 +1,20 @@
+Backend chronological phase commands:
+
+1. dev-phase-000-setup.mdc -> dev-plan/P000_setup.mdc
+2. dev-phase-001-core-utilities.mdc -> dev-plan/P001_core.mdc
+3. dev-phase-002-prisma-foundation.mdc -> dev-plan/P002_prisma.mdc
+4. dev-phase-003-minimal-app.mdc -> dev-plan/P003_app.mdc
+5. dev-phase-004-i18n-base.mdc -> dev-plan/P004_i18n.mdc
+6. dev-phase-005-websocket-base.mdc -> dev-plan/P005_ws.mdc
+7. dev-phase-006-storage-base.mdc -> dev-plan/P006_storage.mdc
+8. dev-phase-007-testing-ci-base.mdc -> dev-plan/P007_tests.mdc
+9. dev-phase-008-offline-support-base.mdc -> dev-plan/P015_offline.mdc
+10. dev-phase-009-models.mdc -> dev-plan/P009_models.mdc
+11. dev-phase-010-api-endpoints-reference.mdc -> dev-plan/P010_api_endpoints.mdc
+12. dev-phase-011-api-modules.mdc -> dev-plan/P011_modules.mdc
+13. dev-phase-012-seeder.mdc -> dev-plan/P012_seeder.mdc
+14. dev-phase-013-websocket-features.mdc -> dev-plan/P013_ws_features.mdc
+15. dev-phase-014-locale-expansion.mdc -> dev-plan/P014_locales.mdc
+16. dev-phase-015-performance-readiness.mdc -> dev-plan/P008_perf.mdc
+
+Use phases in this order to reproduce the backend chronologically.
