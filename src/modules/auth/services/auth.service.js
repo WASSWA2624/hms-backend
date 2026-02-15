@@ -33,12 +33,14 @@ const resolveAccountStatusErrorKey = (status) => {
   return 'errors.auth.account_inactive';
 };
 
-const APP_DISPLAY_NAME = 'Hospital Management System';
+const APP_DISPLAY_NAME =
+  String(env.APP_DISPLAY_NAME || 'Hospital Management System').trim() ||
+  'Hospital Management System';
 const EMAIL_LOGO_CID = 'hms-app-logo';
 const EMAIL_LOGO_PATHS = [
-  path.resolve(__dirname, '../../../../../hms-frontend/public/logo-light.png'),
-  path.resolve(__dirname, '../../../../../hms-frontend/assets/logo-light.png'),
-  path.resolve(__dirname, '../../../../public/logo-light.png'),
+  path.resolve(__dirname, '../../../../../hms-frontend/public/logo.png'),
+  path.resolve(__dirname, '../../../../../hms-frontend/assets/logo.png'),
+  path.resolve(__dirname, '../../../../public/logo.png'),
 ];
 
 const resolveFacilityTypeLabel = (facilityType, locale = 'en') => {
@@ -174,7 +176,9 @@ const buildVerificationEmailMessage = ({
   const passwordLine = plainPassword
     ? `${translate('messages.auth.email_verification.password_notice', resolvedLocale)} ${plainPassword}\n`
     : '';
-  const subject = translate('messages.auth.email_verification.subject', resolvedLocale);
+  const subject = translate('messages.auth.email_verification.subject', resolvedLocale, {
+    app_name: APP_DISPLAY_NAME,
+  });
   const preheader = translate('messages.auth.email_verification.preheader', resolvedLocale, {
     app_name: APP_DISPLAY_NAME,
   });

@@ -73,7 +73,7 @@
   "messages.auth.verification_sent.success": "Verification code sent successfully",
   "messages.auth.identify.success": "Tenant options retrieved successfully",
   "messages.auth.csrf_token.generated": "CSRF token generated successfully",
-  "messages.auth.email_verification.subject": "Confirm your Hospital Management System account",
+  "messages.auth.email_verification.subject": "Confirm your {{app_name}} account",
   "messages.auth.email_verification.preheader": "Use your verification code to activate your account.",
   "messages.auth.email_verification.greeting": "Hello {{name}},",
   "messages.auth.email_verification.intro": "Thanks for registering {{facility}} ({{facility_type}}) on {{app_name}}.",

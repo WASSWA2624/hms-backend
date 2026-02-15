@@ -117,12 +117,16 @@ const buildEnv = () => {
   const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || null;
   const CSRF_SECRET = process.env.CSRF_SECRET || null;
   const APP_PUBLIC_URL = process.env.APP_PUBLIC_URL || 'http://localhost:8081';
+  const APP_DISPLAY_NAME =
+    String(process.env.APP_DISPLAY_NAME || 'Hospital Management System').trim() ||
+    'Hospital Management System';
+  const APP_SHORT_NAME = String(process.env.APP_SHORT_NAME || 'HMS').trim() || 'HMS';
   const SMTP_HOST = process.env.SMTP_HOST || null;
   const SMTP_PORT = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : null;
   const SMTP_USER = process.env.SMTP_USER || null;
   const SMTP_PASS = process.env.SMTP_PASS || null;
   const SMTP_FROM = process.env.SMTP_FROM || null;
-  const SMTP_FROM_NAME = process.env.SMTP_FROM_NAME || 'Hospital Management System';
+  const SMTP_FROM_NAME = process.env.SMTP_FROM_NAME || APP_DISPLAY_NAME;
   const SMTP_REPLY_TO = process.env.SMTP_REPLY_TO || null;
   const SMTP_NO_REPLY_ADDRESS = process.env.SMTP_NO_REPLY_ADDRESS || null;
   const ALLOW_PLAINTEXT_PASSWORD_EMAIL = parseOptionalBoolean(
@@ -202,6 +206,8 @@ const buildEnv = () => {
     ENCRYPTION_KEY,
     CSRF_SECRET,
     APP_PUBLIC_URL,
+    APP_DISPLAY_NAME,
+    APP_SHORT_NAME,
     SMTP_HOST,
     SMTP_PORT,
     SMTP_USER,
@@ -229,6 +235,8 @@ const buildEnv = () => {
       corsOrigins: CORS_ORIGINS,
       storageProvider: STORAGE_PROVIDER,
       appPublicUrl: APP_PUBLIC_URL,
+      appDisplayName: APP_DISPLAY_NAME,
+      appShortName: APP_SHORT_NAME,
       handleSigint: HANDLE_SIGINT,
       wsMaxConnections: WS_MAX_CONNECTIONS,
       wsHeartbeatInterval: WS_HEARTBEAT_INTERVAL,
@@ -272,6 +280,8 @@ const envKeys = [
   'ENCRYPTION_KEY',
   'CSRF_SECRET',
   'APP_PUBLIC_URL',
+  'APP_DISPLAY_NAME',
+  'APP_SHORT_NAME',
   'SMTP_HOST',
   'SMTP_PORT',
   'SMTP_USER',

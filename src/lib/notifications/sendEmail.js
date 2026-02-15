@@ -17,7 +17,9 @@ const STORAGE = {
   SKIPPED: 'skipped',
 };
 
-const DEFAULT_SENDER_NAME = 'Hospital Management System';
+const DEFAULT_SENDER_NAME =
+  String(env.APP_DISPLAY_NAME || 'Hospital Management System').trim() ||
+  'Hospital Management System';
 
 const maskEmail = (value) => {
   const raw = String(value || '').trim();
