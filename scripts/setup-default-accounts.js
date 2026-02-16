@@ -11,6 +11,8 @@
  * - PHARMACIST: Pharmacy staff
  * - RECEPTIONIST: Front desk staff
  * - BILLING: Billing and finance staff
+ * - BIOMED: Biomedical engineering staff
+ * - HOUSE_KEEPER: Housekeeping staff
  * - PATIENT: Patient user (example)
  * 
  * This script:
@@ -83,14 +85,14 @@ const { createAuditLog } = require('@lib/audit');
  * Default password for all created accounts
  * WARNING: Change these passwords immediately after first login in production!
  */
-const DEFAULT_PASSWORD = 'ChangeMe123!';
+const DEFAULT_PASSWORD = 'Demo@123!';
 
 /**
  * Default tenant configuration
  */
 const DEFAULT_TENANT = {
-  name: 'Default Hospital',
-  slug: 'default-hospital',
+  name: 'Demo Tenant',
+  slug: 'demo-tenant',
   is_active: true
 };
 
@@ -98,7 +100,7 @@ const DEFAULT_TENANT = {
  * Default facility configuration
  */
 const DEFAULT_FACILITY = {
-  name: 'Main Hospital',
+  name: 'Demo Facility',
   facility_type: 'HOSPITAL',
   is_active: true
 };
@@ -110,7 +112,7 @@ const DEFAULT_FACILITY = {
 const USER_ACCOUNTS = [
   {
     // Platform-level super administrator
-    email: 'superadmin@hospital.com',
+    email: 'superadmin@demo.com',
     phone: '+12345678901',
     role: 'SUPER_ADMIN',
     status: 'ACTIVE',
@@ -123,24 +125,24 @@ const USER_ACCOUNTS = [
   },
   {
     // Hospital/tenant-level administrator
-    email: 'admin@hospital.com',
+    email: 'tenantadmin@demo.com',
     phone: '+12345678902',
     role: 'TENANT_ADMIN',
     status: 'ACTIVE',
     profile: {
-      first_name: 'Hospital',
+      first_name: 'Tenant',
       last_name: 'Administrator',
       gender: 'OTHER'
     },
     staffProfile: {
       staff_number: 'ADM001',
-      position: 'Hospital Administrator',
+      position: 'Tenant Administrator',
       hire_date: new Date()
     }
   },
   {
     // Facility-level administrator
-    email: 'facilityadmin@hospital.com',
+    email: 'facilityadmin@demo.com',
     phone: '+12345678903',
     role: 'FACILITY_ADMIN',
     status: 'ACTIVE',
@@ -157,7 +159,7 @@ const USER_ACCOUNTS = [
   },
   {
     // Medical doctor
-    email: 'doctor@hospital.com',
+    email: 'doctor@demo.com',
     phone: '+12345678904',
     role: 'DOCTOR',
     status: 'ACTIVE',
@@ -174,7 +176,7 @@ const USER_ACCOUNTS = [
   },
   {
     // Nursing staff
-    email: 'nurse@hospital.com',
+    email: 'nurse@demo.com',
     phone: '+12345678905',
     role: 'NURSE',
     status: 'ACTIVE',
@@ -191,7 +193,7 @@ const USER_ACCOUNTS = [
   },
   {
     // Laboratory technician
-    email: 'labtech@hospital.com',
+    email: 'labtech@demo.com',
     phone: '+12345678906',
     role: 'LAB_TECH',
     status: 'ACTIVE',
@@ -208,7 +210,7 @@ const USER_ACCOUNTS = [
   },
   {
     // Pharmacy staff
-    email: 'pharmacist@hospital.com',
+    email: 'pharmacist@demo.com',
     phone: '+12345678907',
     role: 'PHARMACIST',
     status: 'ACTIVE',
@@ -225,7 +227,7 @@ const USER_ACCOUNTS = [
   },
   {
     // Receptionist
-    email: 'receptionist@hospital.com',
+    email: 'receptionist@demo.com',
     phone: '+12345678908',
     role: 'RECEPTIONIST',
     status: 'ACTIVE',
@@ -242,7 +244,7 @@ const USER_ACCOUNTS = [
   },
   {
     // Billing staff
-    email: 'billing@hospital.com',
+    email: 'billing@demo.com',
     phone: '+12345678909',
     role: 'BILLING',
     status: 'ACTIVE',
@@ -258,8 +260,42 @@ const USER_ACCOUNTS = [
     }
   },
   {
+    // Biomedical engineering staff
+    email: 'biomed@demo.com',
+    phone: '+12345678911',
+    role: 'BIOMED',
+    status: 'ACTIVE',
+    profile: {
+      first_name: 'Biomed',
+      last_name: 'Engineer',
+      gender: 'OTHER'
+    },
+    staffProfile: {
+      staff_number: 'BME001',
+      position: 'Biomedical Engineer',
+      hire_date: new Date()
+    }
+  },
+  {
+    // Housekeeping staff
+    email: 'housekeeping@demo.com',
+    phone: '+12345678912',
+    role: 'HOUSE_KEEPER',
+    status: 'ACTIVE',
+    profile: {
+      first_name: 'Housekeeping',
+      last_name: 'Staff',
+      gender: 'OTHER'
+    },
+    staffProfile: {
+      staff_number: 'HKS001',
+      position: 'Housekeeping Staff',
+      hire_date: new Date()
+    }
+  },
+  {
     // Patient user (example)
-    email: 'patient@hospital.com',
+    email: 'patient@demo.com',
     phone: '+12345678910',
     role: 'PATIENT',
     status: 'ACTIVE',
