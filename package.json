@@ -12,6 +12,7 @@
     "verify:compliance": "node scripts/verify-compliance.js",
     "verify:writeup-sync": "node scripts/verify-writeup-sync.js",
     "setup:accounts": "node scripts/setup-default-accounts.js",
+    "backfill:human-ids": "node scripts/backfill-human-friendly-ids.js",
     "prisma:studio": "prisma studio",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",

@@ -26,6 +26,288 @@ const { PrismaMariaDb } = require('@prisma/adapter-mariadb');
 
 const { NODE_ENV, DATABASE_URL } = require('@config/env');
 
+const FRIENDLY_ID_PREFIX_LENGTH = 3;
+const DEFAULT_FRIENDLY_ID_PADDING = 7;
+const FRIENDLY_ID_COUNTER_RETRIES = 3;
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const FRIENDLY_ID_REGEX = /^[A-Z]{3}\d{7}$/;
+
+const SYSTEM_MODELS = new Set(['human_id_counter']);
+
+const MODEL_PREFIX_OVERRIDES = Object.freeze({
+  tenant: 'TEN',
+  facility: 'FAC',
+  branch: 'BRA',
+  department: 'DEP',
+  unit: 'UNI',
+  ward: 'WRD',
+  room: 'ROM',
+  bed: 'BED',
+  user: 'USR',
+  user_profile: 'UPR',
+  user_role: 'URO',
+  patient: 'PAT',
+  staff_profile: 'STF',
+  appointment: 'APT',
+  encounter: 'ENC',
+  admission: 'ADM',
+  invoice: 'INV',
+  payment: 'PAY',
+  role: 'ROL',
+  permission: 'PER',
+});
+
+const ROLE_PREFIX_MAP = Object.freeze({
+  SUPER_ADMIN: 'SUP',
+  TENANT_ADMIN: 'TEN',
+  FACILITY_ADMIN: 'FAC',
+  DOCTOR: 'DOC',
+  NURSE: 'NUR',
+  LAB_TECH: 'LAB',
+  PHARMACIST: 'PHA',
+  RECEPTIONIST: 'REC',
+  BILLING: 'BIL',
+  PATIENT: 'PAT',
+  BIOMED: 'BIO',
+  HOUSE_KEEPER: 'HOU',
+  OTHER: 'OTH',
+});
+
+const FACILITY_SCOPED_ROLES = new Set([
+  'DOCTOR',
+  'NURSE',
+  'LAB_TECH',
+  'PHARMACIST',
+  'RECEPTIONIST',
+  'BIOMED',
+  'HOUSE_KEEPER',
+]);
+
+const isUuid = (value) => typeof value === 'string' && UUID_REGEX.test(value);
+const isFriendlyId = (value) => typeof value === 'string' && FRIENDLY_ID_REGEX.test(value);
+
+const normalizePrefix = (value) =>
+  (String(value || '')
+    .replace(/[^a-zA-Z0-9]/g, '')
+    .toUpperCase()
+    .slice(0, FRIENDLY_ID_PREFIX_LENGTH)
+    .padEnd(FRIENDLY_ID_PREFIX_LENGTH, 'X'));
+
+const deriveModelPrefix = (model) => {
+  if (!model) return 'XXX';
+  if (MODEL_PREFIX_OVERRIDES[model]) return normalizePrefix(MODEL_PREFIX_OVERRIDES[model]);
+
+  const alphaNumericModelName = String(model).replace(/[^a-zA-Z0-9]/g, '');
+  return normalizePrefix(alphaNumericModelName);
+};
+
+const formatFriendlyId = (prefix, sequence) => {
+  const safePrefix = normalizePrefix(prefix);
+  return `${safePrefix}${String(sequence).padStart(DEFAULT_FRIENDLY_ID_PADDING, '0')}`;
+};
+
+const resolveRoleIdFromUserRoleData = (data = {}) => {
+  if (typeof data.role_id === 'string' && data.role_id) return data.role_id;
+  if (typeof data.role?.connect?.id === 'string' && data.role.connect.id) return data.role.connect.id;
+  return null;
+};
+
+const resolveRoleNameForUserRole = async (prismaClient, data = {}) => {
+  if (typeof data.role?.create?.name === 'string' && data.role.create.name) {
+    return data.role.create.name;
+  }
+
+  const roleId = resolveRoleIdFromUserRoleData(data);
+  if (!roleId) return null;
+
+  const role = await prismaClient.role.findUnique({
+    where: { id: roleId },
+    select: { name: true },
+  });
+
+  return role?.name || null;
+};
+
+const buildScopeKey = (model, data, roleName, prefix) => {
+  if (model === 'user_role' && roleName) {
+    if (FACILITY_SCOPED_ROLES.has(roleName) && typeof data.facility_id === 'string' && data.facility_id) {
+      return `facility:${data.facility_id}:role:${roleName}:prefix:${prefix}`;
+    }
+    if (typeof data.tenant_id === 'string' && data.tenant_id) {
+      return `tenant:${data.tenant_id}:role:${roleName}:prefix:${prefix}`;
+    }
+    return `global:role:${roleName}:prefix:${prefix}`;
+  }
+
+  if (typeof data.facility_id === 'string' && data.facility_id) {
+    return `facility:${data.facility_id}:model:${model}:prefix:${prefix}`;
+  }
+
+  if (typeof data.tenant_id === 'string' && data.tenant_id) {
+    return `tenant:${data.tenant_id}:model:${model}:prefix:${prefix}`;
+  }
+
+  return `global:model:${model}:prefix:${prefix}`;
+};
+
+const reserveNextFriendlySequence = async (prismaClient, model, prefix, scopeKey, retryCount = 0) => {
+  try {
+    const counter = await prismaClient.human_id_counter.upsert({
+      where: {
+        model_name_prefix_scope_key: {
+          model_name: model,
+          prefix,
+          scope_key: scopeKey,
+        },
+      },
+      create: {
+        model_name: model,
+        prefix,
+        scope_key: scopeKey,
+        last_value: 1,
+      },
+      update: {
+        last_value: {
+          increment: 1,
+        },
+      },
+      select: {
+        last_value: true,
+      },
+    });
+
+    return counter.last_value;
+  } catch (error) {
+    if (error?.code === 'P2002' && retryCount < FRIENDLY_ID_COUNTER_RETRIES) {
+      return reserveNextFriendlySequence(prismaClient, model, prefix, scopeKey, retryCount + 1);
+    }
+    throw error;
+  }
+};
+
+const assignFriendlyIdIfMissing = async (prismaClient, model, data) => {
+  if (!data || typeof data !== 'object') return;
+  if (SYSTEM_MODELS.has(model)) return;
+
+  if (typeof data.human_friendly_id === 'string' && data.human_friendly_id.trim()) {
+    const standardizedInput = data.human_friendly_id.trim().toUpperCase();
+    if (isFriendlyId(standardizedInput)) {
+      data.human_friendly_id = standardizedInput;
+      return;
+    }
+  }
+
+  let roleName = null;
+  if (model === 'user_role') {
+    roleName = await resolveRoleNameForUserRole(prismaClient, data);
+  }
+
+  const prefix = normalizePrefix(roleName ? ROLE_PREFIX_MAP[roleName] || roleName : deriveModelPrefix(model));
+  const scopeKey = buildScopeKey(model, data, roleName, prefix);
+  const sequence = await reserveNextFriendlySequence(prismaClient, model, prefix, scopeKey);
+
+  data.human_friendly_id = formatFriendlyId(prefix, sequence);
+};
+
+const rewriteHumanFriendlyIdFilters = (whereInput) => {
+  if (!whereInput || typeof whereInput !== 'object') return whereInput;
+
+  const where = whereInput;
+
+  if (typeof where.id === 'string' && !isUuid(where.id)) {
+    where.human_friendly_id = where.id;
+    delete where.id;
+  }
+
+  const walkKeys = ['AND', 'OR', 'NOT'];
+  for (const key of walkKeys) {
+    if (!where[key]) continue;
+
+    if (Array.isArray(where[key])) {
+      where[key] = where[key].map((entry) => rewriteHumanFriendlyIdFilters(entry));
+      continue;
+    }
+
+    where[key] = rewriteHumanFriendlyIdFilters(where[key]);
+  }
+
+  return where;
+};
+
+const appendFriendlyIdSearchTerm = (whereInput) => {
+  if (!whereInput || typeof whereInput !== 'object' || !Array.isArray(whereInput.OR)) {
+    return whereInput;
+  }
+
+  const where = whereInput;
+  const terms = new Set();
+
+  for (const clause of where.OR) {
+    if (!clause || typeof clause !== 'object') continue;
+    for (const value of Object.values(clause)) {
+      if (value && typeof value === 'object' && typeof value.contains === 'string' && value.contains.trim()) {
+        terms.add(value.contains.trim());
+      }
+    }
+  }
+
+  for (const term of terms) {
+    const exists = where.OR.some(
+      (clause) =>
+        clause &&
+        typeof clause === 'object' &&
+        clause.human_friendly_id &&
+        typeof clause.human_friendly_id === 'object' &&
+        clause.human_friendly_id.contains === term
+    );
+
+    if (!exists) {
+      where.OR.push({ human_friendly_id: { contains: term } });
+    }
+  }
+
+  return where;
+};
+
+const withHumanFriendlyIdSupport = (prismaClient) =>
+  prismaClient.$extends({
+    query: {
+      $allModels: {
+        async create({ model, args, query }) {
+          if (!SYSTEM_MODELS.has(model)) {
+            await assignFriendlyIdIfMissing(prismaClient, model, args.data);
+          }
+          return query(args);
+        },
+        async createMany({ model, args, query }) {
+          if (!SYSTEM_MODELS.has(model)) {
+            if (Array.isArray(args.data)) {
+              for (const entry of args.data) {
+                await assignFriendlyIdIfMissing(prismaClient, model, entry);
+              }
+            } else {
+              await assignFriendlyIdIfMissing(prismaClient, model, args.data);
+            }
+          }
+          return query(args);
+        },
+        async findFirst({ args, query }) {
+          args.where = rewriteHumanFriendlyIdFilters(args.where);
+          return query(args);
+        },
+        async findMany({ args, query }) {
+          args.where = appendFriendlyIdSearchTerm(rewriteHumanFriendlyIdFilters(args.where));
+          return query(args);
+        },
+        async count({ args, query }) {
+          args.where = appendFriendlyIdSearchTerm(rewriteHumanFriendlyIdFilters(args.where));
+          return query(args);
+        },
+      },
+    },
+  });
+
 /**
  * Parse MySQL connection string to extract connection parameters
  * Format: mysql://user:password@host:port/database
@@ -71,14 +353,21 @@ const adapter = new PrismaMariaDb({
 });
 
 // Prisma 7.x: Pass adapter to PrismaClient constructor
-const prisma =
-  globalForPrisma.prisma ||
+const basePrisma =
+  globalForPrisma.basePrisma ||
   new PrismaClient({
     adapter: adapter,
     log: isDevelopment ? ['query', 'error', 'warn'] : ['error'],
   });
 
 if (isDevelopment || NODE_ENV !== 'production') {
+  globalForPrisma.basePrisma = basePrisma;
+}
+
+const prisma = globalForPrisma.extendedPrisma || withHumanFriendlyIdSupport(basePrisma);
+
+if (isDevelopment || NODE_ENV !== 'production') {
+  globalForPrisma.extendedPrisma = prisma;
   globalForPrisma.prisma = prisma;
 }
 
@@ -87,7 +376,7 @@ if (isDevelopment || NODE_ENV !== 'production') {
 try {
   const { logQueryPerformance } = require('@lib/performance');
   
-  prisma.$on('query', (e) => {
+  basePrisma.$on('query', (e) => {
     // e.query: SQL query string
     // e.params: Query parameters
     // e.duration: Query duration in milliseconds
