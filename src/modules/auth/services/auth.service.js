@@ -909,8 +909,8 @@ const login = async (data) => {
   const facilities = await authRepository.getUserFacilities(user.id, user.tenant_id);
   const hasMultipleFacilities = facilities.length > 1;
 
-  // If facility_id provided, verify user has access to it
-  let selectedFacilityId = facility_id || user.facility_id;
+  // Require explicit selection for multi-facility users unless facility_id is provided.
+  let selectedFacilityId = facility_id || null;
   if (selectedFacilityId && facilities.length > 0) {
     const hasAccess = facilities.some(f => f.id === selectedFacilityId);
     if (!hasAccess) {
@@ -931,6 +931,9 @@ const login = async (data) => {
   } else if (!selectedFacilityId && facilities.length === 1) {
     // Auto-select if only one facility
     selectedFacilityId = facilities[0].id;
+  } else if (!selectedFacilityId && facilities.length === 0 && user.facility_id) {
+    // Fallback for legacy records where role-derived facilities are unavailable.
+    selectedFacilityId = user.facility_id;
   }
 
   // If multiple facilities and none selected, return facility selection requirement

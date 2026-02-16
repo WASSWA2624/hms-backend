@@ -203,6 +203,52 @@ describe('Auth Service', () => {
         .rejects
         .toMatchObject({ statusCode: 403, messageKey: 'errors.auth.account_pending' });
     });
+
+    it('should require facility selection when user has multiple facilities and no facility_id is provided', async () => {
+      const loginData = {
+        email: 'multifacility@example.com',
+        password: 'Password123!',
+        tenant_id: '550e8400-e29b-41d4-a716-446655440000',
+      };
+
+      const mockUser = {
+        id: 'user-123',
+        email: 'multifacility@example.com',
+        tenant_id: '550e8400-e29b-41d4-a716-446655440000',
+        facility_id: 'facility-legacy-default',
+        status: 'ACTIVE',
+        password_hash: 'hashedpassword',
+        roles: [{ role: { name: 'DOCTOR' } }],
+      };
+
+      authRepository.findUserByEmailAndTenant.mockResolvedValue(mockUser);
+      comparePassword.mockResolvedValue(true);
+      authRepository.getUserFacilities.mockResolvedValue([
+        {
+          id: 'facility-1',
+          name: 'Facility One',
+          facility_type: 'HOSPITAL',
+        },
+        {
+          id: 'facility-2',
+          name: 'Facility Two',
+          facility_type: 'CLINIC',
+        },
+      ]);
+
+      const result = await authService.login(loginData);
+
+      expect(result).toEqual({
+        requires_facility_selection: true,
+        facilities: [
+          { id: 'facility-1', name: 'Facility One', facility_type: 'HOSPITAL' },
+          { id: 'facility-2', name: 'Facility Two', facility_type: 'CLINIC' },
+        ],
+        tenant_id: '550e8400-e29b-41d4-a716-446655440000',
+      });
+      expect(generateToken).not.toHaveBeenCalled();
+      expect(authRepository.createSession).not.toHaveBeenCalled();
+    });
   });
 
   describe('register', () => {
