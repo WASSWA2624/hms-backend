@@ -12,6 +12,7 @@
 // This enables @app/*, @lib/*, @config/*, etc. to work at runtime
 require('module-alias/register');
 const path = require('path');
+const os = require('os');
 
 // Register global aliases for runtime resolution
 try {
@@ -74,6 +75,43 @@ try {
   throw err;
 }
 
+const getLanAddresses = () => {
+  const interfaces = os.networkInterfaces();
+  const results = [];
+
+  Object.values(interfaces).forEach((entries) => {
+    (entries || []).forEach((entry) => {
+      if (!entry || entry.internal) return;
+      const family = typeof entry.family === 'string' ? entry.family : String(entry.family);
+      if (family !== 'IPv4') return;
+      if (!entry.address) return;
+      results.push(entry.address);
+    });
+  });
+
+  return Array.from(new Set(results));
+};
+
+const getStartupUrls = (host, port) => {
+  const normalizedHost = String(host || '').trim();
+  const lanHosts = getLanAddresses();
+  const urls = [];
+
+  if (!normalizedHost || normalizedHost === '0.0.0.0' || normalizedHost === '::') {
+    urls.push(`http://localhost:${port}`);
+    lanHosts.forEach((address) => urls.push(`http://${address}:${port}`));
+    return Array.from(new Set(urls));
+  }
+
+  if (normalizedHost.includes(':') && !normalizedHost.startsWith('[')) {
+    urls.push(`http://[${normalizedHost}]:${port}`);
+    return urls;
+  }
+
+  urls.push(`http://${normalizedHost}:${port}`);
+  return urls;
+};
+
 /**
  * Start HTTP server
  */
@@ -87,11 +125,15 @@ const startServer = () => {
     
     // Start HTTP server
     const server = app.listen(PORT, HOST, () => {
-      const startupHost = HOST === '0.0.0.0' ? 'localhost' : HOST;
-      console.log(`[startup] backend listening on http://${startupHost}:${PORT}`);
+      const startupUrls = getStartupUrls(HOST, PORT);
+      console.log(`[startup] backend listening on ${startupUrls[0]}`);
+      if (startupUrls.length > 1) {
+        console.log(`[startup] LAN access URLs: ${startupUrls.slice(1).join(', ')}`);
+      }
       logger.info(`Server started successfully`, {
         port: PORT,
         host: HOST,
+        urls: startupUrls,
         environment: NODE_ENV,
         nodeVersion: process.version
       });

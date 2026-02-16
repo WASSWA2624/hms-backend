@@ -142,6 +142,10 @@ const buildEnv = () => {
     process.env.HANDLE_SIGINT,
     true
   );
+  const ALLOW_PRIVATE_NETWORK_ORIGINS = parseOptionalBoolean(
+    process.env.ALLOW_PRIVATE_NETWORK_ORIGINS,
+    NODE_ENV === 'development'
+  );
   const WS_MAX_CONNECTIONS = process.env.WS_MAX_CONNECTIONS ? parseInt(process.env.WS_MAX_CONNECTIONS, 10) : 1000;
   const WS_HEARTBEAT_INTERVAL = process.env.WS_HEARTBEAT_INTERVAL ? parseInt(process.env.WS_HEARTBEAT_INTERVAL, 10) : 30000;
   const WS_HEARTBEAT_TIMEOUT = process.env.WS_HEARTBEAT_TIMEOUT ? parseInt(process.env.WS_HEARTBEAT_TIMEOUT, 10) : 60000;
@@ -223,6 +227,7 @@ const buildEnv = () => {
     SMTP_NO_REPLY_ADDRESS,
     ALLOW_PLAINTEXT_PASSWORD_EMAIL,
     HANDLE_SIGINT,
+    ALLOW_PRIVATE_NETWORK_ORIGINS,
     WS_MAX_CONNECTIONS,
     WS_HEARTBEAT_INTERVAL,
     WS_HEARTBEAT_TIMEOUT,
@@ -243,6 +248,7 @@ const buildEnv = () => {
       appDisplayName: APP_DISPLAY_NAME,
       appShortName: APP_SHORT_NAME,
       handleSigint: HANDLE_SIGINT,
+      allowPrivateNetworkOrigins: ALLOW_PRIVATE_NETWORK_ORIGINS,
       wsMaxConnections: WS_MAX_CONNECTIONS,
       wsHeartbeatInterval: WS_HEARTBEAT_INTERVAL,
       wsHeartbeatTimeout: WS_HEARTBEAT_TIMEOUT
@@ -297,6 +303,7 @@ const envKeys = [
   'SMTP_NO_REPLY_ADDRESS',
   'ALLOW_PLAINTEXT_PASSWORD_EMAIL',
   'HANDLE_SIGINT',
+  'ALLOW_PRIVATE_NETWORK_ORIGINS',
   'WS_MAX_CONNECTIONS',
   'WS_HEARTBEAT_INTERVAL',
   'WS_HEARTBEAT_TIMEOUT',

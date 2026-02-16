@@ -6,18 +6,34 @@
  * Environment-aware origins (different for dev/staging/production)
  */
 
-const { CORS_ORIGINS, NODE_ENV } = require('@config/env');
-const { HttpError } = require('@lib/errors');
+const { CORS_ORIGINS, NODE_ENV, ALLOW_PRIVATE_NETWORK_ORIGINS } = require('@config/env');
 const { logger } = require('@lib/logging');
 
 const PRIVATE_IPV4_REGEX = /^(10\.\d{1,3}\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3})$/;
+const PRIVATE_HOSTNAME_REGEX = /^[a-z0-9-]+(\.local)?$/i;
+
+const normalizeHostname = (hostname) => String(hostname || '').replace(/^\[|\]$/g, '').toLowerCase();
+
+const isPrivateIPv6Host = (hostname) => {
+  const normalized = normalizeHostname(hostname);
+  if (!normalized.includes(':')) return false;
+  if (normalized === '::1') return true;
+  if (normalized.startsWith('fc') || normalized.startsWith('fd')) return true; // Unique local
+  if (/^fe[89ab]/i.test(normalized)) return true; // Link-local
+  return false;
+};
 
 const isPrivateNetworkOrigin = (origin) => {
   try {
     const { protocol, hostname } = new URL(origin);
     if (!['http:', 'https:'].includes(protocol)) return false;
-    if (hostname === 'localhost' || hostname === '127.0.0.1') return true;
-    return PRIVATE_IPV4_REGEX.test(hostname);
+    const normalizedHostname = normalizeHostname(hostname);
+    if (normalizedHostname === 'localhost' || normalizedHostname === '127.0.0.1') return true;
+    if (PRIVATE_IPV4_REGEX.test(normalizedHostname)) return true;
+    if (isPrivateIPv6Host(normalizedHostname)) return true;
+    // Allow mDNS/local hostnames for same-LAN development (e.g., desktop.local, DESKTOP-1234)
+    if (PRIVATE_HOSTNAME_REGEX.test(normalizedHostname)) return true;
+    return false;
   } catch (_) {
     return false;
   }
@@ -42,6 +58,7 @@ const getCorsConfig = () => {
   const origins = NODE_ENV === 'development'
     ? Array.from(new Set([...baseOrigins, ...devOrigins]))
     : baseOrigins;
+  const allowPrivateNetworkOrigins = NODE_ENV === 'development' || ALLOW_PRIVATE_NETWORK_ORIGINS;
 
   // Never use wildcard with credentials; require explicit origins
   const allowedOrigins = origins.filter(Boolean);
@@ -50,7 +67,8 @@ const getCorsConfig = () => {
     logger.info('CORS configuration initialized', { 
       origins: allowedOrigins,
       baseOrigins,
-      nodeEnv: NODE_ENV
+      nodeEnv: NODE_ENV,
+      allowPrivateNetworkOrigins
     });
   }
   
@@ -69,11 +87,11 @@ const getCorsConfig = () => {
       
       // Check if origin is in allowed list (check both original and normalized)
       const isAllowed = allowedOrigins.includes(origin) || allowedOrigins.includes(normalizedOrigin);
-      const isDevPrivateOrigin = NODE_ENV === 'development' && isPrivateNetworkOrigin(normalizedOrigin);
+      const isPrivateOrigin = allowPrivateNetworkOrigins && isPrivateNetworkOrigin(normalizedOrigin);
       
-      if (isAllowed || isDevPrivateOrigin) {
+      if (isAllowed || isPrivateOrigin) {
         if (NODE_ENV === 'development') {
-          logger.info('CORS origin allowed', { origin, normalizedOrigin, isDevPrivateOrigin });
+          logger.info('CORS origin allowed', { origin, normalizedOrigin, isPrivateOrigin });
         }
         callback(null, true);
       } else {
@@ -83,6 +101,8 @@ const getCorsConfig = () => {
           allowedOrigins,
           originInList: allowedOrigins.includes(origin),
           normalizedInList: allowedOrigins.includes(normalizedOrigin),
+          privateOriginAllowedByRule: isPrivateNetworkOrigin(normalizedOrigin),
+          allowPrivateNetworkOrigins,
           baseOrigins,
           nodeEnv: NODE_ENV
         });

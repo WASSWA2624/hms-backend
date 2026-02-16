@@ -47,6 +47,15 @@ const createApp = () => {
     // 1. Security headers middleware
     app.use(securityHeaders());
 
+    // 1.5. Allow Private Network Access preflight for LAN/mobile development.
+    // Chrome sends Access-Control-Request-Private-Network for some LAN requests.
+    app.use((req, res, next) => {
+      if (req.headers['access-control-request-private-network'] === 'true') {
+        res.header('Access-Control-Allow-Private-Network', 'true');
+      }
+      next();
+    });
+
     // 2. CORS middleware (handles preflight requests)
     // Call getCorsConfig() to ensure fresh closure with current environment values
     app.use(cors(getCorsConfig()));

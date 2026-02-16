@@ -120,6 +120,16 @@ Start the development server with auto-reload:
 npm run dev
 ```
 
+### Mobile / LAN Access
+
+To access the API from phones/tablets on the same network:
+
+1. Set `HOST="0.0.0.0"` in `.env`.
+2. Keep `ALLOW_PRIVATE_NETWORK_ORIGINS="true"` for local development.
+3. Add your frontend origin(s) to `CORS_ORIGINS` (for example `http://192.168.1.15:8081`).
+4. Start the backend and use one of the printed `LAN access URLs`.
+5. Ensure your frontend API base URL points to the backend LAN IP, not `localhost`.
+
 ### Production
 
 Start the production server:
