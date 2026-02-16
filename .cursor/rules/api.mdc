@@ -1,7 +1,6 @@
 ---
 alwaysApply: true
 ---
-
 # API Endpoint Rules
 
 ## Purpose
@@ -88,3 +87,5 @@ Defines mandatory API design standards: enforce RESTfulness, predictable and reu
 ## Enforcement
 ❌ Any violation is invalid  
 ✅ Strict compliance required; refactors must improve consistency, usability, and maintainability
+
+---

@@ -1,7 +1,6 @@
 ---
 alwaysApply: true
 ---
-
 # Prisma & Database Rules
 ## Purpose
 Defines **mandatory database and Prisma ORM standards** for projects using Prisma.
@@ -29,8 +28,8 @@ Any violation of these rules is **invalid**.
 
 ## Prisma Client Wrapper
 - Prisma client singleton **must** be defined in `src/prisma/client.js` (per `project-structure.mdc`)
-- All repositories **must** import Prisma client wrapper using: `const prisma = require('@prisma')`
-- The alias `@prisma` resolves to `src/prisma/client.js` (per `import-aliases.mdc`)
+- All repositories **must** import Prisma client wrapper using: `const prisma = require('@prisma/client')`
+- The alias `@prisma/client` resolves to `src/prisma/client.js` (per `import-aliases.mdc`)
 - The wrapper **must** handle singleton pattern for development (globalThis) and production instances
 
 ## Prisma 7.x Compatibility
@@ -44,11 +43,14 @@ Any violation of these rules is **invalid**.
 ```javascript
 const { PrismaClient } = require('@prisma/client');
 const { PrismaMariaDb } = require('@prisma/adapter-mariadb');
-const mysql = require('mysql2/promise');
-
-// Parse DATABASE_URL and create connection pool
-const connectionPool = mysql.createPool({ /* connection config */ });
-const adapter = new PrismaMariaDb(connectionPool);
+// Parse DATABASE_URL and pass connection options to adapter
+const adapter = new PrismaMariaDb({
+  host,
+  port,
+  user,
+  password,
+  database,
+});
 
 const prisma = new PrismaClient({ adapter });
 ```
@@ -198,24 +200,10 @@ const prisma = new PrismaClient({ adapter });
 - Database connection errors **must** be logged but **must not** expose connection strings or credentials
 
 ## Schema Feature Coverage
-- The schema includes comprehensive models for:
-  - **Reviews & Ratings**: Multi-dimensional product reviews with verification, media attachments, and vendor responses
-  - **Payment Methods**: Flexible payment method support for orders (cards, wallets, mobile money, bank transfers, purchase orders, net terms, lease-to-own)
-  - **Approval Workflows**: Product and vendor approval workflows with status tracking and history
-  - **Product Compliance**: Certifications (FDA, CE, ISO) and hazard classifications with expiry tracking
-  - **Authentication**: MFA support and OAuth account linking
-  - **Enterprise Features**: Purchase orders, lease agreements, net terms payment options
-  - **Safety & Compliance**: Product recall management with notification tracking
-  - **Search & Discovery**: Saved searches, search history, and wishlist management
-  - **Integrations**: Integration logging for external system API calls
-  - **Referral Program**: User referral codes, referral tracking, and reward management
-  - **Affiliate System**: Affiliate links, commission tracking, and performance analytics
-  - **Loyalty Program**: Points system, tier management, badges, and transaction history
-  - **Support Tickets**: Ticket management with categories, priorities, comments, and history tracking
-  - **Dispute Resolution**: Dispute management with types, status tracking, comments, and resolution workflows
-- All new models follow the same naming conventions, indexing rules, and soft delete patterns
-- New enums follow PascalCase convention
-- All relationships include proper foreign key constraints and cascade rules
+- Rule files **must** remain domain-accurate for the current project.
+- Do not keep stale examples copied from unrelated projects.
+- All new models must follow these same naming, indexing, soft-delete, and relationship rules.
+- New enums must follow PascalCase convention.
 
 ## Best Practices
 - Use Prisma's type safety (generate types with `prisma generate`)
@@ -234,3 +222,5 @@ All database operations **must follow these rules** strictly.
 ---
 
 This file ensures **full Prisma compliance** and **centralizes DB rules** independently.
+
+---

@@ -1,7 +1,6 @@
 ---
 alwaysApply: true
 ---
-
 # WebSocket Rules
 ## Purpose
 Defines **mandatory standards for real-time communication** via WebSockets.
@@ -88,3 +87,5 @@ Any violation is **invalid**.
 ❌ Violations are invalid
 ✅ Refactors must improve real-time efficiency, security, and maintainability
 All WebSocket implementation **must comply strictly** with these rules.
+
+---

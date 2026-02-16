@@ -76,7 +76,8 @@ const FREE_CORE_MODULES = new Set([
   'maintenance-request',
   'equipment-incident-report',
   'asset',
-  'asset-service-log'
+  'asset-service-log',
+  'staff-position'
 ]);
 
 const IRREGULAR_PATH_SEGMENTS = {

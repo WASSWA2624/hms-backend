@@ -1,7 +1,6 @@
---- 
+---
 alwaysApply: true
 ---
-
 # Project Structure Rules
 ## Purpose
 Defines the **authoritative backend folder and file structure**.
@@ -148,3 +147,5 @@ project-root/
 - Any deviation: invalid.
 - Refactors must reduce coupling/duplication.
 - Structure is mandatory, applies project-wide.
+
+---

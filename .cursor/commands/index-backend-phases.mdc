@@ -18,3 +18,6 @@ Backend chronological phase commands:
 16. dev-phase-015-performance-readiness.mdc -> dev-plan/P008_perf.mdc
 
 Use phases in this order to reproduce the backend chronologically.
+
+---
+Role catalog sync (2026-02-16): canonical backend roles include SUPER_ADMIN, TENANT_ADMIN, FACILITY_ADMIN, DOCTOR, NURSE, LAB_TECH, PHARMACIST, RECEPTIONIST, BILLING, OPERATIONS, HR, PATIENT, BIOMED, HOUSE_KEEPER, OTHER.

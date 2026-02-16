@@ -23,6 +23,8 @@ describe('createAuditLog helper', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     prisma.audit_log.create.mockReset();
+    if (!prisma.user) prisma.user = {};
+    prisma.user.findUnique = jest.fn();
   });
 
   it('returns early when required fields are missing', async () => {
@@ -60,6 +62,53 @@ describe('createAuditLog helper', () => {
         diff_json: { after: { id: 'inv-1' } },
         ip_address: '127.0.0.1',
       }),
+    });
+  });
+
+  it('infers tenant_id from diff payload when not provided explicitly', async () => {
+    prisma.audit_log.create.mockResolvedValue({ id: 'audit-tenant-from-diff' });
+
+    await createAuditLog({
+      user_id: 'user-1',
+      action: 'UPDATE',
+      entity: 'user_profile',
+      entity_id: 'profile-1',
+      diff: {
+        before: { id: 'profile-1', tenant_id: 'tenant-from-diff' },
+        after: { id: 'profile-1', tenant_id: 'tenant-from-diff' }
+      }
+    });
+
+    await flushImmediate();
+
+    expect(prisma.audit_log.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        tenant_id: 'tenant-from-diff'
+      })
+    });
+  });
+
+  it('infers tenant_id from user_id when payload does not include tenant_id', async () => {
+    prisma.audit_log.create.mockResolvedValue({ id: 'audit-tenant-from-user' });
+    prisma.user.findUnique.mockResolvedValue({ tenant_id: 'tenant-from-user' });
+
+    await createAuditLog({
+      user_id: 'user-2',
+      action: 'CREATE',
+      entity: 'appointment',
+      entity_id: 'apt-1'
+    });
+
+    await flushImmediate();
+
+    expect(prisma.user.findUnique).toHaveBeenCalledWith({
+      where: { id: 'user-2' },
+      select: { tenant_id: true }
+    });
+    expect(prisma.audit_log.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        tenant_id: 'tenant-from-user'
+      })
     });
   });
 

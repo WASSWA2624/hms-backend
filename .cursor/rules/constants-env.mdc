@@ -1,7 +1,6 @@
 ---
 alwaysApply: true
 ---
-
 # Constants & Environment Rules
 ## Purpose
 Defines **mandatory standards for constants and environment variables**.
@@ -68,3 +67,5 @@ const JwtConfig = {
 ❌ Violations are invalid
 ✅ Refactors must improve centralization, security, and clarity
 All constants and environment variables **must** comply strictly with these rules.
+
+---

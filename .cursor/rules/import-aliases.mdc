@@ -1,7 +1,6 @@
 ---
 alwaysApply: true
 ---
-
 # Import Alias Rules
 
 ## Purpose
@@ -21,7 +20,7 @@ Enforces mandatory import aliasing for no cross-module relative imports, consist
 | `@middlewares/*`  | `src/middlewares`                       | `require('@middlewares/validate.middleware')`         |
 | `@config/*`       | `src/config`                            | `require('@config/index')`                           |
 | `@validations/*`  | `src/modules/<module>/schemas`          | `require('@validations/user/user.schema')`           |
-| `@prisma`         | `src/prisma/client.js`                  | `require('@prisma')`                                 |
+| `@prisma/client`  | `src/prisma/client.js`                  | `require('@prisma/client')`                          |
 | `@logs/*`         | `logs`                                  | `require('@logs/logger')`                            |
 
 **Alias Rules:**
@@ -44,7 +43,7 @@ Enforces mandatory import aliasing for no cross-module relative imports, consist
       "@lib/*": ["src/lib/*"],
       "@middlewares/*": ["src/middlewares/*"],
       "@config/*": ["src/config/*"],
-      "@prisma": ["src/prisma/client.js"],
+      "@prisma/client": ["src/prisma/client.js"],
       "@logs/*": ["logs/*"]
     }
   }
@@ -60,7 +59,7 @@ require('module-alias').addAliases({
   '@lib': path.join(__dirname, 'lib'),
   '@config': path.join(__dirname, 'config'),
   '@middlewares': path.join(__dirname, 'middlewares'),
-  '@prisma': path.join(__dirname, 'prisma', 'client.js'),
+  '@prisma/client': path.join(__dirname, 'prisma', 'client.js'),
   '@logs': path.join(process.cwd(), 'logs')
 });
 // Module-scoped aliases auto-registered via registerAllModuleAliases()
@@ -115,3 +114,5 @@ registerModuleAliases('user');
 ✅ Refactors centralize imports, improve clarity and isolation  
 All modules **must** follow these import alias rules.
 
+
+---

@@ -1,7 +1,6 @@
 ---
 alwaysApply: true
 ---
-
 # Response Format Rules
 ## Purpose
 Defines **mandatory API response standards**.
@@ -99,3 +98,5 @@ Any violation is **invalid**.
 ❌ Violations are invalid
 ✅ Refactors must improve consistency, readability, and reusability
 All modules **must strictly follow these response format rules**.
+
+---

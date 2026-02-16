@@ -147,3 +147,6 @@ Return ONLY:
    - any intentionally deferred work (must be out-of-scope and justified)
 
 Do NOT include files or logic outside selected phase unit(s).
+
+---
+Role catalog sync (2026-02-16): canonical backend roles include SUPER_ADMIN, TENANT_ADMIN, FACILITY_ADMIN, DOCTOR, NURSE, LAB_TECH, PHARMACIST, RECEPTIONIST, BILLING, OPERATIONS, HR, PATIENT, BIOMED, HOUSE_KEEPER, OTHER.

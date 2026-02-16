@@ -1,7 +1,6 @@
 ---
 alwaysApply: true
 ---
-
 # API Versioning Rules
 
 ## Purpose
@@ -59,3 +58,5 @@ Defines **mandatory API versioning** for backward compatibility and smooth evolu
 ❌ Violations are invalid  
 ✅ Refactors must keep compatibility and clear versioning  
 All API versions **must strictly comply with these rules**.
+
+---

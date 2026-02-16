@@ -1,7 +1,6 @@
 ---
 alwaysApply: true
 ---
-
 # Authentication & Security Rules
 
 ## Purpose
@@ -59,3 +58,5 @@ Defines **mandatory authentication, authorization, and security** for protected 
 ❌ Violations: invalid  
 ✅ Refactors: must improve security, compliance, standardization  
 All auth/security logic must fully comply.
+
+---

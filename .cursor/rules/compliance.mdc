@@ -1,7 +1,6 @@
 ---
 alwaysApply: true
 ---
-
 # Compliance Rules
 ## Purpose
 Defines **compliance standards** for data protection, privacy, and audit.
@@ -69,4 +68,6 @@ Ensures:
 ❌ Violations are invalid  
 ✅ Refactors must improve compliance, security, and auditability  
 All modules **must** adhere strictly to these compliance rules.
+---
+
 ---

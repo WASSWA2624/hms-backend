@@ -1,7 +1,6 @@
 ---
 alwaysApply: true
 ---
-
 # Documentation Rules
 ## Purpose
 Defines **mandatory JSDoc standards** for:
@@ -66,3 +65,5 @@ Any violation is **invalid**.
 ❌ Violations are invalid  
 ✅ Refactors must improve clarity, completeness, and accuracy  
 All modules **must strictly follow these documentation rules**.
+
+---

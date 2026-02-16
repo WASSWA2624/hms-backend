@@ -1,7 +1,6 @@
 ---
 alwaysApply: true
 ---
-
 # Health Check Rules
 ## Purpose
 Defines **mandatory health check and monitoring endpoints**.
@@ -98,3 +97,5 @@ Any violation is **invalid**.
 ❌ Violations are invalid  
 ✅ Health checks must be reliable, fast, and secure  
 All health check endpoints **must strictly follow these rules**.
+
+---

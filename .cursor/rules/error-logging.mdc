@@ -1,7 +1,6 @@
 ---
 alwaysApply: true
 ---
-
 # Error Handling & Logging Rules
 ## Purpose
 Defines **mandatory error handling and logging standards**.
@@ -95,3 +94,5 @@ Any violation is **invalid**.
 ❌ Violations are invalid
 ✅ Refactors must improve consistency, clarity, and security
 All errors and logs **must** comply strictly with these rules.
+
+---

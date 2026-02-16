@@ -16,6 +16,8 @@ enum UserRole {
   PHARMACIST
   RECEPTIONIST
   BILLING
+  OPERATIONS
+  HR
   PATIENT
   BIOMED
   HOUSE_KEEPER
@@ -667,6 +669,7 @@ model tenant {
   kpi_snapshots                   kpi_snapshot[]
   analytics_events                analytics_event[]
   registration_follow_ups         registration_follow_up[]
+  staff_positions                 staff_position[]
   staff_profiles                  staff_profile[]
   shifts                          shift[]
   shift_templates                 shift_template[]
@@ -739,6 +742,7 @@ model facility {
   purchase_requests       purchase_request[]
   visit_queue_entries     visit_queue[]
   emergency_cases         emergency_case[]
+  staff_positions         staff_position[]
   user_profiles           user_profile[]
   registration_follow_ups registration_follow_up[]
   shifts                  shift[]
@@ -800,6 +804,7 @@ model department {
   branch            branch?            @relation(fields: [branch_id], references: [id])
   units             unit[]
   wards             ward[]
+  staff_positions   staff_position[]
   staff_profiles    staff_profile[]
   staff_assignments staff_assignment[]
   nurse_rosters     nurse_roster[]
@@ -3220,6 +3225,33 @@ model billing_adjustment {
   @@index([invoice_id])
   @@index([status])
   @@index([adjusted_at])
+  @@index([deleted_at])
+  @@index([human_friendly_id])
+}
+
+model staff_position {
+  id                String    @id @default(uuid()) @db.VarChar(36)
+  human_friendly_id String?   @db.VarChar(32)
+  tenant_id         String    @db.VarChar(36)
+  facility_id       String?   @db.VarChar(36)
+  department_id     String?   @db.VarChar(36)
+  name              String    @db.VarChar(120)
+  description       String?   @db.VarChar(255)
+  is_active         Boolean   @default(true)
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
+  deleted_at        DateTime?
+  version           Int       @default(1)
+
+  tenant     tenant      @relation(fields: [tenant_id], references: [id])
+  facility   facility?   @relation(fields: [facility_id], references: [id])
+  department department? @relation(fields: [department_id], references: [id])
+
+  @@index([tenant_id])
+  @@index([facility_id])
+  @@index([department_id])
+  @@index([name])
+  @@index([is_active])
   @@index([deleted_at])
   @@index([human_friendly_id])
 }

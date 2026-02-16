@@ -19,7 +19,7 @@ const {
   listUserRolesQuerySchema
 } = require('@validations/user-role/user-role.schema');
 
-const ADMIN_ROLE_SET = ['ADMIN', 'TENANT_ADMIN', 'FACILITY_ADMIN', 'SUPER_ADMIN'];
+const ADMIN_ROLE_SET = ['ADMIN', 'TENANT_ADMIN', 'FACILITY_ADMIN', 'SUPER_ADMIN', 'OPERATIONS'];
 
 /**
  * @description List user-roles with pagination and filters

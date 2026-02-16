@@ -1,7 +1,6 @@
 ---
 alwaysApply: true
 ---
-
 # Coding Standards
 
 ## Purpose
@@ -68,3 +67,5 @@ Mandatory, universal JavaScript conventions for consistency, readability, mainta
 ## Enforcement
 ❌ Violations are invalid  
 ✅ Refactors must only increase compliance
+
+---

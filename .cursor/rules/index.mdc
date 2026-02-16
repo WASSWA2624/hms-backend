@@ -1,7 +1,6 @@
 ---
 alwaysApply: true
 ---
-
 # Backend Rules Index (Express.js)
 
 This file is the entry point for backend standards. Every implementation must comply with all linked rules.
@@ -43,3 +42,23 @@ This file is the entry point for backend standards. Every implementation must co
 ## Notes
 - `index.mdc` is a TOC/meta file. Authoritative rules are in the linked `.mdc` files.
 - Delivery sequencing and phase progress are tracked in `hms-backend/dev-plan/`.
+
+---
+## Canonical Role Catalog
+Single source of truth for backend role names. Do not duplicate this list in other rule files.
+
+- `SUPER_ADMIN`
+- `TENANT_ADMIN`
+- `FACILITY_ADMIN`
+- `DOCTOR`
+- `NURSE`
+- `LAB_TECH`
+- `PHARMACIST`
+- `RECEPTIONIST`
+- `BILLING`
+- `OPERATIONS`
+- `HR`
+- `PATIENT`
+- `BIOMED`
+- `HOUSE_KEEPER`
+- `OTHER`

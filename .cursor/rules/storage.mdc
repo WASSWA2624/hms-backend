@@ -1,7 +1,6 @@
---- 
+---
 alwaysApply: true
 ---
-
 # Storage Rules
 ## Purpose
 Defines **mandatory standards for file/resource storage**.
@@ -82,3 +81,5 @@ src/lib/storage/
 ❌ Violations are invalid  
 ✅ Refactors must improve security, maintainability, and provider portability  
 All storage operations **must comply strictly** with these rules.
+
+---

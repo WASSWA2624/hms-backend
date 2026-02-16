@@ -20,12 +20,16 @@ This script initializes the system with default accounts for:
 - **PHARMACIST**: Pharmacy staff
 - **RECEPTIONIST**: Front desk staff
 - **BILLING**: Billing and finance staff
+- **OPERATIONS**: Operations staff
+- **HR**: Human resources staff
+- **BIOMED**: Biomedical engineering staff
+- **HOUSE_KEEPER**: Housekeeping staff
 - **PATIENT**: Patient user (example)
 
 #### What It Does
 
-1. **Creates Default Tenant**: Creates a "Default Hospital" tenant if none exists
-2. **Creates Default Facility**: Creates a "Main Hospital" facility within the tenant
+1. **Creates Default Tenant**: Creates a "Demo Tenant" tenant if none exists
+2. **Creates Default Facility**: Creates a "Demo Facility" facility within the tenant
 3. **Creates Roles**: Creates custom roles for each user type (if they don't exist)
 4. **Creates Users**: Creates user accounts with:
    - Hashed passwords (bcryptjs)
@@ -51,7 +55,7 @@ node scripts/setup-default-accounts.js
 
 **⚠️ SECURITY WARNING**: All accounts are created with the default password:
 ```
-ChangeMe123!
+Demo@123!
 ```
 
 **You MUST change all passwords immediately after first login in production!**
@@ -60,16 +64,20 @@ ChangeMe123!
 
 | Email | Role | Description |
 |-------|------|-------------|
-| `superadmin@hospital.com` | SUPER_ADMIN | Platform-level administrator |
-| `admin@hospital.com` | TENANT_ADMIN | Hospital administrator |
-| `facilityadmin@hospital.com` | FACILITY_ADMIN | Facility administrator |
-| `doctor@hospital.com` | DOCTOR | Medical doctor |
-| `nurse@hospital.com` | NURSE | Nursing staff |
-| `labtech@hospital.com` | LAB_TECH | Laboratory technician |
-| `pharmacist@hospital.com` | PHARMACIST | Pharmacy staff |
-| `receptionist@hospital.com` | RECEPTIONIST | Front desk staff |
-| `billing@hospital.com` | BILLING | Billing officer |
-| `patient@hospital.com` | PATIENT | Patient user |
+| `superadmin@demo.com` | SUPER_ADMIN | Platform-level administrator |
+| `tenantadmin@demo.com` | TENANT_ADMIN | Tenant administrator |
+| `facilityadmin@demo.com` | FACILITY_ADMIN | Facility administrator |
+| `doctor@demo.com` | DOCTOR | Medical doctor |
+| `nurse@demo.com` | NURSE | Nursing staff |
+| `labtech@demo.com` | LAB_TECH | Laboratory technician |
+| `pharmacist@demo.com` | PHARMACIST | Pharmacy staff |
+| `receptionist@demo.com` | RECEPTIONIST | Front desk staff |
+| `billing@demo.com` | BILLING | Billing officer |
+| `operations@demo.com` | OPERATIONS | Operations officer |
+| `hr@demo.com` | HR | Human resources officer |
+| `biomed@demo.com` | BIOMED | Biomedical engineer |
+| `housekeeping@demo.com` | HOUSE_KEEPER | Housekeeping staff |
+| `patient@demo.com` | PATIENT | Patient user |
 
 #### Account Details
 
@@ -136,6 +144,70 @@ const DEFAULT_TENANT = {
 - [Prisma Guide](../prisma/guide.md)
 - [Authentication & Security Rules](../.cursor/rules/auth-security.mdc)
 - [Project Structure](../.cursor/rules/project-structure.mdc)
+
+---
+
+### `clear-demo-data.js`
+
+Clears all application data from the current database.
+
+#### Purpose
+
+- Removes all records from application tables
+- Preserves Prisma migration metadata (`_prisma_migrations`)
+- Useful before reseeding for clean demo environments
+
+#### Usage
+
+```bash
+# Clear all application data
+node scripts/clear-demo-data.js
+
+# Preview tables without deleting
+node scripts/clear-demo-data.js --dry-run
+```
+
+#### NPM Shortcut
+
+```bash
+npm run db:clear:demo
+```
+
+---
+
+### `seed-demo-data.js`
+
+Seeds demo data across seedable tables with a configurable per-table target.
+
+#### Purpose
+
+- Ensures base demo accounts via `setup-default-accounts.js`
+- Seeds approximately 50 records per seedable table (where applicable)
+- Skips direct seeding of `tenant`, `facility`, and `user` models
+
+#### Usage
+
+```bash
+# Seed demo data (default target: 50/model)
+node scripts/seed-demo-data.js
+
+# Custom per-table target
+DEMO_RECORDS_PER_TABLE=20 node scripts/seed-demo-data.js
+
+# Skip running setup-default-accounts.js
+node scripts/seed-demo-data.js --skip-default-accounts
+```
+
+#### NPM Shortcuts
+
+```bash
+npm run db:seed:demo
+npm run db:reset:demo
+```
+
+`db:reset:demo` runs:
+1. `db:clear:demo`
+2. `db:seed:demo`
 
 ---
 

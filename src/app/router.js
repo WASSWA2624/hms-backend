@@ -189,6 +189,7 @@ apiV1Router.use('/pre-authorizations', require('../modules/pre-authorization/rou
 apiV1Router.use('/billing-adjustments', require('../modules/billing-adjustment/routes/billing-adjustment.routes'));
 apiV1Router.use('/payroll-runs', require('../modules/payroll-run/routes/payroll-run.routes'));
 apiV1Router.use('/payroll-items', require('../modules/payroll-item/routes/payroll-item.routes'));
+apiV1Router.use('/staff-positions', require('../modules/staff-position/routes/staff-position.routes'));
 apiV1Router.use('/staff-profiles', require('../modules/staff-profile/routes/staff-profile.routes'));
 apiV1Router.use('/staff-assignments', require('../modules/staff-assignment/routes/staff-assignment.routes'));
 apiV1Router.use('/staff-leaves', require('../modules/staff-leave/routes/staff-leave.routes'));

@@ -1,7 +1,6 @@
 ---
 alwaysApply: true
 ---
-
 # Offline Support Rules
 ## Purpose
 Defines **mandatory standards for offline-first API design** to support clients that operate with intermittent connectivity.
@@ -163,3 +162,5 @@ Any violation is **invalid**.
 ✅ All APIs must support offline-capable clients  
 ✅ Sync and conflict resolution must be reliable and predictable  
 All modules **must strictly follow these offline support rules**.
+
+---

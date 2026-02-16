@@ -1,7 +1,6 @@
 ---
 alwaysApply: true
 ---
-
 # Internationalization (i18n) Rules
 ## Purpose
 Defines **mandatory standards for multi-language and locale support (Internationalization and Localization)**.
@@ -148,3 +147,5 @@ const DEFAULT_LOCALE = 'en';
 ✅ All user-facing content must be localizable  
 ✅ Locale handling must be consistent and performant  
 All modules **must strictly follow these internationalization rules**.
+
+---

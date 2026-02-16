@@ -1,7 +1,6 @@
 ---
 alwaysApply: true
 ---
-
 # Module Creation Rules
 
 > **Follow this ordered, unskippable, fully tested process for every module.**
@@ -42,7 +41,7 @@ alwaysApply: true
    - Test: `schemas/<module>.schema.test.js`.
 
 3. ### **Repository**
-   - File: `<module>.repository.js` with `@prisma`.
+   - File: `<module>.repository.js` with `@prisma/client`.
    - Only: `findById`, `findMany`, `create`, `update`, `softDelete`.
    - Follow `prisma.mdc` for APIs, errors, soft deletes.
    - Test: `repositories/<module>.repository.test.js`.
@@ -122,3 +121,5 @@ alwaysApply: true
 - **No exceptions.**
 - Strict compliance enforced step-by-step.
 
+
+---

@@ -151,7 +151,7 @@ Utility scripts are located in the `scripts/` directory. See `scripts/README.md`
 
 ### Setup Default Accounts
 
-Create default user accounts for all user types (SUPER_ADMIN, TENANT_ADMIN, DOCTOR, NURSE, etc.):
+Create default user accounts for all user types (SUPER_ADMIN, TENANT_ADMIN, DOCTOR, NURSE, OPERATIONS, HR, BIOMED, HOUSE_KEEPER, etc.):
 
 ```bash
 npm run setup:accounts

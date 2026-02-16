@@ -1,7 +1,6 @@
 ---
 alwaysApply: true
 ---
-
 # Testing Rules
 ## Purpose
 Defines **mandatory testing standards** using Jest.
@@ -70,3 +69,5 @@ Any violation is **invalid**.
 ❌ Violations are invalid  
 ✅ Refactors must improve coverage, reliability, and maintainability  
 All modules **must strictly follow these testing rules**.
+
+---

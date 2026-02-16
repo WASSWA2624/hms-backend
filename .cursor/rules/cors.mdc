@@ -1,7 +1,6 @@
 ---
 alwaysApply: true
 ---
-
 # CORS Rules
 ## Purpose
 Defines **mandatory Cross-Origin Resource Sharing (CORS) configuration**.
@@ -79,3 +78,5 @@ Any violation is **invalid**.
 ❌ Violations are invalid  
 ✅ CORS must be secure, configurable, and properly tested  
 All CORS configuration **must strictly follow these rules**.
+
+---

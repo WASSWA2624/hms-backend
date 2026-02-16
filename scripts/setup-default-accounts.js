@@ -11,6 +11,8 @@
  * - PHARMACIST: Pharmacy staff
  * - RECEPTIONIST: Front desk staff
  * - BILLING: Billing and finance staff
+ * - OPERATIONS: Operations staff
+ * - HR: Human resources staff
  * - BIOMED: Biomedical engineering staff
  * - HOUSE_KEEPER: Housekeeping staff
  * - PATIENT: Patient user (example)
@@ -256,6 +258,40 @@ const USER_ACCOUNTS = [
     staffProfile: {
       staff_number: 'BIL001',
       position: 'Billing Officer',
+      hire_date: new Date()
+    }
+  },
+  {
+    // Operations staff
+    email: 'operations@demo.com',
+    phone: '+12345678913',
+    role: 'OPERATIONS',
+    status: 'ACTIVE',
+    profile: {
+      first_name: 'Operations',
+      last_name: 'Staff',
+      gender: 'OTHER'
+    },
+    staffProfile: {
+      staff_number: 'OPR001',
+      position: 'Operations Officer',
+      hire_date: new Date()
+    }
+  },
+  {
+    // Human resources staff
+    email: 'hr@demo.com',
+    phone: '+12345678914',
+    role: 'HR',
+    status: 'ACTIVE',
+    profile: {
+      first_name: 'Human',
+      last_name: 'Resources',
+      gender: 'OTHER'
+    },
+    staffProfile: {
+      staff_number: 'HR001',
+      position: 'HR Officer',
       hire_date: new Date()
     }
   },

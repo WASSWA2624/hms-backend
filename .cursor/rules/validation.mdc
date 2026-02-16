@@ -1,7 +1,6 @@
 ---
 alwaysApply: true
 ---
-
 # Validation Rules
 
 ## Purpose
@@ -59,3 +58,5 @@ Zod-based validation is mandatory for strict input checking, data integrity, reu
 ❌ Violations = invalid  
 ✅ Refactors must clarify/improve validation  
 All endpoints must comply.
+
+---

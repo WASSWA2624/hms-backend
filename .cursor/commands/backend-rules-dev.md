@@ -11,3 +11,6 @@ Create and always update the seeder (use facker). Create a seeding script and ad
 If it means creating new files, do so. Make sure the dev-plan is chronological and each step implements an atomic feature/aspect of the app. Whoever uses the dev-plan and rules, should produce a similar project/app. Create one file at a time and ensure: preciseness, conciseness, brevity, completeness without duplicates and contradictions.
 
 Ensure there are no duplicates and contradictions.
+
+---
+Role catalog sync (2026-02-16): canonical backend roles include SUPER_ADMIN, TENANT_ADMIN, FACILITY_ADMIN, DOCTOR, NURSE, LAB_TECH, PHARMACIST, RECEPTIONIST, BILLING, OPERATIONS, HR, PATIENT, BIOMED, HOUSE_KEEPER, OTHER.

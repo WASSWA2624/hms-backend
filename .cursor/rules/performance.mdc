@@ -1,7 +1,6 @@
 ---
 alwaysApply: true
 ---
-
 # Performance Rules
 ## Purpose
 Defines **mandatory performance standards** for queries, endpoints, and responses.
@@ -64,3 +63,5 @@ Any violation is **invalid**.
 ❌ Violations are invalid  
 ✅ Refactors must improve speed, scalability, and efficiency  
 All modules **must strictly follow these performance rules**.
+
+---

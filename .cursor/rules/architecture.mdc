@@ -1,7 +1,6 @@
 ---
 alwaysApply: true
 ---
-
 # Architecture Rules
 
 ## Purpose
@@ -96,4 +95,6 @@ Defines the required backend stack and patterns for consistent, scalable, mainta
 ## Enforcement
 ❌ Deviation is invalid  
 ✅ Update this file for architectural changes
+---
+
 ---
