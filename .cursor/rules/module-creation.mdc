@@ -42,7 +42,8 @@ alwaysApply: true
 
 3. ### **Repository**
    - File: `<module>.repository.js` with `@prisma/client`.
-   - Only: `findById`, `findMany`, `create`, `update`, `softDelete`.
+   - Baseline repository methods must include: `findById`, `findMany`, `create`, `update`, `softDelete`.
+   - Additional repository methods are allowed when justified by module requirements and must follow `prisma.mdc`.
    - Follow `prisma.mdc` for APIs, errors, soft deletes.
    - Test: `src/tests/modules/<module>/repositories/<module>.repository.test.js`.
 

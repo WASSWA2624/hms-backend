@@ -59,9 +59,8 @@ Defines mandatory API design standards: enforce RESTfulness, predictable and reu
 ---
 
 ## Versioning & URLs
-- `/api/v<version>/...` required (initial release: `/api/v1/...`)
-- No breaking changes without version bump
-- Must be backward compatible
+- Versioned URL prefix is mandatory (`/api/v<version>/...`, initial release `/api/v1/...`).
+- Breaking-change policy, backward-compatibility window, and deprecation/sunset headers are governed by `api-versioning.mdc`.
 
 ---
 

@@ -36,7 +36,7 @@ Ensures:
 ## Encryption Standards
 - AES-256 for data at rest and transit
 - Sensitive keys **must** be stored securely and rotated periodically
-- Passwords hashed with bcryptjs; API keys with Argon2id
+- Credential hashing and API key handling **must** follow `auth-security.mdc`
 - No sensitive data stored in plaintext
 ---
 

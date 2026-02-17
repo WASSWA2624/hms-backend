@@ -32,7 +32,7 @@ Defines **mandatory authentication, authorization, and security** for protected 
 ---
 
 ## Sensitive Data Handling
-- Encrypt sensitive data (PII, PHI, financial) at rest/in transit (AES-256).
+- Sensitive-data encryption, retention, and handling controls must comply with `compliance.mdc`.
 - Do not return sensitive errors to clients.
 - Audit logs must record access to sensitive data.
 ---
