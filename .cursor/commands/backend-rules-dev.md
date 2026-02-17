@@ -1,16 +1,41 @@
-# backend-rules-dev
+﻿# Backend Rules Dev Command Contract
 
-Update the rules to add multi-language support (internationalization and localization) so that everything is localized. the response should include the locale. During development, define the en locale first and ensure it is complete. All the other locales will be implemented in the last phase of the development process. The locale files must be organized in the locale folder for resuability and maintainability.
+This file is the shared execution contract for `.cursor/commands/dev-phase-*.mdc`.
 
-Organize the dev-plan chronologically such that the app cores, logic and setup are implemented first. All the app specific aspects such as: db models, modules, enpoints, etc, should be implemented last.
+## Source-Of-Truth Order (Mandatory)
 
-No app specific aspects should be included in the rules. All app specific aspects should be moved to the dev-plan folder and created chronologically. Before implementing any app specific aspects, the app/server should minimally run without any errors.
+Use this exact precedence, aligned with `hms-backend/dev-plan/index.md`:
+1. `hms-backend/.cursor/rules/index.mdc` and linked canonical rule files.
+2. `hms-frontend/dev-plan/*.md`.
+3. Selected file in `hms-backend/dev-plan/*.mdc`.
+4. `hms-frontend/write-up.md`.
+5. Ticket/chat notes.
 
-Create and always update the seeder (use facker). Create a seeding script and add it to the package.json. There should be a dynamic way to set the number of records to be seeded, maybe via environment variables or in a special seeds constants table for each table
+## Mandatory Preflight
 
-If it means creating new files, do so. Make sure the dev-plan is chronological and each step implements an atomic feature/aspect of the app. Whoever uses the dev-plan and rules, should produce a similar project/app. Create one file at a time and ensure: preciseness, conciseness, brevity, completeness without duplicates and contradictions.
+- Read `hms-backend/.cursor/rules/index.mdc` and any canonical ownership files it points to.
+- Read the selected phase file completely, including supplemental compliance and write-up gates.
+- Confirm chronology against `.cursor/commands/index-backend-phases.mdc`.
+- If endpoints are touched, enforce `dev-plan/P010_api_endpoints.mdc` sections 0-28.
+- If modules are touched, enforce the 8-step module lifecycle from `module-creation.mdc`.
 
-Ensure there are no duplicates and contradictions.
+## Non-Negotiable Contracts
 
----
-Role catalog sync (2026-02-16): canonical backend roles include SUPER_ADMIN, TENANT_ADMIN, FACILITY_ADMIN, DOCTOR, NURSE, LAB_TECH, PHARMACIST, RECEPTIONIST, BILLING, OPERATIONS, HR, PATIENT, BIOMED, HOUSE_KEEPER, OTHER.
+- All `.cursor/rules/*.mdc` files are mandatory; no phase command can weaken them.
+- Foundational phases (0-8) remain framework/platform baseline only.
+- App phases (9-15) must not regress completed foundational contracts.
+- Selected step IDs only: do not auto-expand to unselected siblings.
+- Write-up alignment sections declared inside each selected phase file are acceptance gates.
+
+## Required Completion Report Fields
+
+- Selected IDs implemented.
+- Rule compliance checks performed.
+- Chronology/dependency checks performed.
+- Write-up alignment sections/gates validated.
+- Any intentionally deferred out-of-scope work.
+
+## Canonical Role Catalog
+
+Role names must stay aligned with `.cursor/rules/index.mdc`:
+`SUPER_ADMIN`, `TENANT_ADMIN`, `FACILITY_ADMIN`, `DOCTOR`, `NURSE`, `LAB_TECH`, `PHARMACIST`, `RECEPTIONIST`, `BILLING`, `OPERATIONS`, `HR`, `PATIENT`, `BIOMED`, `HOUSE_KEEPER`, `OTHER`.
