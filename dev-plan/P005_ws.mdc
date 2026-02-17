@@ -1,5 +1,8 @@
 ## Phase 5 – WebSockets
 
+**Write-up alignment:** `write-up.md` sections 5.5, 6.16, 7.6, 7.10, 14.5  
+**Primary rules:** `websockets.mdc`, `auth-security.mdc`, `compliance.mdc`, `testing.mdc`
+
 ### Step 5.1: WebSocket server setup (task-atomic sub-steps)
 
 #### Step 5.1.1: Create WebSocket server entry point
@@ -54,3 +57,11 @@
 #### Step 5.7.2: Run WebSocket tests
 - Run `npm test`
 - **Verification**: WebSocket tests pass.
+
+---
+
+### Phase 5 supplemental compliance gates
+
+- Add connection-level abuse controls (per-connection and per-user event throttling) and log repeated violations.
+- Ensure sensitive WS events include audit trail entries and tenant/facility scope checks before emit.
+- Ensure broadcast events are minimized to role-relevant audiences and avoid over-sharing payload fields.

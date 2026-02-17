@@ -6,6 +6,9 @@ alwaysApply: true
 
 **Scope:** Seed data must align with `P009_models.mdc` and HMS endpoints in `P010_api_endpoints.mdc`. Cover all modules in `P011_modules.mdc` with minimum viable records for API completeness.
 
+**Write-up alignment:** `write-up.md` sections 6, 7, 9.2, 9.3  
+**Primary rules:** `prisma.mdc`, `testing.mdc`, `compliance.mdc`
+
 ### Step 12.1: Add Faker dependency
 - Install `@faker-js/faker` as a dev dependency
 - **Verification**: `@faker-js/faker` appears in `devDependencies`
@@ -38,6 +41,15 @@ alwaysApply: true
   6. Diagnostics: `lab_test`, `lab_panel`, `lab_order`, `lab_order_item`, `lab_sample`, `lab_result`, `lab_qc_log`, `radiology_test`, `radiology_order`, `radiology_result`, `imaging_study`, `imaging_asset`, `pacs_link`
   7. Pharmacy & inventory: `drug`, `drug_batch`, `formulary_item`, `pharmacy_order`, `pharmacy_order_item`, `dispense_log`, `adverse_event`, `inventory_item`, `inventory_stock`, `stock_movement`, `supplier`, `purchase_request`, `purchase_order`, `goods_receipt`, `stock_adjustment`
   8. Emergency: `emergency_case`, `triage_assessment`, `emergency_response`, `ambulance`, `ambulance_dispatch`, `ambulance_trip`
-  9. Billing/HR/Facilities: `invoice`, `invoice_item`, `payment`, `refund`, `pricing_rule`, `coverage_plan`, `insurance_claim`, `pre_authorization`, `billing_adjustment`, `staff_profile`, `staff_assignment`, `staff_leave`, `shift`, `shift_assignment`, `shift_swap_request`, `payroll_run`, `payroll_item`, `housekeeping_task`, `housekeeping_schedule`, `maintenance_request`, `asset`, `asset_service_log`
-  10. Comms/Analytics/Compliance/Integrations: `notification`, `notification_delivery`, `conversation`, `message`, `template`, `template_variable`, `report_definition`, `report_run`, `dashboard_widget`, `kpi_snapshot`, `analytics_event`, `subscription_plan`, `subscription`, `subscription_invoice`, `module`, `module_subscription`, `license`, `audit_log`, `phi_access_log`, `data_processing_log`, `breach_notification`, `system_change_log`, `integration`, `integration_log`, `webhook_subscription`
+  9. Billing/HR/Facilities: `invoice`, `invoice_item`, `payment`, `refund`, `pricing_rule`, `coverage_plan`, `insurance_claim`, `pre_authorization`, `billing_adjustment`, `staff_position`, `staff_profile`, `staff_assignment`, `staff_leave`, `shift`, `shift_assignment`, `shift_swap_request`, `payroll_run`, `payroll_item`, `nurse_roster`, `shift_template`, `roster_day_off`, `staff_availability`, `housekeeping_task`, `housekeeping_schedule`, `maintenance_request`, `asset`, `asset_service_log`
+  10. Biomedical suite: `equipment_category`, `equipment_registry`, `equipment_location_history`, `equipment_maintenance_plan`, `equipment_work_order`, `equipment_calibration_log`, `equipment_safety_test_log`, `equipment_downtime_log`, `equipment_spare_part`, `equipment_warranty_contract`, `equipment_service_provider`, `equipment_incident_report`, `equipment_recall_notice`, `equipment_utilization_snapshot`, `equipment_disposal_transfer`
+  11. Comms/Analytics/Compliance/Integrations: `notification`, `notification_delivery`, `conversation`, `message`, `template`, `template_variable`, `report_definition`, `report_run`, `dashboard_widget`, `kpi_snapshot`, `analytics_event`, `subscription_plan`, `subscription`, `subscription_invoice`, `module`, `module_subscription`, `license`, `audit_log`, `phi_access_log`, `data_processing_log`, `breach_notification`, `system_change_log`, `integration`, `integration_log`, `webhook_subscription`
 - **Verification**: `npm run seed` produces valid records for every HMS endpoint group without FK errors
+
+---
+
+### Phase 12 supplemental compliance gates
+
+- Include free-core and paid-module entitlement seed scenarios for activation testing (`module`, `module_subscription`, `subscription_plan`, `subscription`).
+- Seed conflict/offline test records with versioned updates for idempotency and sync-replay test packs.
+- Seed sensitive-data and audit-heavy paths (PHI access, financial events, biomedical actions) for compliance regression tests.

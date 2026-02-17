@@ -8,6 +8,9 @@ alwaysApply: true
 This document defines the complete `/api/v<version>` surface for the HMS backend.
 All module endpoints **must** use the `/api/v<version>/` base path prefix as required by `api.mdc` and `api-versioning.mdc` (initial release: `/api/v1/`).
 
+**Write-up alignment:** `write-up.md` sections 6, 7, 9, 10, 11, 12.2, 13, 18  
+**Primary rules:** `api.mdc`, `api-versioning.mdc`, `response-format.mdc`, `validation.mdc`, `offline-support.mdc`, `compliance.mdc`
+
 ## Conventions
 - CRUD:
   - `GET /<resource>`: list (paginated)
@@ -805,6 +808,13 @@ GET /live
 
 ## 16. HR, Payroll & Staffing
 ```javascript
+/api/v<version>/staff-positions/
+├── GET /                           // List staff positions
+├── POST /                          // Create staff position
+├── GET /{id}                       // Get staff position by ID
+├── PUT /{id}                       // Update staff position
+└── DELETE /{id}                    // Soft delete staff position
+
 /api/v<version>/staff-profiles/
 ├── GET /                           // List staff profiles
 ├── POST /                          // Create staff profile
@@ -1224,8 +1234,73 @@ Telemedicine, patient portal, and engagement features reuse existing resources:
 `appointments`, `encounters`, `messages`, `clinical-notes`, `lab-results`,
 `radiology-results`, `prescriptions` (via pharmacy orders), and `notifications`.
 
-## 24. Final Enforcement Rule
+## 24. Global Enforcement Rule
 ❌ Any API module endpoint under `/api/v<version>/` that is not defined in this file **invalid**  
 ✅ All refactors must **improve compliance**, never reduce it  
 This file is **non-negotiable** and applies globally.
+
+## 25. Workflow Contract Action Endpoints (Write-up Section 7)
+All workflow-critical actions must be modeled as explicit action endpoints and audited.
+
+```javascript
+/api/v<version>/visit-queues/{id}/prioritize      // Apply triage priority and reason
+/api/v<version>/admissions/{id}/transfer          // Enforce transfer approval chain
+/api/v<version>/discharge-summaries/{id}/finalize // Finalize discharge with mandatory checks
+/api/v<version>/lab-results/{id}/release          // Role-gated validated result release
+/api/v<version>/radiology-results/{id}/sign-off   // Role-gated final report sign-off
+/api/v<version>/pharmacy-orders/{id}/dispense     // Dispense with stock + allergy guard
+/api/v<version>/insurance-claims/{id}/submit      // Submit claim to payer flow
+/api/v<version>/insurance-claims/{id}/reconcile   // Reconcile claim status with payments
+/api/v<version>/nurse-rosters/{id}/generate       // Generate roster from constraint profile
+/api/v<version>/maintenance-requests/{id}/triage  // Biomedical triage assignment + SLA
+/api/v<version>/equipment-work-orders/{id}/start  // Begin corrective maintenance
+/api/v<version>/equipment-work-orders/{id}/return-to-service // Require verification evidence
+```
+
+## 26. Commercial, Entitlement, and Billing Control Endpoints
+Write-up alignment: sections 9 and 10.
+
+```javascript
+/api/v<version>/subscriptions/{id}/upgrade
+/api/v<version>/subscriptions/{id}/downgrade
+/api/v<version>/subscriptions/{id}/renew
+/api/v<version>/subscriptions/{id}/proration-preview
+/api/v<version>/module-subscriptions/{id}/activate
+/api/v<version>/module-subscriptions/{id}/deactivate
+/api/v<version>/payments/{id}/reconcile
+/api/v<version>/payments/{id}/channel-breakdown
+/api/v<version>/subscription-invoices/{id}/collect
+/api/v<version>/subscription-invoices/{id}/retry
+```
+
+## 27. Interoperability and Migration Endpoints
+Write-up alignment: section 12.
+
+```javascript
+/api/v<version>/integrations/{id}/test-connection
+/api/v<version>/integrations/{id}/sync-now
+/api/v<version>/integration-logs/{id}/replay
+/api/v<version>/webhook-subscriptions/{id}/replay
+/api/v<version>/interop/fhir/export/{resource}
+/api/v<version>/interop/fhir/import/{resource}
+/api/v<version>/interop/hl7/messages
+/api/v<version>/interop/dicom/studies/{id}/link
+/api/v<version>/interop/migrations/export
+/api/v<version>/interop/migrations/import
+```
+
+## 28. Growth and Engagement Endpoints
+Write-up alignment: section 11.
+
+```javascript
+/api/v<version>/public/services
+/api/v<version>/public/providers
+/api/v<version>/public/branches
+/api/v<version>/campaigns
+/api/v<version>/campaigns/{id}/metrics
+/api/v<version>/referrals
+/api/v<version>/referrals/{id}/redeem
+/api/v<version>/feedback/nps
+/api/v<version>/feedback/csat
+```
 

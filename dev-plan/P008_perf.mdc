@@ -1,4 +1,7 @@
-## Phase 14 – Performance & release readiness
+﻿## Phase 15 - Performance & release readiness
+
+**Write-up alignment:** `write-up.md` sections 14, 15, 18.2, 19, 20  
+**Primary rules:** `performance.mdc`, `offline-support.mdc`, `error-logging.mdc`, `documentation.mdc`
 
 ### Step 8.1: Enforce pagination
 #### Step 8.1.1: Verify pagination helper usage (read-only)
@@ -17,7 +20,7 @@
 #### Step 8.2.2: Apply select/include optimizations (task-atomic sub-steps)
 ##### Step 8.2.2.1: Identify endpoints/repositories with oversized payloads (read-only)
 - Identify query paths returning more fields/relations than needed
-- **Verification**: A short list exists: `repo.fn → fields/relations to trim`.
+- **Verification**: A short list exists: `repo.fn -> fields/relations to trim`.
 
 ##### Step 8.2.2.2: Apply `select` trimming
 - Apply Prisma `select` to return only required scalar fields where appropriate
@@ -34,14 +37,14 @@
 ### Step 8.3: Add caching (if justified)
 #### Step 8.3.1: Decide whether caching is justified (read-only)
 - Identify candidates for caching and expected impact
-- **Caching Decision (2025-01-14):** Caching is **NOT justified** at current stage
+- **Caching Decision (2026-02-17):** Caching is **NOT globally enabled** at current stage
   - **Rationale:**
     - No performance metrics showing bottlenecks (no production data yet)
     - Database queries already optimized (indexes, `select`/`include`, pagination)
     - Application in early development (traffic patterns unknown)
     - Most data changes frequently (products, orders, inventory) - cache invalidation complexity high
     - Reference data (categories, manufacturers) is small and query-optimized
-    - Real-time accuracy critical for marketplace operations
+    - Real-time accuracy is critical for clinical, billing, and biomedical operations
   - **Potential Candidates (deferred):**
     - Reference data (categories, manufacturers, departments) - if accessed > 100x/day
     - Product/user data - NOT recommended due to frequent changes and real-time requirements
@@ -120,3 +123,14 @@
 - [ ] `prisma.config.js` exists at project root for Prisma 7.x migrations (per `prisma.mdc`)
 - [ ] `env.template.txt` exists (not `.env.example`) per `constants-env.mdc`
 - [ ] WebSocket events are in `src/lib/websocket/events.js` (not `src/websockets/events.js`) per `websockets.mdc`
+
+---
+
+### Phase 15 write-up release gates
+
+- [ ] Availability target validated for core services (>= 99.9% target with runbook-backed maintenance and incident handling).
+- [ ] API response performance validated against release thresholds (median list/detail <= 1.5s under expected load profile).
+- [ ] Offline sync conflict handling verified on critical workflows (registration, vitals, notes, medication administration drafts).
+- [ ] Observability dashboard includes error rate, latency, queue health, and integration retry/failure metrics.
+- [ ] Operational readiness artifacts are complete: deploy checklist, rollback checklist, smoke tests, on-call escalation matrix.
+

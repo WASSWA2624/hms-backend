@@ -1,5 +1,8 @@
 ## Phase 6 – Storage integration
 
+**Write-up alignment:** `write-up.md` sections 6.2, 6.15, 6.15A, 7.10, 13.2  
+**Primary rules:** `storage.mdc`, `compliance.mdc`, `auth-security.mdc`, `testing.mdc`
+
 ### Step 6.1: Configure storage provider (task-atomic sub-steps)
 
 #### Step 6.1.1: Ensure env template contains STORAGE_PROVIDER
@@ -18,14 +21,14 @@
 - Confirm provider switching works via env change only
 - **Verification**: No code changes required to switch providers.
 
-### Step 6.2: Integrate StorageService in media module (task-atomic sub-steps)
+### Step 6.2: Integrate StorageService in document/media modules (task-atomic sub-steps)
 
 #### Step 6.2.1: Route storage operations through StorageService
-- Update `media-asset` service to use StorageService (never direct file access)
+- Update modules that store files (`patient-document`, `imaging-asset`, biomedical evidence attachments) to use StorageService (never direct file access)
 - **Verification**: No direct filesystem/S3 SDK calls exist outside `src/lib/storage/*`.
 
 #### Step 6.2.2: Enforce validation via Zod schemas
-- Ensure schemas exist in `@validations/media-asset/*` and are used in routes (no inline validation)
+- Ensure upload schemas exist in the owning module schema files (`@validations/patient-document/*`, `@validations/imaging-asset/*`, or equivalent) and are used in routes (no inline validation)
 - **Verification**: Invalid upload payloads are rejected by validation middleware.
 
 #### Step 6.2.3: Verify middleware order (read-only)
@@ -88,3 +91,11 @@
 #### Step 6.6.3: Run storage tests
 - Run `npm test`
 - **Verification**: Storage tests pass.
+
+---
+
+### Phase 6 supplemental compliance gates
+
+- Ensure attachment evidence rules support biomedical maintenance workflows (photos/docs/certificates) with role-restricted retrieval.
+- Ensure signed or protected download URLs are short-lived and tenant-scoped.
+- Ensure storage audit payloads include actor, tenant, entity, operation, and evidence classification tags.

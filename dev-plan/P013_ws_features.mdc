@@ -6,6 +6,9 @@ alwaysApply: true
 
 **Scope:** HMS-only real-time events aligned with `P009_models.mdc` and `P010_api_endpoints.mdc`. No legacy ecommerce events.
 
+**Write-up alignment:** `write-up.md` sections 5.5, 7, 14.5, 20  
+**Primary rules:** `websockets.mdc`, `compliance.mdc`, `error-logging.mdc`
+
 ### Step 13.1: Define app-specific events (HMS)
 - Add events for:
   - Appointments (created, rescheduled, canceled)
@@ -18,6 +21,8 @@ alwaysApply: true
   - Emergency dispatch (case assigned, ambulance dispatched, arrival updates)
   - Billing & payments (invoice issued, payment received, refund processed)
   - Notifications/messages (new notification, conversation message)
+  - Subscription and module entitlement changes (activated, deactivated, expiring)
+  - Integration events (webhook retry, integration failure, replay complete)
 - **Verification**: All event names are defined in `src/lib/websocket/events.js` and exposed via `@lib/websocket`
 
 ### Step 13.2: Emit events from services only
@@ -28,3 +33,11 @@ alwaysApply: true
 ### Step 13.3: Add WS tests (app-specific)
 - Add tests for app-specific event emissions
 - **Verification**: WS tests pass without real sockets
+
+---
+
+### Phase 13 supplemental compliance gates
+
+- Critical biomedical alerts must support escalation fan-out and acknowledgement tracking.
+- High-risk events must include event idempotency keys to avoid duplicate client-side processing.
+- Event payload contracts must include tenant and scope metadata for safe client routing.

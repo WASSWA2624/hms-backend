@@ -4,6 +4,9 @@ alwaysApply: true
 
 ## Phase 4 – Internationalization (i18n) base
 
+**Write-up alignment:** `write-up.md` sections 8.5, 12.2, 15.3  
+**Primary rules:** `internationalization.mdc`, `response-format.mdc`, `validation.mdc`
+
 ### Step 4.1: Create locale folder
 - Create `src/locales/` and add `en.json` with complete base translations
 - **Verification**: `src/locales/en.json` exists and is non-empty
@@ -39,3 +42,11 @@ alwaysApply: true
 ### Step 4.5: i18n middleware
 - Add middleware to detect locale and attach to request context
 - **Verification**: Locale is available in controllers/services without direct header parsing
+
+---
+
+### Phase 4 supplemental compliance gates
+
+- Enforce no hardcoded user-facing strings in controllers/services; messages must resolve through translation keys.
+- Add locale-key parity check script and fail CI when key sets diverge from `en`.
+- Ensure locale metadata and `Content-Language` behavior are consistent for success, error, and paginated responses.

@@ -4,6 +4,9 @@ alwaysApply: true
 
 ## Phase 2 – Prisma foundation (no models yet)
 
+**Write-up alignment:** `write-up.md` sections 5.3, 12.1, 12.5, 19.1  
+**Primary rules:** `prisma.mdc`, `constants-env.mdc`, `project-structure.mdc`
+
 ### Step 2.1: Confirm Prisma scaffolding is in place (read-only)
 - Verify `prisma/schema.prisma` exists and contains only `generator` + `datasource`
 - Ensure datasource has **no** `url =` (Prisma 7.x requirement)
@@ -22,3 +25,11 @@ alwaysApply: true
 ### Step 2.4: Validate basic connectivity (read-only)
 - Use a minimal connection validation (no models) via adapter or health check
 - **Verification**: Database connectivity check succeeds or fails fast within 2 seconds
+
+---
+
+### Phase 2 supplemental compliance gates
+
+- Confirm rollback strategy documentation exists for forward-only migrations (`rollback_*` convention and runbook reference).
+- Confirm connection-pool defaults are environment-driven and documented for production sizing.
+- Confirm Prisma adapter path is compatible with CI and local development without direct `process.env` access outside `src/config/env.js`.

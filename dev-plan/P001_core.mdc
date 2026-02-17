@@ -4,6 +4,9 @@ alwaysApply: true
 
 ## Phase 1 – Core utilities (small, deterministic steps)
 
+**Write-up alignment:** `write-up.md` sections 5.3, 5.4, 5.7, 9.1, 12.1, 13, 14.5, 18.1  
+**Primary rules:** `auth-security.mdc`, `response-format.mdc`, `error-logging.mdc`, `health-checks.mdc`, `compliance.mdc`
+
 ### Step 1.1: Error handling foundation (task-atomic sub-steps)
 
 #### Step 1.1.1: Create AppError
@@ -143,15 +146,15 @@ alwaysApply: true
 - **Verification**: `require('@lib/aliases')` resolves and exposes module-scoped alias registration helpers.
 
 ### Step 1.10: Storage abstraction - base
-- Create `src/lib/storage/StorageService.js` (abstract base class/interface)
+- Create `src/lib/storage/storage-service.js` (abstract base class/interface exporting `StorageService`)
 - **Verification**: StorageService defines required methods (upload, delete, get, etc.)
 
 ### Step 1.11: Storage providers - local
-- Create `src/lib/storage/LocalStorageService.js` (extends StorageService, local file system)
+- Create `src/lib/storage/local-storage.service.js` (extends `StorageService`, local file system)
 - **Verification**: LocalStorageService implements all StorageService methods
 
 ### Step 1.12: Storage providers - S3
-- Create `src/lib/storage/S3StorageService.js` (extends StorageService, AWS S3)
+- Create `src/lib/storage/s3-storage.service.js` (extends `StorageService`, AWS S3)
 - **Verification**: S3StorageService implements all StorageService methods
 
 ### Step 1.13: Storage factory
@@ -265,7 +268,8 @@ alwaysApply: true
 - **Verification**: Rate limit config exports configuration object
 
 ### Step 1.27: Configure roles
-- Populate `src/config/roles.js` with role definitions (e.g., 'admin', 'user', 'guest')
+- Populate `src/config/roles.js` using the canonical role catalog from `.cursor/rules/index.mdc`:
+  - `SUPER_ADMIN`, `TENANT_ADMIN`, `FACILITY_ADMIN`, `DOCTOR`, `NURSE`, `LAB_TECH`, `PHARMACIST`, `RECEPTIONIST`, `BILLING`, `OPERATIONS`, `HR`, `PATIENT`, `BIOMED`, `HOUSE_KEEPER`, `OTHER`
 - **Verification**: Roles exported as constants or configuration object
 
 ### Step 1.28: Configure permissions
@@ -343,3 +347,17 @@ alwaysApply: true
 - Create `src/lib/resilience/` helpers for retries and timeouts
 - Define retry/timeout defaults in `src/config/constants.js`
 - **Verification**: External service calls use resilience helpers and configurable timeouts.
+
+---
+
+### Phase 1 supplemental compliance gates
+
+- Ensure module activation checks are available as reusable middleware (`license/module-subscription` enforcement hook) so disabled modules are inaccessible at API layer.
+- Add tenant/facility/branch scope helpers in shared auth context utilities and enforce them in service entry points.
+- Ensure request context carries `request_id`, actor identity, locale, and tenancy scope for audit/event correlation.
+- Add shared guard utilities for configuration-driven adaptability controls (policy checks, workflow-state checks, dynamic form validation hooks, and feature flags).
+
+### Phase 1 write-up acceptance gates
+
+- Security defaults must satisfy privileged-access MFA readiness, API-key lifecycle controls, and non-leaking error surfaces.
+- Observability and logging baseline must support section 14.5 targets (logs + metrics hooks) and section 19 support runbooks.

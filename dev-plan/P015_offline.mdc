@@ -6,6 +6,9 @@ alwaysApply: true
 
 **Scope:** Applies to all HMS endpoints in `P010_api_endpoints.mdc` and modules in `P011_modules.mdc`. Responses must follow `response-format.mdc`.
 
+**Write-up alignment:** `write-up.md` sections 5.6, 7, 14.4  
+**Primary rules:** `offline-support.mdc`, `response-format.mdc`, `performance.mdc`, `testing.mdc`
+
 ### Step 8.1: Add versioning fields to responses
 - Ensure all mutation responses return full resource data and a version/timestamp (`version`, `updated_at`, or `etag`)
 - **Verification**: Mutation responses include version fields and full resource data.
@@ -39,3 +42,11 @@ alwaysApply: true
 ### Step 8.7: Offline-focused tests
 - Add tests for conditional GET, sync, idempotency, and conflict responses
 - **Verification**: Offline support tests pass without external dependencies.
+
+---
+
+### Phase 8 supplemental compliance gates
+
+- Critical offline workflows must include queue/registration basics, vitals capture, clinical note drafts, and medication administration drafts.
+- Conflict payloads must be user-resolvable and include current server state plus expected/current versions.
+- Sync replay must be deterministic and safe under duplicate request delivery.

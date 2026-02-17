@@ -6,6 +6,9 @@ alwaysApply: true
 
 **Scope:** Locales must match `SUPPORTED_LOCALES` in `src/config/constants.js` and follow `internationalization.mdc` (including RTL handling).
 
+**Write-up alignment:** `write-up.md` sections 8.5, 14.5, 15.3  
+**Primary rules:** `internationalization.mdc`, `response-format.mdc`, `testing.mdc`
+
 ### Step 14.1: Add individual locale files
 - This step involves creating a translation file for each supported non-English locale, one at a time.
 - Each locale file should contain complete base translations.
@@ -231,3 +234,11 @@ alwaysApply: true
 ### Step 14.3: Validate RTL behavior
 - Ensure RTL locales return `meta.direction = "rtl"`.
 - **Verification**: RTL locales respond with correct direction and `Content-Language`.
+
+---
+
+### Phase 14 supplemental compliance gates
+
+- Locale files must have full key parity with `en` before release candidate builds.
+- Fallback behavior (`invalid locale` and `missing key`) must be covered by automated tests and warning logs.
+- Locale handling must remain request-scoped and must not rely on server-side session state.

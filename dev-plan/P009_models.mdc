@@ -4,6 +4,9 @@ alwaysApply: true
 
 ## Phase 8 – Prisma schema (HMS-specific)
 
+**Write-up alignment:** `write-up.md` sections 6, 12, 13, 18.3  
+**Primary rules:** `prisma.mdc`, `compliance.mdc`, `offline-support.mdc`, `internationalization.mdc`
+
 ### Step 8.1: Define enums
 - Add required enums in `prisma/schema.prisma` (PascalCase):
   - UserRole, UserStatus, Gender, AddressType, ContactType
@@ -96,9 +99,10 @@ alwaysApply: true
 - `billing_adjustment`
 
 ### Step 8.15: HR, payroll & staff operations models
-- `staff_profile`, `staff_assignment`, `staff_leave`
+- `staff_position`, `staff_profile`, `staff_assignment`, `staff_leave`
 - `shift`, `shift_assignment`, `shift_swap_request`
 - `payroll_run`, `payroll_item`
+- `nurse_roster`, `shift_template`, `roster_day_off`, `staff_availability`
 - **Verification**: Supports nurses time-table generator inputs/outputs
 
 ### Step 8.16: Housekeeping & facilities management models
@@ -133,6 +137,13 @@ alwaysApply: true
 ### Step 8.21: Integration & interoperability models
 - `integration`, `integration_log`, `webhook_subscription`
 
+### Step 8.21A: Adaptability and extension model controls
+- Ensure key entities include extension and versioning support where required:
+  - extension metadata fields (for tenant-specific configurable fields)
+  - configuration version references for policy/workflow-controlled behavior
+  - immutable change-history pattern for critical configuration snapshots
+- **Verification**: Extensible entities preserve canonical fields while supporting validated extension blocks.
+
 ### Step 8.22: Run migration
 - Run `npx prisma migrate dev --name initial_schema`
 - **Verification**: Migration folder exists in `prisma/migrations/`
@@ -146,3 +157,5 @@ alwaysApply: true
 - All soft delete models index `deleted_at`
 - All relationships include explicit foreign keys and indexes on common filters
 - All mutations produce audit logs (handled in services)
+- All core records carry tenancy scope (`tenant_id`, plus facility/branch where applicable)
+- Version/conflict fields are available for offline-safe mutations where required (`version`, `updated_at`, optional `etag`)

@@ -1,8 +1,11 @@
----
+﻿---
 alwaysApply: true
 ---
 
-## Phase 0 – One-time setup (identical starting point)
+## Phase 0 - One-time setup (identical starting point)
+
+**Write-up alignment:** `write-up.md` sections 0.4, 5.3, 5.4, 12.1, 13.2, 14.5, 19.1  
+**Primary rules:** `project-structure.mdc`, `import-aliases.mdc`, `constants-env.mdc`, `architecture.mdc`
 
 ### Step 0.1: Initialize project structure (task-atomic sub-steps)
 
@@ -17,13 +20,13 @@ alwaysApply: true
 #### Step 0.1.3: Create `env.template.txt`
 - Create `env.template.txt` with required environment variable placeholders (per `constants-env.mdc`):
   - `DATABASE_URL="mysql://user:password@localhost:3306/dbname"`
-  - `JWT_SECRET="<32+ character secret>"` (≥ 32 characters)
+  - `JWT_SECRET="<32+ character secret>"` (>= 32 characters)
   - `CORS_ORIGINS="http://localhost:3000,http://localhost:3001"` (comma-separated for development)
   - `NODE_ENV="development"`
   - `PORT="3000"` (optional, defaults to 3000)
   - `STORAGE_PROVIDER="local"` (local or s3)
   - Additional variables as needed (AWS credentials if using S3, etc.)
-- **Note:** `env.template.txt` must be git ignored (per `constants-env.mdc`) — add it explicitly to `.gitignore`.
+- **Note:** `env.template.txt` must be git ignored (per `constants-env.mdc`) - add it explicitly to `.gitignore`.
 - **Verification**: `env.template.txt` exists and includes all required variables.
 
 #### Step 0.1.4: Create nodemon config
@@ -146,12 +149,12 @@ alwaysApply: true
 
 #### Step 0.4.1: Create `jsconfig.json` (IDE support)
 - Create `jsconfig.json` at root with aliases per `import-aliases.mdc`:
-  - `@app/*` → `src/app/*`
-  - `@lib/*` → `src/lib/*`
-  - `@middlewares/*` → `src/middlewares/*`
-  - `@config/*` → `src/config/*`
-  - `@prisma` → `src/prisma/client.js`
-  - `@logs/*` → `logs/*`
+  - `@app/*` -> `src/app/*`
+  - `@lib/*` -> `src/lib/*`
+  - `@middlewares/*` -> `src/middlewares/*`
+  - `@config/*` -> `src/config/*`
+  - `@prisma/client` -> `src/prisma/client.js`
+  - `@logs/*` -> `logs/*`
 - **Verification**: `jsconfig.json` exists and contains these paths.
 
 #### Step 0.4.2: Record module-scoped alias limitation (documentation-only)
@@ -159,7 +162,7 @@ alwaysApply: true
 - **Verification**: Note exists in this plan (no code change).
 
 #### Step 0.4.3: Ensure runtime alias registration is planned (mandatory)
-- In `src/server.js`, ensure `require('module-alias/register')` is the very first require, then register base aliases (`@app`, `@lib`, `@config`, `@middlewares`, `@prisma`, `@logs`) and call `registerAllModuleAliases()` (per `import-aliases.mdc`).
+- In `src/server.js`, ensure `require('module-alias/register')` is the very first require, then register base aliases (`@app`, `@lib`, `@config`, `@middlewares`, `@prisma/client`, `@logs`) and call `registerAllModuleAliases()` (per `import-aliases.mdc`).
 - **Verification**: Plan explicitly calls out "alias registration must be first" and includes module-scoped alias registration.
 
 ### Step 0.5: Initialize Prisma (task-atomic sub-steps)
@@ -221,7 +224,7 @@ alwaysApply: true
 
 ### Phase 0 verification checklist (quick, high-signal)
 
-| Check | What “complete” means | Where to verify |
+| Check | What "complete" means | Where to verify |
 |---|---|---|
 | Project initialized | `package.json` + `package-lock.json` exist | project root |
 | CommonJS enforced | `package.json` contains `"type": "commonjs"` | `package.json` |
@@ -235,10 +238,26 @@ alwaysApply: true
 | Config is centralized | `src/config/env.js` exists and is the **only** place reading `process.env` | `src/config/env.js` + repo grep |
 | CORS rule ready | `cors` dependency installed and `src/config/cors.js` stub exists | `package.json`, `src/config/cors.js` |
 | Jest configured | `jest.config.js` exists and points to `src/tests/setup.js` | `jest.config.js` |
-| Aliases (IDE) | `jsconfig.json` paths include `@app`, `@lib`, `@config`, `@middlewares`, `@prisma`, `@logs` | `jsconfig.json` |
+| Aliases (IDE) | `jsconfig.json` paths include `@app`, `@lib`, `@config`, `@middlewares`, `@prisma/client`, `@logs` | `jsconfig.json` |
 | Aliases (runtime) | `src/server.js` registers `module-alias` **first**, then base aliases + `registerAllModuleAliases()` | `src/server.js` |
 | Required folder structure | `src/app`, `src/modules`, `src/lib`, `src/config`, `src/middlewares`, `src/tests`, `src/prisma` exist | `src/` tree |
 | Lib barrel files | `src/lib/index.js` exists and every `src/lib/*/index.js` exists (including `health/`, `i18n/`, `aliases/`) | `src/lib/**/index.js` |
 | Router planned | `src/app/router.js` exists and is responsible for mounting `/api/v<version>/*` (initial release: `/api/v1/*`) and system health endpoints | `src/app/router.js` |
 | Prisma guide | `prisma/guide.md` exists | `prisma/guide.md` |
 | Versioned docs | `CHANGELOG.md` and `docs/api/v1/openapi.yaml` exist | project root, `docs/api/v1/` |
+
+---
+
+### Phase 0 supplemental compliance gates
+
+- Add these baseline env placeholders in `env.template.txt`: `API_VERSION`, `ACCESS_TOKEN_EXPIRES_IN`, `REFRESH_TOKEN_EXPIRES_IN`, `DEFAULT_LOCALE`, `SUPPORTED_LOCALES`, `RATE_LIMIT_WINDOW_MS`, `RATE_LIMIT_MAX`, `IDEMPOTENCY_TTL_HOURS`, `LOG_RETENTION_DAYS`, `ENABLE_OFFLINE_SYNC`.
+- Add Prisma scripts in `package.json`: `prisma:migrate`, `prisma:migrate:deploy`, and `prisma:generate`.
+- Ensure IDE/runtime alias naming matches rule contract: use `@prisma/client` (not `@prisma`) for `src/prisma/client.js`.
+- Create `docs/` and `scripts/` as setup-time directories for runbooks, migration notes, and ops helpers.
+- Add `src/lib/resilience/` in foundational structure so retry/timeout/circuit-breaker helpers are not deferred.
+
+### Phase 0 write-up gates
+
+- Setup choices must keep tenant/module activation config-driven and redeploy-free.
+- Bootstrap artifacts must include enough documentation structure to support release readiness and rollback planning.
+

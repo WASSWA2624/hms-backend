@@ -1,19 +1,21 @@
----
+﻿---
 alwaysApply: true
 ---
 
-## Phase 11 – API modules (HMS implementation order)
+## Phase 11 - API modules (HMS implementation order)
 
 **Rule:** Every module follows the 8-step pattern in `module-creation.mdc`. Each module is a separate, atomic task.
 
-**Scope:** Use the HMS endpoint map in `P010_api_endpoints.mdc` (sections 0–24) and models in `P009_models.mdc`.
+**Scope:** Use the HMS endpoint map in `P010_api_endpoints.mdc` (sections 0-28) and models in `P009_models.mdc`.
+**Write-up alignment:** `write-up.md` sections 6, 7, 9, 10, 11, 18.1, 18.3  
+**Primary rules:** `module-creation.mdc`, `architecture.mdc`, `prisma.mdc`, `compliance.mdc`, `testing.mdc`
 
 **Compliance:** All modules must follow `internationalization.mdc` - use translation keys (no hardcoded strings) and add keys to `src/locales/en.json` before completion.
 
-## Implementation status snapshot (2026-02-15)
+## Implementation status snapshot (2026-02-17)
 
-- Planned atomic modules: **159**
-- Fully implemented (all 5 module layers present): **159/159**
+- Planned atomic modules: **160**
+- Fully implemented (all 5 module layers present): **160/160**
 - Pending module implementations: **None**
 - Group completion highlights:
   - Group 10 (Pharmacy): 7/7 complete
@@ -254,9 +256,10 @@ alwaysApply: true
 ### Module Group 14: HR, Payroll & Staffing
 
 #### 14.1 Staff Management
-14.1.1**: `staff-profile` - Staff profile CRUD operations
-14.1.2**: `staff-assignment` - Staff assignment CRUD
-14.1.3**: `staff-leave` - Staff leave CRUD operations
+14.1.1**: `staff-position` - Staff position CRUD operations
+14.1.2**: `staff-profile` - Staff profile CRUD operations
+14.1.3**: `staff-assignment` - Staff assignment CRUD
+14.1.4**: `staff-leave` - Staff leave CRUD operations
 
 #### 14.2 Shift Management
 14.2.1**: `shift` - Shift CRUD + publish operations
@@ -267,7 +270,7 @@ alwaysApply: true
 14.3.1**: `payroll-run` - Payroll run CRUD operations
 14.3.2**: `payroll-item` - Payroll item CRUD operations
 
-#### 14.4 Nurses Time-table Generator (Write-up §5.17)
+#### 14.4 Nurses Time-table Generator (Write-up section 6.14)
 14.4.1**: `nurse-roster` - Nurse roster CRUD + publish (roster config, constraints, period)
 14.4.2**: `shift-template` - Shift template CRUD (defines shift types for roster)
 14.4.3**: `roster-day-off` - Roster day-off CRUD (days off constraints)
@@ -386,6 +389,25 @@ alwaysApply: true
 
 ---
 
-## Total Module Count: 159 atomic modules
+## Total Module Count: 160 atomic modules
 
 Each module is a complete, independent implementation unit following the 8-step process.
+
+---
+
+### Section 6 acceptance contract overlay (mandatory)
+
+- Group-level "must deliver" and "acceptance essentials" from `write-up.md` section 6 are release gates, not optional backlog notes.
+- Every module completion requires:
+  - tenancy and scope enforcement (`tenant_id` and facility/branch where applicable)
+  - deterministic validation and standardized response envelopes
+  - non-blocking audit trail on all mutations
+  - translated user-facing messages and locale metadata compliance
+- Clinical, billing, compliance, and biomedical modules must include workflow action endpoints where status transitions are safety-critical.
+
+### Adaptability and module-governance gates
+
+- Module enablement must be enforceable by subscription/license state at route middleware + service layer checks.
+- Tenant-specific custom behavior must be configuration-driven (policies, workflows, forms, templates), not forked module code.
+- Cross-module dependencies must be explicit, machine-checkable, and versioned.
+

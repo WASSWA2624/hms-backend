@@ -1,5 +1,8 @@
 ## Phase 3 – Minimal runnable app
 
+**Write-up alignment:** `write-up.md` sections 5.3, 5.5, 13.5, 14.1, 14.5, 18.2  
+**Primary rules:** `api.mdc`, `api-versioning.mdc`, `health-checks.mdc`, `architecture.mdc`
+
 ### Step 3.1: Wire Express app (task-atomic sub-steps)
 #### Step 3.1.1: Verify CORS middleware is applied globally (read-only)
 - Verify CORS middleware is configured in `src/config/cors.js` and applied in `src/app/index.js`
@@ -39,3 +42,11 @@
 #### Step 3.4.2: Verify production startup
 - Run `node src/server.js`
 - **Verification**: Server starts and `/health`, `/ready`, `/live` respond with correct schemas.
+
+---
+
+### Phase 3 supplemental compliance gates
+
+- Verify version lifecycle wiring supports active + deprecated versions simultaneously in router composition.
+- Verify deprecated-version middleware can emit `Deprecation` and `Sunset` headers without affecting non-deprecated versions.
+- Verify startup logging emits build/version metadata and environment-safe diagnostics only (no secrets).
