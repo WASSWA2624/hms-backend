@@ -37,7 +37,7 @@ Mandatory, universal JavaScript conventions for consistency, readability, mainta
 - Routes: map requests.
 - Controllers: handle request/response.
 - Services: business logic.
-- Only repositories may access Prisma models.
+- Only repositories may access Prisma models; services may only orchestrate `prisma.$transaction(...)` as documented in `prisma.mdc`.
 
 ---
 
@@ -49,7 +49,7 @@ Mandatory, universal JavaScript conventions for consistency, readability, mainta
 ## Naming Conventions
 - Vars/functions: `camelCase`
 - Constants: `UPPER_SNAKE_CASE`
-- Files: `kebab-case.js`
+- Files: `kebab-case.js` by default; module layer files must follow `<module>.<layer>.js` (for example `user.service.js`) per `project-structure.mdc`.
 - Folders: `kebab-case`
 
 ---

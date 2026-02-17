@@ -30,12 +30,13 @@ Any violation is **invalid**.
 - Provider implementations **must** live in `src/lib/storage/` with the following structure:
 ```
 src/lib/storage/
-├── StorageService.js        # Abstract interface/base class
-├── LocalStorageService.js   # Local file system implementation
-├── S3StorageService.js      # AWS S3 implementation
-├── factory.js              # Factory function to select provider
-└── index.js                # Exports (StorageService, factory, etc.)
+├── storage-service.js       # Abstract interface/base class (exports StorageService)
+├── local-storage.service.js # Local file system implementation
+├── s3-storage.service.js    # AWS S3 implementation
+├── factory.js               # Factory function to select provider
+└── index.js                 # Exports (StorageService, factory, etc.)
 ```
+- Storage filenames must follow `kebab-case` per `coding-standards.mdc`; exported class names may remain `PascalCase`.
 - Use factory or dependency injection to select provider based on environment configuration.
 ---
 

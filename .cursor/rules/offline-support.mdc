@@ -12,9 +12,10 @@ Ensures:
 Any violation is **invalid**.
 
 ## API Design for Offline Support
-- All mutation endpoints **must** return:
+- Mutation responses with a body (`POST`, `PUT`, `PATCH`) **must** return:
   - Resource version/timestamp (`version`, `updated_at`, or `etag`)
   - Full resource data after mutation
+- `DELETE` responses must follow `response-format.mdc` (default `204 No Content`; use `200` with body only when explicitly required and documented).
 - List endpoints **must** support:
   - `?since=<timestamp>` query parameter for incremental sync
   - `?limit` and pagination for large datasets
@@ -88,7 +89,7 @@ Any violation is **invalid**.
   - Deleted resources **must** be included in sync with `deleted: true` flag
 
 ## Sync Response Format
-- Sync responses **must** follow standard format (per `response-format.mdc`):
+- Sync responses **must** follow standard format (per canonical response contract in `response-format.mdc`):
 ```javascript
 {
   "status": 200,
@@ -151,7 +152,7 @@ Any violation is **invalid**.
 
 ## Forbidden Patterns
 - Hard deletes without recovery option
-- Missing version/etag in responses
+- Missing version/etag in mutation responses that return a body
 - Non-idempotent mutation endpoints
 - Ignoring `If-None-Match` / `If-Modified-Since` headers
 - Returning full datasets without pagination

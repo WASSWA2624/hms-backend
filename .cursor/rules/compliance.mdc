@@ -42,16 +42,7 @@ Ensures:
 
 ## Audit Trails
 - All mutations **must** generate audit logs
-- Audit logs **must** include:
-  - **Tenant ID** (required) - Multi-tenant isolation
-  - User ID (optional) - User who performed the action
-  - Action type (required) - e.g., 'CREATE', 'UPDATE', 'DELETE'
-  - Entity type (required) - e.g., 'user', 'product', 'order'
-  - Entity ID (required) - ID of the affected resource
-  - Changes made (optional) - Before/after diff as JSON object
-  - IP address (optional) - IP address of the request
-  - Timestamp (auto-generated) - `created_at` field
-- Audit log field names **must** match schema: `tenant_id`, `user_id`, `action`, `entity`, `entity_id`, `diff_json`, `ip_address`, `created_at`
+- Audit log payload fields and naming **must** follow the canonical schema contract in `prisma.mdc` (`tenant_id`, `user_id`, `action`, `entity`, `entity_id`, `diff_json`, `ip_address`, `created_at`).
 - Audit logs **must** be immutable and retained as per compliance policy
 - Audit trail utilities **must** live in `src/lib/audit/` (per `project-structure.mdc`)
 - Services **must** call `@lib/audit/createAuditLog` with **required `tenant_id`** parameter (per `prisma.mdc`)

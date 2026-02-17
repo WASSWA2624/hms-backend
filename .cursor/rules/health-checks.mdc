@@ -64,7 +64,8 @@ Any violation is **invalid**.
 ---
 
 ## Response Times
-- Health checks **must** respond within 100ms (under normal conditions)
+- Liveness checks **must** respond within 100ms under normal conditions.
+- Health/readiness checks should target <100ms when dependencies are healthy; degraded fallback paths may take up to configured timeout limits.
 - Health checks **must not** perform expensive operations
 - Database checks **must** use lightweight queries (e.g., `SELECT 1`)
 - Timeout strategy for database checks:

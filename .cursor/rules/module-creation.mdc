@@ -38,28 +38,28 @@ alwaysApply: true
    - Implement `schemas/<module>.schema.js` (Zod).
    - Export by `validation.mdc` conventions (body, params, query).
    - Use snake_case fields.
-   - Test: `schemas/<module>.schema.test.js`.
+   - Test: `src/tests/modules/<module>/schemas/<module>.schema.test.js`.
 
 3. ### **Repository**
    - File: `<module>.repository.js` with `@prisma/client`.
    - Only: `findById`, `findMany`, `create`, `update`, `softDelete`.
    - Follow `prisma.mdc` for APIs, errors, soft deletes.
-   - Test: `repositories/<module>.repository.test.js`.
+   - Test: `src/tests/modules/<module>/repositories/<module>.repository.test.js`.
 
 4. ### **Service**
    - File: `<module>.service.js`.
-   - Only import/use its own repo (no direct DB).
+   - Use repositories for model operations; direct Prisma usage in services is limited to `prisma.$transaction(...)` orchestration per `prisma.mdc`.
    - All mutations **must** call `@lib/audit/createAuditLog` with **required `tenant_id`** parameter.
    - `tenant_id` **must** be extracted from entity data or existing entity (e.g., `entityData.tenant_id`, `existingEntity.tenant_id`).
    - Use Prisma `$transaction()` for multi-step mutations.
-   - Test: `services/<module>.service.test.js`.
+   - Test: `src/tests/modules/<module>/services/<module>.service.test.js`.
 
 5. ### **Controller**
    - File: `<module>.controller.js`.
    - Import the service.
    - All methods wrapped with `@lib/async/asyncHandler`.
    - Use `@lib/response` helpers for output.
-   - Test: `controllers/<module>.controller.test.js`.
+   - Test: `src/tests/modules/<module>/controllers/<module>.controller.test.js`.
 
 6. ### **Routes**
    - File: `<module>.routes.js`.
@@ -68,7 +68,7 @@ alwaysApply: true
    - Query params: snake_case, Zod-validated.
    - Use pagination/metadata helpers.
    - Correct HTTP statuses/JSDoc as per specs.
-   - Test: `routes/<module>.routes.test.js`.
+   - Test: `src/tests/modules/<module>/routes/<module>.routes.test.js`.
 
 7. ### **Mount Module**
    - In `src/app/router.js`:

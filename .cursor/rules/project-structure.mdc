@@ -111,7 +111,7 @@ project-root/
     │   ├── setup.js              # Global Jest setup & mocks
     │   └── modules/              # Module-level tests
     │
-````
+```
 ---
 ## Structure Rules
 

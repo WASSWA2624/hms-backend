@@ -78,12 +78,10 @@ registerModuleAliases('user');
 
 ---
 
-## Barrel File Requirements
+## Barrel Imports
 
-- Any directory with multiple helpers/utilities **must** have an `index.js` barrel file with aggregated `module.exports`.
-- Prefer barrel imports when a barrel exists (e.g., `require('@lib/response')`).
-- Required barrels: all `src/lib/*` subdirs (crypto, jwt, errors, response, async, validation, dates, logging, audit, websocket, storage, health, i18n, aliases), and `src/config/`.
-- No barrels required for module routes/controllers/services/repos/schemas.
+- Barrel file requirements are defined canonically in `project-structure.mdc`.
+- Prefer barrel imports when a barrel exists (for example, `require('@lib/response')`).
 - Direct subfile imports are allowed only for explicitly documented stable entrypoints (example: `@lib/async/asyncHandler`, `@lib/audit/createAuditLog`).
 
 ---
@@ -93,9 +91,10 @@ registerModuleAliases('user');
 - No cross-module relative imports.  
   - Exception: `src/app/router.js` may use relative `require('../modules/...')` only to mount routes.
 - Use aliases for local internal modules; external npm packages must use package names.
-- Barrels are mandatory for utility directories.
+- Barrels for utility directories are mandatory per `project-structure.mdc`.
 - Cross-module access allowed only via services or lib, not direct to controllers/repos.
 - Import paths must be static.
+- Dynamic imports are prohibited except explicit architecture-level exceptions documented in `architecture.mdc`.
 
 ---
 

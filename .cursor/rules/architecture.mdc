@@ -32,7 +32,7 @@ Defines the required backend stack and patterns for consistent, scalable, mainta
 ---
 
 ## Database & ORM
-- DB access only in services/repos.
+- DB model operations must be encapsulated in repositories; service-level Prisma usage is limited to transaction orchestration (`prisma.$transaction(...)`) per `prisma.mdc`.
 - Raw SQL only via ORM’s safe method (e.g. `$queryRaw`) with justification.
 - No ORM in routes/controllers.
 - Default stack: MySQL + Prisma (see `prisma.mdc`).
@@ -87,8 +87,8 @@ Defines the required backend stack and patterns for consistent, scalable, mainta
 - Must follow 8-step process in `module-creation.mdc`.
 - Modules: MVC per `project-structure.mdc`.
 - Controllers wrap all functions with `@lib/async/asyncHandler` (no try/catch).
-- Services call `@lib/audit/createAuditLog` for mutations with **required `tenant_id`** parameter (non-blocking, never throw).
-- Use Prisma `$transaction()` for atomic ops.
+- Mutations must create audit logs via `@lib/audit/createAuditLog` as defined in `prisma.mdc` and `compliance.mdc`.
+- Use Prisma `$transaction()` for atomic operations per `prisma.mdc`.
 
 ---
 

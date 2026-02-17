@@ -154,6 +154,7 @@ const prisma = new PrismaClient({ adapter });
 ---
 
 ## Audit Trail Implementation
+- This section is the canonical audit-log payload contract for the backend rule set.
 - All mutations (create, update, soft delete) **must** generate audit log entries
 - Audit logs **must** include:
   - `tenant_id` (required) - Multi-tenant isolation, must be provided by service layer
@@ -183,7 +184,7 @@ const prisma = new PrismaClient({ adapter });
 
 ## Forbidden Patterns
 - Hard deletes in production (use soft deletes only)
-- Direct Prisma access in controllers, routes, or services
+- Direct Prisma access in controllers/routes, or service-level `prisma.<model>.*` calls (service exception is limited to `prisma.$transaction(...)` orchestration)
 - Circular relationships without necessity
 - Mixing business logic with repository queries
 - Repositories calling services (repositories are data access only)

@@ -43,6 +43,15 @@ This file is the entry point for backend standards. Every implementation must co
 - `index.mdc` is a TOC/meta file. Authoritative rules are in the linked `.mdc` files.
 - Delivery sequencing and phase progress are tracked in `hms-backend/dev-plan/`.
 
+## Canonical Ownership (Conflict Prevention)
+- Structure, folder layout, and barrel requirements: `project-structure.mdc`
+- Alias map and runtime alias registration: `import-aliases.mdc`
+- Response envelopes and DELETE response semantics: `response-format.mdc`
+- Constants and environment access policy: `constants-env.mdc`
+- Audit log payload schema and field naming: `prisma.mdc`
+- Test layout and minimum coverage expectations: `testing.mdc`
+- Other rule files must reference these canonical files for the above topics instead of redefining field-level contracts.
+
 ---
 ## Canonical Role Catalog
 Single source of truth for backend role names. Do not duplicate this list in other rule files.
