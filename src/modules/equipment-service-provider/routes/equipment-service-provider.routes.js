@@ -5,10 +5,11 @@ const { validateRequest } = require('@middlewares/validate.middleware');
 const { authenticate } = require('@middlewares/auth.middleware');
 const { createEquipmentServiceProviderSchema, updateEquipmentServiceProviderSchema, equipmentServiceProviderIdParamsSchema, listEquipmentServiceProvidersQuerySchema } = require('@validations/equipment-service-provider/equipment-service-provider.schema');
 
-router.get('/', authenticate(), validateRequest({ query: listEquipmentServiceProvidersQuerySchema }), equipmentServiceProviderController.listEquipmentServiceProviders);
-router.get('/:id', authenticate(), validateRequest({ params: equipmentServiceProviderIdParamsSchema }), equipmentServiceProviderController.getEquipmentServiceProviderById);
-router.post('/', authenticate(), validateRequest({ body: createEquipmentServiceProviderSchema }), equipmentServiceProviderController.createEquipmentServiceProvider);
-router.put('/:id', authenticate(), validateRequest({ params: equipmentServiceProviderIdParamsSchema, body: updateEquipmentServiceProviderSchema }), equipmentServiceProviderController.updateEquipmentServiceProvider);
-router.delete('/:id', authenticate(), validateRequest({ params: equipmentServiceProviderIdParamsSchema }), equipmentServiceProviderController.deleteEquipmentServiceProvider);
+router.get('/', validateRequest({ query: listEquipmentServiceProvidersQuerySchema }), authenticate(), equipmentServiceProviderController.listEquipmentServiceProviders);
+router.get('/:id', validateRequest({ params: equipmentServiceProviderIdParamsSchema }), authenticate(), equipmentServiceProviderController.getEquipmentServiceProviderById);
+router.post('/', validateRequest({ body: createEquipmentServiceProviderSchema }), authenticate(), equipmentServiceProviderController.createEquipmentServiceProvider);
+router.put('/:id', validateRequest({ params: equipmentServiceProviderIdParamsSchema, body: updateEquipmentServiceProviderSchema }), authenticate(), equipmentServiceProviderController.updateEquipmentServiceProvider);
+router.delete('/:id', validateRequest({ params: equipmentServiceProviderIdParamsSchema }), authenticate(), equipmentServiceProviderController.deleteEquipmentServiceProvider);
 
 module.exports = router;
+

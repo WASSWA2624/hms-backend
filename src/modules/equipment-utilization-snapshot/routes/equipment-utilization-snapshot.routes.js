@@ -5,10 +5,11 @@ const { validateRequest } = require('@middlewares/validate.middleware');
 const { authenticate } = require('@middlewares/auth.middleware');
 const { createEquipmentUtilizationSnapshotSchema, updateEquipmentUtilizationSnapshotSchema, equipmentUtilizationSnapshotIdParamsSchema, listEquipmentUtilizationSnapshotsQuerySchema } = require('@validations/equipment-utilization-snapshot/equipment-utilization-snapshot.schema');
 
-router.get('/', authenticate(), validateRequest({ query: listEquipmentUtilizationSnapshotsQuerySchema }), equipmentUtilizationSnapshotController.listEquipmentUtilizationSnapshots);
-router.get('/:id', authenticate(), validateRequest({ params: equipmentUtilizationSnapshotIdParamsSchema }), equipmentUtilizationSnapshotController.getEquipmentUtilizationSnapshotById);
-router.post('/', authenticate(), validateRequest({ body: createEquipmentUtilizationSnapshotSchema }), equipmentUtilizationSnapshotController.createEquipmentUtilizationSnapshot);
-router.put('/:id', authenticate(), validateRequest({ params: equipmentUtilizationSnapshotIdParamsSchema, body: updateEquipmentUtilizationSnapshotSchema }), equipmentUtilizationSnapshotController.updateEquipmentUtilizationSnapshot);
-router.delete('/:id', authenticate(), validateRequest({ params: equipmentUtilizationSnapshotIdParamsSchema }), equipmentUtilizationSnapshotController.deleteEquipmentUtilizationSnapshot);
+router.get('/', validateRequest({ query: listEquipmentUtilizationSnapshotsQuerySchema }), authenticate(), equipmentUtilizationSnapshotController.listEquipmentUtilizationSnapshots);
+router.get('/:id', validateRequest({ params: equipmentUtilizationSnapshotIdParamsSchema }), authenticate(), equipmentUtilizationSnapshotController.getEquipmentUtilizationSnapshotById);
+router.post('/', validateRequest({ body: createEquipmentUtilizationSnapshotSchema }), authenticate(), equipmentUtilizationSnapshotController.createEquipmentUtilizationSnapshot);
+router.put('/:id', validateRequest({ params: equipmentUtilizationSnapshotIdParamsSchema, body: updateEquipmentUtilizationSnapshotSchema }), authenticate(), equipmentUtilizationSnapshotController.updateEquipmentUtilizationSnapshot);
+router.delete('/:id', validateRequest({ params: equipmentUtilizationSnapshotIdParamsSchema }), authenticate(), equipmentUtilizationSnapshotController.deleteEquipmentUtilizationSnapshot);
 
 module.exports = router;
+

@@ -5,10 +5,11 @@ const { validateRequest } = require('@middlewares/validate.middleware');
 const { authenticate } = require('@middlewares/auth.middleware');
 const { createEquipmentMaintenancePlanSchema, updateEquipmentMaintenancePlanSchema, equipmentMaintenancePlanIdParamsSchema, listEquipmentMaintenancePlansQuerySchema } = require('@validations/equipment-maintenance-plan/equipment-maintenance-plan.schema');
 
-router.get('/', authenticate(), validateRequest({ query: listEquipmentMaintenancePlansQuerySchema }), equipmentMaintenancePlanController.listEquipmentMaintenancePlans);
-router.get('/:id', authenticate(), validateRequest({ params: equipmentMaintenancePlanIdParamsSchema }), equipmentMaintenancePlanController.getEquipmentMaintenancePlanById);
-router.post('/', authenticate(), validateRequest({ body: createEquipmentMaintenancePlanSchema }), equipmentMaintenancePlanController.createEquipmentMaintenancePlan);
-router.put('/:id', authenticate(), validateRequest({ params: equipmentMaintenancePlanIdParamsSchema, body: updateEquipmentMaintenancePlanSchema }), equipmentMaintenancePlanController.updateEquipmentMaintenancePlan);
-router.delete('/:id', authenticate(), validateRequest({ params: equipmentMaintenancePlanIdParamsSchema }), equipmentMaintenancePlanController.deleteEquipmentMaintenancePlan);
+router.get('/', validateRequest({ query: listEquipmentMaintenancePlansQuerySchema }), authenticate(), equipmentMaintenancePlanController.listEquipmentMaintenancePlans);
+router.get('/:id', validateRequest({ params: equipmentMaintenancePlanIdParamsSchema }), authenticate(), equipmentMaintenancePlanController.getEquipmentMaintenancePlanById);
+router.post('/', validateRequest({ body: createEquipmentMaintenancePlanSchema }), authenticate(), equipmentMaintenancePlanController.createEquipmentMaintenancePlan);
+router.put('/:id', validateRequest({ params: equipmentMaintenancePlanIdParamsSchema, body: updateEquipmentMaintenancePlanSchema }), authenticate(), equipmentMaintenancePlanController.updateEquipmentMaintenancePlan);
+router.delete('/:id', validateRequest({ params: equipmentMaintenancePlanIdParamsSchema }), authenticate(), equipmentMaintenancePlanController.deleteEquipmentMaintenancePlan);
 
 module.exports = router;
+

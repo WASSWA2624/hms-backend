@@ -5,7 +5,10 @@
  * Allows importing via @lib/aliases per import-aliases.mdc.
  */
 
-const { registerModuleAliases, registerAllModuleAliases } = require('./registerModuleAliases');
+const {
+  registerModuleAliases,
+  registerAllModuleAliases
+} = require('@lib/aliases/registerModuleAliases');
 
 module.exports = {
   registerModuleAliases,

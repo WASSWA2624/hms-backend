@@ -13,10 +13,11 @@ const {
   listRosterDayOffsQuerySchema
 } = require('@validations/roster-day-off/roster-day-off.schema');
 
-router.get('/', authenticate(), validateRequest({ query: listRosterDayOffsQuerySchema }), rosterDayOffController.list);
-router.get('/:id', authenticate(), validateRequest({ params: rosterDayOffIdParamsSchema }), rosterDayOffController.getById);
-router.post('/', authenticate(), validateRequest({ body: createRosterDayOffSchema }), rosterDayOffController.create);
-router.put('/:id', authenticate(), validateRequest({ params: rosterDayOffIdParamsSchema, body: updateRosterDayOffSchema }), rosterDayOffController.update);
-router.delete('/:id', authenticate(), validateRequest({ params: rosterDayOffIdParamsSchema }), rosterDayOffController.remove);
+router.get('/', validateRequest({ query: listRosterDayOffsQuerySchema }), authenticate(), rosterDayOffController.list);
+router.get('/:id', validateRequest({ params: rosterDayOffIdParamsSchema }), authenticate(), rosterDayOffController.getById);
+router.post('/', validateRequest({ body: createRosterDayOffSchema }), authenticate(), rosterDayOffController.create);
+router.put('/:id', validateRequest({ params: rosterDayOffIdParamsSchema, body: updateRosterDayOffSchema }), authenticate(), rosterDayOffController.update);
+router.delete('/:id', validateRequest({ params: rosterDayOffIdParamsSchema }), authenticate(), rosterDayOffController.remove);
 
 module.exports = router;
+

@@ -5,10 +5,11 @@ const { validateRequest } = require('@middlewares/validate.middleware');
 const { authenticate } = require('@middlewares/auth.middleware');
 const { createEquipmentLocationHistorySchema, updateEquipmentLocationHistorySchema, equipmentLocationHistoryIdParamsSchema, listEquipmentLocationHistorysQuerySchema } = require('@validations/equipment-location-history/equipment-location-history.schema');
 
-router.get('/', authenticate(), validateRequest({ query: listEquipmentLocationHistorysQuerySchema }), equipmentLocationHistoryController.listEquipmentLocationHistorys);
-router.get('/:id', authenticate(), validateRequest({ params: equipmentLocationHistoryIdParamsSchema }), equipmentLocationHistoryController.getEquipmentLocationHistoryById);
-router.post('/', authenticate(), validateRequest({ body: createEquipmentLocationHistorySchema }), equipmentLocationHistoryController.createEquipmentLocationHistory);
-router.put('/:id', authenticate(), validateRequest({ params: equipmentLocationHistoryIdParamsSchema, body: updateEquipmentLocationHistorySchema }), equipmentLocationHistoryController.updateEquipmentLocationHistory);
-router.delete('/:id', authenticate(), validateRequest({ params: equipmentLocationHistoryIdParamsSchema }), equipmentLocationHistoryController.deleteEquipmentLocationHistory);
+router.get('/', validateRequest({ query: listEquipmentLocationHistorysQuerySchema }), authenticate(), equipmentLocationHistoryController.listEquipmentLocationHistorys);
+router.get('/:id', validateRequest({ params: equipmentLocationHistoryIdParamsSchema }), authenticate(), equipmentLocationHistoryController.getEquipmentLocationHistoryById);
+router.post('/', validateRequest({ body: createEquipmentLocationHistorySchema }), authenticate(), equipmentLocationHistoryController.createEquipmentLocationHistory);
+router.put('/:id', validateRequest({ params: equipmentLocationHistoryIdParamsSchema, body: updateEquipmentLocationHistorySchema }), authenticate(), equipmentLocationHistoryController.updateEquipmentLocationHistory);
+router.delete('/:id', validateRequest({ params: equipmentLocationHistoryIdParamsSchema }), authenticate(), equipmentLocationHistoryController.deleteEquipmentLocationHistory);
 
 module.exports = router;
+

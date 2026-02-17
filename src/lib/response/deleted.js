@@ -7,7 +7,7 @@
  * @param {Object} res - Express response object
  * @returns {Object} Express response
  */
-const { sendNoContent } = require('./noContent');
+const { sendNoContent } = require('@lib/response/noContent');
 
 const sendDeleted = (res) => {
   return sendNoContent(res);

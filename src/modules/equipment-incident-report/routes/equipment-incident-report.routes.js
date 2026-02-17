@@ -5,10 +5,11 @@ const { validateRequest } = require('@middlewares/validate.middleware');
 const { authenticate } = require('@middlewares/auth.middleware');
 const { createEquipmentIncidentReportSchema, updateEquipmentIncidentReportSchema, equipmentIncidentReportIdParamsSchema, listEquipmentIncidentReportsQuerySchema } = require('@validations/equipment-incident-report/equipment-incident-report.schema');
 
-router.get('/', authenticate(), validateRequest({ query: listEquipmentIncidentReportsQuerySchema }), equipmentIncidentReportController.listEquipmentIncidentReports);
-router.get('/:id', authenticate(), validateRequest({ params: equipmentIncidentReportIdParamsSchema }), equipmentIncidentReportController.getEquipmentIncidentReportById);
-router.post('/', authenticate(), validateRequest({ body: createEquipmentIncidentReportSchema }), equipmentIncidentReportController.createEquipmentIncidentReport);
-router.put('/:id', authenticate(), validateRequest({ params: equipmentIncidentReportIdParamsSchema, body: updateEquipmentIncidentReportSchema }), equipmentIncidentReportController.updateEquipmentIncidentReport);
-router.delete('/:id', authenticate(), validateRequest({ params: equipmentIncidentReportIdParamsSchema }), equipmentIncidentReportController.deleteEquipmentIncidentReport);
+router.get('/', validateRequest({ query: listEquipmentIncidentReportsQuerySchema }), authenticate(), equipmentIncidentReportController.listEquipmentIncidentReports);
+router.get('/:id', validateRequest({ params: equipmentIncidentReportIdParamsSchema }), authenticate(), equipmentIncidentReportController.getEquipmentIncidentReportById);
+router.post('/', validateRequest({ body: createEquipmentIncidentReportSchema }), authenticate(), equipmentIncidentReportController.createEquipmentIncidentReport);
+router.put('/:id', validateRequest({ params: equipmentIncidentReportIdParamsSchema, body: updateEquipmentIncidentReportSchema }), authenticate(), equipmentIncidentReportController.updateEquipmentIncidentReport);
+router.delete('/:id', validateRequest({ params: equipmentIncidentReportIdParamsSchema }), authenticate(), equipmentIncidentReportController.deleteEquipmentIncidentReport);
 
 module.exports = router;
+

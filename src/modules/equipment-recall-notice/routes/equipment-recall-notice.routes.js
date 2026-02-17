@@ -5,10 +5,11 @@ const { validateRequest } = require('@middlewares/validate.middleware');
 const { authenticate } = require('@middlewares/auth.middleware');
 const { createEquipmentRecallNoticeSchema, updateEquipmentRecallNoticeSchema, equipmentRecallNoticeIdParamsSchema, listEquipmentRecallNoticesQuerySchema } = require('@validations/equipment-recall-notice/equipment-recall-notice.schema');
 
-router.get('/', authenticate(), validateRequest({ query: listEquipmentRecallNoticesQuerySchema }), equipmentRecallNoticeController.listEquipmentRecallNotices);
-router.get('/:id', authenticate(), validateRequest({ params: equipmentRecallNoticeIdParamsSchema }), equipmentRecallNoticeController.getEquipmentRecallNoticeById);
-router.post('/', authenticate(), validateRequest({ body: createEquipmentRecallNoticeSchema }), equipmentRecallNoticeController.createEquipmentRecallNotice);
-router.put('/:id', authenticate(), validateRequest({ params: equipmentRecallNoticeIdParamsSchema, body: updateEquipmentRecallNoticeSchema }), equipmentRecallNoticeController.updateEquipmentRecallNotice);
-router.delete('/:id', authenticate(), validateRequest({ params: equipmentRecallNoticeIdParamsSchema }), equipmentRecallNoticeController.deleteEquipmentRecallNotice);
+router.get('/', validateRequest({ query: listEquipmentRecallNoticesQuerySchema }), authenticate(), equipmentRecallNoticeController.listEquipmentRecallNotices);
+router.get('/:id', validateRequest({ params: equipmentRecallNoticeIdParamsSchema }), authenticate(), equipmentRecallNoticeController.getEquipmentRecallNoticeById);
+router.post('/', validateRequest({ body: createEquipmentRecallNoticeSchema }), authenticate(), equipmentRecallNoticeController.createEquipmentRecallNotice);
+router.put('/:id', validateRequest({ params: equipmentRecallNoticeIdParamsSchema, body: updateEquipmentRecallNoticeSchema }), authenticate(), equipmentRecallNoticeController.updateEquipmentRecallNotice);
+router.delete('/:id', validateRequest({ params: equipmentRecallNoticeIdParamsSchema }), authenticate(), equipmentRecallNoticeController.deleteEquipmentRecallNotice);
 
 module.exports = router;
+

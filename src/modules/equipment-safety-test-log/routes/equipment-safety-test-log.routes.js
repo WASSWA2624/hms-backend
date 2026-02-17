@@ -5,10 +5,11 @@ const { validateRequest } = require('@middlewares/validate.middleware');
 const { authenticate } = require('@middlewares/auth.middleware');
 const { createEquipmentSafetyTestLogSchema, updateEquipmentSafetyTestLogSchema, equipmentSafetyTestLogIdParamsSchema, listEquipmentSafetyTestLogsQuerySchema } = require('@validations/equipment-safety-test-log/equipment-safety-test-log.schema');
 
-router.get('/', authenticate(), validateRequest({ query: listEquipmentSafetyTestLogsQuerySchema }), equipmentSafetyTestLogController.listEquipmentSafetyTestLogs);
-router.get('/:id', authenticate(), validateRequest({ params: equipmentSafetyTestLogIdParamsSchema }), equipmentSafetyTestLogController.getEquipmentSafetyTestLogById);
-router.post('/', authenticate(), validateRequest({ body: createEquipmentSafetyTestLogSchema }), equipmentSafetyTestLogController.createEquipmentSafetyTestLog);
-router.put('/:id', authenticate(), validateRequest({ params: equipmentSafetyTestLogIdParamsSchema, body: updateEquipmentSafetyTestLogSchema }), equipmentSafetyTestLogController.updateEquipmentSafetyTestLog);
-router.delete('/:id', authenticate(), validateRequest({ params: equipmentSafetyTestLogIdParamsSchema }), equipmentSafetyTestLogController.deleteEquipmentSafetyTestLog);
+router.get('/', validateRequest({ query: listEquipmentSafetyTestLogsQuerySchema }), authenticate(), equipmentSafetyTestLogController.listEquipmentSafetyTestLogs);
+router.get('/:id', validateRequest({ params: equipmentSafetyTestLogIdParamsSchema }), authenticate(), equipmentSafetyTestLogController.getEquipmentSafetyTestLogById);
+router.post('/', validateRequest({ body: createEquipmentSafetyTestLogSchema }), authenticate(), equipmentSafetyTestLogController.createEquipmentSafetyTestLog);
+router.put('/:id', validateRequest({ params: equipmentSafetyTestLogIdParamsSchema, body: updateEquipmentSafetyTestLogSchema }), authenticate(), equipmentSafetyTestLogController.updateEquipmentSafetyTestLog);
+router.delete('/:id', validateRequest({ params: equipmentSafetyTestLogIdParamsSchema }), authenticate(), equipmentSafetyTestLogController.deleteEquipmentSafetyTestLog);
 
 module.exports = router;
+

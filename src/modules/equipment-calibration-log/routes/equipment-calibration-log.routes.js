@@ -5,10 +5,11 @@ const { validateRequest } = require('@middlewares/validate.middleware');
 const { authenticate } = require('@middlewares/auth.middleware');
 const { createEquipmentCalibrationLogSchema, updateEquipmentCalibrationLogSchema, equipmentCalibrationLogIdParamsSchema, listEquipmentCalibrationLogsQuerySchema } = require('@validations/equipment-calibration-log/equipment-calibration-log.schema');
 
-router.get('/', authenticate(), validateRequest({ query: listEquipmentCalibrationLogsQuerySchema }), equipmentCalibrationLogController.listEquipmentCalibrationLogs);
-router.get('/:id', authenticate(), validateRequest({ params: equipmentCalibrationLogIdParamsSchema }), equipmentCalibrationLogController.getEquipmentCalibrationLogById);
-router.post('/', authenticate(), validateRequest({ body: createEquipmentCalibrationLogSchema }), equipmentCalibrationLogController.createEquipmentCalibrationLog);
-router.put('/:id', authenticate(), validateRequest({ params: equipmentCalibrationLogIdParamsSchema, body: updateEquipmentCalibrationLogSchema }), equipmentCalibrationLogController.updateEquipmentCalibrationLog);
-router.delete('/:id', authenticate(), validateRequest({ params: equipmentCalibrationLogIdParamsSchema }), equipmentCalibrationLogController.deleteEquipmentCalibrationLog);
+router.get('/', validateRequest({ query: listEquipmentCalibrationLogsQuerySchema }), authenticate(), equipmentCalibrationLogController.listEquipmentCalibrationLogs);
+router.get('/:id', validateRequest({ params: equipmentCalibrationLogIdParamsSchema }), authenticate(), equipmentCalibrationLogController.getEquipmentCalibrationLogById);
+router.post('/', validateRequest({ body: createEquipmentCalibrationLogSchema }), authenticate(), equipmentCalibrationLogController.createEquipmentCalibrationLog);
+router.put('/:id', validateRequest({ params: equipmentCalibrationLogIdParamsSchema, body: updateEquipmentCalibrationLogSchema }), authenticate(), equipmentCalibrationLogController.updateEquipmentCalibrationLog);
+router.delete('/:id', validateRequest({ params: equipmentCalibrationLogIdParamsSchema }), authenticate(), equipmentCalibrationLogController.deleteEquipmentCalibrationLog);
 
 module.exports = router;
+

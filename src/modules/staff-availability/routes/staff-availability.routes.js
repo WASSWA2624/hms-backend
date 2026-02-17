@@ -13,10 +13,11 @@ const {
   listStaffAvailabilitiesQuerySchema
 } = require('@validations/staff-availability/staff-availability.schema');
 
-router.get('/', authenticate(), validateRequest({ query: listStaffAvailabilitiesQuerySchema }), staffAvailabilityController.list);
-router.get('/:id', authenticate(), validateRequest({ params: staffAvailabilityIdParamsSchema }), staffAvailabilityController.getById);
-router.post('/', authenticate(), validateRequest({ body: createStaffAvailabilitySchema }), staffAvailabilityController.create);
-router.put('/:id', authenticate(), validateRequest({ params: staffAvailabilityIdParamsSchema, body: updateStaffAvailabilitySchema }), staffAvailabilityController.update);
-router.delete('/:id', authenticate(), validateRequest({ params: staffAvailabilityIdParamsSchema }), staffAvailabilityController.remove);
+router.get('/', validateRequest({ query: listStaffAvailabilitiesQuerySchema }), authenticate(), staffAvailabilityController.list);
+router.get('/:id', validateRequest({ params: staffAvailabilityIdParamsSchema }), authenticate(), staffAvailabilityController.getById);
+router.post('/', validateRequest({ body: createStaffAvailabilitySchema }), authenticate(), staffAvailabilityController.create);
+router.put('/:id', validateRequest({ params: staffAvailabilityIdParamsSchema, body: updateStaffAvailabilitySchema }), authenticate(), staffAvailabilityController.update);
+router.delete('/:id', validateRequest({ params: staffAvailabilityIdParamsSchema }), authenticate(), staffAvailabilityController.remove);
 
 module.exports = router;
+

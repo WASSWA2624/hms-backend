@@ -5,10 +5,11 @@ const { validateRequest } = require('@middlewares/validate.middleware');
 const { authenticate } = require('@middlewares/auth.middleware');
 const { createEquipmentRegistrySchema, updateEquipmentRegistrySchema, equipmentRegistryIdParamsSchema, listEquipmentRegistrysQuerySchema } = require('@validations/equipment-registry/equipment-registry.schema');
 
-router.get('/', authenticate(), validateRequest({ query: listEquipmentRegistrysQuerySchema }), equipmentRegistryController.listEquipmentRegistrys);
-router.get('/:id', authenticate(), validateRequest({ params: equipmentRegistryIdParamsSchema }), equipmentRegistryController.getEquipmentRegistryById);
-router.post('/', authenticate(), validateRequest({ body: createEquipmentRegistrySchema }), equipmentRegistryController.createEquipmentRegistry);
-router.put('/:id', authenticate(), validateRequest({ params: equipmentRegistryIdParamsSchema, body: updateEquipmentRegistrySchema }), equipmentRegistryController.updateEquipmentRegistry);
-router.delete('/:id', authenticate(), validateRequest({ params: equipmentRegistryIdParamsSchema }), equipmentRegistryController.deleteEquipmentRegistry);
+router.get('/', validateRequest({ query: listEquipmentRegistrysQuerySchema }), authenticate(), equipmentRegistryController.listEquipmentRegistrys);
+router.get('/:id', validateRequest({ params: equipmentRegistryIdParamsSchema }), authenticate(), equipmentRegistryController.getEquipmentRegistryById);
+router.post('/', validateRequest({ body: createEquipmentRegistrySchema }), authenticate(), equipmentRegistryController.createEquipmentRegistry);
+router.put('/:id', validateRequest({ params: equipmentRegistryIdParamsSchema, body: updateEquipmentRegistrySchema }), authenticate(), equipmentRegistryController.updateEquipmentRegistry);
+router.delete('/:id', validateRequest({ params: equipmentRegistryIdParamsSchema }), authenticate(), equipmentRegistryController.deleteEquipmentRegistry);
 
 module.exports = router;
+

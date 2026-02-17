@@ -10,7 +10,7 @@
  * @param {string} locale - Optional locale for translation
  * @returns {Object} Express response
  */
-const { sendSuccess } = require('./success');
+const { sendSuccess } = require('@lib/response/success');
 
 const sendCreated = (res, data, message, locale) => {
   return sendSuccess(res, 201, message, data);

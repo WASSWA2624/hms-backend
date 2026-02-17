@@ -13,10 +13,11 @@ const {
   listShiftTemplatesQuerySchema
 } = require('@validations/shift-template/shift-template.schema');
 
-router.get('/', authenticate(), validateRequest({ query: listShiftTemplatesQuerySchema }), shiftTemplateController.list);
-router.get('/:id', authenticate(), validateRequest({ params: shiftTemplateIdParamsSchema }), shiftTemplateController.getById);
-router.post('/', authenticate(), validateRequest({ body: createShiftTemplateSchema }), shiftTemplateController.create);
-router.put('/:id', authenticate(), validateRequest({ params: shiftTemplateIdParamsSchema, body: updateShiftTemplateSchema }), shiftTemplateController.update);
-router.delete('/:id', authenticate(), validateRequest({ params: shiftTemplateIdParamsSchema }), shiftTemplateController.remove);
+router.get('/', validateRequest({ query: listShiftTemplatesQuerySchema }), authenticate(), shiftTemplateController.list);
+router.get('/:id', validateRequest({ params: shiftTemplateIdParamsSchema }), authenticate(), shiftTemplateController.getById);
+router.post('/', validateRequest({ body: createShiftTemplateSchema }), authenticate(), shiftTemplateController.create);
+router.put('/:id', validateRequest({ params: shiftTemplateIdParamsSchema, body: updateShiftTemplateSchema }), authenticate(), shiftTemplateController.update);
+router.delete('/:id', validateRequest({ params: shiftTemplateIdParamsSchema }), authenticate(), shiftTemplateController.remove);
 
 module.exports = router;
+

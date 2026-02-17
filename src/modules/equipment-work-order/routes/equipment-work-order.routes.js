@@ -5,10 +5,11 @@ const { validateRequest } = require('@middlewares/validate.middleware');
 const { authenticate } = require('@middlewares/auth.middleware');
 const { createEquipmentWorkOrderSchema, updateEquipmentWorkOrderSchema, equipmentWorkOrderIdParamsSchema, listEquipmentWorkOrdersQuerySchema } = require('@validations/equipment-work-order/equipment-work-order.schema');
 
-router.get('/', authenticate(), validateRequest({ query: listEquipmentWorkOrdersQuerySchema }), equipmentWorkOrderController.listEquipmentWorkOrders);
-router.get('/:id', authenticate(), validateRequest({ params: equipmentWorkOrderIdParamsSchema }), equipmentWorkOrderController.getEquipmentWorkOrderById);
-router.post('/', authenticate(), validateRequest({ body: createEquipmentWorkOrderSchema }), equipmentWorkOrderController.createEquipmentWorkOrder);
-router.put('/:id', authenticate(), validateRequest({ params: equipmentWorkOrderIdParamsSchema, body: updateEquipmentWorkOrderSchema }), equipmentWorkOrderController.updateEquipmentWorkOrder);
-router.delete('/:id', authenticate(), validateRequest({ params: equipmentWorkOrderIdParamsSchema }), equipmentWorkOrderController.deleteEquipmentWorkOrder);
+router.get('/', validateRequest({ query: listEquipmentWorkOrdersQuerySchema }), authenticate(), equipmentWorkOrderController.listEquipmentWorkOrders);
+router.get('/:id', validateRequest({ params: equipmentWorkOrderIdParamsSchema }), authenticate(), equipmentWorkOrderController.getEquipmentWorkOrderById);
+router.post('/', validateRequest({ body: createEquipmentWorkOrderSchema }), authenticate(), equipmentWorkOrderController.createEquipmentWorkOrder);
+router.put('/:id', validateRequest({ params: equipmentWorkOrderIdParamsSchema, body: updateEquipmentWorkOrderSchema }), authenticate(), equipmentWorkOrderController.updateEquipmentWorkOrder);
+router.delete('/:id', validateRequest({ params: equipmentWorkOrderIdParamsSchema }), authenticate(), equipmentWorkOrderController.deleteEquipmentWorkOrder);
 
 module.exports = router;
+
