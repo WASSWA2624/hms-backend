@@ -322,7 +322,7 @@ alwaysApply: true
 #### Step 1.33.2: Register runtime aliases first (mandatory)
 - First executable line: `require('module-alias/register')`
 - Register global aliases using `module-alias.addAliases()`:
-  - `@app`, `@lib`, `@config`, `@middlewares`, `@prisma`, `@logs`
+  - `@app`, `@lib`, `@config`, `@middlewares`, `@prisma/client`, `@logs`
 - Call `registerAllModuleAliases()` from `@lib/aliases`
 - **Verification**: Aliases resolve at runtime; server starts without relative cross-module imports.
 
