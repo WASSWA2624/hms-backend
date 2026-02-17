@@ -69,7 +69,7 @@ Any violation is **invalid**.
 
 ## DELETE Response (204 No Content)
 * DELETE operations **must** return 204 (no content) by default
-* DELETE operations returning 204 **must** have an empty response body (null)
+* DELETE operations returning 204 **must not** send a response body
 * HTTP 204 No Content means no response body should be sent
 * Locale metadata is omitted for 204 responses (no body)
 * Only error responses (4xx/5xx) should follow the standard error response format

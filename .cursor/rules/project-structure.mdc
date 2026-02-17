@@ -135,7 +135,7 @@ project-root/
 ## Forbidden
 
 - Business logic in routes/controllers.
-- DB access outside repositories/services.
+- DB model access outside repositories (service exception is limited to transaction orchestration per `prisma.mdc`).
 - Cross-module relative imports.
 - Cross-module direct imports to another module's controllers/repositories.
 - Feature logic in `lib/`.

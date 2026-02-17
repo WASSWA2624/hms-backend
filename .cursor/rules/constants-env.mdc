@@ -15,14 +15,14 @@ Any violation is **invalid**.
 ## Constants
 - All constants **must** live in `src/config/constants.js`
 - Naming convention: `UPPER_SNAKE_CASE`
-- Config objects: `PascalCase`
+- Object-style constants **must** also use `UPPER_SNAKE_CASE` (example: `JWT_CONFIG`)
 - No constants scattered across modules
 - Examples:
 ```javascript
 const DEFAULT_PAGE_LIMIT = 20;
 const DEFAULT_PAGE = 1;
 const MAX_LOGIN_ATTEMPTS = 5;
-const JwtConfig = {
+const JWT_CONFIG = {
   expiresIn: '15m',
   algorithm: 'HS256'
 };

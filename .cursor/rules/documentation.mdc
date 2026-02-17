@@ -19,7 +19,7 @@ Any violation is **invalid**.
 ## Route Documentation
 - Every route **must** include full JSDoc:
   - `@description` → purpose of the route
-  - `@method` → HTTP method (GET, POST, PUT, DELETE)
+  - `@method` → HTTP method (GET, POST, PUT, PATCH, DELETE)
   - `@route` → path of the endpoint
   - `@authentication` → required (JWT, API Key, or None)
   - `@permissions` → role(s) allowed
@@ -28,7 +28,7 @@ Any violation is **invalid**.
   - `@bodyParams` → list and type of body parameters
   - `@returns` → success response schema
   - `@throws` → possible error responses
-- Documentation **must match Prisma schema exactly**
+- For DB-backed resources, documentation **must** align with Prisma schema and API contracts.
 - No undocumented parameters or responses allowed
 ---
 

@@ -35,23 +35,8 @@ Any violation is **invalid**.
 ---
 
 ## Error Response Format
-- Standardized JSON error format **must** be followed:
-```javascript
-{
-  "status": number,
-  "message": string,
-  "data": null,
-  "meta": {
-    "locale": string,
-    "direction": string
-  },
-  "errors": array
-}
-```
-
-* `status`: HTTP status code
-* `message`: user-friendly message
-* `errors`: array of detailed error info (optional)
+- Error responses **must** follow the canonical envelope in `response-format.mdc`.
+- This rule file governs handling/logging behavior, not response-envelope ownership.
 ---
 
 ## Resilience & Retry Logic

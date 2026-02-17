@@ -5,7 +5,7 @@ alwaysApply: true
 ## Purpose
 Defines **mandatory standards for multi-language and locale support (Internationalization and Localization)**.
 Ensures:
-- Consistent locale handling across all endpoints, with the locale explicitly included in the response (e.g., via a 'locale' field or header).
+- Consistent locale handling across all endpoints, with locale metadata in response bodies per `response-format.mdc` (when a body exists) and `Content-Language` header behavior defined below.
 - During development, define and complete the 'en' locale first; implement other locales in the final phase.
 - Locale files must be organized in the `src/locales/` folder, structured as JSON files per locale (e.g., `en.json`).
 - Proper formatting for dates, numbers, and currencies.
@@ -22,8 +22,8 @@ Locale files **must** be organized in the `src/locales/` folder.
 ## Locale Detection
 - Locale **must** be detected from request headers or query parameters
 - Priority order:
-  1. `Accept-Language` header (RFC 7231)
-  2. `?locale=<code>` query parameter (optional, overrides header)
+  1. `?locale=<code>` query parameter (optional explicit override)
+  2. `Accept-Language` header (RFC 7231)
   3. Default locale from `@config/constants` (e.g., `DEFAULT_LOCALE = 'en'`)
 - Locale format **must** follow ISO 639-1 (language) and ISO 3166-1 (country): `en-US`, `fr-CA`, `ar-SA`
 - Locale validation **must** use Zod schema from `@lib/validation`
@@ -56,7 +56,9 @@ const DEFAULT_LOCALE = 'en';
   - Response body: `meta.direction` (`rtl` or `ltr`, required)
   - Response header: `Content-Language: <locale>` when locale differs from default
 - Locale metadata **must** align with the locale used for translations
- - **Exception:** `204 No Content` responses have no body; locale metadata is omitted (see `response-format.mdc`)
+- **Exceptions:**
+  - `204 No Content` responses have no body; locale metadata is omitted (see `response-format.mdc`)
+  - System health endpoints (`GET /health`, `GET /ready`, `GET /live`) may use specialized operational payloads from `health-checks.mdc` without `meta`.
 
 ## Date & Time Formatting
 - All date/time fields in responses **must** be formatted per locale:

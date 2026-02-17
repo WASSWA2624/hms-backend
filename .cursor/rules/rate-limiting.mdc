@@ -61,24 +61,9 @@ Any violation is **invalid**.
 ## Error Response
 - Rate limit exceeded **must** return:
   - Status: 429 Too Many Requests
-  - Message: "Rate limit exceeded. Please try again later."
+  - Message: localized equivalent of "Rate limit exceeded. Please try again later."
   - Include reset time in response body
-- Response format:
-  ```javascript
-  {
-    "status": 429,
-    "message": "Rate limit exceeded. Please try again later.",
-    "data": null,
-    "meta": {
-      "locale": "en",
-      "direction": "ltr"
-    },
-    "errors": [{
-      "field": "rate_limit",
-      "message": "Limit will reset at <timestamp>"
-    }]
-  }
-  ```
+- Response envelope **must** follow `response-format.mdc`; include reset-time detail in `errors`.
 ---
 
 ## Logging & Monitoring
