@@ -54,17 +54,33 @@ When a conflict exists, resolve using this order:
 
 ## Write-Up Coverage Matrix
 
-Backend plan coverage for `hms-frontend/write-up.md`:
+Backend plan coverage for `hms-frontend/write-up.md` (sections 0-22):
 
-| Write-up scope | Backend plan owner |
+| Write-up section | Backend coverage owner(s) |
 |---|---|
-| Section 5 (architecture, tenancy, offline, adaptability controls) | `P001_core.mdc`, `P003_app.mdc`, `P015_offline.mdc`, `P011_modules.mdc`, `P008_perf.mdc` |
-| Section 6 (module groups 1-20 and 15A biomedical) | `P009_models.mdc`, `P010_api_endpoints.mdc`, `P011_modules.mdc`, `P012_seeder.mdc` |
-| Section 7 (end-to-end workflow contracts) | `P010_api_endpoints.mdc`, `P011_modules.mdc`, `P013_ws_features.mdc`, `P015_offline.mdc` |
-| Sections 9-11 (modules strategy, commercial flows, growth engine) | `P010_api_endpoints.mdc`, `P011_modules.mdc`, `P008_perf.mdc` |
-| Sections 12-13 (data model, interoperability, compliance) | `P009_models.mdc`, `P010_api_endpoints.mdc`, `P011_modules.mdc`, `P001_core.mdc` |
-| Sections 14-15 (NFRs, testing, quality gates) | `P007_tests.mdc`, `P008_perf.mdc`, `P015_offline.mdc` |
-| Sections 18-20 (DoD, ops readiness, KPIs) | `P008_perf.mdc`, `P011_modules.mdc`, `P007_tests.mdc` |
+| 0. Purpose and Governance | `index.md`, `P000_setup.mdc` |
+| 1. Product Definition | `index.md`, `P011_modules.mdc` |
+| 2. Current Codebase Baseline | `index.md`, `P011_modules.mdc` |
+| 3. Product Principles | `P001_core.mdc`, `P010_api_endpoints.mdc`, `P011_modules.mdc` |
+| 4. Facility Coverage Model | `P011_modules.mdc`, `P010_api_endpoints.mdc` |
+| 5. Architecture Blueprint | `P001_core.mdc`, `P003_app.mdc`, `P015_offline.mdc`, `P008_perf.mdc` |
+| 6. Complete Functional Scope (Groups 1-20, 15A) | `P009_models.mdc`, `P010_api_endpoints.mdc`, `P011_modules.mdc`, `P012_seeder.mdc` |
+| 7. End-to-End Workflow Contracts | `P010_api_endpoints.mdc`, `P011_modules.mdc`, `P013_ws_features.mdc`, `P015_offline.mdc` |
+| 8. UX, Accessibility, User-Friendliness (backend-relevant parts) | `P004_i18n.mdc`, `P014_locales.mdc`, `P008_perf.mdc` |
+| 9. Flexible Modules Strategy | `P010_api_endpoints.mdc`, `P011_modules.mdc` |
+| 10. Flexible Payment and Commercial Strategy | `P010_api_endpoints.mdc`, `P011_modules.mdc`, `P008_perf.mdc` |
+| 11. Self-Marketable Growth Engine (backend-relevant APIs/events) | `P010_api_endpoints.mdc`, `P013_ws_features.mdc`, `P008_perf.mdc` |
+| 12. Data Model and Interoperability | `P009_models.mdc`, `P010_api_endpoints.mdc`, `P011_modules.mdc` |
+| 13. Security, Privacy, and Compliance | `P001_core.mdc`, `P006_storage.mdc`, `P011_modules.mdc`, `P008_perf.mdc` |
+| 14. Non-Functional Requirements | `P008_perf.mdc`, `P015_offline.mdc`, `P001_core.mdc` |
+| 15. Testing and Quality Gates | `P007_tests.mdc`, `P008_perf.mdc` |
+| 16. Implementation Roadmap Alignment | `index.md`, all phased plan files |
+| 17. Completion Matrix and Gap Tracking | `P010_api_endpoints.mdc`, `P011_modules.mdc`, `index.md` |
+| 18. Definition of Done | `P011_modules.mdc`, `P008_perf.mdc`, `P007_tests.mdc` |
+| 19. Operational Readiness | `P000_setup.mdc`, `P002_prisma.mdc`, `P008_perf.mdc` |
+| 20. KPI Framework | `P008_perf.mdc`, `P013_ws_features.mdc`, `P011_modules.mdc` |
+| 21. High-Priority Improvement Themes | `P010_api_endpoints.mdc`, `P011_modules.mdc`, `P008_perf.mdc` |
+| 22. Final Positioning | `index.md`, all phased plan files |
 
 ## Rule Coverage Matrix
 
