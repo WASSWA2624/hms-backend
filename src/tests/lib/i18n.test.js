@@ -31,9 +31,9 @@ describe('i18n utilities', () => {
     expect(getLocale(req)).toBe('en-US');
   });
 
-  test('skips unsupported locale candidates in Accept-Language', () => {
+  test('resolves regional locale variants to supported base locale', () => {
     const req = { query: {}, headers: { 'accept-language': 'fr-FR,en-US;q=0.8,en;q=0.7' } };
-    expect(getLocale(req)).toBe('en-US');
+    expect(getLocale(req)).toBe('fr');
   });
 
   test('falls back to default locale when Accept-Language is wildcard', () => {

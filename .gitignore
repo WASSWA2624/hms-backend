@@ -37,11 +37,13 @@ build/
 # Test coverage
 coverage/
 .nyc_output/
+.jest-cache*/
 
 # Temporary files
 tmp/
 temp/
 *.tmp
+.tmp-*/
 
 # Uploads (local storage provider)
 uploads/

@@ -142,3 +142,14 @@ global.console = {
   error: jest.fn()
 };
 
+afterAll(() => {
+  try {
+    const { logger } = require('@lib/logging');
+    if (logger && typeof logger.close === 'function') {
+      logger.close();
+    }
+  } catch (err) {
+    // no-op: teardown should never fail tests
+  }
+});
+

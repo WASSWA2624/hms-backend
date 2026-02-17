@@ -10,7 +10,6 @@
 const webhookSubscriptionRepository = require('@repositories/webhook-subscription/webhook-subscription.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
-const prisma = require('@prisma/client');
 
 /**
  * Get webhook subscription by ID

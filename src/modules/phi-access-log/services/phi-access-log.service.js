@@ -11,7 +11,6 @@
 const phiAccessLogRepository = require('@modules/phi-access-log/repositories/phi-access-log.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
-const prisma = require('@prisma/client');
 
 /**
  * Get PHI access log by ID
@@ -133,22 +132,18 @@ const getPhiAccessLogsByUserId = async (userId, page = 1, limit = 20, sortBy = '
  * @returns {Promise<Object>} Created PHI access log
  */
 const createPhiAccessLog = async (data, userId, ipAddress) => {
-  return await prisma.$transaction(async (tx) => {
-    // Create PHI access log
-    const phiAccessLog = await phiAccessLogRepository.create(data);
+  const phiAccessLog = await phiAccessLogRepository.create(data);
 
-    // Create audit log
-    await createAuditLog({
-      tenant_id: data.tenant_id,
-      user_id: userId,
-      action: 'CREATE',
-      entity: 'phi_access_log',
-      entity_id: phiAccessLog.id,
-      ip_address: ipAddress
-    });
-
-    return phiAccessLog;
+  await createAuditLog({
+    tenant_id: data.tenant_id,
+    user_id: userId,
+    action: 'CREATE',
+    entity: 'phi_access_log',
+    entity_id: phiAccessLog.id,
+    ip_address: ipAddress
   });
+
+  return phiAccessLog;
 };
 
 /**
@@ -168,22 +163,18 @@ const updatePhiAccessLog = async (id, data, userId, ipAddress) => {
     throw new HttpError('errors.phi_access_log.not_found', 404);
   }
 
-  return await prisma.$transaction(async (tx) => {
-    // Update PHI access log
-    const phiAccessLog = await phiAccessLogRepository.update(id, data);
+  const phiAccessLog = await phiAccessLogRepository.update(id, data);
 
-    // Create audit log
-    await createAuditLog({
-      tenant_id: existingLog.tenant_id,
-      user_id: userId,
-      action: 'UPDATE',
-      entity: 'phi_access_log',
-      entity_id: id,
-      ip_address: ipAddress
-    });
-
-    return phiAccessLog;
+  await createAuditLog({
+    tenant_id: existingLog.tenant_id,
+    user_id: userId,
+    action: 'UPDATE',
+    entity: 'phi_access_log',
+    entity_id: id,
+    ip_address: ipAddress
   });
+
+  return phiAccessLog;
 };
 
 /**
@@ -203,22 +194,18 @@ const deletePhiAccessLog = async (id, userId, ipAddress) => {
     throw new HttpError('errors.phi_access_log.not_found', 404);
   }
 
-  return await prisma.$transaction(async (tx) => {
-    // Soft delete PHI access log
-    const phiAccessLog = await phiAccessLogRepository.softDelete(id);
+  const phiAccessLog = await phiAccessLogRepository.softDelete(id);
 
-    // Create audit log
-    await createAuditLog({
-      tenant_id: existingLog.tenant_id,
-      user_id: userId,
-      action: 'DELETE',
-      entity: 'phi_access_log',
-      entity_id: id,
-      ip_address: ipAddress
-    });
-
-    return phiAccessLog;
+  await createAuditLog({
+    tenant_id: existingLog.tenant_id,
+    user_id: userId,
+    action: 'DELETE',
+    entity: 'phi_access_log',
+    entity_id: id,
+    ip_address: ipAddress
   });
+
+  return phiAccessLog;
 };
 
 module.exports = {

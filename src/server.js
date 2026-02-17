@@ -138,6 +138,22 @@ const startServer = () => {
         nodeVersion: process.version
       });
     });
+
+    // Initialize WebSocket runtime on the same HTTP server.
+    try {
+      const { initializeWebSocketServer } = require('@websockets/server');
+      const { initializeGateway } = require('@websockets/gateway');
+      initializeWebSocketServer(server);
+      initializeGateway();
+      logger.info('WebSocket runtime initialized');
+    } catch (wsErr) {
+      logger.error('Failed to initialize WebSocket runtime', {
+        error: wsErr.message,
+        stack: wsErr.stack
+      });
+      server.close(() => process.exit(1));
+      return server;
+    }
     
     // Graceful shutdown handling
     const gracefulShutdown = (signal) => {

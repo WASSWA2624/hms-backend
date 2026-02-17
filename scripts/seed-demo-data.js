@@ -18,6 +18,7 @@ const path = require('path');
 const fs = require('fs');
 const { execSync } = require('child_process');
 const crypto = require('crypto');
+const { faker } = require('@faker-js/faker');
 
 // Register global aliases for runtime resolution
 try {
@@ -53,6 +54,7 @@ try {
 const prisma = require('@prisma/client');
 
 const DEFAULT_TARGET_RECORDS_PER_MODEL = 50;
+const DEFAULT_RANDOM_SEED = 20260217;
 const MAX_CREATE_ATTEMPTS_MULTIPLIER = 12;
 const MAX_CREATE_ATTEMPTS_FLOOR = 80;
 
@@ -76,6 +78,7 @@ const RETRYABLE_PRISMA_ERROR_CODES = new Set(['P2000', 'P2002', 'P2003', 'P2011'
 const referenceRowsCache = new Map();
 const usedFieldValuesCache = new Map();
 const sequenceByModel = new Map();
+let activeRandomSeed = DEFAULT_RANDOM_SEED;
 
 const isMissingTableError = (error) => error?.code === 'P2021';
 
@@ -371,16 +374,21 @@ const generateStringValue = (field, modelName, sequence) => {
   const fieldName = field.name.toLowerCase();
   const modelToken = getModelToken(modelName);
   const sequenceToken = String(sequence).padStart(6, '0');
+  faker.seed(activeRandomSeed + sequence);
 
   let candidate;
   if (fieldName === 'id') {
     candidate = crypto.randomUUID();
   } else if (fieldName.includes('email')) {
-    candidate = `${modelToken}${sequence}@d.io`;
+    candidate = faker.internet.email({
+      firstName: modelToken,
+      lastName: sequenceToken,
+      provider: 'demo.local'
+    }).toLowerCase();
   } else if (fieldName.includes('phone') || fieldName.includes('mobile')) {
-    candidate = `+1555${String(1000000 + (sequence % 9000000)).padStart(7, '0')}`;
+    candidate = faker.phone.number('+1555#######');
   } else if (fieldName.includes('slug')) {
-    candidate = `${modelToken}-${sequence}`;
+    candidate = faker.helpers.slugify(`${modelToken}-${sequence}`);
   } else if (fieldName.includes('url') || fieldName.includes('uri') || fieldName.includes('link')) {
     candidate = `https://d.io/${modelToken}${sequence}`;
   } else if (
@@ -395,11 +403,11 @@ const generateStringValue = (field, modelName, sequence) => {
   } else if (fieldName.includes('gender')) {
     candidate = 'OTHER';
   } else if (fieldName.includes('name') || fieldName.includes('title')) {
-    candidate = `${modelToken.toUpperCase()}-${sequenceToken}`;
+    candidate = faker.person.fullName();
   } else if (fieldName.includes('password')) {
     candidate = 'Demo@123!';
   } else if (fieldName.includes('token')) {
-    candidate = `${modelToken}_${sequenceToken}`;
+    candidate = faker.string.alphanumeric(32);
   } else if (fieldName.includes('ip')) {
     candidate = `10.0.${sequence % 250}.${(sequence * 7) % 250}`;
   } else if (
@@ -407,7 +415,7 @@ const generateStringValue = (field, modelName, sequence) => {
     fieldName.includes('reason') ||
     fieldName.includes('note')
   ) {
-    candidate = `Demo-${modelToken}-${sequenceToken}`;
+    candidate = faker.lorem.sentence();
   } else {
     candidate = `${getFieldToken(field.name)}${modelToken}${sequenceToken}`;
   }
@@ -650,12 +658,28 @@ const ensureDefaultAccounts = () => {
 
 const seedDemoData = async ({
   targetCount = DEFAULT_TARGET_RECORDS_PER_MODEL,
+  targetCountsByModel = {},
+  randomSeed = DEFAULT_RANDOM_SEED,
   skipDefaultAccounts = false
 } = {}) => {
   const parsedTarget = Number.parseInt(String(targetCount), 10);
   const safeTargetCount = Number.isFinite(parsedTarget) && parsedTarget >= 0
     ? parsedTarget
     : DEFAULT_TARGET_RECORDS_PER_MODEL;
+  const normalizedTargetCountsByModel = Object.entries(targetCountsByModel || {}).reduce(
+    (acc, [modelName, count]) => {
+      const parsed = Number.parseInt(String(count), 10);
+      if (Number.isFinite(parsed) && parsed >= 0) {
+        acc[modelName] = parsed;
+      }
+      return acc;
+    },
+    {}
+  );
+
+  const parsedRandomSeed = Number.parseInt(String(randomSeed), 10);
+  activeRandomSeed = Number.isFinite(parsedRandomSeed) ? parsedRandomSeed : DEFAULT_RANDOM_SEED;
+  faker.seed(activeRandomSeed);
 
   if (!skipDefaultAccounts) {
     ensureDefaultAccounts();
@@ -677,7 +701,8 @@ const seedDemoData = async ({
   const results = [];
   for (const modelName of seedableModelNames) {
     const modelMeta = modelsByName.get(modelName);
-    const result = await seedModel(modelMeta, enumValuesByName, safeTargetCount);
+    const modelTargetCount = normalizedTargetCountsByModel[modelName] ?? safeTargetCount;
+    const result = await seedModel(modelMeta, enumValuesByName, modelTargetCount);
     results.push(result);
 
     const statusTag = result.status === 'ok' ? 'OK' : result.status.toUpperCase();
@@ -710,10 +735,12 @@ const seedDemoData = async ({
 const main = async () => {
   const skipDefaultAccounts = process.argv.includes('--skip-default-accounts');
   const targetCountFromEnv = process.env.DEMO_RECORDS_PER_TABLE || DEFAULT_TARGET_RECORDS_PER_MODEL;
+  const randomSeedFromEnv = process.env.SEED_RANDOM_SEED || DEFAULT_RANDOM_SEED;
 
   try {
     await seedDemoData({
       targetCount: targetCountFromEnv,
+      randomSeed: randomSeedFromEnv,
       skipDefaultAccounts
     });
   } catch (error) {

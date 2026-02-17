@@ -9,14 +9,10 @@ const emergencyCaseService = require('../../../../modules/emergency-case/service
 const emergencyCaseRepository = require('../../../../modules/emergency-case/repositories/emergency-case.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
-const prisma = require('@prisma/client');
 
 // Mock dependencies
 jest.mock('../../../../modules/emergency-case/repositories/emergency-case.repository');
 jest.mock('@lib/audit');
-jest.mock('@prisma/client', () => ({
-  $transaction: jest.fn(async (callback) => await callback())
-}));
 
 describe('Emergency Case Service', () => {
   const mockUser = { id: 'user-id', tenant_id: 'tenant-id' };
@@ -24,7 +20,6 @@ describe('Emergency Case Service', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     createAuditLog.mockResolvedValue({});
-    prisma.$transaction.mockImplementation(async (callback) => await callback());
   });
 
   describe('listEmergencyCases', () => {
@@ -130,21 +125,6 @@ describe('Emergency Case Service', () => {
       });
     });
 
-    it('should use transaction', async () => {
-      const caseData = {
-        tenant_id: 'tenant-id',
-        patient_id: 'patient-id',
-        severity: 'HIGH',
-        status: 'PENDING'
-      };
-
-      emergencyCaseRepository.create.mockResolvedValue({ id: 'new-id', ...caseData });
-
-      await emergencyCaseService.createEmergencyCase(caseData, mockUser);
-
-      expect(prisma.$transaction).toHaveBeenCalled();
-    });
-
     it('should throw error if create fails', async () => {
       emergencyCaseRepository.create.mockRejectedValue(new Error('DB Error'));
 
@@ -198,14 +178,6 @@ describe('Emergency Case Service', () => {
       });
     });
 
-    it('should use transaction', async () => {
-      emergencyCaseRepository.findById.mockResolvedValue({ id: 'test-id', tenant_id: 'tenant-id' });
-      emergencyCaseRepository.update.mockResolvedValue({});
-
-      await emergencyCaseService.updateEmergencyCase('test-id', {}, mockUser);
-
-      expect(prisma.$transaction).toHaveBeenCalled();
-    });
   });
 
   describe('deleteEmergencyCase', () => {
@@ -251,13 +223,5 @@ describe('Emergency Case Service', () => {
       });
     });
 
-    it('should use transaction', async () => {
-      emergencyCaseRepository.findById.mockResolvedValue({ id: 'test-id', tenant_id: 'tenant-id' });
-      emergencyCaseRepository.softDelete.mockResolvedValue({});
-
-      await emergencyCaseService.deleteEmergencyCase('test-id', mockUser);
-
-      expect(prisma.$transaction).toHaveBeenCalled();
-    });
   });
 });

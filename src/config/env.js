@@ -149,6 +149,12 @@ const buildEnv = () => {
   const WS_MAX_CONNECTIONS = process.env.WS_MAX_CONNECTIONS ? parseInt(process.env.WS_MAX_CONNECTIONS, 10) : 1000;
   const WS_HEARTBEAT_INTERVAL = process.env.WS_HEARTBEAT_INTERVAL ? parseInt(process.env.WS_HEARTBEAT_INTERVAL, 10) : 30000;
   const WS_HEARTBEAT_TIMEOUT = process.env.WS_HEARTBEAT_TIMEOUT ? parseInt(process.env.WS_HEARTBEAT_TIMEOUT, 10) : 60000;
+  const SEED_RECORD_COUNT = process.env.SEED_RECORD_COUNT
+    ? parseInt(process.env.SEED_RECORD_COUNT, 10)
+    : 50;
+  const SEED_RANDOM_SEED = process.env.SEED_RANDOM_SEED
+    ? parseInt(process.env.SEED_RANDOM_SEED, 10)
+    : 20260217;
 
   if (process.env.STORAGE_PROVIDER) {
     validateStorageProvider(STORAGE_PROVIDER);
@@ -188,6 +194,14 @@ const buildEnv = () => {
 
   if (isNaN(WS_HEARTBEAT_TIMEOUT) || WS_HEARTBEAT_TIMEOUT < 2000) {
     throw new Error('WS_HEARTBEAT_TIMEOUT must be at least 2000ms.');
+  }
+
+  if (isNaN(SEED_RECORD_COUNT) || SEED_RECORD_COUNT < 0) {
+    throw new Error('SEED_RECORD_COUNT must be a non-negative integer.');
+  }
+
+  if (isNaN(SEED_RANDOM_SEED)) {
+    throw new Error('SEED_RANDOM_SEED must be an integer.');
   }
 
   const AWS_ACCESS_KEY_ID = process.env.AWS_ACCESS_KEY_ID || null;
@@ -231,6 +245,8 @@ const buildEnv = () => {
     WS_MAX_CONNECTIONS,
     WS_HEARTBEAT_INTERVAL,
     WS_HEARTBEAT_TIMEOUT,
+    SEED_RECORD_COUNT,
+    SEED_RANDOM_SEED,
     AWS_ACCESS_KEY_ID,
     AWS_SECRET_ACCESS_KEY,
     AWS_REGION,
@@ -251,7 +267,9 @@ const buildEnv = () => {
       allowPrivateNetworkOrigins: ALLOW_PRIVATE_NETWORK_ORIGINS,
       wsMaxConnections: WS_MAX_CONNECTIONS,
       wsHeartbeatInterval: WS_HEARTBEAT_INTERVAL,
-      wsHeartbeatTimeout: WS_HEARTBEAT_TIMEOUT
+      wsHeartbeatTimeout: WS_HEARTBEAT_TIMEOUT,
+      seedRecordCount: SEED_RECORD_COUNT,
+      seedRandomSeed: SEED_RANDOM_SEED
     });
   }
 
@@ -307,6 +325,8 @@ const envKeys = [
   'WS_MAX_CONNECTIONS',
   'WS_HEARTBEAT_INTERVAL',
   'WS_HEARTBEAT_TIMEOUT',
+  'SEED_RECORD_COUNT',
+  'SEED_RANDOM_SEED',
   'AWS_ACCESS_KEY_ID',
   'AWS_SECRET_ACCESS_KEY',
   'AWS_REGION',

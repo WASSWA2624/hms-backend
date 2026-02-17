@@ -29,6 +29,7 @@ const csrfMiddleware = require('@middlewares/csrf.middleware');
 const i18nMiddleware = require('@middlewares/i18n.middleware');
 const { defaultRateLimit } = require('@middlewares/rateLimit.middleware');
 const versioningMiddleware = require('@middlewares/versioning.middleware');
+const { offlineSupportMiddleware } = require('@middlewares/offline.middleware');
 const performanceMiddleware = require('@middlewares/performance.middleware');
 const errorMiddleware = require('@middlewares/error.middleware');
 
@@ -78,6 +79,9 @@ const createApp = () => {
 
     // 8. API versioning/deprecation headers
     app.use(versioningMiddleware());
+
+    // 8.5. Offline support contract (conditional GET, idempotency, sync metadata)
+    app.use(offlineSupportMiddleware());
     
     // 9. CSRF middleware for state-changing routes
     app.use(csrfMiddleware());

@@ -26,8 +26,66 @@ const RETRY_BACKOFF_MULTIPLIER = 2;
 const RETRY_MAX_DELAY_MS = 5000;
 const DEFAULT_REQUEST_TIMEOUT_MS = 30000;
 
-const SUPPORTED_LOCALES = ['en', 'en-US'];
+const SUPPORTED_LOCALES = [
+  'en',
+  'en-US',
+  'es',
+  'fr',
+  'de',
+  'it',
+  'pt',
+  'ru',
+  'nl',
+  'pl',
+  'sv',
+  'el',
+  'ro',
+  'cs',
+  'hu',
+  'uk',
+  'da',
+  'no',
+  'fi',
+  'tr',
+  'zh',
+  'ja',
+  'ko',
+  'hi',
+  'bn',
+  'ur',
+  'pa',
+  'te',
+  'mr',
+  'ta',
+  'vi',
+  'th',
+  'ms',
+  'id',
+  'tl',
+  'gu',
+  'jv',
+  'yue',
+  'fa',
+  'km',
+  'my',
+  'ne',
+  'si',
+  'ar',
+  'he',
+  'sw',
+  'am',
+  'ha',
+  'yo',
+  'zu',
+  'af',
+  'lg',
+  'ht',
+  'qu',
+  'mi'
+];
 const DEFAULT_LOCALE = 'en';
+const DEFAULT_SEED_RECORD_COUNT = 50;
+const SEED_COUNTS = Object.freeze({});
 
 module.exports = {
   DEFAULT_PAGE,
@@ -42,6 +100,8 @@ module.exports = {
   DEFAULT_REQUEST_TIMEOUT_MS,
   SUPPORTED_LOCALES,
   DEFAULT_LOCALE,
+  DEFAULT_SEED_RECORD_COUNT,
+  SEED_COUNTS,
   API_VERSION,
   DEPRECATED_API_VERSIONS,
   DEPRECATION_SUNSET

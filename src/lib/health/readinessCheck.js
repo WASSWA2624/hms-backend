@@ -17,6 +17,32 @@ let lastDatabaseCheckAt = 0;
 let lastDatabaseCheckResult = null;
 
 /**
+ * Race a promise with a timeout and clear timer when done.
+ *
+ * @param {Promise<any>} promise - Promise to guard
+ * @param {number} timeoutMs - Timeout in milliseconds
+ * @param {string} timeoutMessage - Error message on timeout
+ * @returns {Promise<any>} Promise result
+ */
+const withTimeout = async (promise, timeoutMs, timeoutMessage) => {
+  let timeoutId;
+  const timeoutPromise = new Promise((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error(timeoutMessage)), timeoutMs);
+    if (timeoutId && typeof timeoutId.unref === 'function') {
+      timeoutId.unref();
+    }
+  });
+
+  try {
+    return await Promise.race([promise, timeoutPromise]);
+  } finally {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+  }
+};
+
+/**
  * Check database connectivity using MySQL connection pool directly
  * This avoids Prisma's module resolution issues by using the underlying connection
  * 
@@ -31,12 +57,7 @@ const checkDatabaseDirect = async () => {
       // Avoid unhandled rejection if the timeout "wins" but Prisma later rejects.
       prismaPromise.catch(() => {});
       // Use shorter timeout (2 seconds) for Prisma - if it fails, fall back to direct connection
-      await Promise.race([
-        prismaPromise,
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Prisma query timeout')), 2000)
-        )
-      ]);
+      await withTimeout(prismaPromise, 2000, 'Prisma query timeout');
       return { status: 'ok' };
     } catch (prismaError) {
       // Fall through to direct mysql2 connection
@@ -63,12 +84,7 @@ const checkDatabaseDirect = async () => {
     }
     
     try {
-      await Promise.race([
-        connection.query('SELECT 1'),
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Database check timeout')), 5000)
-        )
-      ]);
+      await withTimeout(connection.query('SELECT 1'), 5000, 'Database check timeout');
       await connection.end();
       return { status: 'ok' };
     } catch (err) {

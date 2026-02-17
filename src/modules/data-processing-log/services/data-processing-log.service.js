@@ -11,7 +11,6 @@
 const dataProcessingLogRepository = require('@modules/data-processing-log/repositories/data-processing-log.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
-const prisma = require('@prisma/client');
 
 /**
  * Get data processing log by ID
@@ -105,22 +104,18 @@ const getDataProcessingLogs = async (filters = {}, page = 1, limit = 20, sortBy 
  * @returns {Promise<Object>} Created data processing log
  */
 const createDataProcessingLog = async (data, userId, ipAddress) => {
-  return await prisma.$transaction(async (tx) => {
-    // Create data processing log
-    const dataProcessingLog = await dataProcessingLogRepository.create(data);
+  const dataProcessingLog = await dataProcessingLogRepository.create(data);
 
-    // Create audit log
-    await createAuditLog({
-      tenant_id: data.tenant_id,
-      user_id: userId,
-      action: 'CREATE',
-      entity: 'data_processing_log',
-      entity_id: dataProcessingLog.id,
-      ip_address: ipAddress
-    });
-
-    return dataProcessingLog;
+  await createAuditLog({
+    tenant_id: data.tenant_id,
+    user_id: userId,
+    action: 'CREATE',
+    entity: 'data_processing_log',
+    entity_id: dataProcessingLog.id,
+    ip_address: ipAddress
   });
+
+  return dataProcessingLog;
 };
 
 /**
@@ -140,22 +135,18 @@ const updateDataProcessingLog = async (id, data, userId, ipAddress) => {
     throw new HttpError('errors.data_processing_log.not_found', 404);
   }
 
-  return await prisma.$transaction(async (tx) => {
-    // Update data processing log
-    const dataProcessingLog = await dataProcessingLogRepository.update(id, data);
+  const dataProcessingLog = await dataProcessingLogRepository.update(id, data);
 
-    // Create audit log
-    await createAuditLog({
-      tenant_id: existingLog.tenant_id,
-      user_id: userId,
-      action: 'UPDATE',
-      entity: 'data_processing_log',
-      entity_id: id,
-      ip_address: ipAddress
-    });
-
-    return dataProcessingLog;
+  await createAuditLog({
+    tenant_id: existingLog.tenant_id,
+    user_id: userId,
+    action: 'UPDATE',
+    entity: 'data_processing_log',
+    entity_id: id,
+    ip_address: ipAddress
   });
+
+  return dataProcessingLog;
 };
 
 /**
@@ -175,22 +166,18 @@ const deleteDataProcessingLog = async (id, userId, ipAddress) => {
     throw new HttpError('errors.data_processing_log.not_found', 404);
   }
 
-  return await prisma.$transaction(async (tx) => {
-    // Soft delete data processing log
-    const dataProcessingLog = await dataProcessingLogRepository.softDelete(id);
+  const dataProcessingLog = await dataProcessingLogRepository.softDelete(id);
 
-    // Create audit log
-    await createAuditLog({
-      tenant_id: existingLog.tenant_id,
-      user_id: userId,
-      action: 'DELETE',
-      entity: 'data_processing_log',
-      entity_id: id,
-      ip_address: ipAddress
-    });
-
-    return dataProcessingLog;
+  await createAuditLog({
+    tenant_id: existingLog.tenant_id,
+    user_id: userId,
+    action: 'DELETE',
+    entity: 'data_processing_log',
+    entity_id: id,
+    ip_address: ipAddress
   });
+
+  return dataProcessingLog;
 };
 
 module.exports = {

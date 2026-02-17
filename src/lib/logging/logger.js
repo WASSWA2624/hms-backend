@@ -147,9 +147,24 @@ const error = (message, data = null) => {
   writeLog('error', message, data);
 };
 
+/**
+ * Close logger stream gracefully.
+ *
+ * Primarily used by tests/process shutdown to prevent open handles.
+ */
+const close = () => {
+  if (activeStream) {
+    activeStream.end();
+    activeStream = null;
+    activeDate = null;
+    streamErrored = false;
+  }
+};
+
 module.exports = {
   info,
   warn,
-  error
+  error,
+  close
 };
 

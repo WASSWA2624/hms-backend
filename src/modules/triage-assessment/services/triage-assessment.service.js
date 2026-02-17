@@ -10,7 +10,6 @@
 const triageAssessmentRepository = require('@modules/triage-assessment/repositories/triage-assessment.repository');
 const { HttpError } = require('@lib/errors');
 const { createAuditLog } = require('@lib/audit');
-const prisma = require('@prisma/client');
 
 /**
  * List triage assessments with pagination
@@ -65,22 +64,18 @@ const getTriageAssessmentById = async (id) => {
  * @returns {Promise<Object>} Created triage assessment
  */
 const createTriageAssessment = async (data, user) => {
-  return await prisma.$transaction(async (tx) => {
-    // Create triage assessment
-    const triageAssessment = await triageAssessmentRepository.create(data);
+  const triageAssessment = await triageAssessmentRepository.create(data);
 
-    // Audit log
-    await createAuditLog({
-      action: 'CREATE',
-      resource: 'triage_assessment',
-      resource_id: triageAssessment.id,
-      user_id: user.id,
-      tenant_id: user.tenant_id,
-      details: { data }
-    });
-
-    return triageAssessment;
+  await createAuditLog({
+    action: 'CREATE',
+    resource: 'triage_assessment',
+    resource_id: triageAssessment.id,
+    user_id: user.id,
+    tenant_id: user.tenant_id,
+    details: { data }
   });
+
+  return triageAssessment;
 };
 
 /**
@@ -93,28 +88,23 @@ const createTriageAssessment = async (data, user) => {
  * @throws {HttpError} If triage assessment not found
  */
 const updateTriageAssessment = async (id, data, user) => {
-  return await prisma.$transaction(async (tx) => {
-    // Check if exists
-    const existing = await triageAssessmentRepository.findById(id);
-    if (!existing) {
-      throw new HttpError('errors.triage_assessment.not_found', 404);
-    }
+  const existing = await triageAssessmentRepository.findById(id);
+  if (!existing) {
+    throw new HttpError('errors.triage_assessment.not_found', 404);
+  }
 
-    // Update
-    const updated = await triageAssessmentRepository.update(id, data);
+  const updated = await triageAssessmentRepository.update(id, data);
 
-    // Audit log
-    await createAuditLog({
-      action: 'UPDATE',
-      resource: 'triage_assessment',
-      resource_id: id,
-      user_id: user.id,
-      tenant_id: user.tenant_id,
-      details: { before: existing, after: data }
-    });
-
-    return updated;
+  await createAuditLog({
+    action: 'UPDATE',
+    resource: 'triage_assessment',
+    resource_id: id,
+    user_id: user.id,
+    tenant_id: user.tenant_id,
+    details: { before: existing, after: data }
   });
+
+  return updated;
 };
 
 /**
@@ -126,28 +116,23 @@ const updateTriageAssessment = async (id, data, user) => {
  * @throws {HttpError} If triage assessment not found
  */
 const deleteTriageAssessment = async (id, user) => {
-  return await prisma.$transaction(async (tx) => {
-    // Check if exists
-    const existing = await triageAssessmentRepository.findById(id);
-    if (!existing) {
-      throw new HttpError('errors.triage_assessment.not_found', 404);
-    }
+  const existing = await triageAssessmentRepository.findById(id);
+  if (!existing) {
+    throw new HttpError('errors.triage_assessment.not_found', 404);
+  }
 
-    // Soft delete
-    const deleted = await triageAssessmentRepository.softDelete(id);
+  const deleted = await triageAssessmentRepository.softDelete(id);
 
-    // Audit log
-    await createAuditLog({
-      action: 'DELETE',
-      resource: 'triage_assessment',
-      resource_id: id,
-      user_id: user.id,
-      tenant_id: user.tenant_id,
-      details: { data: existing }
-    });
-
-    return deleted;
+  await createAuditLog({
+    action: 'DELETE',
+    resource: 'triage_assessment',
+    resource_id: id,
+    user_id: user.id,
+    tenant_id: user.tenant_id,
+    details: { data: existing }
   });
+
+  return deleted;
 };
 
 module.exports = {

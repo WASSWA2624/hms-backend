@@ -10,7 +10,6 @@
 const integrationRepository = require('@repositories/integration/integration.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
-const prisma = require('@prisma/client');
 
 /**
  * Get integration by ID

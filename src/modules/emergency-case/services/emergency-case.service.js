@@ -10,7 +10,6 @@
 const emergencyCaseRepository = require('@repositories/emergency-case/emergency-case.repository');
 const { HttpError } = require('@lib/errors');
 const { createAuditLog } = require('@lib/audit');
-const prisma = require('@prisma/client');
 
 /**
  * List emergency cases with pagination
@@ -65,22 +64,18 @@ const getEmergencyCaseById = async (id) => {
  * @returns {Promise<Object>} Created emergency case
  */
 const createEmergencyCase = async (data, user) => {
-  return await prisma.$transaction(async (tx) => {
-    // Create emergency case
-    const emergencyCase = await emergencyCaseRepository.create(data);
+  const emergencyCase = await emergencyCaseRepository.create(data);
 
-    // Audit log
-    await createAuditLog({
-      action: 'CREATE',
-      resource: 'emergency_case',
-      resource_id: emergencyCase.id,
-      user_id: user.id,
-      tenant_id: data.tenant_id,
-      details: { data }
-    });
-
-    return emergencyCase;
+  await createAuditLog({
+    action: 'CREATE',
+    resource: 'emergency_case',
+    resource_id: emergencyCase.id,
+    user_id: user.id,
+    tenant_id: data.tenant_id,
+    details: { data }
   });
+
+  return emergencyCase;
 };
 
 /**
@@ -93,28 +88,23 @@ const createEmergencyCase = async (data, user) => {
  * @throws {HttpError} If emergency case not found
  */
 const updateEmergencyCase = async (id, data, user) => {
-  return await prisma.$transaction(async (tx) => {
-    // Check if exists
-    const existing = await emergencyCaseRepository.findById(id);
-    if (!existing) {
-      throw new HttpError('errors.emergency_case.not_found', 404);
-    }
+  const existing = await emergencyCaseRepository.findById(id);
+  if (!existing) {
+    throw new HttpError('errors.emergency_case.not_found', 404);
+  }
 
-    // Update
-    const updated = await emergencyCaseRepository.update(id, data);
+  const updated = await emergencyCaseRepository.update(id, data);
 
-    // Audit log
-    await createAuditLog({
-      action: 'UPDATE',
-      resource: 'emergency_case',
-      resource_id: id,
-      user_id: user.id,
-      tenant_id: existing.tenant_id,
-      details: { before: existing, after: data }
-    });
-
-    return updated;
+  await createAuditLog({
+    action: 'UPDATE',
+    resource: 'emergency_case',
+    resource_id: id,
+    user_id: user.id,
+    tenant_id: existing.tenant_id,
+    details: { before: existing, after: data }
   });
+
+  return updated;
 };
 
 /**
@@ -126,28 +116,23 @@ const updateEmergencyCase = async (id, data, user) => {
  * @throws {HttpError} If emergency case not found
  */
 const deleteEmergencyCase = async (id, user) => {
-  return await prisma.$transaction(async (tx) => {
-    // Check if exists
-    const existing = await emergencyCaseRepository.findById(id);
-    if (!existing) {
-      throw new HttpError('errors.emergency_case.not_found', 404);
-    }
+  const existing = await emergencyCaseRepository.findById(id);
+  if (!existing) {
+    throw new HttpError('errors.emergency_case.not_found', 404);
+  }
 
-    // Soft delete
-    const deleted = await emergencyCaseRepository.softDelete(id);
+  const deleted = await emergencyCaseRepository.softDelete(id);
 
-    // Audit log
-    await createAuditLog({
-      action: 'DELETE',
-      resource: 'emergency_case',
-      resource_id: id,
-      user_id: user.id,
-      tenant_id: existing.tenant_id,
-      details: { data: existing }
-    });
-
-    return deleted;
+  await createAuditLog({
+    action: 'DELETE',
+    resource: 'emergency_case',
+    resource_id: id,
+    user_id: user.id,
+    tenant_id: existing.tenant_id,
+    details: { data: existing }
   });
+
+  return deleted;
 };
 
 module.exports = {

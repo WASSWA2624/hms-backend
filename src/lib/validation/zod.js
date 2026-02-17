@@ -226,7 +226,7 @@ const listQuerySchema = paginationQuerySchema.merge(sortQuerySchema);
  * Validates locale format and supported locales
  */
 const localeSchema = z.string()
-  .regex(/^[a-z]{2}(-[A-Z]{2})?$/, 'Invalid locale format')
+  .regex(/^[a-z]{2,3}(-[A-Z]{2})?$/, 'Invalid locale format')
   .refine((value) => {
     const base = value.split('-')[0];
     return SUPPORTED_LOCALES.includes(value) || SUPPORTED_LOCALES.includes(base);

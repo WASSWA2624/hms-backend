@@ -4,8 +4,10 @@
  * Enforces free-core vs paid-module access for tenant-scoped requests.
  */
 
-const prisma = require('@prisma/client');
 const { HttpError } = require('@lib/errors');
+const moduleRepository = require('@repositories/module/module.repository');
+const moduleSubscriptionRepository = require('@repositories/module-subscription/module-subscription.repository');
+const subscriptionRepository = require('@repositories/subscription/subscription.repository');
 
 const CACHE_TTL_MS = 60 * 1000;
 const CACHE_MAX_ENTRIES = 5000;
@@ -165,15 +167,7 @@ const moduleExists = async (moduleSlug) => {
   const cached = getCached(moduleExistenceCache, cacheKey);
   if (cached !== null) return cached;
 
-  const record = await prisma.module.findFirst({
-    where: {
-      name: moduleSlug,
-      deleted_at: null
-    },
-    select: { id: true }
-  });
-
-  const exists = Boolean(record);
+  const exists = (await moduleRepository.count({ name: moduleSlug })) > 0;
   setCached(moduleExistenceCache, cacheKey, exists);
   return exists;
 };
@@ -183,28 +177,23 @@ const tenantHasModuleAccess = async (tenantId, moduleSlug) => {
   const cached = getCached(entitlementCache, cacheKey);
   if (cached !== null) return cached;
 
-  const entitlement = await prisma.module_subscription.findFirst({
-    where: {
-      deleted_at: null,
-      is_active: true,
-      module: {
-        name: moduleSlug,
-        deleted_at: null
-      },
-      subscription: {
-        tenant_id: tenantId,
-        deleted_at: null,
-        status: { in: ['ACTIVE', 'TRIAL'] },
-        OR: [
-          { end_date: null },
-          { end_date: { gte: new Date() } }
-        ]
-      }
+  const allowed = (await moduleSubscriptionRepository.count({
+    is_active: true,
+    module: {
+      name: moduleSlug,
+      deleted_at: null
     },
-    select: { id: true }
-  });
+    subscription: {
+      tenant_id: tenantId,
+      deleted_at: null,
+      status: { in: ['ACTIVE', 'TRIAL'] },
+      OR: [
+        { end_date: null },
+        { end_date: { gte: new Date() } }
+      ]
+    }
+  })) > 0;
 
-  const allowed = Boolean(entitlement);
   setCached(entitlementCache, cacheKey, allowed);
   return allowed;
 };
@@ -214,20 +203,16 @@ const tenantHasActiveSubscription = async (tenantId) => {
   const cached = getCached(subscriptionStateCache, cacheKey);
   if (cached !== null) return cached;
 
-  const activeSubscription = await prisma.subscription.findFirst({
-    where: {
-      tenant_id: tenantId,
-      deleted_at: null,
-      status: { in: ['ACTIVE', 'TRIAL'] },
-      OR: [
-        { end_date: null },
-        { end_date: { gte: new Date() } }
-      ]
-    },
-    select: { id: true }
-  });
+  const hasActiveSubscription = (await subscriptionRepository.count({
+    tenant_id: tenantId,
+    deleted_at: null,
+    status: { in: ['ACTIVE', 'TRIAL'] },
+    OR: [
+      { end_date: null },
+      { end_date: { gte: new Date() } }
+    ]
+  })) > 0;
 
-  const hasActiveSubscription = Boolean(activeSubscription);
   setCached(subscriptionStateCache, cacheKey, hasActiveSubscription);
   return hasActiveSubscription;
 };

@@ -4,14 +4,27 @@ const invokeMiddleware = (middleware, req, res = {}) =>
   });
 
 describe('module entitlement middleware', () => {
-  let prisma;
+  let moduleRepository;
+  let moduleSubscriptionRepository;
+  let subscriptionRepository;
 
   const loadMiddleware = () => {
     jest.resetModules();
-    prisma = require('@prisma/client');
-    prisma.subscription = { findFirst: jest.fn() };
-    prisma.module = { findFirst: jest.fn() };
-    prisma.module_subscription = { findFirst: jest.fn() };
+
+    moduleRepository = {
+      count: jest.fn()
+    };
+    moduleSubscriptionRepository = {
+      count: jest.fn()
+    };
+    subscriptionRepository = {
+      count: jest.fn()
+    };
+
+    jest.doMock('@repositories/module/module.repository', () => moduleRepository);
+    jest.doMock('@repositories/module-subscription/module-subscription.repository', () => moduleSubscriptionRepository);
+    jest.doMock('@repositories/subscription/subscription.repository', () => subscriptionRepository);
+
     return require('@middlewares/module-entitlement.middleware');
   };
 
@@ -25,9 +38,9 @@ describe('module entitlement middleware', () => {
     const error = await invokeMiddleware(enforceModuleEntitlement(), req);
 
     expect(error).toBeUndefined();
-    expect(prisma.subscription.findFirst).not.toHaveBeenCalled();
-    expect(prisma.module.findFirst).not.toHaveBeenCalled();
-    expect(prisma.module_subscription.findFirst).not.toHaveBeenCalled();
+    expect(subscriptionRepository.count).not.toHaveBeenCalled();
+    expect(moduleRepository.count).not.toHaveBeenCalled();
+    expect(moduleSubscriptionRepository.count).not.toHaveBeenCalled();
   });
 
   test('blocks paid module when active subscription exists but tenant lacks entitlement', async () => {
@@ -37,9 +50,9 @@ describe('module entitlement middleware', () => {
       user: { tenant_id: 'tenant-no-entitlement', roles: ['NURSE'] }
     };
 
-    prisma.subscription.findFirst.mockResolvedValue({ id: 'sub-1' });
-    prisma.module.findFirst.mockResolvedValue({ id: 'module-1' });
-    prisma.module_subscription.findFirst.mockResolvedValue(null);
+    subscriptionRepository.count.mockResolvedValue(1);
+    moduleRepository.count.mockResolvedValue(1);
+    moduleSubscriptionRepository.count.mockResolvedValue(0);
 
     const error = await invokeMiddleware(enforceModuleEntitlement(), req);
 
@@ -55,13 +68,13 @@ describe('module entitlement middleware', () => {
       user: { tenant_id: 'tenant-legacy', roles: ['NURSE'] }
     };
 
-    prisma.subscription.findFirst.mockResolvedValue(null);
+    subscriptionRepository.count.mockResolvedValue(0);
 
     const error = await invokeMiddleware(enforceModuleEntitlement(), req);
 
     expect(error).toBeUndefined();
-    expect(prisma.module.findFirst).not.toHaveBeenCalled();
-    expect(prisma.module_subscription.findFirst).not.toHaveBeenCalled();
+    expect(moduleRepository.count).not.toHaveBeenCalled();
+    expect(moduleSubscriptionRepository.count).not.toHaveBeenCalled();
   });
 
   test('allows paid module when entitlement exists', async () => {
@@ -71,9 +84,9 @@ describe('module entitlement middleware', () => {
       user: { tenant_id: 'tenant-entitled', roles: ['NURSE'] }
     };
 
-    prisma.subscription.findFirst.mockResolvedValue({ id: 'sub-2' });
-    prisma.module.findFirst.mockResolvedValue({ id: 'module-2' });
-    prisma.module_subscription.findFirst.mockResolvedValue({ id: 'entitlement-1' });
+    subscriptionRepository.count.mockResolvedValue(1);
+    moduleRepository.count.mockResolvedValue(1);
+    moduleSubscriptionRepository.count.mockResolvedValue(1);
 
     const error = await invokeMiddleware(enforceModuleEntitlement(), req);
 
