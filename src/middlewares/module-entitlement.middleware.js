@@ -8,6 +8,7 @@ const { HttpError } = require('@lib/errors');
 const moduleRepository = require('@repositories/module/module.repository');
 const moduleSubscriptionRepository = require('@repositories/module-subscription/module-subscription.repository');
 const subscriptionRepository = require('@repositories/subscription/subscription.repository');
+const { ELEVATED_ROLES, normalizeRoleName } = require('@config/roles');
 
 const CACHE_TTL_MS = 60 * 1000;
 const CACHE_MAX_ENTRIES = 5000;
@@ -16,11 +17,7 @@ const entitlementCache = new Map();
 const moduleExistenceCache = new Map();
 const subscriptionStateCache = new Map();
 
-const ELEVATED_ROLES = new Set([
-  'SUPER_ADMIN',
-  'SYSTEM_ADMIN',
-  'PLATFORM_ADMIN'
-]);
+const ELEVATED_ROLE_SET = new Set(ELEVATED_ROLES);
 
 // Free core modules available across all plans.
 const FREE_CORE_MODULES = new Set([
@@ -160,7 +157,10 @@ const resolveModuleSlugFromPath = (reqPath) => {
 
 const hasElevatedRole = (roles = []) =>
   Array.isArray(roles) &&
-  roles.some((role) => ELEVATED_ROLES.has(String(role || '').toUpperCase()));
+  roles.some((role) => {
+    const normalized = normalizeRoleName(role) || String(role || '').toUpperCase();
+    return ELEVATED_ROLE_SET.has(normalized);
+  });
 
 const moduleExists = async (moduleSlug) => {
   const cacheKey = `module:${moduleSlug}`;

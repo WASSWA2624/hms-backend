@@ -115,8 +115,8 @@ jest.mock('@lib/storage', () => {
     getMetadata: jest.fn(async () => ({ size: 1024, mimeType: 'application/octet-stream' }))
   };
 
-  const { createLocalStorageService: createLocalStorageServiceActual } = jest.requireActual('@lib/storage/LocalStorageService');
-  const { sanitizeFilename: sanitizeFilenameActual, createStorageServiceBase } = jest.requireActual('@lib/storage/StorageService');
+  const { createLocalStorageService: createLocalStorageServiceActual } = jest.requireActual('@lib/storage/local-storage.service');
+  const { sanitizeFilename: sanitizeFilenameActual, createStorageServiceBase } = jest.requireActual('@lib/storage/storage-service');
 
   const mockedModule = {
     StorageService: jest.fn(() => mockStorageService),

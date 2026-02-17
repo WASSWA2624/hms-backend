@@ -19,7 +19,7 @@ const {
   listRolesQuerySchema
 } = require('@validations/role/role.schema');
 
-const ADMIN_ROLE_SET = ['ADMIN', 'TENANT_ADMIN', 'FACILITY_ADMIN', 'SUPER_ADMIN', 'OPERATIONS'];
+const ADMIN_ROLE_SET = ['TENANT_ADMIN', 'FACILITY_ADMIN', 'SUPER_ADMIN', 'OPERATIONS'];
 
 /**
  * @description List roles with pagination and filters
@@ -42,8 +42,8 @@ const ADMIN_ROLE_SET = ['ADMIN', 'TENANT_ADMIN', 'FACILITY_ADMIN', 'SUPER_ADMIN'
  */
 router.get(
   '/',
-  authenticate(),
   validateRequest({ query: listRolesQuerySchema }),
+  authenticate(),
   roleController.listRoles
 );
 
@@ -62,8 +62,8 @@ router.get(
  */
 router.get(
   '/:id',
-  authenticate(),
   validateRequest({ params: roleIdParamsSchema }),
+  authenticate(),
   roleController.getRoleById
 );
 
@@ -86,8 +86,8 @@ router.get(
  */
 router.post(
   '/',
-  requireAuth(ADMIN_ROLE_SET),
   validateRequest({ body: createRoleSchema }),
+  requireAuth(ADMIN_ROLE_SET),
   roleController.createRole
 );
 
@@ -110,8 +110,8 @@ router.post(
  */
 router.put(
   '/:id',
-  requireAuth(ADMIN_ROLE_SET),
   validateRequest({ params: roleIdParamsSchema, body: updateRoleSchema }),
+  requireAuth(ADMIN_ROLE_SET),
   roleController.updateRole
 );
 
@@ -130,8 +130,8 @@ router.put(
  */
 router.delete(
   '/:id',
-  requireAuth(ADMIN_ROLE_SET),
   validateRequest({ params: roleIdParamsSchema }),
+  requireAuth(ADMIN_ROLE_SET),
   roleController.deleteRole
 );
 

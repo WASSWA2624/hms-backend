@@ -26,7 +26,7 @@ jest.mock('@lib/logging', () => ({
 }));
 
 const { createLocalStorageService, sanitizeFilename } = require('@lib/storage');
-const { createLocalStorageService: createLocalStorageServiceActual } = jest.requireActual('@lib/storage/LocalStorageService');
+const { createLocalStorageService: createLocalStorageServiceActual } = jest.requireActual('@lib/storage/local-storage.service');
 
 beforeEach(() => {
   if (createLocalStorageService && createLocalStorageService.mock) {

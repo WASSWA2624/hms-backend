@@ -5,9 +5,9 @@
  * Per storage.mdc: Exports StorageService, factory, providers
  */
 
-const { createStorageServiceBase, sanitizeFilename } = require('@lib/storage/StorageService');
-const { createLocalStorageService } = require('@lib/storage/LocalStorageService');
-const { createS3StorageService } = require('@lib/storage/S3StorageService');
+const { createStorageServiceBase, sanitizeFilename } = require('@lib/storage/storage-service');
+const { createLocalStorageService } = require('@lib/storage/local-storage.service');
+const { createS3StorageService } = require('@lib/storage/s3-storage.service');
 const { createStorageService } = require('@lib/storage/factory');
 
 module.exports = {

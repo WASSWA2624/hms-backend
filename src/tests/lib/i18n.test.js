@@ -67,14 +67,24 @@ describe('i18n utilities', () => {
     expect(getResponseMeta(res)).toEqual({ locale: 'en-US', direction: 'ltr' });
   });
 
-  test('applyLocaleHeader always sets content-language with resolved locale', () => {
+  test('applyLocaleHeader sets content-language only for non-default locale', () => {
     const headers = {};
     const res = {
       setHeader: (name, value) => {
         headers[name] = value;
+      },
+      removeHeader: (name) => {
+        delete headers[name];
       }
     };
+
+    applyLocaleHeader(res, 'en');
+    expect(headers['Content-Language']).toBeUndefined();
+
     applyLocaleHeader(res, 'en-us');
     expect(headers['Content-Language']).toBe('en-US');
+
+    applyLocaleHeader(res, 'fr-FR');
+    expect(headers['Content-Language']).toBe('fr');
   });
 });

@@ -12,7 +12,6 @@ const router = express.Router();
 // Health check utilities
 const { healthCheck, readinessCheck, livenessCheck } = require('@lib/health');
 const { asyncHandler } = require('@lib/async');
-const { sendSuccess } = require('@lib/response');
 const { authenticate } = require('@middlewares/auth.middleware');
 const { hydrateRequestScope, enforceTenantScope } = require('@middlewares/tenant-scope.middleware');
 const { enforceModuleEntitlement } = require('@middlewares/module-entitlement.middleware');
@@ -32,7 +31,7 @@ const { enforceModuleEntitlement } = require('@middlewares/module-entitlement.mi
 router.get('/health', (req, res) => {
   const health = healthCheck();
   const statusCode = health.status === 'healthy' ? 200 : 503;
-  return sendSuccess(res, statusCode, 'messages.health.check', health);
+  return res.status(statusCode).json(health);
 });
 
 /**
@@ -50,7 +49,7 @@ router.get('/health', (req, res) => {
 router.get('/ready', asyncHandler(async (req, res) => {
   const readiness = await readinessCheck();
   const statusCode = readiness.status === 'ready' ? 200 : 503;
-  return sendSuccess(res, statusCode, 'messages.readiness.check', readiness);
+  return res.status(statusCode).json(readiness);
 }));
 
 /**
@@ -66,7 +65,7 @@ router.get('/ready', asyncHandler(async (req, res) => {
  */
 router.get('/live', (req, res) => {
   const liveness = livenessCheck();
-  return sendSuccess(res, 200, 'messages.liveness.check', liveness);
+  return res.status(200).json(liveness);
 });
 
 /**

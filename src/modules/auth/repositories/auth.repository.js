@@ -197,8 +197,8 @@ const registerFacilityOwner = async (data) => {
         data: {
           tenant_id: tenant.id,
           facility_id: facility.id,
-          name: 'ADMIN',
-          description: 'Tenant owner administrator',
+          name: 'TENANT_ADMIN',
+          description: 'Tenant administrator',
         },
       });
 

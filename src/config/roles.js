@@ -1,26 +1,78 @@
 /**
- * Role Definitions
- * 
- * Role definitions per auth-security.mdc
- * Defines available base roles for core access control
+ * Canonical role catalog
+ *
+ * Per .cursor/rules/index.mdc and backend-rules-dev.md:
+ * SUPER_ADMIN, TENANT_ADMIN, FACILITY_ADMIN, DOCTOR, NURSE, LAB_TECH,
+ * PHARMACIST, RECEPTIONIST, BILLING, OPERATIONS, HR, PATIENT, BIOMED,
+ * HOUSE_KEEPER, OTHER.
  */
+const ROLES = Object.freeze({
+  SUPER_ADMIN: 'SUPER_ADMIN',
+  TENANT_ADMIN: 'TENANT_ADMIN',
+  FACILITY_ADMIN: 'FACILITY_ADMIN',
+  DOCTOR: 'DOCTOR',
+  NURSE: 'NURSE',
+  LAB_TECH: 'LAB_TECH',
+  PHARMACIST: 'PHARMACIST',
+  RECEPTIONIST: 'RECEPTIONIST',
+  BILLING: 'BILLING',
+  OPERATIONS: 'OPERATIONS',
+  HR: 'HR',
+  PATIENT: 'PATIENT',
+  BIOMED: 'BIOMED',
+  HOUSE_KEEPER: 'HOUSE_KEEPER',
+  OTHER: 'OTHER'
+});
 
-// Base roles
-const ROLES = {
-  GUEST: 'GUEST',
-  USER: 'USER',
-  ADMIN: 'ADMIN'
+const ROLE_VALUES = Object.freeze(Object.values(ROLES));
+
+// Legacy aliases are normalized at runtime for backward compatibility.
+const LEGACY_ROLE_ALIASES = Object.freeze({
+  ADMIN: ROLES.TENANT_ADMIN,
+  SYSTEM_ADMIN: ROLES.SUPER_ADMIN,
+  PLATFORM_ADMIN: ROLES.SUPER_ADMIN,
+  USER: ROLES.OTHER,
+  GUEST: ROLES.OTHER
+});
+
+const normalizeRoleName = (role) => {
+  const normalized = String(role || '').trim().toUpperCase();
+  if (!normalized) return null;
+  if (LEGACY_ROLE_ALIASES[normalized]) return LEGACY_ROLE_ALIASES[normalized];
+  if (ROLE_VALUES.includes(normalized)) return normalized;
+  return null;
 };
 
-// Role hierarchy (for permission inheritance)
-const ROLE_HIERARCHY = {
-  [ROLES.GUEST]: 0,
-  [ROLES.USER]: 1,
-  [ROLES.ADMIN]: 2
-};
+const isCanonicalRole = (role) => normalizeRoleName(role) !== null;
+
+const ELEVATED_ROLES = Object.freeze([ROLES.SUPER_ADMIN]);
+
+// Numeric hierarchy used by optional permission inheritance policies.
+const ROLE_HIERARCHY = Object.freeze({
+  [ROLES.OTHER]: 0,
+  [ROLES.PATIENT]: 1,
+  [ROLES.HOUSE_KEEPER]: 2,
+  [ROLES.RECEPTIONIST]: 3,
+  [ROLES.BILLING]: 4,
+  [ROLES.OPERATIONS]: 5,
+  [ROLES.LAB_TECH]: 6,
+  [ROLES.PHARMACIST]: 7,
+  [ROLES.BIOMED]: 8,
+  [ROLES.NURSE]: 9,
+  [ROLES.DOCTOR]: 10,
+  [ROLES.HR]: 11,
+  [ROLES.FACILITY_ADMIN]: 12,
+  [ROLES.TENANT_ADMIN]: 13,
+  [ROLES.SUPER_ADMIN]: 14
+});
 
 module.exports = {
   ROLES,
-  ROLE_HIERARCHY
+  ROLE_VALUES,
+  ROLE_HIERARCHY,
+  ELEVATED_ROLES,
+  LEGACY_ROLE_ALIASES,
+  normalizeRoleName,
+  isCanonicalRole
 };
 

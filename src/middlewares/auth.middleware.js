@@ -13,8 +13,7 @@
 
 const { verifyToken } = require('@lib/jwt');
 const { HttpError } = require('@lib/errors');
-const rolesConfig = require('@config/roles');
-const permissionsConfig = require('@config/permissions');
+const { normalizeRoleName } = require('@config/roles');
 
 /**
  * Normalize decoded JWT payload into a consistent request user object.
@@ -29,15 +28,19 @@ const normalizeUserContext = (decoded = {}) => {
   const facilityId = decoded.facility_id || decoded.facilityId || null;
   const branchId = decoded.branch_id || decoded.branchId || null;
 
-  const roles = Array.isArray(decoded.roles)
+  const rawRoles = Array.isArray(decoded.roles)
     ? decoded.roles
     : decoded.role
       ? [decoded.role]
       : [];
+  const roles = rawRoles
+    .map((role) => normalizeRoleName(role) || String(role || '').trim().toUpperCase())
+    .filter(Boolean);
 
   const permissions = Array.isArray(decoded.permissions)
     ? decoded.permissions
     : [];
+  const role = roles[0] || null;
 
   return {
     ...decoded,
@@ -50,6 +53,7 @@ const normalizeUserContext = (decoded = {}) => {
     facilityId,
     branch_id: branchId,
     branchId,
+    role,
     roles,
     permissions
   };
@@ -127,13 +131,15 @@ const authorize = (requiredRole, type = 'role') => {
       }
       
       if (type === 'role') {
-        const userRoles = req.user.roles || [req.user.role];
-        const rolesArray = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
-        
-        const hasRequiredRole = rolesArray.some(role => 
-          userRoles.some(userRole => 
-            String(userRole).toUpperCase() === String(role).toUpperCase()
-          )
+        const userRoles = (req.user.roles || [req.user.role])
+          .map((role) => normalizeRoleName(role) || String(role || '').toUpperCase())
+          .filter(Boolean);
+        const rolesArray = (Array.isArray(requiredRole) ? requiredRole : [requiredRole])
+          .map((role) => normalizeRoleName(role) || String(role || '').toUpperCase())
+          .filter(Boolean);
+
+        const hasRequiredRole = rolesArray.some((role) =>
+          userRoles.some((userRole) => userRole === role)
         );
         
         if (!hasRequiredRole) {

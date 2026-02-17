@@ -7,13 +7,17 @@
 
 const { HttpError } = require('@lib/errors');
 const { normalizeUserContext } = require('@middlewares/auth.middleware');
+const { ELEVATED_ROLES, normalizeRoleName } = require('@config/roles');
 
 const SCOPE_FIELDS = ['tenant_id', 'facility_id', 'branch_id'];
-const ELEVATED_ROLES = new Set(['SUPER_ADMIN', 'SYSTEM_ADMIN', 'PLATFORM_ADMIN']);
+const ELEVATED_ROLE_SET = new Set(ELEVATED_ROLES);
 
 const hasElevatedRole = (roles = []) =>
   Array.isArray(roles) &&
-  roles.some((role) => ELEVATED_ROLES.has(String(role || '').toUpperCase()));
+  roles.some((role) => {
+    const normalized = normalizeRoleName(role) || String(role || '').toUpperCase();
+    return ELEVATED_ROLE_SET.has(normalized);
+  });
 
 const toCamelCase = (snakeCase) =>
   String(snakeCase).replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());

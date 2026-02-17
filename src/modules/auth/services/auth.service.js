@@ -1073,7 +1073,7 @@ const register = async (data) => {
 
   let user;
   try {
-    // Bootstrap tenant/facility and create owner user with ADMIN role in one transaction.
+    // Bootstrap tenant/facility and create owner user with TENANT_ADMIN role in one transaction.
     user = await authRepository.registerFacilityOwner({
       email: normalizedEmail,
       phone,
@@ -1166,7 +1166,7 @@ const register = async (data) => {
       facility_name,
       facility_type,
       admin_name,
-      role: 'ADMIN',
+      role: 'TENANT_ADMIN',
       self_serve: true,
       verification_expires_in_minutes: EMAIL_VERIFICATION_EXPIRY_MINUTES,
     }

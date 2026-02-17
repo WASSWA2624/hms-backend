@@ -24,6 +24,7 @@ const { getWebSocketServer } = require('@websockets/server');
 const { verifyToken } = require('@lib/jwt');
 const rolesConfig = require('@config/roles');
 const permissionsConfig = require('@config/permissions');
+const { normalizeRoleName } = require('@config/roles');
 const { WS_MAX_CONNECTIONS, WS_HEARTBEAT_INTERVAL, WS_HEARTBEAT_TIMEOUT } = require('@config/env');
 
 /**
@@ -245,16 +246,23 @@ const getUserData = (ws) => {
  */
 const checkWebSocketRBAC = (user, requiredRole, type = 'role') => {
   try {
-    if (!user || !user.role) {
+    if (!user) {
       return false;
     }
 
-    const userRole = user.role;
+    const sourceRole = user.role || (Array.isArray(user.roles) ? user.roles[0] : null);
+    if (!sourceRole) {
+      return false;
+    }
+
+    const userRole = normalizeRoleName(sourceRole) || String(sourceRole || '').toUpperCase();
     const roles = rolesConfig?.ROLES || rolesConfig || {};
     const rolePermissions = permissionsConfig?.ROLE_PERMISSIONS || permissionsConfig || {};
     
     // Convert single role to array
-    const requiredRoles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
+    const requiredRoles = (Array.isArray(requiredRole) ? requiredRole : [requiredRole])
+      .map((role) => normalizeRoleName(role) || String(role || '').toUpperCase())
+      .filter(Boolean);
     
     if (type === 'role') {
       // Check if user has required role

@@ -157,8 +157,15 @@ const translate = (key, locale, params = {}) => {
  */
 const applyLocaleHeader = (res, locale) => {
   const resolvedLocale = resolveLocale(locale);
-  if (res && typeof res.setHeader === 'function') {
+  if (!res) return;
+
+  if (resolvedLocale !== DEFAULT_LOCALE && typeof res.setHeader === 'function') {
     res.setHeader('Content-Language', resolvedLocale);
+    return;
+  }
+
+  if (resolvedLocale === DEFAULT_LOCALE && typeof res.removeHeader === 'function') {
+    res.removeHeader('Content-Language');
   }
 };
 
