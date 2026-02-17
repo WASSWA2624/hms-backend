@@ -44,9 +44,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listShiftsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listShiftsQuerySchema }),
   shiftController.listShifts
 );
 
@@ -64,9 +64,9 @@ router.get(
  * @throws 404 Shift not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: shiftIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: shiftIdParamsSchema }),
   shiftController.getShiftById
 );
 
@@ -91,9 +91,9 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createShiftSchema }),
+
   authenticate(),
-  validateRequest({ body: createShiftSchema }),
   shiftController.createShift
 );
 
@@ -118,9 +118,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: shiftIdParamsSchema, body: updateShiftSchema }),
+
   authenticate(),
-  validateRequest({ params: shiftIdParamsSchema, body: updateShiftSchema }),
   shiftController.updateShift
 );
 
@@ -138,9 +138,9 @@ router.put(
  * @throws 404 Shift not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: shiftIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: shiftIdParamsSchema }),
   shiftController.deleteShift
 );
 
@@ -159,9 +159,9 @@ router.delete(
  * @throws 400 Shift already published
  */
 router.post(
-  '/:id/publish',
+  '/:id/publish',  validateRequest({ params: shiftIdParamsSchema, body: publishShiftSchema }),
+
   authenticate(),
-  validateRequest({ params: shiftIdParamsSchema, body: publishShiftSchema }),
   shiftController.publishShift
 );
 

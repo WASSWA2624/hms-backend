@@ -41,9 +41,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listAdmissionsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listAdmissionsQuerySchema }),
   admissionController.listAdmissions
 );
 
@@ -61,9 +61,9 @@ router.get(
  * @throws 404 Admission not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: admissionIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: admissionIdParamsSchema }),
   admissionController.getAdmissionById
 );
 
@@ -88,9 +88,9 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createAdmissionSchema }),
+
   authenticate(),
-  validateRequest({ body: createAdmissionSchema }),
   admissionController.createAdmission
 );
 
@@ -115,9 +115,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: admissionIdParamsSchema, body: updateAdmissionSchema }),
+
   authenticate(),
-  validateRequest({ params: admissionIdParamsSchema, body: updateAdmissionSchema }),
   admissionController.updateAdmission
 );
 
@@ -135,9 +135,9 @@ router.put(
  * @throws 404 Admission not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: admissionIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: admissionIdParamsSchema }),
   admissionController.deleteAdmission
 );
 
@@ -156,9 +156,9 @@ router.delete(
  * @throws 400 Admission already discharged
  */
 router.post(
-  '/:id/discharge',
+  '/:id/discharge',  validateRequest({ params: admissionIdParamsSchema, body: dischargeAdmissionSchema }),
+
   authenticate(),
-  validateRequest({ params: admissionIdParamsSchema, body: dischargeAdmissionSchema }),
   admissionController.dischargeAdmission
 );
 

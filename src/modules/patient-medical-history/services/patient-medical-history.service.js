@@ -7,7 +7,7 @@
  * Per coding-standards.mdc: Use try/catch for error translation.
  */
 
-const patientMedicalHistoryRepository = require('../repositories/patient-medical-history.repository');
+const patientMedicalHistoryRepository = require('@repositories/patient-medical-history/patient-medical-history.repository');
 const { createAuditLog } = require('@lib/audit');
 
 /**

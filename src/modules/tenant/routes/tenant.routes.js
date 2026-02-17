@@ -37,9 +37,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listTenantsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listTenantsQuerySchema }),
   tenantController.listTenants
 );
 
@@ -57,9 +57,9 @@ router.get(
  * @throws 404 Tenant not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: tenantIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: tenantIdParamsSchema }),
   tenantController.getTenantById
 );
 
@@ -80,9 +80,9 @@ router.get(
  * @throws 409 Duplicate slug
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createTenantSchema }),
+
   authenticate(),
-  validateRequest({ body: createTenantSchema }),
   tenantController.createTenant
 );
 
@@ -104,9 +104,9 @@ router.post(
  * @throws 409 Duplicate slug
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: tenantIdParamsSchema, body: updateTenantSchema }),
+
   authenticate(),
-  validateRequest({ params: tenantIdParamsSchema, body: updateTenantSchema }),
   tenantController.updateTenant
 );
 
@@ -124,9 +124,9 @@ router.put(
  * @throws 404 Tenant not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: tenantIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: tenantIdParamsSchema }),
   tenantController.deleteTenant
 );
 

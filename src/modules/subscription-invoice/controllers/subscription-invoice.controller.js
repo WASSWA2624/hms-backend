@@ -7,7 +7,7 @@
  * Per module-creation.mdc: Use response helpers for output.
  */
 
-const subscriptionInvoiceService = require('../services/subscription-invoice.service');
+const subscriptionInvoiceService = require('@services/subscription-invoice/subscription-invoice.service');
 const { sendSuccess, sendPaginated } = require('@lib/response');
 
 /**

@@ -9,7 +9,7 @@
 
 const express = require('express');
 const router = express.Router();
-const kpiSnapshotController = require('../controllers/kpi-snapshot.controller');
+const kpiSnapshotController = require('@controllers/kpi-snapshot/kpi-snapshot.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
 const { authenticate } = require('@middlewares/auth.middleware');
 const {
@@ -17,7 +17,7 @@ const {
   updateKpiSnapshotSchema,
   kpiSnapshotIdParamsSchema,
   listKpiSnapshotsQuerySchema
-} = require('../schemas/kpi-snapshot.schema');
+} = require('@validations/kpi-snapshot/kpi-snapshot.schema');
 
 /**
  * @description List KPI snapshots with pagination and filters
@@ -40,9 +40,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listKpiSnapshotsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listKpiSnapshotsQuerySchema }),
   kpiSnapshotController.listKpiSnapshots
 );
 
@@ -60,9 +60,9 @@ router.get(
  * @throws 404 KPI snapshot not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: kpiSnapshotIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: kpiSnapshotIdParamsSchema }),
   kpiSnapshotController.getKpiSnapshotById
 );
 
@@ -85,9 +85,9 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createKpiSnapshotSchema }),
+
   authenticate(),
-  validateRequest({ body: createKpiSnapshotSchema }),
   kpiSnapshotController.createKpiSnapshot
 );
 
@@ -110,9 +110,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: kpiSnapshotIdParamsSchema, body: updateKpiSnapshotSchema }),
+
   authenticate(),
-  validateRequest({ params: kpiSnapshotIdParamsSchema, body: updateKpiSnapshotSchema }),
   kpiSnapshotController.updateKpiSnapshot
 );
 
@@ -130,9 +130,9 @@ router.put(
  * @throws 404 KPI snapshot not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: kpiSnapshotIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: kpiSnapshotIdParamsSchema }),
   kpiSnapshotController.deleteKpiSnapshot
 );
 

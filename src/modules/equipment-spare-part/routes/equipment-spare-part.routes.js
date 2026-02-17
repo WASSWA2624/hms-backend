@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const equipmentSparePartController = require('../controllers/equipment-spare-part.controller');
+const equipmentSparePartController = require('@controllers/equipment-spare-part/equipment-spare-part.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
 const { authenticate } = require('@middlewares/auth.middleware');
-const { createEquipmentSparePartSchema, updateEquipmentSparePartSchema, equipmentSparePartIdParamsSchema, listEquipmentSparePartsQuerySchema } = require('../schemas/equipment-spare-part.schema');
+const { createEquipmentSparePartSchema, updateEquipmentSparePartSchema, equipmentSparePartIdParamsSchema, listEquipmentSparePartsQuerySchema } = require('@validations/equipment-spare-part/equipment-spare-part.schema');
 
 router.get('/', authenticate(), validateRequest({ query: listEquipmentSparePartsQuerySchema }), equipmentSparePartController.listEquipmentSpareParts);
 router.get('/:id', authenticate(), validateRequest({ params: equipmentSparePartIdParamsSchema }), equipmentSparePartController.getEquipmentSparePartById);

@@ -37,9 +37,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listpostOpNotesQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listpostOpNotesQuerySchema }),
   postOpNoteController.listpostOpNotes
 );
 
@@ -57,9 +57,9 @@ router.get(
  * @throws 404 Post-op note not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: postOpNoteIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: postOpNoteIdParamsSchema }),
   postOpNoteController.getpostOpNoteById
 );
 
@@ -81,9 +81,9 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createpostOpNoteSchema }),
+
   authenticate(),
-  validateRequest({ body: createpostOpNoteSchema }),
   postOpNoteController.createpostOpNote
 );
 
@@ -106,9 +106,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: postOpNoteIdParamsSchema, body: updatepostOpNoteSchema }),
+
   authenticate(),
-  validateRequest({ params: postOpNoteIdParamsSchema, body: updatepostOpNoteSchema }),
   postOpNoteController.updatepostOpNote
 );
 
@@ -126,9 +126,9 @@ router.put(
  * @throws 404 Post-op note not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: postOpNoteIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: postOpNoteIdParamsSchema }),
   postOpNoteController.deletepostOpNote
 );
 

@@ -7,7 +7,7 @@
  * Per response-format.mdc: Use standardized response helpers.
  */
 
-const labSampleService = require('../services/lab-sample.service');
+const labSampleService = require('@services/lab-sample/lab-sample.service');
 const { asyncHandler } = require('@lib/async');
 const { sendSuccess, sendPaginated, sendNoContent } = require('@lib/response');
 const { DEFAULT_PAGE, DEFAULT_PAGE_LIMIT } = require('@config/constants');

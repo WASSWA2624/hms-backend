@@ -7,7 +7,7 @@
  * Per prisma.mdc: All mutations call createAuditLog.
  */
 
-const analyticsEventRepository = require('../repositories/analytics-event.repository');
+const analyticsEventRepository = require('@repositories/analytics-event/analytics-event.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 

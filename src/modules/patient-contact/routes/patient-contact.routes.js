@@ -40,9 +40,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listPatientContactsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listPatientContactsQuerySchema }),
   patientContactController.listPatientContacts
 );
 
@@ -60,9 +60,9 @@ router.get(
  * @throws 404 Patient Contact not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: patientContactIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: patientContactIdParamsSchema }),
   patientContactController.getPatientContactById
 );
 
@@ -86,9 +86,9 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createPatientContactSchema }),
+
   authenticate(),
-  validateRequest({ body: createPatientContactSchema }),
   patientContactController.createPatientContact
 );
 
@@ -111,9 +111,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: patientContactIdParamsSchema, body: updatePatientContactSchema }),
+
   authenticate(),
-  validateRequest({ params: patientContactIdParamsSchema, body: updatePatientContactSchema }),
   patientContactController.updatePatientContact
 );
 
@@ -131,9 +131,9 @@ router.put(
  * @throws 404 Patient Contact not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: patientContactIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: patientContactIdParamsSchema }),
   patientContactController.deletePatientContact
 );
 

@@ -7,7 +7,7 @@
  * Per prisma.mdc: All mutations call createAuditLog.
  */
 
-const kpiSnapshotRepository = require('../repositories/kpi-snapshot.repository');
+const kpiSnapshotRepository = require('@repositories/kpi-snapshot/kpi-snapshot.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 

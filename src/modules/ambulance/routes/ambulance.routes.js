@@ -39,9 +39,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listAmbulancesQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listAmbulancesQuerySchema }),
   ambulanceController.listAmbulances
 );
 
@@ -59,9 +59,9 @@ router.get(
  * @throws 404 Ambulance not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: ambulanceIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: ambulanceIdParamsSchema }),
   ambulanceController.getAmbulanceById
 );
 
@@ -83,9 +83,9 @@ router.get(
  * @throws 400 Foreign key constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createAmbulanceSchema }),
+
   authenticate(),
-  validateRequest({ body: createAmbulanceSchema }),
   ambulanceController.createAmbulance
 );
 
@@ -107,9 +107,9 @@ router.post(
  * @throws 400 Foreign key constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: ambulanceIdParamsSchema, body: updateAmbulanceSchema }),
+
   authenticate(),
-  validateRequest({ params: ambulanceIdParamsSchema, body: updateAmbulanceSchema }),
   ambulanceController.updateAmbulance
 );
 
@@ -127,9 +127,9 @@ router.put(
  * @throws 404 Ambulance not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: ambulanceIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: ambulanceIdParamsSchema }),
   ambulanceController.deleteAmbulance
 );
 

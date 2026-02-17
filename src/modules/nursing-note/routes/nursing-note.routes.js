@@ -37,9 +37,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listNursingNotesQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listNursingNotesQuerySchema }),
   nursingNoteController.listNursingNotes
 );
 
@@ -57,9 +57,9 @@ router.get(
  * @throws 404 Nursing note not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: nursingNoteIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: nursingNoteIdParamsSchema }),
   nursingNoteController.getNursingNoteById
 );
 
@@ -81,9 +81,9 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createNursingNoteSchema }),
+
   authenticate(),
-  validateRequest({ body: createNursingNoteSchema }),
   nursingNoteController.createNursingNote
 );
 
@@ -104,9 +104,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: nursingNoteIdParamsSchema, body: updateNursingNoteSchema }),
+
   authenticate(),
-  validateRequest({ params: nursingNoteIdParamsSchema, body: updateNursingNoteSchema }),
   nursingNoteController.updateNursingNote
 );
 
@@ -124,9 +124,9 @@ router.put(
  * @throws 404 Nursing note not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: nursingNoteIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: nursingNoteIdParamsSchema }),
   nursingNoteController.deleteNursingNote
 );
 

@@ -7,7 +7,7 @@
  * Per prisma.mdc: All mutations call createAuditLog.
  */
 
-const vitalSignRepository = require('../repositories/vital-sign.repository');
+const vitalSignRepository = require('@repositories/vital-sign/vital-sign.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 

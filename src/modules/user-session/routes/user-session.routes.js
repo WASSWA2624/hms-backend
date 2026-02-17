@@ -35,9 +35,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listSessionsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listSessionsQuerySchema }),
   sessionController.listSessions
 );
 
@@ -55,9 +55,9 @@ router.get(
  * @throws 404 Session not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: sessionIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: sessionIdParamsSchema }),
   sessionController.getSessionById
 );
 
@@ -76,9 +76,9 @@ router.get(
  * @throws 400 Session already revoked
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: sessionIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: sessionIdParamsSchema }),
   sessionController.revokeSession
 );
 

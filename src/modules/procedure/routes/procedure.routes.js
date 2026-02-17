@@ -37,9 +37,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listProceduresQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listProceduresQuerySchema }),
   procedureController.listProcedures
 );
 
@@ -57,9 +57,9 @@ router.get(
  * @throws 404 Procedure not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: procedureIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: procedureIdParamsSchema }),
   procedureController.getProcedureById
 );
 
@@ -82,9 +82,9 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createProcedureSchema }),
+
   authenticate(),
-  validateRequest({ body: createProcedureSchema }),
   procedureController.createProcedure
 );
 
@@ -107,9 +107,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: procedureIdParamsSchema, body: updateProcedureSchema }),
+
   authenticate(),
-  validateRequest({ params: procedureIdParamsSchema, body: updateProcedureSchema }),
   procedureController.updateProcedure
 );
 
@@ -127,9 +127,9 @@ router.put(
  * @throws 404 Procedure not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: procedureIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: procedureIdParamsSchema }),
   procedureController.deleteProcedure
 );
 

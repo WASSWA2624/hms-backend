@@ -37,9 +37,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listVitalSignsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listVitalSignsQuerySchema }),
   vitalSignController.listVitalSigns
 );
 
@@ -57,9 +57,9 @@ router.get(
  * @throws 404 Vital sign not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: vitalSignIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: vitalSignIdParamsSchema }),
   vitalSignController.getVitalSignById
 );
 
@@ -82,9 +82,9 @@ router.get(
  * @throws 400 Foreign key constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createVitalSignSchema }),
+
   authenticate(),
-  validateRequest({ body: createVitalSignSchema }),
   vitalSignController.createVitalSign
 );
 
@@ -108,9 +108,9 @@ router.post(
  * @throws 400 Foreign key constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: vitalSignIdParamsSchema, body: updateVitalSignSchema }),
+
   authenticate(),
-  validateRequest({ params: vitalSignIdParamsSchema, body: updateVitalSignSchema }),
   vitalSignController.updateVitalSign
 );
 
@@ -128,9 +128,9 @@ router.put(
  * @throws 404 Vital sign not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: vitalSignIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: vitalSignIdParamsSchema }),
   vitalSignController.deleteVitalSign
 );
 

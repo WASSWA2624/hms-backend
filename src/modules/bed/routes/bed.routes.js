@@ -41,9 +41,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listBedsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listBedsQuerySchema }),
   bedController.listBeds
 );
 
@@ -61,9 +61,9 @@ router.get(
  * @throws 404 Bed not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: bedIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: bedIdParamsSchema }),
   bedController.getBedById
 );
 
@@ -87,9 +87,9 @@ router.get(
  * @throws 400 Foreign key constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createBedSchema }),
+
   authenticate(),
-  validateRequest({ body: createBedSchema }),
   bedController.createBed
 );
 
@@ -113,9 +113,9 @@ router.post(
  * @throws 400 Foreign key constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: bedIdParamsSchema, body: updateBedSchema }),
+
   authenticate(),
-  validateRequest({ params: bedIdParamsSchema, body: updateBedSchema }),
   bedController.updateBed
 );
 
@@ -133,9 +133,9 @@ router.put(
  * @throws 404 Bed not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: bedIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: bedIdParamsSchema }),
   bedController.deleteBed
 );
 

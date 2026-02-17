@@ -24,9 +24,9 @@ const {
  * @authentication Required (JWT)
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listPharmacyOrderItemsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listPharmacyOrderItemsQuerySchema }),
   pharmacyOrderItemController.listPharmacyOrderItems
 );
 
@@ -37,9 +37,9 @@ router.get(
  * @authentication Required (JWT)
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: pharmacyOrderItemIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: pharmacyOrderItemIdParamsSchema }),
   pharmacyOrderItemController.getPharmacyOrderItemById
 );
 
@@ -50,9 +50,9 @@ router.get(
  * @authentication Required (JWT)
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createPharmacyOrderItemSchema }),
+
   authenticate(),
-  validateRequest({ body: createPharmacyOrderItemSchema }),
   pharmacyOrderItemController.createPharmacyOrderItem
 );
 
@@ -63,9 +63,9 @@ router.post(
  * @authentication Required (JWT)
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: pharmacyOrderItemIdParamsSchema, body: updatePharmacyOrderItemSchema }),
+
   authenticate(),
-  validateRequest({ params: pharmacyOrderItemIdParamsSchema, body: updatePharmacyOrderItemSchema }),
   pharmacyOrderItemController.updatePharmacyOrderItem
 );
 
@@ -76,9 +76,9 @@ router.put(
  * @authentication Required (JWT)
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: pharmacyOrderItemIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: pharmacyOrderItemIdParamsSchema }),
   pharmacyOrderItemController.deletePharmacyOrderItem
 );
 

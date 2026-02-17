@@ -7,7 +7,7 @@
  * Per response-format.mdc: Use response helpers for consistent output.
  */
 
-const patientDocumentService = require('../services/patient-document.service');
+const patientDocumentService = require('@services/patient-document/patient-document.service');
 const { sendSuccess, sendPaginated } = require('@lib/response');
 const { HttpError } = require('@lib/errors');
 const { DEFAULT_PAGE, DEFAULT_PAGE_LIMIT } = require('@config/constants');

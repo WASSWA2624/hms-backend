@@ -9,7 +9,7 @@
 
 const express = require('express');
 const router = express.Router();
-const payrollItemController = require('../controllers/payroll-item.controller');
+const payrollItemController = require('@controllers/payroll-item/payroll-item.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
 const { authenticate } = require('@middlewares/auth.middleware');
 const {
@@ -17,7 +17,7 @@ const {
   updatePayrollItemSchema,
   payrollItemIdParamsSchema,
   listPayrollItemsQuerySchema
-} = require('../schemas/payroll-item.schema');
+} = require('@validations/payroll-item/payroll-item.schema');
 
 /**
  * @description List payroll items with pagination and filters
@@ -40,9 +40,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listPayrollItemsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listPayrollItemsQuerySchema }),
   payrollItemController.listPayrollItems
 );
 
@@ -60,9 +60,9 @@ router.get(
  * @throws 404 Payroll item not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: payrollItemIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: payrollItemIdParamsSchema }),
   payrollItemController.getPayrollItemById
 );
 
@@ -85,9 +85,9 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createPayrollItemSchema }),
+
   authenticate(),
-  validateRequest({ body: createPayrollItemSchema }),
   payrollItemController.createPayrollItem
 );
 
@@ -111,9 +111,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: payrollItemIdParamsSchema, body: updatePayrollItemSchema }),
+
   authenticate(),
-  validateRequest({ params: payrollItemIdParamsSchema, body: updatePayrollItemSchema }),
   payrollItemController.updatePayrollItem
 );
 
@@ -131,9 +131,9 @@ router.put(
  * @throws 404 Payroll item not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: payrollItemIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: payrollItemIdParamsSchema }),
   payrollItemController.deletePayrollItem
 );
 

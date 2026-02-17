@@ -36,9 +36,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listWardRoundsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listWardRoundsQuerySchema }),
   wardRoundController.listWardRounds
 );
 
@@ -56,9 +56,9 @@ router.get(
  * @throws 404 Ward round not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: wardRoundIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: wardRoundIdParamsSchema }),
   wardRoundController.getWardRoundById
 );
 
@@ -80,9 +80,9 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createWardRoundSchema }),
+
   authenticate(),
-  validateRequest({ body: createWardRoundSchema }),
   wardRoundController.createWardRound
 );
 
@@ -104,9 +104,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: wardRoundIdParamsSchema, body: updateWardRoundSchema }),
+
   authenticate(),
-  validateRequest({ params: wardRoundIdParamsSchema, body: updateWardRoundSchema }),
   wardRoundController.updateWardRound
 );
 
@@ -124,9 +124,9 @@ router.put(
  * @throws 404 Ward round not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: wardRoundIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: wardRoundIdParamsSchema }),
   wardRoundController.deleteWardRound
 );
 

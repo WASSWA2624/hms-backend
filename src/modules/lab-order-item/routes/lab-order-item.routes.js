@@ -39,9 +39,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listLabOrderItemsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listLabOrderItemsQuerySchema }),
   labOrderItemController.listLabOrderItems
 );
 
@@ -59,9 +59,9 @@ router.get(
  * @throws 404 Lab order item not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: labOrderItemIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: labOrderItemIdParamsSchema }),
   labOrderItemController.getLabOrderItemById
 );
 
@@ -81,9 +81,9 @@ router.get(
  * @throws 400 Validation error
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createLabOrderItemSchema }),
+
   authenticate(),
-  validateRequest({ body: createLabOrderItemSchema }),
   labOrderItemController.createLabOrderItem
 );
 
@@ -104,9 +104,9 @@ router.post(
  * @throws 400 Validation error
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: labOrderItemIdParamsSchema, body: updateLabOrderItemSchema }),
+
   authenticate(),
-  validateRequest({ params: labOrderItemIdParamsSchema, body: updateLabOrderItemSchema }),
   labOrderItemController.updateLabOrderItem
 );
 
@@ -124,9 +124,9 @@ router.put(
  * @throws 404 Lab order item not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: labOrderItemIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: labOrderItemIdParamsSchema }),
   labOrderItemController.deleteLabOrderItem
 );
 

@@ -40,9 +40,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listRadiologyOrdersQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listRadiologyOrdersQuerySchema }),
   radiologyOrderController.listRadiologyOrders
 );
 
@@ -60,9 +60,9 @@ router.get(
  * @throws 404 Radiology order not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: radiologyOrderIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: radiologyOrderIdParamsSchema }),
   radiologyOrderController.getRadiologyOrderById
 );
 
@@ -86,9 +86,9 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createRadiologyOrderSchema }),
+
   authenticate(),
-  validateRequest({ body: createRadiologyOrderSchema }),
   radiologyOrderController.createRadiologyOrder
 );
 
@@ -113,9 +113,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: radiologyOrderIdParamsSchema, body: updateRadiologyOrderSchema }),
+
   authenticate(),
-  validateRequest({ params: radiologyOrderIdParamsSchema, body: updateRadiologyOrderSchema }),
   radiologyOrderController.updateRadiologyOrder
 );
 
@@ -133,9 +133,9 @@ router.put(
  * @throws 404 Radiology order not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: radiologyOrderIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: radiologyOrderIdParamsSchema }),
   radiologyOrderController.deleteRadiologyOrder
 );
 

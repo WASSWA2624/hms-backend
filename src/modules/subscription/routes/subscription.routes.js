@@ -9,7 +9,7 @@
 
 const express = require('express');
 const router = express.Router();
-const subscriptionController = require('../controllers/subscription.controller');
+const subscriptionController = require('@controllers/subscription/subscription.controller');
 const { asyncHandler } = require('@lib/async');
 const { validate } = require('@middlewares/validate.middleware');
 const {
@@ -17,7 +17,7 @@ const {
   updateSubscriptionSchema,
   subscriptionIdParamsSchema,
   listSubscriptionsQuerySchema
-} = require('../schemas/subscription.schema');
+} = require('@validations/subscription/subscription.schema');
 
 /**
  * @description List subscriptions with pagination

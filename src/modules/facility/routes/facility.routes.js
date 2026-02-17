@@ -40,9 +40,9 @@ const { listQuerySchema } = require('@lib/validation/zod');
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listFacilitiesQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listFacilitiesQuerySchema }),
   facilityController.listFacilities
 );
 
@@ -60,9 +60,9 @@ router.get(
  * @throws 404 Facility not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: facilityIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: facilityIdParamsSchema }),
   facilityController.getFacilityById
 );
 
@@ -84,9 +84,9 @@ router.get(
  * @throws 409 Duplicate facility
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createFacilitySchema }),
+
   authenticate(),
-  validateRequest({ body: createFacilitySchema }),
   facilityController.createFacility
 );
 
@@ -108,9 +108,9 @@ router.post(
  * @throws 409 Duplicate facility
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: facilityIdParamsSchema, body: updateFacilitySchema }),
+
   authenticate(),
-  validateRequest({ params: facilityIdParamsSchema, body: updateFacilitySchema }),
   facilityController.updateFacility
 );
 
@@ -128,9 +128,9 @@ router.put(
  * @throws 404 Facility not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: facilityIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: facilityIdParamsSchema }),
   facilityController.deleteFacility
 );
 
@@ -152,11 +152,11 @@ router.delete(
  */
 router.get(
   '/:id/branches',
-  authenticate(),
   validateRequest({ 
     params: facilityIdParamsSchema,
     query: listQuerySchema 
   }),
+  authenticate(),
   facilityController.getFacilityBranches
 );
 

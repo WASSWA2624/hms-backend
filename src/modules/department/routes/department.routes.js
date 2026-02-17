@@ -41,9 +41,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listDepartmentsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listDepartmentsQuerySchema }),
   departmentController.listDepartments
 );
 
@@ -61,9 +61,9 @@ router.get(
  * @throws 404 Department not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: departmentIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: departmentIdParamsSchema }),
   departmentController.getDepartmentById
 );
 
@@ -87,9 +87,9 @@ router.get(
  * @throws 400 Foreign key constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createDepartmentSchema }),
+
   authenticate(),
-  validateRequest({ body: createDepartmentSchema }),
   departmentController.createDepartment
 );
 
@@ -113,9 +113,9 @@ router.post(
  * @throws 400 Foreign key constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: departmentIdParamsSchema, body: updateDepartmentSchema }),
+
   authenticate(),
-  validateRequest({ params: departmentIdParamsSchema, body: updateDepartmentSchema }),
   departmentController.updateDepartment
 );
 
@@ -133,9 +133,9 @@ router.put(
  * @throws 404 Department not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: departmentIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: departmentIdParamsSchema }),
   departmentController.deleteDepartment
 );
 
@@ -154,9 +154,9 @@ router.delete(
  * @throws 404 Department not found
  */
 router.get(
-  '/:id/units',
+  '/:id/units',  validateRequest({ params: departmentIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: departmentIdParamsSchema }),
   departmentController.getDepartmentUnits
 );
 

@@ -2,7 +2,7 @@
  * Lab QC log controller
  */
 
-const labQcLogService = require('../services/lab-qc-log.service');
+const labQcLogService = require('@services/lab-qc-log/lab-qc-log.service');
 const { asyncHandler } = require('@lib/async');
 const { sendSuccess, sendPaginated, sendNoContent } = require('@lib/response');
 const { DEFAULT_PAGE, DEFAULT_PAGE_LIMIT } = require('@config/constants');

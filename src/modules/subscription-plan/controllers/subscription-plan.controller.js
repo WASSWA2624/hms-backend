@@ -7,7 +7,7 @@
  * Per module-creation.mdc: Use response helpers for output.
  */
 
-const subscriptionPlanService = require('../services/subscription-plan.service');
+const subscriptionPlanService = require('@services/subscription-plan/subscription-plan.service');
 const { sendSuccess, sendPaginated } = require('@lib/response');
 
 /**

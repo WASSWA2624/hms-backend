@@ -38,9 +38,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listImagingStudiesQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listImagingStudiesQuerySchema }),
   imagingStudyController.listImagingStudies
 );
 
@@ -58,9 +58,9 @@ router.get(
  * @throws 404 Imaging study not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: imagingStudyIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: imagingStudyIdParamsSchema }),
   imagingStudyController.getImagingStudyById
 );
 
@@ -82,9 +82,9 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createImagingStudySchema }),
+
   authenticate(),
-  validateRequest({ body: createImagingStudySchema }),
   imagingStudyController.createImagingStudy
 );
 
@@ -106,9 +106,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: imagingStudyIdParamsSchema, body: updateImagingStudySchema }),
+
   authenticate(),
-  validateRequest({ params: imagingStudyIdParamsSchema, body: updateImagingStudySchema }),
   imagingStudyController.updateImagingStudy
 );
 
@@ -126,9 +126,9 @@ router.put(
  * @throws 404 Imaging study not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: imagingStudyIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: imagingStudyIdParamsSchema }),
   imagingStudyController.deleteImagingStudy
 );
 

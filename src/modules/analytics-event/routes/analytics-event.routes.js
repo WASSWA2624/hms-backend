@@ -9,7 +9,7 @@
 
 const express = require('express');
 const router = express.Router();
-const analyticsEventController = require('../controllers/analytics-event.controller');
+const analyticsEventController = require('@controllers/analytics-event/analytics-event.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
 const { authenticate } = require('@middlewares/auth.middleware');
 const {
@@ -17,7 +17,7 @@ const {
   updateAnalyticsEventSchema,
   analyticsEventIdParamsSchema,
   listAnalyticsEventsQuerySchema
-} = require('../schemas/analytics-event.schema');
+} = require('@validations/analytics-event/analytics-event.schema');
 
 /**
  * @description List analytics events with pagination and filters
@@ -41,9 +41,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listAnalyticsEventsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listAnalyticsEventsQuerySchema }),
   analyticsEventController.listAnalyticsEvents
 );
 
@@ -61,9 +61,9 @@ router.get(
  * @throws 404 Analytics event not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: analyticsEventIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: analyticsEventIdParamsSchema }),
   analyticsEventController.getAnalyticsEventById
 );
 
@@ -87,9 +87,9 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createAnalyticsEventSchema }),
+
   authenticate(),
-  validateRequest({ body: createAnalyticsEventSchema }),
   analyticsEventController.createAnalyticsEvent
 );
 
@@ -112,9 +112,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: analyticsEventIdParamsSchema, body: updateAnalyticsEventSchema }),
+
   authenticate(),
-  validateRequest({ params: analyticsEventIdParamsSchema, body: updateAnalyticsEventSchema }),
   analyticsEventController.updateAnalyticsEvent
 );
 
@@ -132,9 +132,9 @@ router.put(
  * @throws 404 Analytics event not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: analyticsEventIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: analyticsEventIdParamsSchema }),
   analyticsEventController.deleteAnalyticsEvent
 );
 

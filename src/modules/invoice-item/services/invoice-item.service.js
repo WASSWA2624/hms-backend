@@ -5,7 +5,7 @@
  * @description Business logic layer for invoice item operations.
  */
 
-const invoiceItemRepository = require('../repositories/invoice-item.repository');
+const invoiceItemRepository = require('@repositories/invoice-item/invoice-item.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 

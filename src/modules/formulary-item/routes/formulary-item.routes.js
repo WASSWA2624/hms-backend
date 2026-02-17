@@ -9,7 +9,7 @@
 
 const express = require('express');
 const router = express.Router();
-const formularyItemController = require('../controllers/formulary-item.controller');
+const formularyItemController = require('@controllers/formulary-item/formulary-item.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
 const { authenticate } = require('@middlewares/auth.middleware');
 const {
@@ -17,7 +17,7 @@ const {
   updateFormularyItemSchema,
   formularyItemIdParamsSchema,
   listFormularyItemsQuerySchema
-} = require('../schemas/formulary-item.schema');
+} = require('@validations/formulary-item/formulary-item.schema');
 
 /**
  * @description List formulary items with pagination and filters
@@ -38,9 +38,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listFormularyItemsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listFormularyItemsQuerySchema }),
   formularyItemController.listFormularyItems
 );
 
@@ -58,9 +58,9 @@ router.get(
  * @throws 404 Formulary item not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: formularyItemIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: formularyItemIdParamsSchema }),
   formularyItemController.getFormularyItemById
 );
 
@@ -82,9 +82,9 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createFormularyItemSchema }),
+
   authenticate(),
-  validateRequest({ body: createFormularyItemSchema }),
   formularyItemController.createFormularyItem
 );
 
@@ -105,9 +105,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: formularyItemIdParamsSchema, body: updateFormularyItemSchema }),
+
   authenticate(),
-  validateRequest({ params: formularyItemIdParamsSchema, body: updateFormularyItemSchema }),
   formularyItemController.updateFormularyItem
 );
 
@@ -125,9 +125,9 @@ router.put(
  * @throws 404 Formulary item not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: formularyItemIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: formularyItemIdParamsSchema }),
   formularyItemController.deleteFormularyItem
 );
 

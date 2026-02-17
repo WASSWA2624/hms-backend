@@ -9,7 +9,7 @@
 
 const express = require('express');
 const router = express.Router();
-const assetController = require('../controllers/asset.controller');
+const assetController = require('@controllers/asset/asset.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
 const { authenticate } = require('@middlewares/auth.middleware');
 const {
@@ -17,7 +17,7 @@ const {
   updateAssetSchema,
   assetIdParamsSchema,
   listAssetsQuerySchema
-} = require('../schemas/asset.schema');
+} = require('@validations/asset/asset.schema');
 
 /**
  * @description List assets with pagination and filters
@@ -41,9 +41,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listAssetsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listAssetsQuerySchema }),
   assetController.listAssets
 );
 
@@ -61,9 +61,9 @@ router.get(
  * @throws 404 Asset not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: assetIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: assetIdParamsSchema }),
   assetController.getAssetById
 );
 
@@ -87,9 +87,9 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createAssetSchema }),
+
   authenticate(),
-  validateRequest({ body: createAssetSchema }),
   assetController.createAsset
 );
 
@@ -113,9 +113,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: assetIdParamsSchema, body: updateAssetSchema }),
+
   authenticate(),
-  validateRequest({ params: assetIdParamsSchema, body: updateAssetSchema }),
   assetController.updateAsset
 );
 
@@ -133,9 +133,9 @@ router.put(
  * @throws 404 Asset not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: assetIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: assetIdParamsSchema }),
   assetController.deleteAsset
 );
 

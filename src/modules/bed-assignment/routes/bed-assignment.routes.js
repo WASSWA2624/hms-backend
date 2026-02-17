@@ -37,9 +37,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listBedAssignmentsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listBedAssignmentsQuerySchema }),
   bedAssignmentController.listBedAssignments
 );
 
@@ -57,9 +57,9 @@ router.get(
  * @throws 404 Bed assignment not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: bedAssignmentIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: bedAssignmentIdParamsSchema }),
   bedAssignmentController.getBedAssignmentById
 );
 
@@ -81,9 +81,9 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createBedAssignmentSchema }),
+
   authenticate(),
-  validateRequest({ body: createBedAssignmentSchema }),
   bedAssignmentController.createBedAssignment
 );
 
@@ -106,9 +106,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: bedAssignmentIdParamsSchema, body: updateBedAssignmentSchema }),
+
   authenticate(),
-  validateRequest({ params: bedAssignmentIdParamsSchema, body: updateBedAssignmentSchema }),
   bedAssignmentController.updateBedAssignment
 );
 
@@ -126,9 +126,9 @@ router.put(
  * @throws 404 Bed assignment not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: bedAssignmentIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: bedAssignmentIdParamsSchema }),
   bedAssignmentController.deleteBedAssignment
 );
 

@@ -41,9 +41,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listPreAuthorizationsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listPreAuthorizationsQuerySchema }),
   preAuthorizationController.listPreAuthorizations
 );
 
@@ -61,9 +61,9 @@ router.get(
  * @throws 404 Pre-authorization not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: preAuthorizationIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: preAuthorizationIdParamsSchema }),
   preAuthorizationController.getPreAuthorizationById
 );
 
@@ -86,9 +86,9 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createPreAuthorizationSchema }),
+
   authenticate(),
-  validateRequest({ body: createPreAuthorizationSchema }),
   preAuthorizationController.createPreAuthorization
 );
 
@@ -112,9 +112,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: preAuthorizationIdParamsSchema, body: updatePreAuthorizationSchema }),
+
   authenticate(),
-  validateRequest({ params: preAuthorizationIdParamsSchema, body: updatePreAuthorizationSchema }),
   preAuthorizationController.updatePreAuthorization
 );
 
@@ -132,9 +132,9 @@ router.put(
  * @throws 404 Pre-authorization not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: preAuthorizationIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: preAuthorizationIdParamsSchema }),
   preAuthorizationController.deletePreAuthorization
 );
 

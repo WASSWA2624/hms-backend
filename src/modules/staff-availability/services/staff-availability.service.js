@@ -1,7 +1,7 @@
 /**
  * Staff availability service
  */
-const staffAvailabilityRepository = require('../repositories/staff-availability.repository');
+const staffAvailabilityRepository = require('@repositories/staff-availability/staff-availability.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 

@@ -1,4 +1,4 @@
-const equipmentCalibrationLogRepository = require('../repositories/equipment-calibration-log.repository');
+const equipmentCalibrationLogRepository = require('@repositories/equipment-calibration-log/equipment-calibration-log.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 

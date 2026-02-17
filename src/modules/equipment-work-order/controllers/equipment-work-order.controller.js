@@ -1,4 +1,4 @@
-const equipmentWorkOrderService = require('../services/equipment-work-order.service');
+const equipmentWorkOrderService = require('@services/equipment-work-order/equipment-work-order.service');
 const { asyncHandler } = require('@lib/async');
 const { sendSuccess, sendPaginated, sendNoContent } = require('@lib/response');
 const { DEFAULT_PAGE, DEFAULT_PAGE_LIMIT } = require('@config/constants');

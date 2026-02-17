@@ -40,9 +40,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listPatientMedicalHistoriesQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listPatientMedicalHistoriesQuerySchema }),
   asyncHandler(patientMedicalHistoryController.listPatientMedicalHistories)
 );
 
@@ -60,9 +60,9 @@ router.get(
  * @throws 404 Patient medical history not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: patientMedicalHistoryIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: patientMedicalHistoryIdParamsSchema }),
   asyncHandler(patientMedicalHistoryController.getPatientMedicalHistoryById)
 );
 
@@ -85,9 +85,9 @@ router.get(
  * @throws 400 Foreign key constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createPatientMedicalHistorySchema }),
+
   authenticate(),
-  validateRequest({ body: createPatientMedicalHistorySchema }),
   asyncHandler(patientMedicalHistoryController.createPatientMedicalHistory)
 );
 
@@ -108,9 +108,9 @@ router.post(
  * @throws 404 Patient medical history not found
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: patientMedicalHistoryIdParamsSchema, body: updatePatientMedicalHistorySchema }),
+
   authenticate(),
-  validateRequest({ params: patientMedicalHistoryIdParamsSchema, body: updatePatientMedicalHistorySchema }),
   asyncHandler(patientMedicalHistoryController.updatePatientMedicalHistory)
 );
 
@@ -128,9 +128,9 @@ router.put(
  * @throws 404 Patient medical history not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: patientMedicalHistoryIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: patientMedicalHistoryIdParamsSchema }),
   asyncHandler(patientMedicalHistoryController.deletePatientMedicalHistory)
 );
 

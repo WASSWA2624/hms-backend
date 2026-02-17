@@ -42,9 +42,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listVisitQueuesQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listVisitQueuesQuerySchema }),
   visitQueueController.listVisitQueues
 );
 
@@ -62,9 +62,9 @@ router.get(
  * @throws 404 Visit queue entry not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: visitQueueIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: visitQueueIdParamsSchema }),
   visitQueueController.getVisitQueueById
 );
 
@@ -89,9 +89,9 @@ router.get(
  * @throws 400 Foreign key constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createVisitQueueSchema }),
+
   authenticate(),
-  validateRequest({ body: createVisitQueueSchema }),
   visitQueueController.createVisitQueue
 );
 
@@ -115,9 +115,9 @@ router.post(
  * @throws 400 Foreign key constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: visitQueueIdParamsSchema, body: updateVisitQueueSchema }),
+
   authenticate(),
-  validateRequest({ params: visitQueueIdParamsSchema, body: updateVisitQueueSchema }),
   visitQueueController.updateVisitQueue
 );
 
@@ -135,9 +135,9 @@ router.put(
  * @throws 404 Visit queue entry not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: visitQueueIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: visitQueueIdParamsSchema }),
   visitQueueController.deleteVisitQueue
 );
 

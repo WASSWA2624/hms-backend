@@ -42,9 +42,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listAdverseEventsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listAdverseEventsQuerySchema }),
   asyncHandler(adverseEventController.listAdverseEvents)
 );
 
@@ -62,9 +62,9 @@ router.get(
  * @throws 404 Adverse event not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: adverseEventIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: adverseEventIdParamsSchema }),
   asyncHandler(adverseEventController.getAdverseEventById)
 );
 
@@ -87,9 +87,9 @@ router.get(
  * @throws 400 Foreign key constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createAdverseEventSchema }),
+
   authenticate(),
-  validateRequest({ body: createAdverseEventSchema }),
   asyncHandler(adverseEventController.createAdverseEvent)
 );
 
@@ -111,9 +111,9 @@ router.post(
  * @throws 404 Adverse event not found
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: adverseEventIdParamsSchema, body: updateAdverseEventSchema }),
+
   authenticate(),
-  validateRequest({ params: adverseEventIdParamsSchema, body: updateAdverseEventSchema }),
   asyncHandler(adverseEventController.updateAdverseEvent)
 );
 
@@ -131,9 +131,9 @@ router.put(
  * @throws 404 Adverse event not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: adverseEventIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: adverseEventIdParamsSchema }),
   asyncHandler(adverseEventController.deleteAdverseEvent)
 );
 

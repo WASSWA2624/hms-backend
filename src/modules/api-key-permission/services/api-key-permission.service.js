@@ -7,7 +7,7 @@
  * Per prisma.mdc: All mutations call createAuditLog.
  */
 
-const apiKeyPermissionRepository = require('../repositories/api-key-permission.repository');
+const apiKeyPermissionRepository = require('@repositories/api-key-permission/api-key-permission.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 

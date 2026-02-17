@@ -1,4 +1,4 @@
-const equipmentSparePartRepository = require('../repositories/equipment-spare-part.repository');
+const equipmentSparePartRepository = require('@repositories/equipment-spare-part/equipment-spare-part.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 

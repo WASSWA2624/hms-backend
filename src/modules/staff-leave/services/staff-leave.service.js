@@ -7,7 +7,7 @@
  * Per prisma.mdc: All mutations call createAuditLog.
  */
 
-const staffLeaveRepository = require('../repositories/staff-leave.repository');
+const staffLeaveRepository = require('@repositories/staff-leave/staff-leave.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 

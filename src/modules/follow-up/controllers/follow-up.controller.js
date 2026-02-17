@@ -7,7 +7,7 @@
  * Per response-format.mdc: Use standardized response helpers.
  */
 
-const followUpService = require('../services/follow-up.service');
+const followUpService = require('@services/follow-up/follow-up.service');
 const { asyncHandler } = require('@lib/async');
 const { sendSuccess, sendPaginated, sendNoContent } = require('@lib/response');
 const { DEFAULT_PAGE, DEFAULT_PAGE_LIMIT } = require('@config/constants');

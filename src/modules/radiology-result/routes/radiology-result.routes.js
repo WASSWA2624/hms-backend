@@ -38,9 +38,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listRadiologyResultsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listRadiologyResultsQuerySchema }),
   radiologyResultController.listRadiologyResults
 );
 
@@ -58,9 +58,9 @@ router.get(
  * @throws 404 Radiology result not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: radiologyResultIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: radiologyResultIdParamsSchema }),
   radiologyResultController.getRadiologyResultById
 );
 
@@ -83,9 +83,9 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createRadiologyResultSchema }),
+
   authenticate(),
-  validateRequest({ body: createRadiologyResultSchema }),
   radiologyResultController.createRadiologyResult
 );
 
@@ -109,9 +109,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: radiologyResultIdParamsSchema, body: updateRadiologyResultSchema }),
+
   authenticate(),
-  validateRequest({ params: radiologyResultIdParamsSchema, body: updateRadiologyResultSchema }),
   radiologyResultController.updateRadiologyResult
 );
 
@@ -129,9 +129,9 @@ router.put(
  * @throws 404 Radiology result not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: radiologyResultIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: radiologyResultIdParamsSchema }),
   radiologyResultController.deleteRadiologyResult
 );
 

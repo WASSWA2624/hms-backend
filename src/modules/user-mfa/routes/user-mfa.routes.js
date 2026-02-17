@@ -42,9 +42,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listUserMfasQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listUserMfasQuerySchema }),
   userMfaController.listUserMfas
 );
 
@@ -62,9 +62,9 @@ router.get(
  * @throws 404 User MFA not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: userMfaIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: userMfaIdParamsSchema }),
   userMfaController.getUserMfaById
 );
 
@@ -81,9 +81,9 @@ router.get(
  * @throws 401 Unauthorized
  */
 router.get(
-  '/user/:userId',
+  '/user/:userId',  validateRequest({ params: userIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: userIdParamsSchema }),
   userMfaController.getUserMfasByUserId
 );
 
@@ -105,9 +105,9 @@ router.get(
  * @throws 400 Foreign key constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createUserMfaSchema }),
+
   authenticate(),
-  validateRequest({ body: createUserMfaSchema }),
   userMfaController.createUserMfa
 );
 
@@ -128,9 +128,9 @@ router.post(
  * @throws 404 User MFA not found
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: userMfaIdParamsSchema, body: updateUserMfaSchema }),
+
   authenticate(),
-  validateRequest({ params: userMfaIdParamsSchema, body: updateUserMfaSchema }),
   userMfaController.updateUserMfa
 );
 
@@ -148,9 +148,9 @@ router.put(
  * @throws 404 User MFA not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: userMfaIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: userMfaIdParamsSchema }),
   userMfaController.deleteUserMfa
 );
 
@@ -170,9 +170,9 @@ router.delete(
  * @throws 400 MFA is disabled
  */
 router.post(
-  '/:id/verify',
+  '/:id/verify',  validateRequest({ params: userMfaIdParamsSchema, body: verifyMfaSchema }),
+
   authenticate(),
-  validateRequest({ params: userMfaIdParamsSchema, body: verifyMfaSchema }),
   userMfaController.verifyMfaCode
 );
 
@@ -192,9 +192,9 @@ router.post(
  * @throws 400 MFA already enabled
  */
 router.post(
-  '/:id/enable',
+  '/:id/enable',  validateRequest({ params: userMfaIdParamsSchema, body: enableMfaSchema }),
+
   authenticate(),
-  validateRequest({ params: userMfaIdParamsSchema, body: enableMfaSchema }),
   userMfaController.enableMfa
 );
 
@@ -214,9 +214,9 @@ router.post(
  * @throws 400 MFA already disabled
  */
 router.post(
-  '/:id/disable',
+  '/:id/disable',  validateRequest({ params: userMfaIdParamsSchema, body: disableMfaSchema }),
+
   authenticate(),
-  validateRequest({ params: userMfaIdParamsSchema, body: disableMfaSchema }),
   userMfaController.disableMfa
 );
 

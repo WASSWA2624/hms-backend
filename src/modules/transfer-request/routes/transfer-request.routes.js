@@ -40,9 +40,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listTransferRequestsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listTransferRequestsQuerySchema }),
   transferRequestController.listTransferRequests
 );
 
@@ -60,9 +60,9 @@ router.get(
  * @throws 404 Transfer request not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: transferRequestIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: transferRequestIdParamsSchema }),
   transferRequestController.getTransferRequestById
 );
 
@@ -86,9 +86,9 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createTransferRequestSchema }),
+
   authenticate(),
-  validateRequest({ body: createTransferRequestSchema }),
   transferRequestController.createTransferRequest
 );
 
@@ -113,9 +113,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: transferRequestIdParamsSchema, body: updateTransferRequestSchema }),
+
   authenticate(),
-  validateRequest({ params: transferRequestIdParamsSchema, body: updateTransferRequestSchema }),
   transferRequestController.updateTransferRequest
 );
 
@@ -133,9 +133,9 @@ router.put(
  * @throws 404 Transfer request not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: transferRequestIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: transferRequestIdParamsSchema }),
   transferRequestController.deleteTransferRequest
 );
 

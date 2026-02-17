@@ -8,7 +8,7 @@
  * Note: Terms acceptance has no update operation per API spec
  */
 
-const termsAcceptanceRepository = require('../repositories/terms-acceptance.repository');
+const termsAcceptanceRepository = require('@repositories/terms-acceptance/terms-acceptance.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 

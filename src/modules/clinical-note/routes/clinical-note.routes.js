@@ -37,9 +37,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listClinicalNotesQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listClinicalNotesQuerySchema }),
   clinicalNoteController.listClinicalNotes
 );
 
@@ -57,9 +57,9 @@ router.get(
  * @throws 404 Clinical note not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: clinicalNoteIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: clinicalNoteIdParamsSchema }),
   clinicalNoteController.getClinicalNoteById
 );
 
@@ -81,9 +81,9 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createClinicalNoteSchema }),
+
   authenticate(),
-  validateRequest({ body: createClinicalNoteSchema }),
   clinicalNoteController.createClinicalNote
 );
 
@@ -104,9 +104,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: clinicalNoteIdParamsSchema, body: updateClinicalNoteSchema }),
+
   authenticate(),
-  validateRequest({ params: clinicalNoteIdParamsSchema, body: updateClinicalNoteSchema }),
   clinicalNoteController.updateClinicalNote
 );
 
@@ -124,9 +124,9 @@ router.put(
  * @throws 404 Clinical note not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: clinicalNoteIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: clinicalNoteIdParamsSchema }),
   clinicalNoteController.deleteClinicalNote
 );
 

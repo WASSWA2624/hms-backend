@@ -39,9 +39,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listPricingRulesQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listPricingRulesQuerySchema }),
   pricingRuleController.listPricingRules
 );
 
@@ -59,9 +59,9 @@ router.get(
  * @throws 404 Pricing rule not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: pricingRuleIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: pricingRuleIdParamsSchema }),
   pricingRuleController.getPricingRuleById
 );
 
@@ -87,9 +87,9 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createPricingRuleSchema }),
+
   authenticate(),
-  validateRequest({ body: createPricingRuleSchema }),
   pricingRuleController.createPricingRule
 );
 
@@ -115,9 +115,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: pricingRuleIdParamsSchema, body: updatePricingRuleSchema }),
+
   authenticate(),
-  validateRequest({ params: pricingRuleIdParamsSchema, body: updatePricingRuleSchema }),
   pricingRuleController.updatePricingRule
 );
 
@@ -135,9 +135,9 @@ router.put(
  * @throws 404 Pricing rule not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: pricingRuleIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: pricingRuleIdParamsSchema }),
   pricingRuleController.deletePricingRule
 );
 

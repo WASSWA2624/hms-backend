@@ -7,7 +7,7 @@
  * Per response-format.mdc: Use standardized response helpers.
  */
 
-const userMfaService = require('../services/user-mfa.service');
+const userMfaService = require('@services/user-mfa/user-mfa.service');
 const { asyncHandler } = require('@lib/async');
 const { sendSuccess, sendPaginated, sendNoContent } = require('@lib/response');
 const { DEFAULT_PAGE, DEFAULT_PAGE_LIMIT } = require('@config/constants');

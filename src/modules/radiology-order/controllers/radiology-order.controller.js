@@ -7,7 +7,7 @@
  * Per response-format.mdc: Use standardized response helpers.
  */
 
-const radiologyOrderService = require('../services/radiology-order.service');
+const radiologyOrderService = require('@services/radiology-order/radiology-order.service');
 const { asyncHandler } = require('@lib/async');
 const { sendSuccess, sendPaginated, sendNoContent } = require('@lib/response');
 const { DEFAULT_PAGE, DEFAULT_PAGE_LIMIT } = require('@config/constants');

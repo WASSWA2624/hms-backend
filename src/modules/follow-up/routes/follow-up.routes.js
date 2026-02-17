@@ -36,9 +36,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listFollowUpsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listFollowUpsQuerySchema }),
   followUpController.listFollowUps
 );
 
@@ -56,9 +56,9 @@ router.get(
  * @throws 404 Follow-up not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: followUpIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: followUpIdParamsSchema }),
   followUpController.getFollowUpById
 );
 
@@ -79,9 +79,9 @@ router.get(
  * @throws 400 Foreign key constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createFollowUpSchema }),
+
   authenticate(),
-  validateRequest({ body: createFollowUpSchema }),
   followUpController.createFollowUp
 );
 
@@ -101,9 +101,9 @@ router.post(
  * @throws 404 Follow-up not found
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: followUpIdParamsSchema, body: updateFollowUpSchema }),
+
   authenticate(),
-  validateRequest({ params: followUpIdParamsSchema, body: updateFollowUpSchema }),
   followUpController.updateFollowUp
 );
 
@@ -121,9 +121,9 @@ router.put(
  * @throws 404 Follow-up not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: followUpIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: followUpIdParamsSchema }),
   followUpController.deleteFollowUp
 );
 

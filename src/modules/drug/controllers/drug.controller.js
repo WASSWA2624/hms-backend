@@ -7,7 +7,7 @@
  * Per response-format.mdc: Use standardized response helpers.
  */
 
-const drugService = require('../services/drug.service');
+const drugService = require('@services/drug/drug.service');
 const { asyncHandler } = require('@lib/async');
 const { sendSuccess, sendPaginated, sendNoContent } = require('@lib/response');
 const { DEFAULT_PAGE, DEFAULT_PAGE_LIMIT } = require('@config/constants');

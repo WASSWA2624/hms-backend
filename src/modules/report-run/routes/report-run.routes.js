@@ -40,9 +40,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listReportRunsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listReportRunsQuerySchema }),
   reportRunController.listReportRuns
 );
 
@@ -60,9 +60,9 @@ router.get(
  * @throws 404 Report run not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: reportRunIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: reportRunIdParamsSchema }),
   reportRunController.getReportRunById
 );
 
@@ -84,9 +84,9 @@ router.get(
  * @throws 400 Foreign key constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createReportRunSchema }),
+
   authenticate(),
-  validateRequest({ body: createReportRunSchema }),
   reportRunController.createReportRun
 );
 
@@ -109,9 +109,9 @@ router.post(
  * @throws 404 Report run not found
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: reportRunIdParamsSchema, body: updateReportRunSchema }),
+
   authenticate(),
-  validateRequest({ params: reportRunIdParamsSchema, body: updateReportRunSchema }),
   reportRunController.updateReportRun
 );
 
@@ -129,9 +129,9 @@ router.put(
  * @throws 404 Report run not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: reportRunIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: reportRunIdParamsSchema }),
   reportRunController.deleteReportRun
 );
 

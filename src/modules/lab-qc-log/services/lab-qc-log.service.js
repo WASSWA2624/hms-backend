@@ -2,7 +2,7 @@
  * Lab QC log service
  */
 
-const labQcLogRepository = require('../repositories/lab-qc-log.repository');
+const labQcLogRepository = require('@repositories/lab-qc-log/lab-qc-log.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 

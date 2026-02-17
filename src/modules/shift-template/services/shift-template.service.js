@@ -1,7 +1,7 @@
 /**
  * Shift template service
  */
-const shiftTemplateRepository = require('../repositories/shift-template.repository');
+const shiftTemplateRepository = require('@repositories/shift-template/shift-template.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 

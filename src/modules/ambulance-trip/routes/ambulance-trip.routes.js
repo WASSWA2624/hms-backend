@@ -37,9 +37,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listAmbulanceTripsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listAmbulanceTripsQuerySchema }),
   ambulanceTripController.listAmbulanceTrips
 );
 
@@ -57,9 +57,9 @@ router.get(
  * @throws 404 Ambulance Trip not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: ambulanceTripIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: ambulanceTripIdParamsSchema }),
   ambulanceTripController.getAmbulanceTripById
 );
 
@@ -81,9 +81,9 @@ router.get(
  * @throws 400 Foreign key constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createAmbulanceTripSchema }),
+
   authenticate(),
-  validateRequest({ body: createAmbulanceTripSchema }),
   ambulanceTripController.createAmbulanceTrip
 );
 
@@ -106,9 +106,9 @@ router.post(
  * @throws 400 Foreign key constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: ambulanceTripIdParamsSchema, body: updateAmbulanceTripSchema }),
+
   authenticate(),
-  validateRequest({ params: ambulanceTripIdParamsSchema, body: updateAmbulanceTripSchema }),
   ambulanceTripController.updateAmbulanceTrip
 );
 
@@ -126,9 +126,9 @@ router.put(
  * @throws 404 Ambulance Trip not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: ambulanceTripIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: ambulanceTripIdParamsSchema }),
   ambulanceTripController.deleteAmbulanceTrip
 );
 

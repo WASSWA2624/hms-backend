@@ -1,4 +1,4 @@
-const equipmentLocationHistoryRepository = require('../repositories/equipment-location-history.repository');
+const equipmentLocationHistoryRepository = require('@repositories/equipment-location-history/equipment-location-history.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 

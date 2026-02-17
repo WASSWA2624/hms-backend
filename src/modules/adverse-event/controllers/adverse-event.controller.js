@@ -7,7 +7,7 @@
  * Per response-format.mdc: Use response helpers for consistent output.
  */
 
-const adverseEventService = require('../services/adverse-event.service');
+const adverseEventService = require('@services/adverse-event/adverse-event.service');
 const { sendSuccess, sendPaginated } = require('@lib/response');
 const { HttpError } = require('@lib/errors');
 const { DEFAULT_PAGE, DEFAULT_PAGE_LIMIT } = require('@config/constants');

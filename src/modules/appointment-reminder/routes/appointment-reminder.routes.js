@@ -15,37 +15,37 @@ const {
 } = require('@validations/appointment-reminder/appointment-reminder.schema');
 
 router.get(
-  '/',
+  '/',  validateRequest({ query: listAppointmentRemindersQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listAppointmentRemindersQuerySchema }),
   appointmentReminderController.listAppointmentReminders
 );
 
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: appointmentReminderIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: appointmentReminderIdParamsSchema }),
   appointmentReminderController.getAppointmentReminderById
 );
 
 router.post(
-  '/',
+  '/',  validateRequest({ body: createAppointmentReminderSchema }),
+
   authenticate(),
-  validateRequest({ body: createAppointmentReminderSchema }),
   appointmentReminderController.createAppointmentReminder
 );
 
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: appointmentReminderIdParamsSchema, body: updateAppointmentReminderSchema }),
+
   authenticate(),
-  validateRequest({ params: appointmentReminderIdParamsSchema, body: updateAppointmentReminderSchema }),
   appointmentReminderController.updateAppointmentReminder
 );
 
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: appointmentReminderIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: appointmentReminderIdParamsSchema }),
   appointmentReminderController.deleteAppointmentReminder
 );
 

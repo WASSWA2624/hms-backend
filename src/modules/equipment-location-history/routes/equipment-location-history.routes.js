@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const equipmentLocationHistoryController = require('../controllers/equipment-location-history.controller');
+const equipmentLocationHistoryController = require('@controllers/equipment-location-history/equipment-location-history.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
 const { authenticate } = require('@middlewares/auth.middleware');
-const { createEquipmentLocationHistorySchema, updateEquipmentLocationHistorySchema, equipmentLocationHistoryIdParamsSchema, listEquipmentLocationHistorysQuerySchema } = require('../schemas/equipment-location-history.schema');
+const { createEquipmentLocationHistorySchema, updateEquipmentLocationHistorySchema, equipmentLocationHistoryIdParamsSchema, listEquipmentLocationHistorysQuerySchema } = require('@validations/equipment-location-history/equipment-location-history.schema');
 
 router.get('/', authenticate(), validateRequest({ query: listEquipmentLocationHistorysQuerySchema }), equipmentLocationHistoryController.listEquipmentLocationHistorys);
 router.get('/:id', authenticate(), validateRequest({ params: equipmentLocationHistoryIdParamsSchema }), equipmentLocationHistoryController.getEquipmentLocationHistoryById);

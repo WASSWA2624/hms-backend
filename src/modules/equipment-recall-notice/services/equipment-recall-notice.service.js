@@ -1,4 +1,4 @@
-const equipmentRecallNoticeRepository = require('../repositories/equipment-recall-notice.repository');
+const equipmentRecallNoticeRepository = require('@repositories/equipment-recall-notice/equipment-recall-notice.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 

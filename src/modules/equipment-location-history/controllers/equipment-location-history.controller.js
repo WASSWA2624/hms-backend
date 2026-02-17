@@ -1,4 +1,4 @@
-const equipmentLocationHistoryService = require('../services/equipment-location-history.service');
+const equipmentLocationHistoryService = require('@services/equipment-location-history/equipment-location-history.service');
 const { asyncHandler } = require('@lib/async');
 const { sendSuccess, sendPaginated, sendNoContent } = require('@lib/response');
 const { DEFAULT_PAGE, DEFAULT_PAGE_LIMIT } = require('@config/constants');

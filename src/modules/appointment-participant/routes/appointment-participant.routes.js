@@ -25,9 +25,9 @@ const {
  * @route /api/v1/appointment-participants/
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listAppointmentParticipantsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listAppointmentParticipantsQuerySchema }),
   appointmentParticipantController.listAppointmentParticipants
 );
 
@@ -37,9 +37,9 @@ router.get(
  * @route /api/v1/appointment-participants/:id
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: appointmentParticipantIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: appointmentParticipantIdParamsSchema }),
   appointmentParticipantController.getAppointmentParticipantById
 );
 
@@ -49,9 +49,9 @@ router.get(
  * @route /api/v1/appointment-participants/
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createAppointmentParticipantSchema }),
+
   authenticate(),
-  validateRequest({ body: createAppointmentParticipantSchema }),
   appointmentParticipantController.createAppointmentParticipant
 );
 
@@ -61,9 +61,9 @@ router.post(
  * @route /api/v1/appointment-participants/:id
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: appointmentParticipantIdParamsSchema, body: updateAppointmentParticipantSchema }),
+
   authenticate(),
-  validateRequest({ params: appointmentParticipantIdParamsSchema, body: updateAppointmentParticipantSchema }),
   appointmentParticipantController.updateAppointmentParticipant
 );
 
@@ -73,9 +73,9 @@ router.put(
  * @route /api/v1/appointment-participants/:id
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: appointmentParticipantIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: appointmentParticipantIdParamsSchema }),
   appointmentParticipantController.deleteAppointmentParticipant
 );
 

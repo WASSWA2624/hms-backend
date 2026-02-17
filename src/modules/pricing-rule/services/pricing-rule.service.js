@@ -7,7 +7,7 @@
  * Per prisma.mdc: All mutations call createAuditLog.
  */
 
-const pricingRuleRepository = require('../repositories/pricing-rule.repository');
+const pricingRuleRepository = require('@repositories/pricing-rule/pricing-rule.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 

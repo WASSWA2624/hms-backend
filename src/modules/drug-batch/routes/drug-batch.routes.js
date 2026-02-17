@@ -9,7 +9,7 @@
 
 const express = require('express');
 const router = express.Router();
-const drugBatchController = require('../controllers/drug-batch.controller');
+const drugBatchController = require('@controllers/drug-batch/drug-batch.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
 const { authenticate } = require('@middlewares/auth.middleware');
 const {
@@ -17,7 +17,7 @@ const {
   updateDrugBatchSchema,
   drugBatchIdParamsSchema,
   listDrugBatchesQuerySchema
-} = require('../schemas/drug-batch.schema');
+} = require('@validations/drug-batch/drug-batch.schema');
 
 /**
  * @description List drug batches with pagination and filters
@@ -39,9 +39,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listDrugBatchesQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listDrugBatchesQuerySchema }),
   drugBatchController.listDrugBatches
 );
 
@@ -59,9 +59,9 @@ router.get(
  * @throws 404 Drug batch not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: drugBatchIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: drugBatchIdParamsSchema }),
   drugBatchController.getDrugBatchById
 );
 
@@ -84,9 +84,9 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createDrugBatchSchema }),
+
   authenticate(),
-  validateRequest({ body: createDrugBatchSchema }),
   drugBatchController.createDrugBatch
 );
 
@@ -109,9 +109,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: drugBatchIdParamsSchema, body: updateDrugBatchSchema }),
+
   authenticate(),
-  validateRequest({ params: drugBatchIdParamsSchema, body: updateDrugBatchSchema }),
   drugBatchController.updateDrugBatch
 );
 
@@ -129,9 +129,9 @@ router.put(
  * @throws 404 Drug batch not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: drugBatchIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: drugBatchIdParamsSchema }),
   drugBatchController.deleteDrugBatch
 );
 

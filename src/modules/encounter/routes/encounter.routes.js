@@ -41,9 +41,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listEncountersQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listEncountersQuerySchema }),
   encounterController.listEncounters
 );
 
@@ -61,9 +61,9 @@ router.get(
  * @throws 404 Encounter not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: encounterIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: encounterIdParamsSchema }),
   encounterController.getEncounterById
 );
 
@@ -90,9 +90,9 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createEncounterSchema }),
+
   authenticate(),
-  validateRequest({ body: createEncounterSchema }),
   encounterController.createEncounter
 );
 
@@ -118,9 +118,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: encounterIdParamsSchema, body: updateEncounterSchema }),
+
   authenticate(),
-  validateRequest({ params: encounterIdParamsSchema, body: updateEncounterSchema }),
   encounterController.updateEncounter
 );
 
@@ -138,9 +138,9 @@ router.put(
  * @throws 404 Encounter not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: encounterIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: encounterIdParamsSchema }),
   encounterController.deleteEncounter
 );
 

@@ -5,7 +5,7 @@
  * @description Business logic layer for pharmacy order item operations.
  */
 
-const pharmacyOrderItemRepository = require('../repositories/pharmacy-order-item.repository');
+const pharmacyOrderItemRepository = require('@repositories/pharmacy-order-item/pharmacy-order-item.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 

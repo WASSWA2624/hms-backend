@@ -40,9 +40,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listPatientIdentifiersQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listPatientIdentifiersQuerySchema }),
   patientIdentifierController.listPatientIdentifiers
 );
 
@@ -60,9 +60,9 @@ router.get(
  * @throws 404 Patient Identifier not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: patientIdentifierIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: patientIdentifierIdParamsSchema }),
   patientIdentifierController.getPatientIdentifierById
 );
 
@@ -86,9 +86,9 @@ router.get(
  * @throws 409 Unique constraint violation (duplicate identifier_value in tenant)
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createPatientIdentifierSchema }),
+
   authenticate(),
-  validateRequest({ body: createPatientIdentifierSchema }),
   patientIdentifierController.createPatientIdentifier
 );
 
@@ -111,9 +111,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: patientIdentifierIdParamsSchema, body: updatePatientIdentifierSchema }),
+
   authenticate(),
-  validateRequest({ params: patientIdentifierIdParamsSchema, body: updatePatientIdentifierSchema }),
   patientIdentifierController.updatePatientIdentifier
 );
 
@@ -131,9 +131,9 @@ router.put(
  * @throws 404 Patient Identifier not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: patientIdentifierIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: patientIdentifierIdParamsSchema }),
   patientIdentifierController.deletePatientIdentifier
 );
 

@@ -7,7 +7,7 @@
  * Per prisma.mdc: All mutations call createAuditLog.
  */
 
-const pacsLinkRepository = require('../repositories/pacs-link.repository');
+const pacsLinkRepository = require('@repositories/pacs-link/pacs-link.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 

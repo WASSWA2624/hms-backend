@@ -37,9 +37,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listTermsAcceptancesQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listTermsAcceptancesQuerySchema }),
   termsAcceptanceController.listTermsAcceptances
 );
 
@@ -57,9 +57,9 @@ router.get(
  * @throws 404 Terms acceptance not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: termsAcceptanceIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: termsAcceptanceIdParamsSchema }),
   termsAcceptanceController.getTermsAcceptanceById
 );
 
@@ -79,9 +79,9 @@ router.get(
  * @throws 400 Foreign key constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createTermsAcceptanceSchema }),
+
   authenticate(),
-  validateRequest({ body: createTermsAcceptanceSchema }),
   termsAcceptanceController.createTermsAcceptance
 );
 
@@ -99,9 +99,9 @@ router.post(
  * @throws 404 Terms acceptance not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: termsAcceptanceIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: termsAcceptanceIdParamsSchema }),
   termsAcceptanceController.deleteTermsAcceptance
 );
 

@@ -38,9 +38,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listCriticalAlertsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listCriticalAlertsQuerySchema }),
   criticalAlertController.listCriticalAlerts
 );
 
@@ -58,9 +58,9 @@ router.get(
  * @throws 404 Critical alert not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: criticalAlertIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: criticalAlertIdParamsSchema }),
   criticalAlertController.getCriticalAlertById
 );
 
@@ -82,9 +82,9 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createCriticalAlertSchema }),
+
   authenticate(),
-  validateRequest({ body: createCriticalAlertSchema }),
   criticalAlertController.createCriticalAlert
 );
 
@@ -106,9 +106,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: criticalAlertIdParamsSchema, body: updateCriticalAlertSchema }),
+
   authenticate(),
-  validateRequest({ params: criticalAlertIdParamsSchema, body: updateCriticalAlertSchema }),
   criticalAlertController.updateCriticalAlert
 );
 
@@ -126,9 +126,9 @@ router.put(
  * @throws 404 Critical alert not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: criticalAlertIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: criticalAlertIdParamsSchema }),
   criticalAlertController.deleteCriticalAlert
 );
 

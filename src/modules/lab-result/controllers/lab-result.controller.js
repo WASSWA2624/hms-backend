@@ -2,7 +2,7 @@
  * Lab result controller
  */
 
-const labResultService = require('../services/lab-result.service');
+const labResultService = require('@services/lab-result/lab-result.service');
 const { asyncHandler } = require('@lib/async');
 const { sendSuccess, sendPaginated, sendNoContent } = require('@lib/response');
 const { DEFAULT_PAGE, DEFAULT_PAGE_LIMIT } = require('@config/constants');

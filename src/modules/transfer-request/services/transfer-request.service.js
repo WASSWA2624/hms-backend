@@ -7,7 +7,7 @@
  * Per prisma.mdc: All mutations call createAuditLog.
  */
 
-const transferRequestRepository = require('../repositories/transfer-request.repository');
+const transferRequestRepository = require('@repositories/transfer-request/transfer-request.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 

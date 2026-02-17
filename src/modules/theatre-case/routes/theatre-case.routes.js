@@ -39,9 +39,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listTheatreCasesQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listTheatreCasesQuerySchema }),
   theatreCaseController.listTheatreCases
 );
 
@@ -59,9 +59,9 @@ router.get(
  * @throws 404 Theatre case not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: theatreCaseIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: theatreCaseIdParamsSchema }),
   theatreCaseController.getTheatreCaseById
 );
 
@@ -83,9 +83,9 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createTheatreCaseSchema }),
+
   authenticate(),
-  validateRequest({ body: createTheatreCaseSchema }),
   theatreCaseController.createTheatreCase
 );
 
@@ -108,9 +108,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: theatreCaseIdParamsSchema, body: updateTheatreCaseSchema }),
+
   authenticate(),
-  validateRequest({ params: theatreCaseIdParamsSchema, body: updateTheatreCaseSchema }),
   theatreCaseController.updateTheatreCase
 );
 
@@ -128,9 +128,9 @@ router.put(
  * @throws 404 Theatre case not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: theatreCaseIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: theatreCaseIdParamsSchema }),
   theatreCaseController.deleteTheatreCase
 );
 

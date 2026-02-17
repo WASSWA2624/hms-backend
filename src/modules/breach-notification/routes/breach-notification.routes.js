@@ -9,7 +9,7 @@
 
 const express = require('express');
 const router = express.Router();
-const breachNotificationController = require('../controllers/breach-notification.controller');
+const breachNotificationController = require('@controllers/breach-notification/breach-notification.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
 const { authenticate } = require('@middlewares/auth.middleware');
 const {
@@ -18,7 +18,7 @@ const {
   resolveBreachNotificationSchema,
   breachNotificationIdParamsSchema,
   listBreachNotificationsQuerySchema
-} = require('../schemas/breach-notification.schema');
+} = require('@validations/breach-notification/breach-notification.schema');
 
 /**
  * @description List breach notifications with pagination and filters
@@ -26,9 +26,9 @@ const {
  * @route /api/v1/breach-notifications/
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listBreachNotificationsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listBreachNotificationsQuerySchema }),
   breachNotificationController.listBreachNotifications
 );
 
@@ -38,9 +38,9 @@ router.get(
  * @route /api/v1/breach-notifications/:id
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: breachNotificationIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: breachNotificationIdParamsSchema }),
   breachNotificationController.getBreachNotificationById
 );
 
@@ -50,9 +50,9 @@ router.get(
  * @route /api/v1/breach-notifications/
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createBreachNotificationSchema }),
+
   authenticate(),
-  validateRequest({ body: createBreachNotificationSchema }),
   breachNotificationController.createBreachNotification
 );
 
@@ -62,9 +62,9 @@ router.post(
  * @route /api/v1/breach-notifications/:id
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: breachNotificationIdParamsSchema, body: updateBreachNotificationSchema }),
+
   authenticate(),
-  validateRequest({ params: breachNotificationIdParamsSchema, body: updateBreachNotificationSchema }),
   breachNotificationController.updateBreachNotification
 );
 
@@ -74,9 +74,9 @@ router.put(
  * @route /api/v1/breach-notifications/:id/resolve
  */
 router.post(
-  '/:id/resolve',
+  '/:id/resolve',  validateRequest({ params: breachNotificationIdParamsSchema, body: resolveBreachNotificationSchema }),
+
   authenticate(),
-  validateRequest({ params: breachNotificationIdParamsSchema, body: resolveBreachNotificationSchema }),
   breachNotificationController.resolveBreachNotification
 );
 
@@ -86,9 +86,9 @@ router.post(
  * @route /api/v1/breach-notifications/:id
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: breachNotificationIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: breachNotificationIdParamsSchema }),
   breachNotificationController.deleteBreachNotification
 );
 

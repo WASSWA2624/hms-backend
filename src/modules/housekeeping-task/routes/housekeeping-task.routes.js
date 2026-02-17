@@ -39,9 +39,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listHousekeepingTasksQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listHousekeepingTasksQuerySchema }),
   housekeepingTaskController.listHousekeepingTasks
 );
 
@@ -59,9 +59,9 @@ router.get(
  * @throws 404 Housekeeping task not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: housekeepingTaskIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: housekeepingTaskIdParamsSchema }),
   housekeepingTaskController.getHousekeepingTaskById
 );
 
@@ -85,9 +85,9 @@ router.get(
  * @throws 400 Foreign key constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createHousekeepingTaskSchema }),
+
   authenticate(),
-  validateRequest({ body: createHousekeepingTaskSchema }),
   housekeepingTaskController.createHousekeepingTask
 );
 
@@ -112,9 +112,9 @@ router.post(
  * @throws 400 Foreign key constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: housekeepingTaskIdParamsSchema, body: updateHousekeepingTaskSchema }),
+
   authenticate(),
-  validateRequest({ params: housekeepingTaskIdParamsSchema, body: updateHousekeepingTaskSchema }),
   housekeepingTaskController.updateHousekeepingTask
 );
 
@@ -132,9 +132,9 @@ router.put(
  * @throws 404 Housekeeping task not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: housekeepingTaskIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: housekeepingTaskIdParamsSchema }),
   housekeepingTaskController.deleteHousekeepingTask
 );
 

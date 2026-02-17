@@ -1,7 +1,7 @@
 /**
  * Roster day off controller
  */
-const rosterDayOffService = require('../services/roster-day-off.service');
+const rosterDayOffService = require('@services/roster-day-off/roster-day-off.service');
 const { asyncHandler } = require('@lib/async');
 const { sendSuccess, sendPaginated, sendNoContent } = require('@lib/response');
 const { DEFAULT_PAGE, DEFAULT_PAGE_LIMIT } = require('@config/constants');

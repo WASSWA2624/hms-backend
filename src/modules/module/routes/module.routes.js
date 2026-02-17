@@ -36,9 +36,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listModulesQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listModulesQuerySchema }),
   moduleController.listModules
 );
 
@@ -56,9 +56,9 @@ router.get(
  * @throws 404 Module not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: moduleIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: moduleIdParamsSchema }),
   moduleController.getModuleById
 );
 
@@ -78,9 +78,9 @@ router.get(
  * @throws 409 Duplicate name
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createModuleSchema }),
+
   authenticate(),
-  validateRequest({ body: createModuleSchema }),
   moduleController.createModule
 );
 
@@ -101,9 +101,9 @@ router.post(
  * @throws 409 Duplicate name
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: moduleIdParamsSchema, body: updateModuleSchema }),
+
   authenticate(),
-  validateRequest({ params: moduleIdParamsSchema, body: updateModuleSchema }),
   moduleController.updateModule
 );
 
@@ -121,9 +121,9 @@ router.put(
  * @throws 404 Module not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: moduleIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: moduleIdParamsSchema }),
   moduleController.deleteModule
 );
 

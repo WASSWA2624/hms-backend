@@ -39,9 +39,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listRoomsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listRoomsQuerySchema }),
   roomController.listRooms
 );
 
@@ -59,9 +59,9 @@ router.get(
  * @throws 404 Room not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: roomIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: roomIdParamsSchema }),
   roomController.getRoomById
 );
 
@@ -84,9 +84,9 @@ router.get(
  * @throws 400 Foreign key constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createRoomSchema }),
+
   authenticate(),
-  validateRequest({ body: createRoomSchema }),
   roomController.createRoom
 );
 
@@ -109,9 +109,9 @@ router.post(
  * @throws 400 Foreign key constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: roomIdParamsSchema, body: updateRoomSchema }),
+
   authenticate(),
-  validateRequest({ params: roomIdParamsSchema, body: updateRoomSchema }),
   roomController.updateRoom
 );
 
@@ -129,9 +129,9 @@ router.put(
  * @throws 404 Room not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: roomIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: roomIdParamsSchema }),
   roomController.deleteRoom
 );
 

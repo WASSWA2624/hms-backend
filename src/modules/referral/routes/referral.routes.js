@@ -39,9 +39,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listReferralsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listReferralsQuerySchema }),
   referralController.listReferrals
 );
 
@@ -59,9 +59,9 @@ router.get(
  * @throws 404 Referral not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: referralIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: referralIdParamsSchema }),
   referralController.getReferralById
 );
 
@@ -84,9 +84,9 @@ router.get(
  * @throws 400 Foreign key constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createReferralSchema }),
+
   authenticate(),
-  validateRequest({ body: createReferralSchema }),
   referralController.createReferral
 );
 
@@ -108,9 +108,9 @@ router.post(
  * @throws 404 Referral not found
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: referralIdParamsSchema, body: updateReferralSchema }),
+
   authenticate(),
-  validateRequest({ params: referralIdParamsSchema, body: updateReferralSchema }),
   referralController.updateReferral
 );
 
@@ -128,9 +128,9 @@ router.put(
  * @throws 404 Referral not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: referralIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: referralIdParamsSchema }),
   referralController.deleteReferral
 );
 

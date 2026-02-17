@@ -9,7 +9,7 @@
 
 const express = require('express');
 const router = express.Router();
-const payrollRunController = require('../controllers/payroll-run.controller');
+const payrollRunController = require('@controllers/payroll-run/payroll-run.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
 const { authenticate } = require('@middlewares/auth.middleware');
 const {
@@ -17,7 +17,7 @@ const {
   updatePayrollRunSchema,
   payrollRunIdParamsSchema,
   listPayrollRunsQuerySchema
-} = require('../schemas/payroll-run.schema');
+} = require('@validations/payroll-run/payroll-run.schema');
 
 /**
  * @description List payroll runs with pagination and filters
@@ -41,9 +41,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listPayrollRunsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listPayrollRunsQuerySchema }),
   payrollRunController.listPayrollRuns
 );
 
@@ -61,9 +61,9 @@ router.get(
  * @throws 404 Payroll run not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: payrollRunIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: payrollRunIdParamsSchema }),
   payrollRunController.getPayrollRunById
 );
 
@@ -86,9 +86,9 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createPayrollRunSchema }),
+
   authenticate(),
-  validateRequest({ body: createPayrollRunSchema }),
   payrollRunController.createPayrollRun
 );
 
@@ -111,9 +111,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: payrollRunIdParamsSchema, body: updatePayrollRunSchema }),
+
   authenticate(),
-  validateRequest({ params: payrollRunIdParamsSchema, body: updatePayrollRunSchema }),
   payrollRunController.updatePayrollRun
 );
 
@@ -131,9 +131,9 @@ router.put(
  * @throws 404 Payroll run not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: payrollRunIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: payrollRunIdParamsSchema }),
   payrollRunController.deletePayrollRun
 );
 

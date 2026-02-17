@@ -40,9 +40,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listRadiologyTestsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listRadiologyTestsQuerySchema }),
   radiologyTestController.listRadiologyTests
 );
 
@@ -60,9 +60,9 @@ router.get(
  * @throws 404 Radiology test not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: radiologyTestIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: radiologyTestIdParamsSchema }),
   radiologyTestController.getRadiologyTestById
 );
 
@@ -85,9 +85,9 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createRadiologyTestSchema }),
+
   authenticate(),
-  validateRequest({ body: createRadiologyTestSchema }),
   radiologyTestController.createRadiologyTest
 );
 
@@ -110,9 +110,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: radiologyTestIdParamsSchema, body: updateRadiologyTestSchema }),
+
   authenticate(),
-  validateRequest({ params: radiologyTestIdParamsSchema, body: updateRadiologyTestSchema }),
   radiologyTestController.updateRadiologyTest
 );
 
@@ -130,9 +130,9 @@ router.put(
  * @throws 404 Radiology test not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: radiologyTestIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: radiologyTestIdParamsSchema }),
   radiologyTestController.deleteRadiologyTest
 );
 

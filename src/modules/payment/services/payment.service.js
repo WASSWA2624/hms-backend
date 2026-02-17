@@ -5,7 +5,7 @@
  * @description Business logic layer for payment operations.
  */
 
-const paymentRepository = require('../repositories/payment.repository');
+const paymentRepository = require('@repositories/payment/payment.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 

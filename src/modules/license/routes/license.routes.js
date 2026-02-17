@@ -38,9 +38,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listLicensesQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listLicensesQuerySchema }),
   licenseController.listLicenses
 );
 
@@ -58,9 +58,9 @@ router.get(
  * @throws 404 License not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: licenseIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: licenseIdParamsSchema }),
   licenseController.getLicenseById
 );
 
@@ -82,9 +82,9 @@ router.get(
  * @throws 400 Validation error or foreign key violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createLicenseSchema }),
+
   authenticate(),
-  validateRequest({ body: createLicenseSchema }),
   licenseController.createLicense
 );
 
@@ -107,9 +107,9 @@ router.post(
  * @throws 404 License not found
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: licenseIdParamsSchema, body: updateLicenseSchema }),
+
   authenticate(),
-  validateRequest({ params: licenseIdParamsSchema, body: updateLicenseSchema }),
   licenseController.updateLicense
 );
 
@@ -127,9 +127,9 @@ router.put(
  * @throws 404 License not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: licenseIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: licenseIdParamsSchema }),
   licenseController.deleteLicense
 );
 

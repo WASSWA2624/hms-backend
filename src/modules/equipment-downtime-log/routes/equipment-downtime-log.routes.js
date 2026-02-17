@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const equipmentDowntimeLogController = require('../controllers/equipment-downtime-log.controller');
+const equipmentDowntimeLogController = require('@controllers/equipment-downtime-log/equipment-downtime-log.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
 const { authenticate } = require('@middlewares/auth.middleware');
-const { createEquipmentDowntimeLogSchema, updateEquipmentDowntimeLogSchema, equipmentDowntimeLogIdParamsSchema, listEquipmentDowntimeLogsQuerySchema } = require('../schemas/equipment-downtime-log.schema');
+const { createEquipmentDowntimeLogSchema, updateEquipmentDowntimeLogSchema, equipmentDowntimeLogIdParamsSchema, listEquipmentDowntimeLogsQuerySchema } = require('@validations/equipment-downtime-log/equipment-downtime-log.schema');
 
 router.get('/', authenticate(), validateRequest({ query: listEquipmentDowntimeLogsQuerySchema }), equipmentDowntimeLogController.listEquipmentDowntimeLogs);
 router.get('/:id', authenticate(), validateRequest({ params: equipmentDowntimeLogIdParamsSchema }), equipmentDowntimeLogController.getEquipmentDowntimeLogById);

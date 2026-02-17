@@ -24,9 +24,9 @@ const {
  * @authentication Required (JWT)
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listRefundsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listRefundsQuerySchema }),
   refundController.listRefunds
 );
 
@@ -37,9 +37,9 @@ router.get(
  * @authentication Required (JWT)
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: refundIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: refundIdParamsSchema }),
   refundController.getRefundById
 );
 
@@ -50,9 +50,9 @@ router.get(
  * @authentication Required (JWT)
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createRefundSchema }),
+
   authenticate(),
-  validateRequest({ body: createRefundSchema }),
   refundController.createRefund
 );
 
@@ -63,9 +63,9 @@ router.post(
  * @authentication Required (JWT)
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: refundIdParamsSchema, body: updateRefundSchema }),
+
   authenticate(),
-  validateRequest({ params: refundIdParamsSchema, body: updateRefundSchema }),
   refundController.updateRefund
 );
 
@@ -76,9 +76,9 @@ router.put(
  * @authentication Required (JWT)
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: refundIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: refundIdParamsSchema }),
   refundController.deleteRefund
 );
 

@@ -1,4 +1,4 @@
-const equipmentWarrantyContractService = require('../services/equipment-warranty-contract.service');
+const equipmentWarrantyContractService = require('@services/equipment-warranty-contract/equipment-warranty-contract.service');
 const { asyncHandler } = require('@lib/async');
 const { sendSuccess, sendPaginated, sendNoContent } = require('@lib/response');
 const { DEFAULT_PAGE, DEFAULT_PAGE_LIMIT } = require('@config/constants');

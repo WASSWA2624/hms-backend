@@ -39,9 +39,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listReportDefinitionsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listReportDefinitionsQuerySchema }),
   reportDefinitionController.listReportDefinitions
 );
 
@@ -59,9 +59,9 @@ router.get(
  * @throws 404 Report definition not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: reportDefinitionIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: reportDefinitionIdParamsSchema }),
   reportDefinitionController.getReportDefinitionById
 );
 
@@ -85,9 +85,9 @@ router.get(
  * @throws 400 Foreign key constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createReportDefinitionSchema }),
+
   authenticate(),
-  validateRequest({ body: createReportDefinitionSchema }),
   reportDefinitionController.createReportDefinition
 );
 
@@ -111,9 +111,9 @@ router.post(
  * @throws 400 Foreign key constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: reportDefinitionIdParamsSchema, body: updateReportDefinitionSchema }),
+
   authenticate(),
-  validateRequest({ params: reportDefinitionIdParamsSchema, body: updateReportDefinitionSchema }),
   reportDefinitionController.updateReportDefinition
 );
 
@@ -131,9 +131,9 @@ router.put(
  * @throws 404 Report definition not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: reportDefinitionIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: reportDefinitionIdParamsSchema }),
   reportDefinitionController.deleteReportDefinition
 );
 

@@ -38,9 +38,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listModuleSubscriptionsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listModuleSubscriptionsQuerySchema }),
   moduleSubscriptionController.listModuleSubscriptions
 );
 
@@ -58,9 +58,9 @@ router.get(
  * @throws 404 Module subscription not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: moduleSubscriptionIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: moduleSubscriptionIdParamsSchema }),
   moduleSubscriptionController.getModuleSubscriptionById
 );
 
@@ -81,9 +81,9 @@ router.get(
  * @throws 409 Duplicate module-subscription combination
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createModuleSubscriptionSchema }),
+
   authenticate(),
-  validateRequest({ body: createModuleSubscriptionSchema }),
   moduleSubscriptionController.createModuleSubscription
 );
 
@@ -105,9 +105,9 @@ router.post(
  * @throws 409 Duplicate module-subscription combination
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: moduleSubscriptionIdParamsSchema, body: updateModuleSubscriptionSchema }),
+
   authenticate(),
-  validateRequest({ params: moduleSubscriptionIdParamsSchema, body: updateModuleSubscriptionSchema }),
   moduleSubscriptionController.updateModuleSubscription
 );
 
@@ -125,9 +125,9 @@ router.put(
  * @throws 404 Module subscription not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: moduleSubscriptionIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: moduleSubscriptionIdParamsSchema }),
   moduleSubscriptionController.deleteModuleSubscription
 );
 

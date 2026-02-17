@@ -5,7 +5,7 @@
  * @description Business logic layer for appointment reminder operations.
  */
 
-const appointmentReminderRepository = require('../repositories/appointment-reminder.repository');
+const appointmentReminderRepository = require('@repositories/appointment-reminder/appointment-reminder.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 

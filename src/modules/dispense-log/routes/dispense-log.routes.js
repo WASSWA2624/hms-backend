@@ -40,9 +40,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listDispenseLogsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listDispenseLogsQuerySchema }),
   asyncHandler(dispenseLogController.listDispenseLogs)
 );
 
@@ -60,9 +60,9 @@ router.get(
  * @throws 404 Dispense log not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: dispenseLogIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: dispenseLogIdParamsSchema }),
   asyncHandler(dispenseLogController.getDispenseLogById)
 );
 
@@ -84,9 +84,9 @@ router.get(
  * @throws 400 Foreign key constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createDispenseLogSchema }),
+
   authenticate(),
-  validateRequest({ body: createDispenseLogSchema }),
   asyncHandler(dispenseLogController.createDispenseLog)
 );
 
@@ -107,9 +107,9 @@ router.post(
  * @throws 404 Dispense log not found
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: dispenseLogIdParamsSchema, body: updateDispenseLogSchema }),
+
   authenticate(),
-  validateRequest({ params: dispenseLogIdParamsSchema, body: updateDispenseLogSchema }),
   asyncHandler(dispenseLogController.updateDispenseLog)
 );
 
@@ -127,9 +127,9 @@ router.put(
  * @throws 404 Dispense log not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: dispenseLogIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: dispenseLogIdParamsSchema }),
   asyncHandler(dispenseLogController.deleteDispenseLog)
 );
 

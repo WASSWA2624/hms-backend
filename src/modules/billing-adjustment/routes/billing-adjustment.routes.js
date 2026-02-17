@@ -38,9 +38,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listBillingAdjustmentsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listBillingAdjustmentsQuerySchema }),
   billingAdjustmentController.listBillingAdjustments
 );
 
@@ -58,9 +58,9 @@ router.get(
  * @throws 404 Billing adjustment not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: billingAdjustmentIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: billingAdjustmentIdParamsSchema }),
   billingAdjustmentController.getBillingAdjustmentById
 );
 
@@ -84,9 +84,9 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createBillingAdjustmentSchema }),
+
   authenticate(),
-  validateRequest({ body: createBillingAdjustmentSchema }),
   billingAdjustmentController.createBillingAdjustment
 );
 
@@ -110,9 +110,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: billingAdjustmentIdParamsSchema, body: updateBillingAdjustmentSchema }),
+
   authenticate(),
-  validateRequest({ params: billingAdjustmentIdParamsSchema, body: updateBillingAdjustmentSchema }),
   billingAdjustmentController.updateBillingAdjustment
 );
 
@@ -130,9 +130,9 @@ router.put(
  * @throws 404 Billing adjustment not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: billingAdjustmentIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: billingAdjustmentIdParamsSchema }),
   billingAdjustmentController.deleteBillingAdjustment
 );
 

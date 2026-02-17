@@ -7,7 +7,7 @@
  * Per module-creation.mdc: All mutations must call audit log creation.
  */
 
-const subscriptionRepository = require('../repositories/subscription.repository');
+const subscriptionRepository = require('@repositories/subscription/subscription.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 

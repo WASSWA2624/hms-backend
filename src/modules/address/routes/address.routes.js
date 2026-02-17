@@ -47,9 +47,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listAddressesQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listAddressesQuerySchema }),
   addressController.listAddresses
 );
 
@@ -67,9 +67,9 @@ router.get(
  * @throws 404 Address not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: addressIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: addressIdParamsSchema }),
   addressController.getAddressById
 );
 
@@ -103,9 +103,9 @@ router.get(
  * @throws 400 Foreign key constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createAddressSchema }),
+
   authenticate(),
-  validateRequest({ body: createAddressSchema }),
   addressController.createAddress
 );
 
@@ -139,9 +139,9 @@ router.post(
  * @throws 400 Foreign key constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: addressIdParamsSchema, body: updateAddressSchema }),
+
   authenticate(),
-  validateRequest({ params: addressIdParamsSchema, body: updateAddressSchema }),
   addressController.updateAddress
 );
 
@@ -159,9 +159,9 @@ router.put(
  * @throws 404 Address not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: addressIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: addressIdParamsSchema }),
   addressController.deleteAddress
 );
 

@@ -38,9 +38,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listMedicationAdministrationsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listMedicationAdministrationsQuerySchema }),
   medicationAdministrationController.listMedicationAdministrations
 );
 
@@ -58,9 +58,9 @@ router.get(
  * @throws 404 Medication administration not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: medicationAdministrationIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: medicationAdministrationIdParamsSchema }),
   medicationAdministrationController.getMedicationAdministrationById
 );
 
@@ -85,9 +85,9 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createMedicationAdministrationSchema }),
+
   authenticate(),
-  validateRequest({ body: createMedicationAdministrationSchema }),
   medicationAdministrationController.createMedicationAdministration
 );
 
@@ -111,9 +111,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: medicationAdministrationIdParamsSchema, body: updateMedicationAdministrationSchema }),
+
   authenticate(),
-  validateRequest({ params: medicationAdministrationIdParamsSchema, body: updateMedicationAdministrationSchema }),
   medicationAdministrationController.updateMedicationAdministration
 );
 
@@ -131,9 +131,9 @@ router.put(
  * @throws 404 Medication administration not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: medicationAdministrationIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: medicationAdministrationIdParamsSchema }),
   medicationAdministrationController.deleteMedicationAdministration
 );
 

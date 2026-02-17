@@ -37,9 +37,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listApiKeyPermissionsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listApiKeyPermissionsQuerySchema }),
   apiKeyPermissionController.listApiKeyPermissions
 );
 
@@ -57,9 +57,9 @@ router.get(
  * @throws 404 API key permission not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: apiKeyPermissionIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: apiKeyPermissionIdParamsSchema }),
   apiKeyPermissionController.getApiKeyPermissionById
 );
 
@@ -80,9 +80,9 @@ router.get(
  * @throws 409 Unique constraint violation (duplicate assignment)
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createApiKeyPermissionSchema }),
+
   authenticate(),
-  validateRequest({ body: createApiKeyPermissionSchema }),
   apiKeyPermissionController.createApiKeyPermission
 );
 
@@ -102,9 +102,9 @@ router.post(
  * @throws 404 API key permission not found
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: apiKeyPermissionIdParamsSchema, body: updateApiKeyPermissionSchema }),
+
   authenticate(),
-  validateRequest({ params: apiKeyPermissionIdParamsSchema, body: updateApiKeyPermissionSchema }),
   apiKeyPermissionController.updateApiKeyPermission
 );
 
@@ -122,9 +122,9 @@ router.put(
  * @throws 404 API key permission not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: apiKeyPermissionIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: apiKeyPermissionIdParamsSchema }),
   apiKeyPermissionController.deleteApiKeyPermission
 );
 

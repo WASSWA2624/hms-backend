@@ -9,7 +9,7 @@
 
 const express = require('express');
 const router = express.Router();
-const systemChangeLogController = require('../controllers/system-change-log.controller');
+const systemChangeLogController = require('@controllers/system-change-log/system-change-log.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
 const { authenticate } = require('@middlewares/auth.middleware');
 const {
@@ -19,7 +19,7 @@ const {
   implementSystemChangeLogSchema,
   systemChangeLogIdParamsSchema,
   listSystemChangeLogsQuerySchema
-} = require('../schemas/system-change-log.schema');
+} = require('@validations/system-change-log/system-change-log.schema');
 
 /**
  * @description List system change logs with pagination and filters
@@ -27,9 +27,9 @@ const {
  * @route /api/v1/system-change-logs/
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listSystemChangeLogsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listSystemChangeLogsQuerySchema }),
   systemChangeLogController.listSystemChangeLogs
 );
 
@@ -39,9 +39,9 @@ router.get(
  * @route /api/v1/system-change-logs/:id
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: systemChangeLogIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: systemChangeLogIdParamsSchema }),
   systemChangeLogController.getSystemChangeLogById
 );
 
@@ -51,9 +51,9 @@ router.get(
  * @route /api/v1/system-change-logs/
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createSystemChangeLogSchema }),
+
   authenticate(),
-  validateRequest({ body: createSystemChangeLogSchema }),
   systemChangeLogController.createSystemChangeLog
 );
 
@@ -63,9 +63,9 @@ router.post(
  * @route /api/v1/system-change-logs/:id
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: systemChangeLogIdParamsSchema, body: updateSystemChangeLogSchema }),
+
   authenticate(),
-  validateRequest({ params: systemChangeLogIdParamsSchema, body: updateSystemChangeLogSchema }),
   systemChangeLogController.updateSystemChangeLog
 );
 
@@ -75,9 +75,9 @@ router.put(
  * @route /api/v1/system-change-logs/:id/approve
  */
 router.post(
-  '/:id/approve',
+  '/:id/approve',  validateRequest({ params: systemChangeLogIdParamsSchema, body: approveSystemChangeLogSchema }),
+
   authenticate(),
-  validateRequest({ params: systemChangeLogIdParamsSchema, body: approveSystemChangeLogSchema }),
   systemChangeLogController.approveSystemChangeLog
 );
 
@@ -87,9 +87,9 @@ router.post(
  * @route /api/v1/system-change-logs/:id/implement
  */
 router.post(
-  '/:id/implement',
+  '/:id/implement',  validateRequest({ params: systemChangeLogIdParamsSchema, body: implementSystemChangeLogSchema }),
+
   authenticate(),
-  validateRequest({ params: systemChangeLogIdParamsSchema, body: implementSystemChangeLogSchema }),
   systemChangeLogController.implementSystemChangeLog
 );
 
@@ -99,9 +99,9 @@ router.post(
  * @route /api/v1/system-change-logs/:id
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: systemChangeLogIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: systemChangeLogIdParamsSchema }),
   systemChangeLogController.deleteSystemChangeLog
 );
 

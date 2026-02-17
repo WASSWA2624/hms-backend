@@ -40,9 +40,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listPatientGuardiansQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listPatientGuardiansQuerySchema }),
   patientGuardianController.listPatientGuardians
 );
 
@@ -60,9 +60,9 @@ router.get(
  * @throws 404 Patient Guardian not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: patientGuardianIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: patientGuardianIdParamsSchema }),
   patientGuardianController.getPatientGuardianById
 );
 
@@ -87,9 +87,9 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createPatientGuardianSchema }),
+
   authenticate(),
-  validateRequest({ body: createPatientGuardianSchema }),
   patientGuardianController.createPatientGuardian
 );
 
@@ -113,9 +113,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: patientGuardianIdParamsSchema, body: updatePatientGuardianSchema }),
+
   authenticate(),
-  validateRequest({ params: patientGuardianIdParamsSchema, body: updatePatientGuardianSchema }),
   patientGuardianController.updatePatientGuardian
 );
 
@@ -133,9 +133,9 @@ router.put(
  * @throws 404 Patient Guardian not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: patientGuardianIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: patientGuardianIdParamsSchema }),
   patientGuardianController.deletePatientGuardian
 );
 

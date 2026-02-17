@@ -2,7 +2,7 @@
  * Appointment reminder controller
  */
 
-const appointmentReminderService = require('../services/appointment-reminder.service');
+const appointmentReminderService = require('@services/appointment-reminder/appointment-reminder.service');
 const { asyncHandler } = require('@lib/async');
 const { sendSuccess, sendPaginated, sendNoContent } = require('@lib/response');
 const { DEFAULT_PAGE, DEFAULT_PAGE_LIMIT } = require('@config/constants');

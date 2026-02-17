@@ -7,7 +7,7 @@
  * Per prisma.mdc: All mutations call createAuditLog.
  */
 
-const breachNotificationRepository = require('../repositories/breach-notification.repository');
+const breachNotificationRepository = require('@repositories/breach-notification/breach-notification.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 

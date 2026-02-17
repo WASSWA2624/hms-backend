@@ -39,9 +39,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listCoveragePlansQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listCoveragePlansQuerySchema }),
   coveragePlanController.listCoveragePlans
 );
 
@@ -59,9 +59,9 @@ router.get(
  * @throws 404 Coverage plan not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: coveragePlanIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: coveragePlanIdParamsSchema }),
   coveragePlanController.getCoveragePlanById
 );
 
@@ -84,9 +84,9 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createCoveragePlanSchema }),
+
   authenticate(),
-  validateRequest({ body: createCoveragePlanSchema }),
   coveragePlanController.createCoveragePlan
 );
 
@@ -109,9 +109,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: coveragePlanIdParamsSchema, body: updateCoveragePlanSchema }),
+
   authenticate(),
-  validateRequest({ params: coveragePlanIdParamsSchema, body: updateCoveragePlanSchema }),
   coveragePlanController.updateCoveragePlan
 );
 
@@ -129,9 +129,9 @@ router.put(
  * @throws 404 Coverage plan not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: coveragePlanIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: coveragePlanIdParamsSchema }),
   coveragePlanController.deleteCoveragePlan
 );
 

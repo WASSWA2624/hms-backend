@@ -9,7 +9,7 @@
 
 const express = require('express');
 const router = express.Router();
-const assetServiceLogController = require('../controllers/asset-service-log.controller');
+const assetServiceLogController = require('@controllers/asset-service-log/asset-service-log.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
 const { authenticate } = require('@middlewares/auth.middleware');
 const {
@@ -17,7 +17,7 @@ const {
   updateAssetServiceLogSchema,
   assetServiceLogIdParamsSchema,
   listAssetServiceLogsQuerySchema
-} = require('../schemas/asset-service-log.schema');
+} = require('@validations/asset-service-log/asset-service-log.schema');
 
 /**
  * @description List asset service logs with pagination and filters
@@ -37,9 +37,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listAssetServiceLogsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listAssetServiceLogsQuerySchema }),
   assetServiceLogController.listAssetServiceLogs
 );
 
@@ -57,9 +57,9 @@ router.get(
  * @throws 404 Asset service log not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: assetServiceLogIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: assetServiceLogIdParamsSchema }),
   assetServiceLogController.getAssetServiceLogById
 );
 
@@ -81,9 +81,9 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createAssetServiceLogSchema }),
+
   authenticate(),
-  validateRequest({ body: createAssetServiceLogSchema }),
   assetServiceLogController.createAssetServiceLog
 );
 
@@ -105,9 +105,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: assetServiceLogIdParamsSchema, body: updateAssetServiceLogSchema }),
+
   authenticate(),
-  validateRequest({ params: assetServiceLogIdParamsSchema, body: updateAssetServiceLogSchema }),
   assetServiceLogController.updateAssetServiceLog
 );
 
@@ -125,9 +125,9 @@ router.put(
  * @throws 404 Asset service log not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: assetServiceLogIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: assetServiceLogIdParamsSchema }),
   assetServiceLogController.deleteAssetServiceLog
 );
 

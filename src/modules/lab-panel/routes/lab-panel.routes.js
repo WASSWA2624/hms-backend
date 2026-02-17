@@ -39,9 +39,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listLabPanelsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listLabPanelsQuerySchema }),
   labPanelController.listLabPanels
 );
 
@@ -59,9 +59,9 @@ router.get(
  * @throws 404 Lab panel not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: labPanelIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: labPanelIdParamsSchema }),
   labPanelController.getLabPanelById
 );
 
@@ -82,9 +82,9 @@ router.get(
  * @throws 409 Conflict (duplicate code)
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createLabPanelSchema }),
+
   authenticate(),
-  validateRequest({ body: createLabPanelSchema }),
   labPanelController.createLabPanel
 );
 
@@ -105,9 +105,9 @@ router.post(
  * @throws 409 Conflict (duplicate code)
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: labPanelIdParamsSchema, body: updateLabPanelSchema }),
+
   authenticate(),
-  validateRequest({ params: labPanelIdParamsSchema, body: updateLabPanelSchema }),
   labPanelController.updateLabPanel
 );
 
@@ -125,9 +125,9 @@ router.put(
  * @throws 404 Lab panel not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: labPanelIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: labPanelIdParamsSchema }),
   labPanelController.deleteLabPanel
 );
 

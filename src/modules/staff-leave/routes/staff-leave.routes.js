@@ -9,7 +9,7 @@
 
 const express = require('express');
 const router = express.Router();
-const staffLeaveController = require('../controllers/staff-leave.controller');
+const staffLeaveController = require('@controllers/staff-leave/staff-leave.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
 const { authenticate } = require('@middlewares/auth.middleware');
 const {
@@ -17,7 +17,7 @@ const {
   updateStaffLeaveSchema,
   staffLeaveIdParamsSchema,
   listStaffLeavesQuerySchema
-} = require('../schemas/staff-leave.schema');
+} = require('@validations/staff-leave/staff-leave.schema');
 
 /**
  * @description List staff leaves with pagination and filters
@@ -37,9 +37,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listStaffLeavesQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listStaffLeavesQuerySchema }),
   staffLeaveController.listStaffLeaves
 );
 
@@ -57,9 +57,9 @@ router.get(
  * @throws 404 Staff leave not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: staffLeaveIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: staffLeaveIdParamsSchema }),
   staffLeaveController.getStaffLeaveById
 );
 
@@ -83,9 +83,9 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createStaffLeaveSchema }),
+
   authenticate(),
-  validateRequest({ body: createStaffLeaveSchema }),
   staffLeaveController.createStaffLeave
 );
 
@@ -109,9 +109,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: staffLeaveIdParamsSchema, body: updateStaffLeaveSchema }),
+
   authenticate(),
-  validateRequest({ params: staffLeaveIdParamsSchema, body: updateStaffLeaveSchema }),
   staffLeaveController.updateStaffLeave
 );
 
@@ -129,9 +129,9 @@ router.put(
  * @throws 404 Staff leave not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: staffLeaveIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: staffLeaveIdParamsSchema }),
   staffLeaveController.deleteStaffLeave
 );
 

@@ -9,7 +9,7 @@
 
 const express = require('express');
 const router = express.Router();
-const inventoryItemController = require('../controllers/inventory-item.controller');
+const inventoryItemController = require('@controllers/inventory-item/inventory-item.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
 const { authenticate } = require('@middlewares/auth.middleware');
 const {
@@ -17,7 +17,7 @@ const {
   updateInventoryItemSchema,
   inventoryItemIdParamsSchema,
   listInventoryItemsQuerySchema
-} = require('../schemas/inventory-item.schema');
+} = require('@validations/inventory-item/inventory-item.schema');
 
 /**
  * @description List inventory items with pagination and filters
@@ -41,9 +41,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listInventoryItemsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listInventoryItemsQuerySchema }),
   inventoryItemController.listInventoryItems
 );
 
@@ -61,9 +61,9 @@ router.get(
  * @throws 404 Inventory item not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: inventoryItemIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: inventoryItemIdParamsSchema }),
   inventoryItemController.getInventoryItemById
 );
 
@@ -87,9 +87,9 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createInventoryItemSchema }),
+
   authenticate(),
-  validateRequest({ body: createInventoryItemSchema }),
   inventoryItemController.createInventoryItem
 );
 
@@ -113,9 +113,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: inventoryItemIdParamsSchema, body: updateInventoryItemSchema }),
+
   authenticate(),
-  validateRequest({ params: inventoryItemIdParamsSchema, body: updateInventoryItemSchema }),
   inventoryItemController.updateInventoryItem
 );
 
@@ -133,9 +133,9 @@ router.put(
  * @throws 404 Inventory item not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: inventoryItemIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: inventoryItemIdParamsSchema }),
   inventoryItemController.deleteInventoryItem
 );
 

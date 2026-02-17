@@ -37,9 +37,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listAnesthesiaRecordsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listAnesthesiaRecordsQuerySchema }),
   anesthesiaRecordController.listAnesthesiaRecords
 );
 
@@ -57,9 +57,9 @@ router.get(
  * @throws 404 Anesthesia record not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: anesthesiaRecordIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: anesthesiaRecordIdParamsSchema }),
   anesthesiaRecordController.getAnesthesiaRecordById
 );
 
@@ -81,9 +81,9 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createAnesthesiaRecordSchema }),
+
   authenticate(),
-  validateRequest({ body: createAnesthesiaRecordSchema }),
   anesthesiaRecordController.createAnesthesiaRecord
 );
 
@@ -106,9 +106,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: anesthesiaRecordIdParamsSchema, body: updateAnesthesiaRecordSchema }),
+
   authenticate(),
-  validateRequest({ params: anesthesiaRecordIdParamsSchema, body: updateAnesthesiaRecordSchema }),
   anesthesiaRecordController.updateAnesthesiaRecord
 );
 
@@ -126,9 +126,9 @@ router.put(
  * @throws 404 Anesthesia record not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: anesthesiaRecordIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: anesthesiaRecordIdParamsSchema }),
   anesthesiaRecordController.deleteAnesthesiaRecord
 );
 

@@ -7,7 +7,7 @@
  * Per prisma.mdc: All mutations call createAuditLog.
  */
 
-const notificationDeliveryRepository = require('../repositories/notification-delivery.repository');
+const notificationDeliveryRepository = require('@repositories/notification-delivery/notification-delivery.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 

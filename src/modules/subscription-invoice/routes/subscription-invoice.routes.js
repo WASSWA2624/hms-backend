@@ -9,7 +9,7 @@
 
 const express = require('express');
 const router = express.Router();
-const subscriptionInvoiceController = require('../controllers/subscription-invoice.controller');
+const subscriptionInvoiceController = require('@controllers/subscription-invoice/subscription-invoice.controller');
 const { asyncHandler } = require('@lib/async');
 const { validate } = require('@middlewares/validate.middleware');
 const {
@@ -17,7 +17,7 @@ const {
   updateSubscriptionInvoiceSchema,
   subscriptionInvoiceIdParamsSchema,
   listSubscriptionInvoicesQuerySchema
-} = require('../schemas/subscription-invoice.schema');
+} = require('@validations/subscription-invoice/subscription-invoice.schema');
 
 /**
  * @description List subscription invoices with pagination

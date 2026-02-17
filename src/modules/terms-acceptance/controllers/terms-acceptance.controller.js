@@ -8,7 +8,7 @@
  * Note: Terms acceptance has no update endpoint per API spec
  */
 
-const termsAcceptanceService = require('../services/terms-acceptance.service');
+const termsAcceptanceService = require('@services/terms-acceptance/terms-acceptance.service');
 const { asyncHandler } = require('@lib/async');
 const { sendSuccess, sendPaginated, sendNoContent } = require('@lib/response');
 const { DEFAULT_PAGE, DEFAULT_PAGE_LIMIT } = require('@config/constants');

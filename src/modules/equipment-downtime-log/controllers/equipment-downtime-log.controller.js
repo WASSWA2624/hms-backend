@@ -1,4 +1,4 @@
-const equipmentDowntimeLogService = require('../services/equipment-downtime-log.service');
+const equipmentDowntimeLogService = require('@services/equipment-downtime-log/equipment-downtime-log.service');
 const { asyncHandler } = require('@lib/async');
 const { sendSuccess, sendPaginated, sendNoContent } = require('@lib/response');
 const { DEFAULT_PAGE, DEFAULT_PAGE_LIMIT } = require('@config/constants');

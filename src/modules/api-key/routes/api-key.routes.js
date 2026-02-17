@@ -39,9 +39,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listApiKeysQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listApiKeysQuerySchema }),
   apiKeyController.listApiKeys
 );
 
@@ -59,9 +59,9 @@ router.get(
  * @throws 404 API key not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: apiKeyIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: apiKeyIdParamsSchema }),
   apiKeyController.getApiKeyById
 );
 
@@ -83,9 +83,9 @@ router.get(
  * @throws 400 Foreign key constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createApiKeySchema }),
+
   authenticate(),
-  validateRequest({ body: createApiKeySchema }),
   apiKeyController.createApiKey
 );
 
@@ -106,9 +106,9 @@ router.post(
  * @throws 404 API key not found
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: apiKeyIdParamsSchema, body: updateApiKeySchema }),
+
   authenticate(),
-  validateRequest({ params: apiKeyIdParamsSchema, body: updateApiKeySchema }),
   apiKeyController.updateApiKey
 );
 
@@ -126,9 +126,9 @@ router.put(
  * @throws 404 API key not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: apiKeyIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: apiKeyIdParamsSchema }),
   apiKeyController.deleteApiKey
 );
 

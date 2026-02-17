@@ -39,9 +39,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listIcuObservationsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listIcuObservationsQuerySchema }),
   icuObservationController.listIcuObservations
 );
 
@@ -59,9 +59,9 @@ router.get(
  * @throws 404 ICU observation not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: icuObservationIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: icuObservationIdParamsSchema }),
   icuObservationController.getIcuObservationById
 );
 
@@ -83,9 +83,9 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createIcuObservationSchema }),
+
   authenticate(),
-  validateRequest({ body: createIcuObservationSchema }),
   icuObservationController.createIcuObservation
 );
 
@@ -107,9 +107,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: icuObservationIdParamsSchema, body: updateIcuObservationSchema }),
+
   authenticate(),
-  validateRequest({ params: icuObservationIdParamsSchema, body: updateIcuObservationSchema }),
   icuObservationController.updateIcuObservation
 );
 
@@ -127,9 +127,9 @@ router.put(
  * @throws 404 ICU observation not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: icuObservationIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: icuObservationIdParamsSchema }),
   icuObservationController.deleteIcuObservation
 );
 

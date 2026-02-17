@@ -37,9 +37,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listDischargeSummariesQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listDischargeSummariesQuerySchema }),
   dischargeSummaryController.listDischargeSummaries
 );
 
@@ -57,9 +57,9 @@ router.get(
  * @throws 404 Discharge summary not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: dischargeSummaryIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: dischargeSummaryIdParamsSchema }),
   dischargeSummaryController.getDischargeSummaryById
 );
 
@@ -82,9 +82,9 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createDischargeSummarySchema }),
+
   authenticate(),
-  validateRequest({ body: createDischargeSummarySchema }),
   dischargeSummaryController.createDischargeSummary
 );
 
@@ -107,9 +107,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: dischargeSummaryIdParamsSchema, body: updateDischargeSummarySchema }),
+
   authenticate(),
-  validateRequest({ params: dischargeSummaryIdParamsSchema, body: updateDischargeSummarySchema }),
   dischargeSummaryController.updateDischargeSummary
 );
 
@@ -127,9 +127,9 @@ router.put(
  * @throws 404 Discharge summary not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: dischargeSummaryIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: dischargeSummaryIdParamsSchema }),
   dischargeSummaryController.deleteDischargeSummary
 );
 

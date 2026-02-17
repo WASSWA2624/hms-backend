@@ -37,9 +37,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listClinicalAlertsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listClinicalAlertsQuerySchema }),
   clinicalAlertController.listClinicalAlerts
 );
 
@@ -57,9 +57,9 @@ router.get(
  * @throws 404 Clinical alert not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: clinicalAlertIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: clinicalAlertIdParamsSchema }),
   clinicalAlertController.getClinicalAlertById
 );
 
@@ -80,9 +80,9 @@ router.get(
  * @throws 400 Foreign key constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createClinicalAlertSchema }),
+
   authenticate(),
-  validateRequest({ body: createClinicalAlertSchema }),
   clinicalAlertController.createClinicalAlert
 );
 
@@ -104,9 +104,9 @@ router.post(
  * @throws 400 Foreign key constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: clinicalAlertIdParamsSchema, body: updateClinicalAlertSchema }),
+
   authenticate(),
-  validateRequest({ params: clinicalAlertIdParamsSchema, body: updateClinicalAlertSchema }),
   clinicalAlertController.updateClinicalAlert
 );
 
@@ -124,9 +124,9 @@ router.put(
  * @throws 404 Clinical alert not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: clinicalAlertIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: clinicalAlertIdParamsSchema }),
   clinicalAlertController.deleteClinicalAlert
 );
 

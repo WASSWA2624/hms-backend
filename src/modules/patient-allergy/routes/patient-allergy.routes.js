@@ -41,9 +41,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listPatientAllergiesQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listPatientAllergiesQuerySchema }),
   asyncHandler(patientAllergyController.listPatientAllergies)
 );
 
@@ -61,9 +61,9 @@ router.get(
  * @throws 404 Patient allergy not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: patientAllergyIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: patientAllergyIdParamsSchema }),
   asyncHandler(patientAllergyController.getPatientAllergyById)
 );
 
@@ -87,9 +87,9 @@ router.get(
  * @throws 400 Foreign key constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createPatientAllergySchema }),
+
   authenticate(),
-  validateRequest({ body: createPatientAllergySchema }),
   asyncHandler(patientAllergyController.createPatientAllergy)
 );
 
@@ -111,9 +111,9 @@ router.post(
  * @throws 404 Patient allergy not found
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: patientAllergyIdParamsSchema, body: updatePatientAllergySchema }),
+
   authenticate(),
-  validateRequest({ params: patientAllergyIdParamsSchema, body: updatePatientAllergySchema }),
   asyncHandler(patientAllergyController.updatePatientAllergy)
 );
 
@@ -131,9 +131,9 @@ router.put(
  * @throws 404 Patient allergy not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: patientAllergyIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: patientAllergyIdParamsSchema }),
   asyncHandler(patientAllergyController.deletePatientAllergy)
 );
 

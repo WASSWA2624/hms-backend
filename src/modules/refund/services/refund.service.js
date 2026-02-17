@@ -5,7 +5,7 @@
  * @description Business logic layer for refund operations.
  */
 
-const refundRepository = require('../repositories/refund.repository');
+const refundRepository = require('@repositories/refund/refund.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 

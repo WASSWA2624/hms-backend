@@ -38,9 +38,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listConsentsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listConsentsQuerySchema }),
   consentController.listConsents
 );
 
@@ -58,9 +58,9 @@ router.get(
  * @throws 404 Consent not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: consentIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: consentIdParamsSchema }),
   consentController.getConsentById
 );
 
@@ -83,9 +83,9 @@ router.get(
  * @throws 400 Foreign key constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createConsentSchema }),
+
   authenticate(),
-  validateRequest({ body: createConsentSchema }),
   consentController.createConsent
 );
 
@@ -107,9 +107,9 @@ router.post(
  * @throws 404 Consent not found
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: consentIdParamsSchema, body: updateConsentSchema }),
+
   authenticate(),
-  validateRequest({ params: consentIdParamsSchema, body: updateConsentSchema }),
   consentController.updateConsent
 );
 
@@ -127,9 +127,9 @@ router.put(
  * @throws 404 Consent not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: consentIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: consentIdParamsSchema }),
   consentController.deleteConsent
 );
 

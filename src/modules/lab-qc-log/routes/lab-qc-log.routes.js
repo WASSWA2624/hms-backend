@@ -15,37 +15,37 @@ const {
 } = require('@validations/lab-qc-log/lab-qc-log.schema');
 
 router.get(
-  '/',
+  '/',  validateRequest({ query: listLabQcLogsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listLabQcLogsQuerySchema }),
   labQcLogController.listLabQcLogs
 );
 
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: labQcLogIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: labQcLogIdParamsSchema }),
   labQcLogController.getLabQcLogById
 );
 
 router.post(
-  '/',
+  '/',  validateRequest({ body: createLabQcLogSchema }),
+
   authenticate(),
-  validateRequest({ body: createLabQcLogSchema }),
   labQcLogController.createLabQcLog
 );
 
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: labQcLogIdParamsSchema, body: updateLabQcLogSchema }),
+
   authenticate(),
-  validateRequest({ params: labQcLogIdParamsSchema, body: updateLabQcLogSchema }),
   labQcLogController.updateLabQcLog
 );
 
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: labQcLogIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: labQcLogIdParamsSchema }),
   labQcLogController.deleteLabQcLog
 );
 

@@ -41,9 +41,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listWardsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listWardsQuerySchema }),
   wardController.listWards
 );
 
@@ -61,9 +61,9 @@ router.get(
  * @throws 404 Ward not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: wardIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: wardIdParamsSchema }),
   wardController.getWardById
 );
 
@@ -87,9 +87,9 @@ router.get(
  * @throws 400 Foreign key constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createWardSchema }),
+
   authenticate(),
-  validateRequest({ body: createWardSchema }),
   wardController.createWard
 );
 
@@ -113,9 +113,9 @@ router.post(
  * @throws 400 Foreign key constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: wardIdParamsSchema, body: updateWardSchema }),
+
   authenticate(),
-  validateRequest({ params: wardIdParamsSchema, body: updateWardSchema }),
   wardController.updateWard
 );
 
@@ -133,9 +133,9 @@ router.put(
  * @throws 404 Ward not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: wardIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: wardIdParamsSchema }),
   wardController.deleteWard
 );
 
@@ -153,9 +153,9 @@ router.delete(
  * @throws 404 Ward not found
  */
 router.get(
-  '/:id/beds',
+  '/:id/beds',  validateRequest({ params: wardIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: wardIdParamsSchema }),
   wardController.getWardBeds
 );
 

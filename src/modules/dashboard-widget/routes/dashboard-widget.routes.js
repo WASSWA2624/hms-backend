@@ -9,7 +9,7 @@
 
 const express = require('express');
 const router = express.Router();
-const dashboardWidgetController = require('../controllers/dashboard-widget.controller');
+const dashboardWidgetController = require('@controllers/dashboard-widget/dashboard-widget.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
 const { authenticate } = require('@middlewares/auth.middleware');
 const {
@@ -17,7 +17,7 @@ const {
   updateDashboardWidgetSchema,
   dashboardWidgetIdParamsSchema,
   listDashboardWidgetsQuerySchema
-} = require('../schemas/dashboard-widget.schema');
+} = require('@validations/dashboard-widget/dashboard-widget.schema');
 
 /**
  * @description List dashboard widgets with pagination and filters
@@ -38,9 +38,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listDashboardWidgetsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listDashboardWidgetsQuerySchema }),
   dashboardWidgetController.listDashboardWidgets
 );
 
@@ -58,9 +58,9 @@ router.get(
  * @throws 404 Dashboard widget not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: dashboardWidgetIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: dashboardWidgetIdParamsSchema }),
   dashboardWidgetController.getDashboardWidgetById
 );
 
@@ -82,9 +82,9 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createDashboardWidgetSchema }),
+
   authenticate(),
-  validateRequest({ body: createDashboardWidgetSchema }),
   dashboardWidgetController.createDashboardWidget
 );
 
@@ -106,9 +106,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: dashboardWidgetIdParamsSchema, body: updateDashboardWidgetSchema }),
+
   authenticate(),
-  validateRequest({ params: dashboardWidgetIdParamsSchema, body: updateDashboardWidgetSchema }),
   dashboardWidgetController.updateDashboardWidget
 );
 
@@ -126,9 +126,9 @@ router.put(
  * @throws 404 Dashboard widget not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: dashboardWidgetIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: dashboardWidgetIdParamsSchema }),
   dashboardWidgetController.deleteDashboardWidget
 );
 

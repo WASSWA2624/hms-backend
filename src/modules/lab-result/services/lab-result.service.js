@@ -2,7 +2,7 @@
  * Lab result service
  */
 
-const labResultRepository = require('../repositories/lab-result.repository');
+const labResultRepository = require('@repositories/lab-result/lab-result.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 

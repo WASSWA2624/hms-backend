@@ -7,7 +7,7 @@
  * Per prisma.mdc: All mutations call createAuditLog.
  */
 
-const labOrderItemRepository = require('../repositories/lab-order-item.repository');
+const labOrderItemRepository = require('@repositories/lab-order-item/lab-order-item.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 

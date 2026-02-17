@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const equipmentDisposalTransferController = require('../controllers/equipment-disposal-transfer.controller');
+const equipmentDisposalTransferController = require('@controllers/equipment-disposal-transfer/equipment-disposal-transfer.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
 const { authenticate } = require('@middlewares/auth.middleware');
-const { createEquipmentDisposalTransferSchema, updateEquipmentDisposalTransferSchema, equipmentDisposalTransferIdParamsSchema, listEquipmentDisposalTransfersQuerySchema } = require('../schemas/equipment-disposal-transfer.schema');
+const { createEquipmentDisposalTransferSchema, updateEquipmentDisposalTransferSchema, equipmentDisposalTransferIdParamsSchema, listEquipmentDisposalTransfersQuerySchema } = require('@validations/equipment-disposal-transfer/equipment-disposal-transfer.schema');
 
 router.get('/', authenticate(), validateRequest({ query: listEquipmentDisposalTransfersQuerySchema }), equipmentDisposalTransferController.listEquipmentDisposalTransfers);
 router.get('/:id', authenticate(), validateRequest({ params: equipmentDisposalTransferIdParamsSchema }), equipmentDisposalTransferController.getEquipmentDisposalTransferById);

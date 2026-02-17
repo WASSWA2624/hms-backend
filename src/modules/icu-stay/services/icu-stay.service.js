@@ -7,7 +7,7 @@
  * Per prisma.mdc: All mutations call createAuditLog.
  */
 
-const icuStayRepository = require('../repositories/icu-stay.repository');
+const icuStayRepository = require('@repositories/icu-stay/icu-stay.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 

@@ -38,9 +38,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listDiagnosesQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listDiagnosesQuerySchema }),
   diagnosisController.listDiagnoses
 );
 
@@ -58,9 +58,9 @@ router.get(
  * @throws 404 Diagnosis not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: diagnosisIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: diagnosisIdParamsSchema }),
   diagnosisController.getDiagnosisById
 );
 
@@ -83,9 +83,9 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createDiagnosisSchema }),
+
   authenticate(),
-  validateRequest({ body: createDiagnosisSchema }),
   diagnosisController.createDiagnosis
 );
 
@@ -108,9 +108,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: diagnosisIdParamsSchema, body: updateDiagnosisSchema }),
+
   authenticate(),
-  validateRequest({ params: diagnosisIdParamsSchema, body: updateDiagnosisSchema }),
   diagnosisController.updateDiagnosis
 );
 
@@ -128,9 +128,9 @@ router.put(
  * @throws 404 Diagnosis not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: diagnosisIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: diagnosisIdParamsSchema }),
   diagnosisController.deleteDiagnosis
 );
 

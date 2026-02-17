@@ -1,4 +1,4 @@
-const equipmentDisposalTransferRepository = require('../repositories/equipment-disposal-transfer.repository');
+const equipmentDisposalTransferRepository = require('@repositories/equipment-disposal-transfer/equipment-disposal-transfer.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 

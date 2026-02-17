@@ -37,9 +37,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listAvailabilitySlotsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listAvailabilitySlotsQuerySchema }),
   availabilitySlotController.listAvailabilitySlots
 );
 
@@ -57,9 +57,9 @@ router.get(
  * @throws 404 Availability slot not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: availabilitySlotIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: availabilitySlotIdParamsSchema }),
   availabilitySlotController.getAvailabilitySlotById
 );
 
@@ -82,9 +82,9 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createAvailabilitySlotSchema }),
+
   authenticate(),
-  validateRequest({ body: createAvailabilitySlotSchema }),
   availabilitySlotController.createAvailabilitySlot
 );
 
@@ -108,9 +108,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: availabilitySlotIdParamsSchema, body: updateAvailabilitySlotSchema }),
+
   authenticate(),
-  validateRequest({ params: availabilitySlotIdParamsSchema, body: updateAvailabilitySlotSchema }),
   availabilitySlotController.updateAvailabilitySlot
 );
 
@@ -128,9 +128,9 @@ router.put(
  * @throws 404 Availability slot not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: availabilitySlotIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: availabilitySlotIdParamsSchema }),
   availabilitySlotController.deleteAvailabilitySlot
 );
 

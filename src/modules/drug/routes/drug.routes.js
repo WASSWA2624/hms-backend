@@ -9,7 +9,7 @@
 
 const express = require('express');
 const router = express.Router();
-const drugController = require('../controllers/drug.controller');
+const drugController = require('@controllers/drug/drug.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
 const { authenticate } = require('@middlewares/auth.middleware');
 const {
@@ -17,7 +17,7 @@ const {
   updateDrugSchema,
   drugIdParamsSchema,
   listDrugsQuerySchema
-} = require('../schemas/drug.schema');
+} = require('@validations/drug/drug.schema');
 
 /**
  * @description List drugs with pagination and filters
@@ -41,9 +41,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listDrugsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listDrugsQuerySchema }),
   drugController.listDrugs
 );
 
@@ -61,9 +61,9 @@ router.get(
  * @throws 404 Drug not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: drugIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: drugIdParamsSchema }),
   drugController.getDrugById
 );
 
@@ -87,9 +87,9 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createDrugSchema }),
+
   authenticate(),
-  validateRequest({ body: createDrugSchema }),
   drugController.createDrug
 );
 
@@ -113,9 +113,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: drugIdParamsSchema, body: updateDrugSchema }),
+
   authenticate(),
-  validateRequest({ params: drugIdParamsSchema, body: updateDrugSchema }),
   drugController.updateDrug
 );
 
@@ -133,9 +133,9 @@ router.put(
  * @throws 404 Drug not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: drugIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: drugIdParamsSchema }),
   drugController.deleteDrug
 );
 

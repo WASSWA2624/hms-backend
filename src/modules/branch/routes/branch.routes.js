@@ -39,9 +39,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listBranchesQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listBranchesQuerySchema }),
   branchController.listBranches
 );
 
@@ -59,9 +59,9 @@ router.get(
  * @throws 404 Branch not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: branchIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: branchIdParamsSchema }),
   branchController.getBranchById
 );
 
@@ -83,9 +83,9 @@ router.get(
  * @throws 400 Foreign key constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createBranchSchema }),
+
   authenticate(),
-  validateRequest({ body: createBranchSchema }),
   branchController.createBranch
 );
 
@@ -107,9 +107,9 @@ router.post(
  * @throws 400 Foreign key constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: branchIdParamsSchema, body: updateBranchSchema }),
+
   authenticate(),
-  validateRequest({ params: branchIdParamsSchema, body: updateBranchSchema }),
   branchController.updateBranch
 );
 
@@ -127,9 +127,9 @@ router.put(
  * @throws 404 Branch not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: branchIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: branchIdParamsSchema }),
   branchController.deleteBranch
 );
 

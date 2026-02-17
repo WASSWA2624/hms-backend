@@ -1,4 +1,4 @@
-const equipmentWarrantyContractRepository = require('../repositories/equipment-warranty-contract.repository');
+const equipmentWarrantyContractRepository = require('@repositories/equipment-warranty-contract/equipment-warranty-contract.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 

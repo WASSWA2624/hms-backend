@@ -9,7 +9,7 @@
 
 const express = require('express');
 const router = express.Router();
-const maintenanceRequestController = require('../controllers/maintenance-request.controller');
+const maintenanceRequestController = require('@controllers/maintenance-request/maintenance-request.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
 const { authenticate } = require('@middlewares/auth.middleware');
 const {
@@ -17,7 +17,7 @@ const {
   updateMaintenanceRequestSchema,
   maintenanceRequestIdParamsSchema,
   listMaintenanceRequestsQuerySchema
-} = require('../schemas/maintenance-request.schema');
+} = require('@validations/maintenance-request/maintenance-request.schema');
 
 /**
  * @description List maintenance requests with pagination and filters
@@ -39,9 +39,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listMaintenanceRequestsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listMaintenanceRequestsQuerySchema }),
   maintenanceRequestController.listMaintenanceRequests
 );
 
@@ -59,9 +59,9 @@ router.get(
  * @throws 404 Maintenance request not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: maintenanceRequestIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: maintenanceRequestIdParamsSchema }),
   maintenanceRequestController.getMaintenanceRequestById
 );
 
@@ -86,9 +86,9 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createMaintenanceRequestSchema }),
+
   authenticate(),
-  validateRequest({ body: createMaintenanceRequestSchema }),
   maintenanceRequestController.createMaintenanceRequest
 );
 
@@ -113,9 +113,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: maintenanceRequestIdParamsSchema, body: updateMaintenanceRequestSchema }),
+
   authenticate(),
-  validateRequest({ params: maintenanceRequestIdParamsSchema, body: updateMaintenanceRequestSchema }),
   maintenanceRequestController.updateMaintenanceRequest
 );
 
@@ -133,9 +133,9 @@ router.put(
  * @throws 404 Maintenance request not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: maintenanceRequestIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: maintenanceRequestIdParamsSchema }),
   maintenanceRequestController.deleteMaintenanceRequest
 );
 

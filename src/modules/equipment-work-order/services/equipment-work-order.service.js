@@ -1,4 +1,4 @@
-const equipmentWorkOrderRepository = require('../repositories/equipment-work-order.repository');
+const equipmentWorkOrderRepository = require('@repositories/equipment-work-order/equipment-work-order.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 

@@ -9,7 +9,7 @@
 
 const express = require('express');
 const router = express.Router();
-const staffProfileController = require('../controllers/staff-profile.controller');
+const staffProfileController = require('@controllers/staff-profile/staff-profile.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
 const { authenticate } = require('@middlewares/auth.middleware');
 const {
@@ -17,7 +17,7 @@ const {
   updateStaffProfileSchema,
   staffProfileIdParamsSchema,
   listStaffProfilesQuerySchema
-} = require('../schemas/staff-profile.schema');
+} = require('@validations/staff-profile/staff-profile.schema');
 
 /**
  * @description List staff profiles with pagination and filters
@@ -41,9 +41,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listStaffProfilesQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listStaffProfilesQuerySchema }),
   staffProfileController.listStaffProfiles
 );
 
@@ -61,9 +61,9 @@ router.get(
  * @throws 404 Staff profile not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: staffProfileIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: staffProfileIdParamsSchema }),
   staffProfileController.getStaffProfileById
 );
 
@@ -88,9 +88,9 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createStaffProfileSchema }),
+
   authenticate(),
-  validateRequest({ body: createStaffProfileSchema }),
   staffProfileController.createStaffProfile
 );
 
@@ -114,9 +114,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: staffProfileIdParamsSchema, body: updateStaffProfileSchema }),
+
   authenticate(),
-  validateRequest({ params: staffProfileIdParamsSchema, body: updateStaffProfileSchema }),
   staffProfileController.updateStaffProfile
 );
 
@@ -134,9 +134,9 @@ router.put(
  * @throws 404 Staff profile not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: staffProfileIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: staffProfileIdParamsSchema }),
   staffProfileController.deleteStaffProfile
 );
 

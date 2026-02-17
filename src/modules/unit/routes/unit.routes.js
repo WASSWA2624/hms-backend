@@ -40,9 +40,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listUnitsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listUnitsQuerySchema }),
   unitController.listUnits
 );
 
@@ -60,9 +60,9 @@ router.get(
  * @throws 404 Unit not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: unitIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: unitIdParamsSchema }),
   unitController.getUnitById
 );
 
@@ -85,9 +85,9 @@ router.get(
  * @throws 400 Foreign key constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createUnitSchema }),
+
   authenticate(),
-  validateRequest({ body: createUnitSchema }),
   unitController.createUnit
 );
 
@@ -110,9 +110,9 @@ router.post(
  * @throws 400 Foreign key constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: unitIdParamsSchema, body: updateUnitSchema }),
+
   authenticate(),
-  validateRequest({ params: unitIdParamsSchema, body: updateUnitSchema }),
   unitController.updateUnit
 );
 
@@ -130,9 +130,9 @@ router.put(
  * @throws 404 Unit not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: unitIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: unitIdParamsSchema }),
   unitController.deleteUnit
 );
 

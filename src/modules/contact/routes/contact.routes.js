@@ -45,9 +45,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listContactsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listContactsQuerySchema }),
   contactController.listContacts
 );
 
@@ -65,9 +65,9 @@ router.get(
  * @throws 404 Contact not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: contactIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: contactIdParamsSchema }),
   contactController.getContactById
 );
 
@@ -95,9 +95,9 @@ router.get(
  * @throws 400 Foreign key constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createContactSchema }),
+
   authenticate(),
-  validateRequest({ body: createContactSchema }),
   contactController.createContact
 );
 
@@ -125,9 +125,9 @@ router.post(
  * @throws 400 Foreign key constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: contactIdParamsSchema, body: updateContactSchema }),
+
   authenticate(),
-  validateRequest({ params: contactIdParamsSchema, body: updateContactSchema }),
   contactController.updateContact
 );
 
@@ -145,9 +145,9 @@ router.put(
  * @throws 404 Contact not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: contactIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: contactIdParamsSchema }),
   contactController.deleteContact
 );
 

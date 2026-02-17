@@ -9,7 +9,7 @@
 
 const express = require('express');
 const router = express.Router();
-const staffPositionController = require('../controllers/staff-position.controller');
+const staffPositionController = require('@controllers/staff-position/staff-position.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
 const { authenticate, requireAuth } = require('@middlewares/auth.middleware');
 const {
@@ -17,7 +17,7 @@ const {
   updateStaffPositionSchema,
   staffPositionIdParamsSchema,
   listStaffPositionsQuerySchema
-} = require('../schemas/staff-position.schema');
+} = require('@validations/staff-position/staff-position.schema');
 
 const STAFF_POSITION_MANAGE_ROLES = ['TENANT_ADMIN', 'FACILITY_ADMIN', 'SUPER_ADMIN', 'HR'];
 
@@ -43,9 +43,9 @@ const STAFF_POSITION_MANAGE_ROLES = ['TENANT_ADMIN', 'FACILITY_ADMIN', 'SUPER_AD
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listStaffPositionsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listStaffPositionsQuerySchema }),
   staffPositionController.listStaffPositions
 );
 
@@ -63,9 +63,9 @@ router.get(
  * @throws 404 Staff position not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: staffPositionIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: staffPositionIdParamsSchema }),
   staffPositionController.getStaffPositionById
 );
 
@@ -89,9 +89,9 @@ router.get(
  * @throws 400 Validation error
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createStaffPositionSchema }),
+
   requireAuth(STAFF_POSITION_MANAGE_ROLES),
-  validateRequest({ body: createStaffPositionSchema }),
   staffPositionController.createStaffPosition
 );
 
@@ -115,9 +115,9 @@ router.post(
  * @throws 404 Staff position not found
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: staffPositionIdParamsSchema, body: updateStaffPositionSchema }),
+
   requireAuth(STAFF_POSITION_MANAGE_ROLES),
-  validateRequest({ params: staffPositionIdParamsSchema, body: updateStaffPositionSchema }),
   staffPositionController.updateStaffPosition
 );
 
@@ -136,9 +136,9 @@ router.put(
  * @throws 404 Staff position not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: staffPositionIdParamsSchema }),
+
   requireAuth(STAFF_POSITION_MANAGE_ROLES),
-  validateRequest({ params: staffPositionIdParamsSchema }),
   staffPositionController.deleteStaffPosition
 );
 

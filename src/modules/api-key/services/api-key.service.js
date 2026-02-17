@@ -9,7 +9,7 @@
  */
 
 const crypto = require('crypto');
-const apiKeyRepository = require('../repositories/api-key.repository');
+const apiKeyRepository = require('@repositories/api-key/api-key.repository');
 const { createAuditLog } = require('@lib/audit');
 const { hashApiKey } = require('@lib/crypto');
 const { HttpError } = require('@lib/errors');

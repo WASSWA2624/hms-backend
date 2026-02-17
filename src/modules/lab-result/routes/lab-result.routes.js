@@ -18,9 +18,9 @@ const {
  * @route GET /api/v1/lab-results/
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listLabResultsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listLabResultsQuerySchema }),
   labResultController.listLabResults
 );
 
@@ -28,9 +28,9 @@ router.get(
  * @route GET /api/v1/lab-results/:id
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: labResultIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: labResultIdParamsSchema }),
   labResultController.getLabResultById
 );
 
@@ -38,9 +38,9 @@ router.get(
  * @route POST /api/v1/lab-results/
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createLabResultSchema }),
+
   authenticate(),
-  validateRequest({ body: createLabResultSchema }),
   labResultController.createLabResult
 );
 
@@ -48,9 +48,9 @@ router.post(
  * @route PUT /api/v1/lab-results/:id
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: labResultIdParamsSchema, body: updateLabResultSchema }),
+
   authenticate(),
-  validateRequest({ params: labResultIdParamsSchema, body: updateLabResultSchema }),
   labResultController.updateLabResult
 );
 
@@ -58,9 +58,9 @@ router.put(
  * @route DELETE /api/v1/lab-results/:id
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: labResultIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: labResultIdParamsSchema }),
   labResultController.deleteLabResult
 );
 

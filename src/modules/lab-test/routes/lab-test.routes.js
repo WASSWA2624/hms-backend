@@ -39,9 +39,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listLabTestsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listLabTestsQuerySchema }),
   labTestController.listLabTests
 );
 
@@ -59,9 +59,9 @@ router.get(
  * @throws 404 Lab test not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: labTestIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: labTestIdParamsSchema }),
   labTestController.getLabTestById
 );
 
@@ -84,9 +84,9 @@ router.get(
  * @throws 409 Conflict (duplicate code)
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createLabTestSchema }),
+
   authenticate(),
-  validateRequest({ body: createLabTestSchema }),
   labTestController.createLabTest
 );
 
@@ -109,9 +109,9 @@ router.post(
  * @throws 409 Conflict (duplicate code)
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: labTestIdParamsSchema, body: updateLabTestSchema }),
+
   authenticate(),
-  validateRequest({ params: labTestIdParamsSchema, body: updateLabTestSchema }),
   labTestController.updateLabTest
 );
 
@@ -129,9 +129,9 @@ router.put(
  * @throws 404 Lab test not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: labTestIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: labTestIdParamsSchema }),
   labTestController.deleteLabTest
 );
 

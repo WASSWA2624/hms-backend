@@ -9,7 +9,7 @@
 
 const express = require('express');
 const router = express.Router();
-const staffAssignmentController = require('../controllers/staff-assignment.controller');
+const staffAssignmentController = require('@controllers/staff-assignment/staff-assignment.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
 const { authenticate } = require('@middlewares/auth.middleware');
 const {
@@ -17,7 +17,7 @@ const {
   updateStaffAssignmentSchema,
   staffAssignmentIdParamsSchema,
   listStaffAssignmentsQuerySchema
-} = require('../schemas/staff-assignment.schema');
+} = require('@validations/staff-assignment/staff-assignment.schema');
 
 /**
  * @description List staff assignments with pagination and filters
@@ -38,9 +38,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listStaffAssignmentsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listStaffAssignmentsQuerySchema }),
   staffAssignmentController.listStaffAssignments
 );
 
@@ -58,9 +58,9 @@ router.get(
  * @throws 404 Staff assignment not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: staffAssignmentIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: staffAssignmentIdParamsSchema }),
   staffAssignmentController.getStaffAssignmentById
 );
 
@@ -84,9 +84,9 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createStaffAssignmentSchema }),
+
   authenticate(),
-  validateRequest({ body: createStaffAssignmentSchema }),
   staffAssignmentController.createStaffAssignment
 );
 
@@ -110,9 +110,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: staffAssignmentIdParamsSchema, body: updateStaffAssignmentSchema }),
+
   authenticate(),
-  validateRequest({ params: staffAssignmentIdParamsSchema, body: updateStaffAssignmentSchema }),
   staffAssignmentController.updateStaffAssignment
 );
 
@@ -130,9 +130,9 @@ router.put(
  * @throws 404 Staff assignment not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: staffAssignmentIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: staffAssignmentIdParamsSchema }),
   staffAssignmentController.deleteStaffAssignment
 );
 

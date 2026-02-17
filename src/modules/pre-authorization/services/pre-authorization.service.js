@@ -7,7 +7,7 @@
  * Per prisma.mdc: All mutations call createAuditLog.
  */
 
-const preAuthorizationRepository = require('../repositories/pre-authorization.repository');
+const preAuthorizationRepository = require('@repositories/pre-authorization/pre-authorization.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 

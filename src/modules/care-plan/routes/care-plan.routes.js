@@ -38,9 +38,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listCarePlansQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listCarePlansQuerySchema }),
   carePlanController.listCarePlans
 );
 
@@ -58,9 +58,9 @@ router.get(
  * @throws 404 Care plan not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: carePlanIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: carePlanIdParamsSchema }),
   carePlanController.getCarePlanById
 );
 
@@ -82,9 +82,9 @@ router.get(
  * @throws 400 Foreign key constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createCarePlanSchema }),
+
   authenticate(),
-  validateRequest({ body: createCarePlanSchema }),
   carePlanController.createCarePlan
 );
 
@@ -107,9 +107,9 @@ router.post(
  * @throws 400 Foreign key constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: carePlanIdParamsSchema, body: updateCarePlanSchema }),
+
   authenticate(),
-  validateRequest({ params: carePlanIdParamsSchema, body: updateCarePlanSchema }),
   carePlanController.updateCarePlan
 );
 
@@ -127,9 +127,9 @@ router.put(
  * @throws 404 Care plan not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: carePlanIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: carePlanIdParamsSchema }),
   carePlanController.deleteCarePlan
 );
 

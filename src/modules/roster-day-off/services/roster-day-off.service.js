@@ -1,7 +1,7 @@
 /**
  * Roster day off service
  */
-const rosterDayOffRepository = require('../repositories/roster-day-off.repository');
+const rosterDayOffRepository = require('@repositories/roster-day-off/roster-day-off.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 

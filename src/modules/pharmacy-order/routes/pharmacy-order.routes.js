@@ -40,9 +40,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listPharmacyOrdersQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listPharmacyOrdersQuerySchema }),
   pharmacyOrderController.listPharmacyOrders
 );
 
@@ -60,9 +60,9 @@ router.get(
  * @throws 404 Pharmacy order not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: pharmacyOrderIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: pharmacyOrderIdParamsSchema }),
   pharmacyOrderController.getPharmacyOrderById
 );
 
@@ -85,9 +85,9 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createPharmacyOrderSchema }),
+
   authenticate(),
-  validateRequest({ body: createPharmacyOrderSchema }),
   pharmacyOrderController.createPharmacyOrder
 );
 
@@ -111,9 +111,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: pharmacyOrderIdParamsSchema, body: updatePharmacyOrderSchema }),
+
   authenticate(),
-  validateRequest({ params: pharmacyOrderIdParamsSchema, body: updatePharmacyOrderSchema }),
   pharmacyOrderController.updatePharmacyOrder
 );
 
@@ -131,9 +131,9 @@ router.put(
  * @throws 404 Pharmacy order not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: pharmacyOrderIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: pharmacyOrderIdParamsSchema }),
   pharmacyOrderController.deletePharmacyOrder
 );
 

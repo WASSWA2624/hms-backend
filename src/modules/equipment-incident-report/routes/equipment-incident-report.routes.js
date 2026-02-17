@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const equipmentIncidentReportController = require('../controllers/equipment-incident-report.controller');
+const equipmentIncidentReportController = require('@controllers/equipment-incident-report/equipment-incident-report.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
 const { authenticate } = require('@middlewares/auth.middleware');
-const { createEquipmentIncidentReportSchema, updateEquipmentIncidentReportSchema, equipmentIncidentReportIdParamsSchema, listEquipmentIncidentReportsQuerySchema } = require('../schemas/equipment-incident-report.schema');
+const { createEquipmentIncidentReportSchema, updateEquipmentIncidentReportSchema, equipmentIncidentReportIdParamsSchema, listEquipmentIncidentReportsQuerySchema } = require('@validations/equipment-incident-report/equipment-incident-report.schema');
 
 router.get('/', authenticate(), validateRequest({ query: listEquipmentIncidentReportsQuerySchema }), equipmentIncidentReportController.listEquipmentIncidentReports);
 router.get('/:id', authenticate(), validateRequest({ params: equipmentIncidentReportIdParamsSchema }), equipmentIncidentReportController.getEquipmentIncidentReportById);

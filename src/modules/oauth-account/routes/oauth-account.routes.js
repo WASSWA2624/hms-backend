@@ -28,9 +28,9 @@ const {
  * @permissions Authenticated users
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listOAuthAccountsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listOAuthAccountsQuerySchema }),
   oauthAccountController.listOAuthAccounts
 );
 
@@ -42,9 +42,9 @@ router.get(
  * @permissions Authenticated users
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: oauthAccountIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: oauthAccountIdParamsSchema }),
   oauthAccountController.getOAuthAccountById
 );
 
@@ -56,9 +56,9 @@ router.get(
  * @permissions Authenticated users
  */
 router.get(
-  '/user/:userId',
+  '/user/:userId',  validateRequest({ params: userIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: userIdParamsSchema }),
   oauthAccountController.getOAuthAccountsByUserId
 );
 
@@ -70,9 +70,9 @@ router.get(
  * @permissions Authenticated users
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createOAuthAccountSchema }),
+
   authenticate(),
-  validateRequest({ body: createOAuthAccountSchema }),
   oauthAccountController.createOAuthAccount
 );
 
@@ -84,9 +84,9 @@ router.post(
  * @permissions Authenticated users
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: oauthAccountIdParamsSchema, body: updateOAuthAccountSchema }),
+
   authenticate(),
-  validateRequest({ params: oauthAccountIdParamsSchema, body: updateOAuthAccountSchema }),
   oauthAccountController.updateOAuthAccount
 );
 
@@ -98,9 +98,9 @@ router.put(
  * @permissions Authenticated users
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: oauthAccountIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: oauthAccountIdParamsSchema }),
   oauthAccountController.deleteOAuthAccount
 );
 

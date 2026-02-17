@@ -9,7 +9,7 @@
 
 const express = require('express');
 const router = express.Router();
-const stockMovementController = require('../controllers/stock-movement.controller');
+const stockMovementController = require('@controllers/stock-movement/stock-movement.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
 const { authenticate } = require('@middlewares/auth.middleware');
 const {
@@ -17,7 +17,7 @@ const {
   updateStockMovementSchema,
   stockMovementIdParamsSchema,
   listStockMovementsQuerySchema
-} = require('../schemas/stock-movement.schema');
+} = require('@validations/stock-movement/stock-movement.schema');
 
 /**
  * @description List stock movements with pagination and filters
@@ -25,9 +25,9 @@ const {
  * @route /api/v1/stock-movements/
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listStockMovementsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listStockMovementsQuerySchema }),
   stockMovementController.listStockMovements
 );
 
@@ -37,9 +37,9 @@ router.get(
  * @route /api/v1/stock-movements/:id
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: stockMovementIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: stockMovementIdParamsSchema }),
   stockMovementController.getStockMovementById
 );
 
@@ -49,9 +49,9 @@ router.get(
  * @route /api/v1/stock-movements/
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createStockMovementSchema }),
+
   authenticate(),
-  validateRequest({ body: createStockMovementSchema }),
   stockMovementController.createStockMovement
 );
 
@@ -61,9 +61,9 @@ router.post(
  * @route /api/v1/stock-movements/:id
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: stockMovementIdParamsSchema, body: updateStockMovementSchema }),
+
   authenticate(),
-  validateRequest({ params: stockMovementIdParamsSchema, body: updateStockMovementSchema }),
   stockMovementController.updateStockMovement
 );
 
@@ -73,9 +73,9 @@ router.put(
  * @route /api/v1/stock-movements/:id
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: stockMovementIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: stockMovementIdParamsSchema }),
   stockMovementController.deleteStockMovement
 );
 

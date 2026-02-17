@@ -7,7 +7,7 @@
  * Per prisma.mdc: All mutations call createAuditLog.
  */
 
-const dashboardWidgetRepository = require('../repositories/dashboard-widget.repository');
+const dashboardWidgetRepository = require('@repositories/dashboard-widget/dashboard-widget.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 

@@ -24,9 +24,9 @@ const {
  * @authentication Required (JWT)
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listInvoiceItemsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listInvoiceItemsQuerySchema }),
   invoiceItemController.listInvoiceItems
 );
 
@@ -37,9 +37,9 @@ router.get(
  * @authentication Required (JWT)
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: invoiceItemIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: invoiceItemIdParamsSchema }),
   invoiceItemController.getInvoiceItemById
 );
 
@@ -50,9 +50,9 @@ router.get(
  * @authentication Required (JWT)
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createInvoiceItemSchema }),
+
   authenticate(),
-  validateRequest({ body: createInvoiceItemSchema }),
   invoiceItemController.createInvoiceItem
 );
 
@@ -63,9 +63,9 @@ router.post(
  * @authentication Required (JWT)
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: invoiceItemIdParamsSchema, body: updateInvoiceItemSchema }),
+
   authenticate(),
-  validateRequest({ params: invoiceItemIdParamsSchema, body: updateInvoiceItemSchema }),
   invoiceItemController.updateInvoiceItem
 );
 
@@ -76,9 +76,9 @@ router.put(
  * @authentication Required (JWT)
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: invoiceItemIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: invoiceItemIdParamsSchema }),
   invoiceItemController.deleteInvoiceItem
 );
 

@@ -40,9 +40,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listInsuranceClaimsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listInsuranceClaimsQuerySchema }),
   insuranceClaimController.listInsuranceClaims
 );
 
@@ -60,9 +60,9 @@ router.get(
  * @throws 404 Insurance claim not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: insuranceClaimIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: insuranceClaimIdParamsSchema }),
   insuranceClaimController.getInsuranceClaimById
 );
 
@@ -85,9 +85,9 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createInsuranceClaimSchema }),
+
   authenticate(),
-  validateRequest({ body: createInsuranceClaimSchema }),
   insuranceClaimController.createInsuranceClaim
 );
 
@@ -111,9 +111,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: insuranceClaimIdParamsSchema, body: updateInsuranceClaimSchema }),
+
   authenticate(),
-  validateRequest({ params: insuranceClaimIdParamsSchema, body: updateInsuranceClaimSchema }),
   insuranceClaimController.updateInsuranceClaim
 );
 
@@ -131,9 +131,9 @@ router.put(
  * @throws 404 Insurance claim not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: insuranceClaimIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: insuranceClaimIdParamsSchema }),
   insuranceClaimController.deleteInsuranceClaim
 );
 

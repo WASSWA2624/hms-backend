@@ -1,4 +1,4 @@
-const equipmentUtilizationSnapshotService = require('../services/equipment-utilization-snapshot.service');
+const equipmentUtilizationSnapshotService = require('@services/equipment-utilization-snapshot/equipment-utilization-snapshot.service');
 const { asyncHandler } = require('@lib/async');
 const { sendSuccess, sendPaginated, sendNoContent } = require('@lib/response');
 const { DEFAULT_PAGE, DEFAULT_PAGE_LIMIT } = require('@config/constants');

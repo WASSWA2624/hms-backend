@@ -42,9 +42,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listAppointmentsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listAppointmentsQuerySchema }),
   appointmentController.listAppointments
 );
 
@@ -62,9 +62,9 @@ router.get(
  * @throws 404 Appointment not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: appointmentIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: appointmentIdParamsSchema }),
   appointmentController.getAppointmentById
 );
 
@@ -91,9 +91,9 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createAppointmentSchema }),
+
   authenticate(),
-  validateRequest({ body: createAppointmentSchema }),
   appointmentController.createAppointment
 );
 
@@ -120,9 +120,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: appointmentIdParamsSchema, body: updateAppointmentSchema }),
+
   authenticate(),
-  validateRequest({ params: appointmentIdParamsSchema, body: updateAppointmentSchema }),
   appointmentController.updateAppointment
 );
 
@@ -140,9 +140,9 @@ router.put(
  * @throws 404 Appointment not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: appointmentIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: appointmentIdParamsSchema }),
   appointmentController.deleteAppointment
 );
 
@@ -161,9 +161,9 @@ router.delete(
  * @throws 400 Appointment already cancelled
  */
 router.post(
-  '/:id/cancel',
+  '/:id/cancel',  validateRequest({ params: appointmentIdParamsSchema, body: cancelAppointmentSchema }),
+
   authenticate(),
-  validateRequest({ params: appointmentIdParamsSchema, body: cancelAppointmentSchema }),
   appointmentController.cancelAppointment
 );
 

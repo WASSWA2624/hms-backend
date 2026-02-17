@@ -40,9 +40,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listNotificationsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listNotificationsQuerySchema }),
   notificationController.listNotifications
 );
 
@@ -60,9 +60,9 @@ router.get(
  * @throws 404 Notification not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: notificationIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: notificationIdParamsSchema }),
   notificationController.getNotificationById
 );
 
@@ -88,9 +88,9 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createNotificationSchema }),
+
   authenticate(),
-  validateRequest({ body: createNotificationSchema }),
   notificationController.createNotification
 );
 
@@ -116,9 +116,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: notificationIdParamsSchema, body: updateNotificationSchema }),
+
   authenticate(),
-  validateRequest({ params: notificationIdParamsSchema, body: updateNotificationSchema }),
   notificationController.updateNotification
 );
 
@@ -136,9 +136,9 @@ router.put(
  * @throws 404 Notification not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: notificationIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: notificationIdParamsSchema }),
   notificationController.deleteNotification
 );
 

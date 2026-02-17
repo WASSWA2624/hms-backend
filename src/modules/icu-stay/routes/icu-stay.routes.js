@@ -41,9 +41,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listIcuStaysQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listIcuStaysQuerySchema }),
   icuStayController.listIcuStays
 );
 
@@ -61,9 +61,9 @@ router.get(
  * @throws 404 ICU stay not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: icuStayIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: icuStayIdParamsSchema }),
   icuStayController.getIcuStayById
 );
 
@@ -85,9 +85,9 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createIcuStaySchema }),
+
   authenticate(),
-  validateRequest({ body: createIcuStaySchema }),
   icuStayController.createIcuStay
 );
 
@@ -109,9 +109,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: icuStayIdParamsSchema, body: updateIcuStaySchema }),
+
   authenticate(),
-  validateRequest({ params: icuStayIdParamsSchema, body: updateIcuStaySchema }),
   icuStayController.updateIcuStay
 );
 
@@ -129,9 +129,9 @@ router.put(
  * @throws 404 ICU stay not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: icuStayIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: icuStayIdParamsSchema }),
   icuStayController.deleteIcuStay
 );
 

@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const equipmentWorkOrderController = require('../controllers/equipment-work-order.controller');
+const equipmentWorkOrderController = require('@controllers/equipment-work-order/equipment-work-order.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
 const { authenticate } = require('@middlewares/auth.middleware');
-const { createEquipmentWorkOrderSchema, updateEquipmentWorkOrderSchema, equipmentWorkOrderIdParamsSchema, listEquipmentWorkOrdersQuerySchema } = require('../schemas/equipment-work-order.schema');
+const { createEquipmentWorkOrderSchema, updateEquipmentWorkOrderSchema, equipmentWorkOrderIdParamsSchema, listEquipmentWorkOrdersQuerySchema } = require('@validations/equipment-work-order/equipment-work-order.schema');
 
 router.get('/', authenticate(), validateRequest({ query: listEquipmentWorkOrdersQuerySchema }), equipmentWorkOrderController.listEquipmentWorkOrders);
 router.get('/:id', authenticate(), validateRequest({ params: equipmentWorkOrderIdParamsSchema }), equipmentWorkOrderController.getEquipmentWorkOrderById);

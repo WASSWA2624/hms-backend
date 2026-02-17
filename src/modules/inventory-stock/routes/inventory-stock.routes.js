@@ -9,7 +9,7 @@
 
 const express = require('express');
 const router = express.Router();
-const inventoryStockController = require('../controllers/inventory-stock.controller');
+const inventoryStockController = require('@controllers/inventory-stock/inventory-stock.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
 const { authenticate } = require('@middlewares/auth.middleware');
 const {
@@ -17,7 +17,7 @@ const {
   updateInventoryStockSchema,
   inventoryStockIdParamsSchema,
   listInventoryStocksQuerySchema
-} = require('../schemas/inventory-stock.schema');
+} = require('@validations/inventory-stock/inventory-stock.schema');
 
 /**
  * @description List inventory stocks with pagination and filters
@@ -25,9 +25,9 @@ const {
  * @route /api/v1/inventory-stocks/
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listInventoryStocksQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listInventoryStocksQuerySchema }),
   inventoryStockController.listInventoryStocks
 );
 
@@ -37,9 +37,9 @@ router.get(
  * @route /api/v1/inventory-stocks/:id
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: inventoryStockIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: inventoryStockIdParamsSchema }),
   inventoryStockController.getInventoryStockById
 );
 
@@ -49,9 +49,9 @@ router.get(
  * @route /api/v1/inventory-stocks/
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createInventoryStockSchema }),
+
   authenticate(),
-  validateRequest({ body: createInventoryStockSchema }),
   inventoryStockController.createInventoryStock
 );
 
@@ -61,9 +61,9 @@ router.post(
  * @route /api/v1/inventory-stocks/:id
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: inventoryStockIdParamsSchema, body: updateInventoryStockSchema }),
+
   authenticate(),
-  validateRequest({ params: inventoryStockIdParamsSchema, body: updateInventoryStockSchema }),
   inventoryStockController.updateInventoryStock
 );
 
@@ -73,9 +73,9 @@ router.put(
  * @route /api/v1/inventory-stocks/:id
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: inventoryStockIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: inventoryStockIdParamsSchema }),
   inventoryStockController.deleteInventoryStock
 );
 

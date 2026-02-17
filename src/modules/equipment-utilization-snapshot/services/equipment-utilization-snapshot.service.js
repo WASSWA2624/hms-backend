@@ -1,4 +1,4 @@
-const equipmentUtilizationSnapshotRepository = require('../repositories/equipment-utilization-snapshot.repository');
+const equipmentUtilizationSnapshotRepository = require('@repositories/equipment-utilization-snapshot/equipment-utilization-snapshot.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 

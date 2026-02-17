@@ -38,9 +38,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listHousekeepingSchedulesQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listHousekeepingSchedulesQuerySchema }),
   housekeepingScheduleController.listHousekeepingSchedules
 );
 
@@ -58,9 +58,9 @@ router.get(
  * @throws 404 Housekeeping schedule not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: housekeepingScheduleIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: housekeepingScheduleIdParamsSchema }),
   housekeepingScheduleController.getHousekeepingScheduleById
 );
 
@@ -83,9 +83,9 @@ router.get(
  * @throws 400 Foreign key constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createHousekeepingScheduleSchema }),
+
   authenticate(),
-  validateRequest({ body: createHousekeepingScheduleSchema }),
   housekeepingScheduleController.createHousekeepingSchedule
 );
 
@@ -109,9 +109,9 @@ router.post(
  * @throws 400 Foreign key constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: housekeepingScheduleIdParamsSchema, body: updateHousekeepingScheduleSchema }),
+
   authenticate(),
-  validateRequest({ params: housekeepingScheduleIdParamsSchema, body: updateHousekeepingScheduleSchema }),
   housekeepingScheduleController.updateHousekeepingSchedule
 );
 
@@ -129,9 +129,9 @@ router.put(
  * @throws 404 Housekeeping schedule not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: housekeepingScheduleIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: housekeepingScheduleIdParamsSchema }),
   housekeepingScheduleController.deleteHousekeepingSchedule
 );
 

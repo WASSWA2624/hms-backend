@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const equipmentMaintenancePlanController = require('../controllers/equipment-maintenance-plan.controller');
+const equipmentMaintenancePlanController = require('@controllers/equipment-maintenance-plan/equipment-maintenance-plan.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
 const { authenticate } = require('@middlewares/auth.middleware');
-const { createEquipmentMaintenancePlanSchema, updateEquipmentMaintenancePlanSchema, equipmentMaintenancePlanIdParamsSchema, listEquipmentMaintenancePlansQuerySchema } = require('../schemas/equipment-maintenance-plan.schema');
+const { createEquipmentMaintenancePlanSchema, updateEquipmentMaintenancePlanSchema, equipmentMaintenancePlanIdParamsSchema, listEquipmentMaintenancePlansQuerySchema } = require('@validations/equipment-maintenance-plan/equipment-maintenance-plan.schema');
 
 router.get('/', authenticate(), validateRequest({ query: listEquipmentMaintenancePlansQuerySchema }), equipmentMaintenancePlanController.listEquipmentMaintenancePlans);
 router.get('/:id', authenticate(), validateRequest({ params: equipmentMaintenancePlanIdParamsSchema }), equipmentMaintenancePlanController.getEquipmentMaintenancePlanById);

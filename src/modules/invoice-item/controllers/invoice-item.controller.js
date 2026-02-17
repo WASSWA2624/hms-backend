@@ -5,7 +5,7 @@
  * @description Request handlers for invoice item endpoints.
  */
 
-const invoiceItemService = require('../services/invoice-item.service');
+const invoiceItemService = require('@services/invoice-item/invoice-item.service');
 const { asyncHandler } = require('@lib/async');
 const { sendSuccess, sendPaginated, sendNoContent } = require('@lib/response');
 const { DEFAULT_PAGE, DEFAULT_PAGE_LIMIT } = require('@config/constants');

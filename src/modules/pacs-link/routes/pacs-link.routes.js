@@ -37,9 +37,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listPacsLinksQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listPacsLinksQuerySchema }),
   pacsLinkController.listPacsLinks
 );
 
@@ -57,9 +57,9 @@ router.get(
  * @throws 404 PACS link not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: pacsLinkIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: pacsLinkIdParamsSchema }),
   pacsLinkController.getPacsLinkById
 );
 
@@ -81,9 +81,9 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createPacsLinkSchema }),
+
   authenticate(),
-  validateRequest({ body: createPacsLinkSchema }),
   pacsLinkController.createPacsLink
 );
 
@@ -105,9 +105,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: pacsLinkIdParamsSchema, body: updatePacsLinkSchema }),
+
   authenticate(),
-  validateRequest({ params: pacsLinkIdParamsSchema, body: updatePacsLinkSchema }),
   pacsLinkController.updatePacsLink
 );
 
@@ -125,9 +125,9 @@ router.put(
  * @throws 404 PACS link not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: pacsLinkIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: pacsLinkIdParamsSchema }),
   pacsLinkController.deletePacsLink
 );
 

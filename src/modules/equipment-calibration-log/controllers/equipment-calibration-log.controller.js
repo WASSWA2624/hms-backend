@@ -1,4 +1,4 @@
-const equipmentCalibrationLogService = require('../services/equipment-calibration-log.service');
+const equipmentCalibrationLogService = require('@services/equipment-calibration-log/equipment-calibration-log.service');
 const { asyncHandler } = require('@lib/async');
 const { sendSuccess, sendPaginated, sendNoContent } = require('@lib/response');
 const { DEFAULT_PAGE, DEFAULT_PAGE_LIMIT } = require('@config/constants');

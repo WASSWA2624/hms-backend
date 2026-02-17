@@ -37,9 +37,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listRolePermissionsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listRolePermissionsQuerySchema }),
   rolePermissionController.listRolePermissions
 );
 
@@ -57,9 +57,9 @@ router.get(
  * @throws 404 Role-Permission not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: rolePermissionIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: rolePermissionIdParamsSchema }),
   rolePermissionController.getRolePermissionById
 );
 
@@ -79,9 +79,9 @@ router.get(
  * @throws 400 Foreign key constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createRolePermissionSchema }),
+
   authenticate(),
-  validateRequest({ body: createRolePermissionSchema }),
   rolePermissionController.createRolePermission
 );
 
@@ -102,9 +102,9 @@ router.post(
  * @throws 400 Foreign key constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: rolePermissionIdParamsSchema, body: updateRolePermissionSchema }),
+
   authenticate(),
-  validateRequest({ params: rolePermissionIdParamsSchema, body: updateRolePermissionSchema }),
   rolePermissionController.updateRolePermission
 );
 
@@ -122,9 +122,9 @@ router.put(
  * @throws 404 Role-Permission not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: rolePermissionIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: rolePermissionIdParamsSchema }),
   rolePermissionController.deleteRolePermission
 );
 

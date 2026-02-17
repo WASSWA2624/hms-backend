@@ -39,9 +39,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listProviderSchedulesQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listProviderSchedulesQuerySchema }),
   providerScheduleController.listProviderSchedules
 );
 
@@ -59,9 +59,9 @@ router.get(
  * @throws 404 Provider schedule not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: providerScheduleIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: providerScheduleIdParamsSchema }),
   providerScheduleController.getProviderScheduleById
 );
 
@@ -86,9 +86,9 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createProviderScheduleSchema }),
+
   authenticate(),
-  validateRequest({ body: createProviderScheduleSchema }),
   providerScheduleController.createProviderSchedule
 );
 
@@ -113,9 +113,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: providerScheduleIdParamsSchema, body: updateProviderScheduleSchema }),
+
   authenticate(),
-  validateRequest({ params: providerScheduleIdParamsSchema, body: updateProviderScheduleSchema }),
   providerScheduleController.updateProviderSchedule
 );
 
@@ -133,9 +133,9 @@ router.put(
  * @throws 404 Provider schedule not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: providerScheduleIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: providerScheduleIdParamsSchema }),
   providerScheduleController.deleteProviderSchedule
 );
 

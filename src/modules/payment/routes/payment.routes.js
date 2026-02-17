@@ -24,9 +24,9 @@ const {
  * @authentication Required (JWT)
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listPaymentsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listPaymentsQuerySchema }),
   paymentController.listPayments
 );
 
@@ -37,9 +37,9 @@ router.get(
  * @authentication Required (JWT)
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: paymentIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: paymentIdParamsSchema }),
   paymentController.getPaymentById
 );
 
@@ -50,9 +50,9 @@ router.get(
  * @authentication Required (JWT)
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createPaymentSchema }),
+
   authenticate(),
-  validateRequest({ body: createPaymentSchema }),
   paymentController.createPayment
 );
 
@@ -63,9 +63,9 @@ router.post(
  * @authentication Required (JWT)
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: paymentIdParamsSchema, body: updatePaymentSchema }),
+
   authenticate(),
-  validateRequest({ params: paymentIdParamsSchema, body: updatePaymentSchema }),
   paymentController.updatePayment
 );
 
@@ -76,9 +76,9 @@ router.put(
  * @authentication Required (JWT)
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: paymentIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: paymentIdParamsSchema }),
   paymentController.deletePayment
 );
 

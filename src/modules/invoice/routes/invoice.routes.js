@@ -41,9 +41,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listInvoicesQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listInvoicesQuerySchema }),
   invoiceController.listInvoices
 );
 
@@ -61,9 +61,9 @@ router.get(
  * @throws 404 Invoice not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: invoiceIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: invoiceIdParamsSchema }),
   invoiceController.getInvoiceById
 );
 
@@ -90,9 +90,9 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createInvoiceSchema }),
+
   authenticate(),
-  validateRequest({ body: createInvoiceSchema }),
   invoiceController.createInvoice
 );
 
@@ -119,9 +119,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: invoiceIdParamsSchema, body: updateInvoiceSchema }),
+
   authenticate(),
-  validateRequest({ params: invoiceIdParamsSchema, body: updateInvoiceSchema }),
   invoiceController.updateInvoice
 );
 
@@ -139,9 +139,9 @@ router.put(
  * @throws 404 Invoice not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: invoiceIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: invoiceIdParamsSchema }),
   invoiceController.deleteInvoice
 );
 

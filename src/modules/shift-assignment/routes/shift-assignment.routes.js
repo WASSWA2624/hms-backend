@@ -39,9 +39,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listShiftAssignmentsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listShiftAssignmentsQuerySchema }),
   shiftAssignmentController.listShiftAssignments
 );
 
@@ -59,9 +59,9 @@ router.get(
  * @throws 404 Shift assignment not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: shiftAssignmentIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: shiftAssignmentIdParamsSchema }),
   shiftAssignmentController.getShiftAssignmentById
 );
 
@@ -83,9 +83,9 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createShiftAssignmentSchema }),
+
   authenticate(),
-  validateRequest({ body: createShiftAssignmentSchema }),
   shiftAssignmentController.createShiftAssignment
 );
 
@@ -108,9 +108,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: shiftAssignmentIdParamsSchema, body: updateShiftAssignmentSchema }),
+
   authenticate(),
-  validateRequest({ params: shiftAssignmentIdParamsSchema, body: updateShiftAssignmentSchema }),
   shiftAssignmentController.updateShiftAssignment
 );
 
@@ -128,9 +128,9 @@ router.put(
  * @throws 404 Shift assignment not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: shiftAssignmentIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: shiftAssignmentIdParamsSchema }),
   shiftAssignmentController.deleteShiftAssignment
 );
 

@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const equipmentUtilizationSnapshotController = require('../controllers/equipment-utilization-snapshot.controller');
+const equipmentUtilizationSnapshotController = require('@controllers/equipment-utilization-snapshot/equipment-utilization-snapshot.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
 const { authenticate } = require('@middlewares/auth.middleware');
-const { createEquipmentUtilizationSnapshotSchema, updateEquipmentUtilizationSnapshotSchema, equipmentUtilizationSnapshotIdParamsSchema, listEquipmentUtilizationSnapshotsQuerySchema } = require('../schemas/equipment-utilization-snapshot.schema');
+const { createEquipmentUtilizationSnapshotSchema, updateEquipmentUtilizationSnapshotSchema, equipmentUtilizationSnapshotIdParamsSchema, listEquipmentUtilizationSnapshotsQuerySchema } = require('@validations/equipment-utilization-snapshot/equipment-utilization-snapshot.schema');
 
 router.get('/', authenticate(), validateRequest({ query: listEquipmentUtilizationSnapshotsQuerySchema }), equipmentUtilizationSnapshotController.listEquipmentUtilizationSnapshots);
 router.get('/:id', authenticate(), validateRequest({ params: equipmentUtilizationSnapshotIdParamsSchema }), equipmentUtilizationSnapshotController.getEquipmentUtilizationSnapshotById);

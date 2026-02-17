@@ -38,9 +38,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listPermissionsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listPermissionsQuerySchema }),
   permissionController.listPermissions
 );
 
@@ -58,9 +58,9 @@ router.get(
  * @throws 404 Permission not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: permissionIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: permissionIdParamsSchema }),
   permissionController.getPermissionById
 );
 
@@ -81,9 +81,9 @@ router.get(
  * @throws 400 Foreign key constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createPermissionSchema }),
+
   authenticate(),
-  validateRequest({ body: createPermissionSchema }),
   permissionController.createPermission
 );
 
@@ -104,9 +104,9 @@ router.post(
  * @throws 400 Foreign key constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: permissionIdParamsSchema, body: updatePermissionSchema }),
+
   authenticate(),
-  validateRequest({ params: permissionIdParamsSchema, body: updatePermissionSchema }),
   permissionController.updatePermission
 );
 
@@ -124,9 +124,9 @@ router.put(
  * @throws 404 Permission not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: permissionIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: permissionIdParamsSchema }),
   permissionController.deletePermission
 );
 

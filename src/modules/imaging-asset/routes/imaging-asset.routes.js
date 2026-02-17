@@ -37,9 +37,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listImagingAssetsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listImagingAssetsQuerySchema }),
   imagingAssetController.listImagingAssets
 );
 
@@ -57,9 +57,9 @@ router.get(
  * @throws 404 Imaging asset not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: imagingAssetIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: imagingAssetIdParamsSchema }),
   imagingAssetController.getImagingAssetById
 );
 
@@ -82,9 +82,9 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createImagingAssetSchema }),
+
   authenticate(),
-  validateRequest({ body: createImagingAssetSchema }),
   imagingAssetController.createImagingAsset
 );
 
@@ -106,9 +106,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: imagingAssetIdParamsSchema, body: updateImagingAssetSchema }),
+
   authenticate(),
-  validateRequest({ params: imagingAssetIdParamsSchema, body: updateImagingAssetSchema }),
   imagingAssetController.updateImagingAsset
 );
 
@@ -126,9 +126,9 @@ router.put(
  * @throws 404 Imaging asset not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: imagingAssetIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: imagingAssetIdParamsSchema }),
   imagingAssetController.deleteImagingAsset
 );
 

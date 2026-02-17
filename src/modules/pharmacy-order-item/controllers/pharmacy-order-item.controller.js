@@ -5,7 +5,7 @@
  * @description Request handlers for pharmacy order item endpoints.
  */
 
-const pharmacyOrderItemService = require('../services/pharmacy-order-item.service');
+const pharmacyOrderItemService = require('@services/pharmacy-order-item/pharmacy-order-item.service');
 const { asyncHandler } = require('@lib/async');
 const { sendSuccess, sendPaginated, sendNoContent } = require('@lib/response');
 const { DEFAULT_PAGE, DEFAULT_PAGE_LIMIT } = require('@config/constants');

@@ -37,9 +37,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listLabSamplesQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listLabSamplesQuerySchema }),
   labSampleController.listLabSamples
 );
 
@@ -57,9 +57,9 @@ router.get(
  * @throws 404 Lab sample not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: labSampleIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: labSampleIdParamsSchema }),
   labSampleController.getLabSampleById
 );
 
@@ -82,9 +82,9 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createLabSampleSchema }),
+
   authenticate(),
-  validateRequest({ body: createLabSampleSchema }),
   labSampleController.createLabSample
 );
 
@@ -107,9 +107,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: labSampleIdParamsSchema, body: updateLabSampleSchema }),
+
   authenticate(),
-  validateRequest({ params: labSampleIdParamsSchema, body: updateLabSampleSchema }),
   labSampleController.updateLabSample
 );
 
@@ -127,9 +127,9 @@ router.put(
  * @throws 404 Lab sample not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: labSampleIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: labSampleIdParamsSchema }),
   labSampleController.deleteLabSample
 );
 

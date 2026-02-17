@@ -39,9 +39,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listUserProfilesQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listUserProfilesQuerySchema }),
   userProfileController.listUserProfiles
 );
 
@@ -59,9 +59,9 @@ router.get(
  * @throws 404 User profile not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: userProfileIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: userProfileIdParamsSchema }),
   userProfileController.getUserProfileById
 );
 
@@ -87,9 +87,9 @@ router.get(
  * @throws 409 Unique constraint violation (duplicate user_id)
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createUserProfileSchema }),
+
   authenticate(),
-  validateRequest({ body: createUserProfileSchema }),
   userProfileController.createUserProfile
 );
 
@@ -114,9 +114,9 @@ router.post(
  * @throws 400 Foreign key constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: userProfileIdParamsSchema, body: updateUserProfileSchema }),
+
   authenticate(),
-  validateRequest({ params: userProfileIdParamsSchema, body: updateUserProfileSchema }),
   userProfileController.updateUserProfile
 );
 
@@ -134,9 +134,9 @@ router.put(
  * @throws 404 User profile not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: userProfileIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: userProfileIdParamsSchema }),
   userProfileController.deleteUserProfile
 );
 

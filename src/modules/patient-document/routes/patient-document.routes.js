@@ -40,9 +40,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listPatientDocumentsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listPatientDocumentsQuerySchema }),
   asyncHandler(patientDocumentController.listPatientDocuments)
 );
 
@@ -60,9 +60,9 @@ router.get(
  * @throws 404 Patient document not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: patientDocumentIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: patientDocumentIdParamsSchema }),
   asyncHandler(patientDocumentController.getPatientDocumentById)
 );
 
@@ -86,9 +86,9 @@ router.get(
  * @throws 400 Foreign key constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createPatientDocumentSchema }),
+
   authenticate(),
-  validateRequest({ body: createPatientDocumentSchema }),
   asyncHandler(patientDocumentController.createPatientDocument)
 );
 
@@ -110,9 +110,9 @@ router.post(
  * @throws 404 Patient document not found
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: patientDocumentIdParamsSchema, body: updatePatientDocumentSchema }),
+
   authenticate(),
-  validateRequest({ params: patientDocumentIdParamsSchema, body: updatePatientDocumentSchema }),
   asyncHandler(patientDocumentController.updatePatientDocument)
 );
 
@@ -130,9 +130,9 @@ router.put(
  * @throws 404 Patient document not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: patientDocumentIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: patientDocumentIdParamsSchema }),
   asyncHandler(patientDocumentController.deletePatientDocument)
 );
 

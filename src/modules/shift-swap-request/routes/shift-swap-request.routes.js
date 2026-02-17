@@ -26,9 +26,9 @@ const {
  * @authentication Required (JWT)
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listShiftSwapRequestsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listShiftSwapRequestsQuerySchema }),
   shiftSwapRequestController.listShiftSwapRequests
 );
 
@@ -39,9 +39,9 @@ router.get(
  * @authentication Required (JWT)
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: shiftSwapRequestIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: shiftSwapRequestIdParamsSchema }),
   shiftSwapRequestController.getShiftSwapRequestById
 );
 
@@ -52,9 +52,9 @@ router.get(
  * @authentication Required (JWT)
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createShiftSwapRequestSchema }),
+
   authenticate(),
-  validateRequest({ body: createShiftSwapRequestSchema }),
   shiftSwapRequestController.createShiftSwapRequest
 );
 
@@ -65,9 +65,9 @@ router.post(
  * @authentication Required (JWT)
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: shiftSwapRequestIdParamsSchema, body: updateShiftSwapRequestSchema }),
+
   authenticate(),
-  validateRequest({ params: shiftSwapRequestIdParamsSchema, body: updateShiftSwapRequestSchema }),
   shiftSwapRequestController.updateShiftSwapRequest
 );
 
@@ -78,9 +78,9 @@ router.put(
  * @authentication Required (JWT)
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: shiftSwapRequestIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: shiftSwapRequestIdParamsSchema }),
   shiftSwapRequestController.deleteShiftSwapRequest
 );
 

@@ -42,9 +42,9 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',
+  '/',  validateRequest({ query: listPatientsQuerySchema }),
+
   authenticate(),
-  validateRequest({ query: listPatientsQuerySchema }),
   patientController.listPatients
 );
 
@@ -62,9 +62,9 @@ router.get(
  * @throws 404 Patient not found
  */
 router.get(
-  '/:id',
+  '/:id',  validateRequest({ params: patientIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: patientIdParamsSchema }),
   patientController.getPatientById
 );
 
@@ -90,9 +90,9 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',
+  '/',  validateRequest({ body: createPatientSchema }),
+
   authenticate(),
-  validateRequest({ body: createPatientSchema }),
   patientController.createPatient
 );
 
@@ -118,9 +118,9 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',
+  '/:id',  validateRequest({ params: patientIdParamsSchema, body: updatePatientSchema }),
+
   authenticate(),
-  validateRequest({ params: patientIdParamsSchema, body: updatePatientSchema }),
   patientController.updatePatient
 );
 
@@ -138,9 +138,9 @@ router.put(
  * @throws 404 Patient not found
  */
 router.delete(
-  '/:id',
+  '/:id',  validateRequest({ params: patientIdParamsSchema }),
+
   authenticate(),
-  validateRequest({ params: patientIdParamsSchema }),
   patientController.deletePatient
 );
 
