@@ -48,8 +48,9 @@ const errorMiddleware = (err, req, res, next) => {
   // Log authorization failures for security monitoring
   if (err.statusCode === 403) {
     // Log permission denial attempt
-    const userId = req.user?.id || 'unknown';
-    const tenantId = req.user?.tenantId || 'unknown';
+    const userId = req.user?.id || null;
+    const tenantId = req.user?.tenant_id || req.user?.tenantId || null;
+    const facilityId = req.user?.facility_id || req.user?.facilityId || null;
     
     // Async log audit event (non-blocking)
     createAuditLog({
@@ -58,7 +59,7 @@ const errorMiddleware = (err, req, res, next) => {
       entity_id: req.path,
       user_id: userId,
       tenant_id: tenantId,
-      facility_id: req.user?.facilityId || null,
+      facility_id: facilityId,
       ip_address: req.ip,
       user_agent: req.get('user-agent'),
       details: { 

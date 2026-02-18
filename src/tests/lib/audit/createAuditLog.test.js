@@ -88,6 +88,28 @@ describe('createAuditLog helper', () => {
     });
   });
 
+  it('skips audit write when tenant_id is a placeholder value', async () => {
+    await createAuditLog({
+      tenant_id: 'unknown',
+      action: 'ACCESS',
+      entity: 'authorization',
+      entity_id: '/api/v1/auth/login',
+      user_id: null,
+    });
+
+    await flushImmediate();
+
+    expect(prisma.audit_log.create).not.toHaveBeenCalled();
+    expect(logger.warn).toHaveBeenCalledWith(
+      'Invalid audit log data: missing tenant_id',
+      expect.objectContaining({
+        action: 'ACCESS',
+        entity: 'authorization',
+        entity_id: '/api/v1/auth/login',
+      })
+    );
+  });
+
   it('infers tenant_id from user_id when payload does not include tenant_id', async () => {
     prisma.audit_log.create.mockResolvedValue({ id: 'audit-tenant-from-user' });
     prisma.user.findUnique.mockResolvedValue({ tenant_id: 'tenant-from-user' });

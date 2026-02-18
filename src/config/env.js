@@ -254,7 +254,7 @@ const buildEnv = () => {
   };
 
   if (NODE_ENV === 'development') {
-    logger.warn('Environment variables loaded', {
+    logger.info('Environment variables loaded', {
       nodeEnv: NODE_ENV,
       port: PORT,
       host: HOST,

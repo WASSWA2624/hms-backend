@@ -43,29 +43,16 @@ const withTimeout = async (promise, timeoutMs, timeoutMessage) => {
 };
 
 /**
- * Check database connectivity using MySQL connection pool directly
- * This avoids Prisma's module resolution issues by using the underlying connection
- * 
+ * Check database connectivity using a short-lived mysql2 connection.
+ *
+ * Readiness is polled frequently in development. Probing with Prisma can leave
+ * background acquisition attempts alive after a timeout and produce noisy engine
+ * pool timeout logs. The direct mysql2 check is deterministic and keeps readiness
+ * output stable.
+ *
  * @returns {Promise<{status: string, error?: string}>} Database check result
  */
 const checkDatabaseDirect = async () => {
-  // Try Prisma first, but fall back to direct mysql2 connection if it fails
-  // This ensures we can always check database connectivity even if Prisma's pool has issues
-  if (globalThis.prisma && typeof globalThis.prisma.$queryRaw === 'function') {
-    try {
-      const prismaPromise = globalThis.prisma.$queryRaw`SELECT 1`;
-      // Avoid unhandled rejection if the timeout "wins" but Prisma later rejects.
-      prismaPromise.catch(() => {});
-      // Use shorter timeout (2 seconds) for Prisma - if it fails, fall back to direct connection
-      await withTimeout(prismaPromise, 2000, 'Prisma query timeout');
-      return { status: 'ok' };
-    } catch (prismaError) {
-      // Fall through to direct mysql2 connection
-    }
-  }
-  
-  // Fallback: Test database connection directly using mysql2
-  // This avoids Prisma's pool issues and provides a reliable connectivity check
   try {
     const mysql = require('mysql2/promise');
     

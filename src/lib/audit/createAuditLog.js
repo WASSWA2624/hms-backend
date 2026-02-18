@@ -11,6 +11,7 @@
 
 const { logger } = require('@lib/logging');
 const VALID_AUDIT_ACTIONS = new Set(['CREATE', 'UPDATE', 'DELETE', 'ACCESS', 'EXPORT', 'LOGIN', 'LOGOUT']);
+const INVALID_ID_LITERALS = new Set(['unknown', 'undefined', 'null', 'n/a', 'na']);
 
 // Prisma may not be available during initial setup
 let prisma = null;
@@ -21,7 +22,13 @@ try {
 }
 
 const pickTenantId = (value) => {
-  if (typeof value === 'string' && value.trim()) return value.trim();
+  if (typeof value === 'string' && value.trim()) {
+    const normalized = value.trim();
+    if (INVALID_ID_LITERALS.has(normalized.toLowerCase())) {
+      return null;
+    }
+    return normalized;
+  }
   return null;
 };
 

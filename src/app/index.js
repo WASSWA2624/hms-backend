@@ -22,7 +22,7 @@
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
-const { getCorsConfig } = require('@config/cors');
+const { corsOptions } = require('@config/cors');
 const securityHeaders = require('@middlewares/security.middleware');
 const sessionMiddleware = require('@middlewares/session.middleware');
 const csrfMiddleware = require('@middlewares/csrf.middleware');
@@ -58,8 +58,7 @@ const createApp = () => {
     });
 
     // 2. CORS middleware (handles preflight requests)
-    // Call getCorsConfig() to ensure fresh closure with current environment values
-    app.use(cors(getCorsConfig()));
+    app.use(cors(corsOptions));
     
     // 3. Cookie parser middleware
     app.use(cookieParser());
