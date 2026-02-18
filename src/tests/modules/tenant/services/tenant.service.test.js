@@ -97,8 +97,8 @@ describe('Tenant Service', () => {
       expect(tenantRepository.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           OR: expect.arrayContaining([
-            { name: { contains: 'hospital', mode: 'insensitive' } },
-            { slug: { contains: 'hospital', mode: 'insensitive' } }
+            { name: { contains: 'hospital' } },
+            { slug: { contains: 'hospital' } }
           ])
         }),
         0,
