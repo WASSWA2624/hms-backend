@@ -18,22 +18,41 @@
  * @param {Object} [schema.query] - Zod schema for query parameters
  * @returns {Function} Express middleware
  */
+const assignValidatedValue = (req, key, value) => {
+  // Express 5 exposes req.query via accessor semantics. Setting a concrete value
+  // ensures downstream handlers receive validated/coerced data.
+  try {
+    req[key] = value;
+  } catch (error) {
+    // Fall through to defineProperty override.
+  }
+
+  if (req[key] !== value) {
+    Object.defineProperty(req, key, {
+      value,
+      writable: true,
+      enumerable: true,
+      configurable: true
+    });
+  }
+};
+
 const validate = (schema) => {
   return (req, res, next) => {
     try {
       // Validate body if schema provided
       if (schema.body) {
-        req.body = schema.body.parse(req.body);
+        assignValidatedValue(req, 'body', schema.body.parse(req.body));
       }
       
       // Validate params if schema provided
       if (schema.params) {
-        req.params = schema.params.parse(req.params);
+        assignValidatedValue(req, 'params', schema.params.parse(req.params));
       }
       
       // Validate query if schema provided
       if (schema.query) {
-        req.query = schema.query.parse(req.query);
+        assignValidatedValue(req, 'query', schema.query.parse(req.query));
       }
       
       // All validations passed
