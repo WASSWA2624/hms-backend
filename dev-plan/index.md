@@ -54,6 +54,13 @@ When a conflict exists, resolve using this order:
 16. **Phase 15: Performance and Readiness Checks** (`P008_perf.mdc`)
     - Performance thresholds, final rule audit, release readiness.
 
+## Phase and Module Chronology Lock (Mandatory)
+
+- Execute phases in listed order unless an earlier phase explicitly declares a read-only verification checkpoint.
+- Do not start module implementation (`P011_modules.mdc`) before completing prerequisites in foundational and model/endpoint phases (`P000`-`P010` as applicable).
+- Module chronology is locked to `P011_modules.mdc`; do not reorder groups/modules for convenience.
+- Any approved deferral must include owner, reason, and target phase/date in the relevant phase file.
+
 ## Write-Up Coverage Matrix
 
 Backend plan coverage for `hms-frontend/write-up.md` (sections 0-22):
@@ -99,6 +106,7 @@ All rule files in `.cursor/rules` are mapped to at least one phase:
 - Frontend feature parity source (`hms-frontend/dev-plan/P010_core-features.md`): backend module parity locked at `160/160`.
 - Frontend route parity source (`hms-frontend/dev-plan/P011_screens-routes.md`): backend module-to-route mapping remains synchronized through Group `20` plus Group `15A` biomedical.
 - Commercial/entitlement source (`hms-frontend/subscription-plan.md`): Group `18` models/endpoints/seeding must enforce tier limits, add-on eligibility, and upgrade/downgrade suitability checks.
+- Module execution chronology source: `hms-backend/dev-plan/P011_modules.mdc` group and step order is the authoritative implementation sequence; router mount order is not an execution-order override.
 
 ## Current Implementation Snapshot (2026-02-17)
 

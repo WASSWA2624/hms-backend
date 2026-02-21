@@ -23,6 +23,12 @@ All module endpoints **must** use the `/api/v<version>/` base path prefix as req
 - Action endpoints allowed: `POST /<resource>/{id}/<action>` (must be validated and authorized)
 - Query params use `snake_case` and support `page`, `limit`, `sort_by`, `order`
 
+## Module Modularity and Sequence Contract (Mandatory)
+- Endpoint groups must remain modular: one HMS module maps to one primary resource path family.
+- Do not collapse multiple module contracts into one endpoint family when modules are distinct in `P011_modules.mdc`.
+- Implement endpoint families in the same group chronology as `P011_modules.mdc` (Groups `1` through `20`, with `15A` between `15` and `16`).
+- Action/control overlays in sections `25` to `28` must extend existing modular resources; they do not authorize undocumented ad hoc module creation.
+
 ## 0. System Health Endpoints (Unversioned)
 These endpoints are **system endpoints** and are not mounted under `/api/v<version>` (see `health-checks.mdc`):
 ```javascript
