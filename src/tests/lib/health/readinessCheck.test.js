@@ -119,6 +119,26 @@ describe('readinessCheck helper', () => {
     );
   });
 
+  it('fails over from a hanging Prisma check after the 2-second timeout window', async () => {
+    const prismaQuery = jest.fn(() => new Promise(() => {}));
+    const createConnection = jest.fn().mockRejectedValue(new Error('mysql down'));
+    const { readinessCheck } = loadReadinessModule({
+      prismaClient: { $queryRaw: prismaQuery },
+      mysqlCreateConnectionImpl: createConnection,
+    });
+
+    const startedAt = Date.now();
+    const result = await readinessCheck();
+    const elapsedMs = Date.now() - startedAt;
+
+    expect(result.status).toBe('not_ready');
+    expect(result.checks.database).toBe('error');
+    expect(prismaQuery).toHaveBeenCalledTimes(1);
+    expect(createConnection).toHaveBeenCalledTimes(1);
+    expect(elapsedMs).toBeGreaterThanOrEqual(1900);
+    expect(elapsedMs).toBeLessThan(3000);
+  });
+
   it('caches successful readiness checks for ttl window', async () => {
     const prismaQuery = jest.fn().mockResolvedValue([{ ok: 1 }]);
     const { readinessCheck } = loadReadinessModule({

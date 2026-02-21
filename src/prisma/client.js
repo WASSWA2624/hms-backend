@@ -23,8 +23,37 @@ const { PrismaClient } = prismaPackage;
 
 // Import MariaDB adapter for MySQL (Prisma 7.x requirement)
 const { PrismaMariaDb } = require('@prisma/adapter-mariadb');
+const mysql2 = require('mysql2');
 
-const { NODE_ENV, DATABASE_URL } = require('@config/env');
+if (typeof mysql2.createPool !== 'function') {
+  throw new Error('mysql2 package is required for database connectivity support.');
+}
+
+const loadEnvConfig = () => {
+  try {
+    return require('@config/env');
+  } catch (error) {
+    const isMissingConfigAlias =
+      error?.code === 'MODULE_NOT_FOUND' &&
+      typeof error?.message === 'string' &&
+      error.message.includes("'@config/env'");
+
+    if (!isMissingConfigAlias) {
+      throw error;
+    }
+
+    // Support requiring Prisma client from scripts/CI where runtime aliases are not pre-registered.
+    return require('../config/env');
+  }
+};
+
+const {
+  NODE_ENV,
+  DATABASE_URL,
+  PRISMA_POOL_CONNECTION_LIMIT,
+  PRISMA_POOL_CONNECT_TIMEOUT_MS,
+  PRISMA_POOL_ACQUIRE_TIMEOUT_MS,
+} = loadEnvConfig();
 
 const FRIENDLY_ID_PREFIX_LENGTH = 3;
 const DEFAULT_FRIENDLY_ID_PADDING = 7;
@@ -355,6 +384,9 @@ const adapter = new PrismaMariaDb({
   user: connectionConfig.user,
   password: connectionConfig.password,
   database: connectionConfig.database,
+  connectionLimit: PRISMA_POOL_CONNECTION_LIMIT,
+  connectTimeout: PRISMA_POOL_CONNECT_TIMEOUT_MS,
+  acquireTimeout: PRISMA_POOL_ACQUIRE_TIMEOUT_MS,
 });
 
 // Prisma 7.x: Pass adapter to PrismaClient constructor
