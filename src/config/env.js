@@ -10,7 +10,6 @@
 
 // Load .env once here (no other file should read process.env)
 const path = require('path');
-const { logger } = require('@lib/logging');
 require('dotenv').config({
   path: path.resolve(__dirname, '../../.env'),
   // Dotenv's runtime tips are useful for local manual runs, but they add heavy
@@ -252,26 +251,6 @@ const buildEnv = () => {
     AWS_REGION,
     AWS_S3_BUCKET
   };
-
-  if (NODE_ENV === 'development') {
-    logger.info('Environment variables loaded', {
-      nodeEnv: NODE_ENV,
-      port: PORT,
-      host: HOST,
-      corsOrigins: CORS_ORIGINS,
-      storageProvider: STORAGE_PROVIDER,
-      appPublicUrl: APP_PUBLIC_URL,
-      appDisplayName: APP_DISPLAY_NAME,
-      appShortName: APP_SHORT_NAME,
-      handleSigint: HANDLE_SIGINT,
-      allowPrivateNetworkOrigins: ALLOW_PRIVATE_NETWORK_ORIGINS,
-      wsMaxConnections: WS_MAX_CONNECTIONS,
-      wsHeartbeatInterval: WS_HEARTBEAT_INTERVAL,
-      wsHeartbeatTimeout: WS_HEARTBEAT_TIMEOUT,
-      seedRecordCount: SEED_RECORD_COUNT,
-      seedRandomSeed: SEED_RANDOM_SEED
-    });
-  }
 
   return envConfig;
 };
