@@ -9,6 +9,7 @@ This document defines the complete `/api/v<version>` surface for the HMS backend
 All module endpoints **must** use the `/api/v<version>/` base path prefix as required by `api.mdc` and `api-versioning.mdc` (initial release: `/api/v1/`).
 
 **Write-up alignment:** `write-up.md` sections 6, 7, 9, 10, 11, 12.2, 13, 18  
+**Commercial source alignment:** `hms-frontend/subscription-plan.md` for plan tiers, limits, add-on eligibility, and upgrade signals.
 **Primary rules:** `api.mdc`, `api-versioning.mdc`, `response-format.mdc`, `validation.mdc`, `offline-support.mdc`, `compliance.mdc`
 
 ## Conventions
@@ -1259,14 +1260,21 @@ All workflow-critical actions must be modeled as explicit action endpoints and a
 
 ## 26. Commercial, Entitlement, and Billing Control Endpoints
 Write-up alignment: sections 9 and 10.
+Subscription/tier source-of-truth alignment: `hms-frontend/subscription-plan.md`.
 
 ```javascript
+/api/v<version>/subscription-plans/{id}/entitlements
+/api/v<version>/subscription-plans/{id}/add-on-eligibility
 /api/v<version>/subscriptions/{id}/upgrade
 /api/v<version>/subscriptions/{id}/downgrade
 /api/v<version>/subscriptions/{id}/renew
 /api/v<version>/subscriptions/{id}/proration-preview
+/api/v<version>/subscriptions/{id}/usage-summary
+/api/v<version>/subscriptions/{id}/fit-check
+/api/v<version>/subscriptions/{id}/upgrade-recommendation
 /api/v<version>/module-subscriptions/{id}/activate
 /api/v<version>/module-subscriptions/{id}/deactivate
+/api/v<version>/module-subscriptions/{id}/eligibility-check
 /api/v<version>/payments/{id}/reconcile
 /api/v<version>/payments/{id}/channel-breakdown
 /api/v<version>/subscription-invoices/{id}/collect

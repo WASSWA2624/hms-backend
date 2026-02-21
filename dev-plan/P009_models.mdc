@@ -2,9 +2,9 @@
 alwaysApply: true
 ---
 
-## Phase 8 – Prisma schema (HMS-specific)
+## Phase 9 - Prisma schema (HMS-specific)
 
-**Write-up alignment:** `write-up.md` sections 6, 12, 13, 18.3  
+**Write-up alignment:** `write-up.md` sections 6, 9, 10, 12, 13, 18.3  
 **Primary rules:** `prisma.mdc`, `compliance.mdc`, `offline-support.mdc`, `internationalization.mdc`
 
 ### Step 8.1: Define enums
@@ -129,6 +129,12 @@ alwaysApply: true
 ### Step 8.19: Subscription, licensing & module management models
 - `subscription_plan`, `subscription`, `subscription_invoice`
 - `module`, `module_subscription`, `license`
+- Align plan metadata with `hms-frontend/subscription-plan.md` (tier code, billing cycle, limit policy, and add-on eligibility contracts)
+- Support entitlement governance fields needed for plan-fit decisions:
+  - threshold/limit metadata for users, facilities, storage, and module gates
+  - add-on minimum-plan requirement mapping
+  - upgrade/downgrade/proration state tracking with auditable timestamps
+  - plan-fit status snapshot fields (healthy/approaching_limit/exceeded)
 
 ### Step 8.20: Compliance, audit & security models
 - `audit_log`, `phi_access_log`, `data_processing_log`
@@ -159,3 +165,5 @@ alwaysApply: true
 - All mutations produce audit logs (handled in services)
 - All core records carry tenancy scope (`tenant_id`, plus facility/branch where applicable)
 - Version/conflict fields are available for offline-safe mutations where required (`version`, `updated_at`, optional `etag`)
+- Group 18 entities can enforce minimum-plan add-on eligibility and deterministic entitlement denials.
+- Subscription entities support plan-fit and limit-state evaluation without schema changes.

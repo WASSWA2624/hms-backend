@@ -1,6 +1,6 @@
-## Phase 7 – Testing & CI
+## Phase 7 - Testing & CI
 
-**Write-up alignment:** `write-up.md` section 15, section 18.2  
+**Write-up alignment:** `write-up.md` section 15, section 18.2, section 6.18  
 **Primary rules:** `testing.mdc`, `validation.mdc`, `response-format.mdc`, `auth-security.mdc`
 
 ### Step 7.1: Global test setup
@@ -56,3 +56,6 @@
 - Add regression suites for section 7 workflow contracts: OPD, IPD, emergency, diagnostics, pharmacy, billing/claims, roster, biomedical.
 - Add release-blocking checks for P0/P1 defects, i18n key parity, and security test failures.
 - Add contract tests for module activation enforcement (disabled modules return deterministic forbidden responses).
+- Add contract tests for minimum-plan add-on eligibility and deterministic denial responses.
+- Add billing tests for proration preview accuracy and upgrade/downgrade lifecycle transitions.
+- Add plan-fit evaluation tests for threshold states (`healthy`, `approaching_limit`, `exceeded`).

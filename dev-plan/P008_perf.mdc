@@ -1,6 +1,6 @@
 ﻿## Phase 15 - Performance & release readiness
 
-**Write-up alignment:** `write-up.md` sections 14, 15, 18.2, 19, 20  
+**Write-up alignment:** `write-up.md` sections 10.3, 14, 15, 18.2, 19, 20  
 **Primary rules:** `performance.mdc`, `offline-support.mdc`, `error-logging.mdc`, `documentation.mdc`
 
 ### Step 8.1: Enforce pagination
@@ -94,6 +94,10 @@
 - Verify health endpoints remain unversioned: `/health`, `/ready`, `/live`
 - **Verification**: Health endpoints are not mounted under `/api/v<version>` and return correct schemas.
 
+#### Step 8.5.8: Verify entitlement and billing control performance (read-only)
+- Verify section `26` action endpoints (`upgrade`, `downgrade`, `proration-preview`, `fit-check`, activation/deactivation actions) meet non-regression latency budgets.
+- **Verification**: Control-path median latency and error rate are within release thresholds.
+
 ## Verification Checklist (run after each phase)
 
 - [ ] All files follow CommonJS (`require`/`module.exports`)
@@ -123,6 +127,7 @@
 - [ ] `prisma.config.js` exists at project root for Prisma 7.x migrations (per `prisma.mdc`)
 - [ ] `env.template.txt` exists (not `.env.example`) per `constants-env.mdc`
 - [ ] WebSocket events are in `src/lib/websocket/events.js` (not `src/websockets/events.js`) per `websockets.mdc`
+- [ ] Commercial control endpoints and plan-fit checks are observable (latency, failures, denial reasons).
 
 ---
 

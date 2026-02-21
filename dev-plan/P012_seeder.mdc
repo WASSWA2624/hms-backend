@@ -2,11 +2,12 @@
 alwaysApply: true
 ---
 
-## Phase 12 – Seeder (Faker-based)
+## Phase 12 - Seeder (Faker-based)
 
 **Scope:** Seed data must align with `P009_models.mdc` and HMS endpoints in `P010_api_endpoints.mdc`. Cover all modules in `P011_modules.mdc` with minimum viable records for API completeness.
 
-**Write-up alignment:** `write-up.md` sections 6, 7, 9.2, 9.3  
+**Write-up alignment:** `write-up.md` sections 6, 7, 9.2, 9.3, 10.2  
+**Commercial source alignment:** `hms-frontend/subscription-plan.md`
 **Primary rules:** `prisma.mdc`, `testing.mdc`, `compliance.mdc`
 
 ### Step 12.1: Add Faker dependency
@@ -51,5 +52,9 @@ alwaysApply: true
 ### Phase 12 supplemental compliance gates
 
 - Include free-core and paid-module entitlement seed scenarios for activation testing (`module`, `module_subscription`, `subscription_plan`, `subscription`).
+- Seed canonical tier records from `hms-frontend/subscription-plan.md`: `free`, `basic`, `pro`, `advanced`, `custom`.
+- Seed add-on catalog and minimum-plan eligibility mappings (inventory/procurement lite, biomedical suite, compliance/audit suite, advanced analytics, integrations/webhooks pack, storage, SMS).
+- Seed plan-fit states for subscription tests: `healthy`, `approaching_limit`, and `exceeded`.
+- Seed usage-threshold scenarios that trigger upgrade recommendation and downgrade-review logic.
 - Seed conflict/offline test records with versioned updates for idempotency and sync-replay test packs.
 - Seed sensitive-data and audit-heavy paths (PHI access, financial events, biomedical actions) for compliance regression tests.
