@@ -2,7 +2,7 @@
 alwaysApply: true
 ---
 
-## Phase 14 – Locale expansion
+## Phase 14 - Locale expansion
 
 **Scope:** Locales must match `SUPPORTED_LOCALES` in `src/config/constants.js` and follow `internationalization.mdc` (including RTL handling).
 

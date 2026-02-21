@@ -2,7 +2,7 @@
 alwaysApply: true
 ---
 
-## Phase 2 – Prisma foundation (no models yet)
+## Phase 2 - Prisma foundation (no models yet)
 
 **Write-up alignment:** `write-up.md` sections 5.3, 12.1, 12.5, 19.1  
 **Primary rules:** `prisma.mdc`, `constants-env.mdc`, `project-structure.mdc`

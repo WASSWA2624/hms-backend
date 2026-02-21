@@ -2,7 +2,7 @@
 alwaysApply: true
 ---
 
-## Phase 4 – Internationalization (i18n) base
+## Phase 4 - Internationalization (i18n) base
 
 **Write-up alignment:** `write-up.md` sections 8.5, 12.2, 15.3  
 **Primary rules:** `internationalization.mdc`, `response-format.mdc`, `validation.mdc`

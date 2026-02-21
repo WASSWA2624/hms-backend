@@ -2,7 +2,7 @@
 alwaysApply: true
 ---
 
-## Phase 1 – Core utilities (small, deterministic steps)
+## Phase 1 - Core utilities (small, deterministic steps)
 
 **Write-up alignment:** `write-up.md` sections 5.3, 5.4, 5.7, 9.1, 12.1, 13, 14.5, 18.1  
 **Primary rules:** `auth-security.mdc`, `response-format.mdc`, `error-logging.mdc`, `health-checks.mdc`, `compliance.mdc`
@@ -206,7 +206,7 @@ alwaysApply: true
   - Direct mysql2 connection using `DATABASE_URL`
   - Timeout after 5 seconds max
   - Used when Prisma is unavailable/fails/times out
-- **Verification**: Fallback executes only when primary fails; total DB check time ≤ 7 seconds.
+- **Verification**: Fallback executes only when primary fails; total DB check time <= 7 seconds.
 
 #### Step 1.21.4: Implement `livenessCheck`
 - Create `src/lib/health/livenessCheck.js` (liveness check minimal response)
@@ -229,7 +229,7 @@ alwaysApply: true
   - Access token expiration (e.g., '15m')
   - Refresh token expiration (e.g., '7d')
   - Algorithm ('HS256')
-  - Reads `JWT_SECRET` from `@config/env` (validated to be ≥ 32 characters)
+  - Reads `JWT_SECRET` from `@config/env` (validated to be >= 32 characters)
 - **Verification**: JWT config exports configuration object, validates JWT_SECRET length
 
 ### Step 1.24: Configure security
@@ -273,7 +273,7 @@ alwaysApply: true
 - **Verification**: Roles exported as constants or configuration object
 
 ### Step 1.28: Configure permissions
-- Populate `src/config/permissions.js` with permission mappings (role → permissions)
+- Populate `src/config/permissions.js` with permission mappings (role -> permissions)
 - **Verification**: Permissions exported, maps roles to permission sets
 
 ### Step 1.29: Populate config barrel exports

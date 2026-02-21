@@ -34,911 +34,911 @@ GET /live
 ## 1. Authentication & Sessions
 ```javascript
 /api/v<version>/auth/
-├── POST /login                     // Authenticate user and return JWT
-├── POST /logout                    // Logout and invalidate session
-├── POST /refresh                   // Refresh JWT token
-├── POST /register                  // Register new user (if enabled)
-├── POST /verify-email              // Verify email with token/code
-├── POST /verify-phone              // Verify phone with token/code
-├── POST /resend-verification       // Resend verification email/SMS
-├── POST /forgot-password           // Send password reset email/SMS
-├── POST /reset-password            // Reset password with token
-├── POST /change-password           // Change password (authenticated)
-└── GET /me                         // Get current user info
+- POST /login                     // Authenticate user and return JWT
+- POST /logout                    // Logout and invalidate session
+- POST /refresh                   // Refresh JWT token
+- POST /register                  // Register new user (if enabled)
+- POST /verify-email              // Verify email with token/code
+- POST /verify-phone              // Verify phone with token/code
+- POST /resend-verification       // Resend verification email/SMS
+- POST /forgot-password           // Send password reset email/SMS
+- POST /reset-password            // Reset password with token
+- POST /change-password           // Change password (authenticated)
+- GET /me                         // Get current user info
 
 /api/v<version>/user-sessions/
-├── GET /                           // List user sessions with pagination
-├── GET /{id}                       // Get user session by ID
-└── DELETE /{id}                    // Revoke session
+- GET /                           // List user sessions with pagination
+- GET /{id}                       // Get user session by ID
+- DELETE /{id}                    // Revoke session
 ```
 
 ## 2. Tenancy, Facilities & Organization
 ```javascript
 /api/v<version>/tenants/
-├── GET /                           // List tenants with pagination
-├── POST /                          // Create tenant
-├── GET /{id}                       // Get tenant by ID
-├── PUT /{id}                       // Update tenant
-└── DELETE /{id}                    // Soft delete tenant
+- GET /                           // List tenants with pagination
+- POST /                          // Create tenant
+- GET /{id}                       // Get tenant by ID
+- PUT /{id}                       // Update tenant
+- DELETE /{id}                    // Soft delete tenant
 
 /api/v<version>/facilities/
-├── GET /                           // List facilities with pagination
-├── POST /                          // Create facility
-├── GET /{id}                       // Get facility by ID
-├── PUT /{id}                       // Update facility
-├── DELETE /{id}                    // Soft delete facility
-└── GET /{id}/branches              // Get facility branches
+- GET /                           // List facilities with pagination
+- POST /                          // Create facility
+- GET /{id}                       // Get facility by ID
+- PUT /{id}                       // Update facility
+- DELETE /{id}                    // Soft delete facility
+- GET /{id}/branches              // Get facility branches
 
 /api/v<version>/branches/
-├── GET /                           // List branches with pagination
-├── POST /                          // Create branch
-├── GET /{id}                       // Get branch by ID
-├── PUT /{id}                       // Update branch
-└── DELETE /{id}                    // Soft delete branch
+- GET /                           // List branches with pagination
+- POST /                          // Create branch
+- GET /{id}                       // Get branch by ID
+- PUT /{id}                       // Update branch
+- DELETE /{id}                    // Soft delete branch
 
 /api/v<version>/departments/
-├── GET /                           // List departments with pagination
-├── POST /                          // Create department
-├── GET /{id}                       // Get department by ID
-├── PUT /{id}                       // Update department
-├── DELETE /{id}                    // Soft delete department
-└── GET /{id}/units                 // Get department units
+- GET /                           // List departments with pagination
+- POST /                          // Create department
+- GET /{id}                       // Get department by ID
+- PUT /{id}                       // Update department
+- DELETE /{id}                    // Soft delete department
+- GET /{id}/units                 // Get department units
 
 /api/v<version>/units/
-├── GET /                           // List units with pagination
-├── POST /                          // Create unit
-├── GET /{id}                       // Get unit by ID
-├── PUT /{id}                       // Update unit
-└── DELETE /{id}                    // Soft delete unit
+- GET /                           // List units with pagination
+- POST /                          // Create unit
+- GET /{id}                       // Get unit by ID
+- PUT /{id}                       // Update unit
+- DELETE /{id}                    // Soft delete unit
 
 /api/v<version>/rooms/
-├── GET /                           // List rooms with pagination
-├── POST /                          // Create room
-├── GET /{id}                       // Get room by ID
-├── PUT /{id}                       // Update room
-└── DELETE /{id}                    // Soft delete room
+- GET /                           // List rooms with pagination
+- POST /                          // Create room
+- GET /{id}                       // Get room by ID
+- PUT /{id}                       // Update room
+- DELETE /{id}                    // Soft delete room
 
 /api/v<version>/wards/
-├── GET /                           // List wards with pagination
-├── POST /                          // Create ward
-├── GET /{id}                       // Get ward by ID
-├── PUT /{id}                       // Update ward
-├── DELETE /{id}                    // Soft delete ward
-└── GET /{id}/beds                  // Get ward beds
+- GET /                           // List wards with pagination
+- POST /                          // Create ward
+- GET /{id}                       // Get ward by ID
+- PUT /{id}                       // Update ward
+- DELETE /{id}                    // Soft delete ward
+- GET /{id}/beds                  // Get ward beds
 
 /api/v<version>/beds/
-├── GET /                           // List beds with pagination
-├── POST /                          // Create bed
-├── GET /{id}                       // Get bed by ID
-├── PUT /{id}                       // Update bed
-└── DELETE /{id}                    // Soft delete bed
+- GET /                           // List beds with pagination
+- POST /                          // Create bed
+- GET /{id}                       // Get bed by ID
+- PUT /{id}                       // Update bed
+- DELETE /{id}                    // Soft delete bed
 
 /api/v<version>/addresses/
-├── GET /                           // List addresses with pagination
-├── POST /                          // Create address
-├── GET /{id}                       // Get address by ID
-├── PUT /{id}                       // Update address
-└── DELETE /{id}                    // Soft delete address
+- GET /                           // List addresses with pagination
+- POST /                          // Create address
+- GET /{id}                       // Get address by ID
+- PUT /{id}                       // Update address
+- DELETE /{id}                    // Soft delete address
 
 /api/v<version>/contacts/
-├── GET /                           // List contacts with pagination
-├── POST /                          // Create contact
-├── GET /{id}                       // Get contact by ID
-├── PUT /{id}                       // Update contact
-└── DELETE /{id}                    // Soft delete contact
+- GET /                           // List contacts with pagination
+- POST /                          // Create contact
+- GET /{id}                       // Get contact by ID
+- PUT /{id}                       // Update contact
+- DELETE /{id}                    // Soft delete contact
 ```
 
 ## 3. Users, Profiles & RBAC
 ```javascript
 /api/v<version>/users/
-├── GET /                           // List users with pagination
-├── POST /                          // Create user
-├── GET /{id}                       // Get user by ID
-├── PUT /{id}                       // Update user
-└── DELETE /{id}                    // Soft delete user
+- GET /                           // List users with pagination
+- POST /                          // Create user
+- GET /{id}                       // Get user by ID
+- PUT /{id}                       // Update user
+- DELETE /{id}                    // Soft delete user
 
 /api/v<version>/user-profiles/
-├── GET /                           // List user profiles with pagination
-├── POST /                          // Create user profile
-├── GET /{id}                       // Get user profile by ID
-├── PUT /{id}                       // Update user profile
-└── DELETE /{id}                    // Soft delete user profile
+- GET /                           // List user profiles with pagination
+- POST /                          // Create user profile
+- GET /{id}                       // Get user profile by ID
+- PUT /{id}                       // Update user profile
+- DELETE /{id}                    // Soft delete user profile
 
 /api/v<version>/roles/
-├── GET /                           // List roles with pagination
-├── POST /                          // Create role
-├── GET /{id}                       // Get role by ID
-├── PUT /{id}                       // Update role
-└── DELETE /{id}                    // Soft delete role
+- GET /                           // List roles with pagination
+- POST /                          // Create role
+- GET /{id}                       // Get role by ID
+- PUT /{id}                       // Update role
+- DELETE /{id}                    // Soft delete role
 
 /api/v<version>/permissions/
-├── GET /                           // List permissions with pagination
-├── POST /                          // Create permission
-├── GET /{id}                       // Get permission by ID
-├── PUT /{id}                       // Update permission
-└── DELETE /{id}                    // Soft delete permission
+- GET /                           // List permissions with pagination
+- POST /                          // Create permission
+- GET /{id}                       // Get permission by ID
+- PUT /{id}                       // Update permission
+- DELETE /{id}                    // Soft delete permission
 
 /api/v<version>/role-permissions/
-├── GET /                           // List role-permission mappings
-├── POST /                          // Create role-permission mapping
-├── GET /{id}                       // Get role-permission mapping
-├── PUT /{id}                       // Update role-permission mapping
-└── DELETE /{id}                    // Soft delete role-permission mapping
+- GET /                           // List role-permission mappings
+- POST /                          // Create role-permission mapping
+- GET /{id}                       // Get role-permission mapping
+- PUT /{id}                       // Update role-permission mapping
+- DELETE /{id}                    // Soft delete role-permission mapping
 
 /api/v<version>/user-roles/
-├── GET /                           // List user-role mappings
-├── POST /                          // Create user-role mapping
-├── GET /{id}                       // Get user-role mapping
-├── PUT /{id}                       // Update user-role mapping
-└── DELETE /{id}                    // Soft delete user-role mapping
+- GET /                           // List user-role mappings
+- POST /                          // Create user-role mapping
+- GET /{id}                       // Get user-role mapping
+- PUT /{id}                       // Update user-role mapping
+- DELETE /{id}                    // Soft delete user-role mapping
 
 /api/v<version>/api-keys/
-├── GET /                           // List API keys with pagination
-├── POST /                          // Create API key
-├── GET /{id}                       // Get API key by ID
-├── PUT /{id}                       // Update API key
-└── DELETE /{id}                    // Soft delete API key
+- GET /                           // List API keys with pagination
+- POST /                          // Create API key
+- GET /{id}                       // Get API key by ID
+- PUT /{id}                       // Update API key
+- DELETE /{id}                    // Soft delete API key
 
 /api/v<version>/api-key-permissions/
-├── GET /                           // List API key permissions
-├── POST /                          // Create API key permission
-├── GET /{id}                       // Get API key permission
-├── PUT /{id}                       // Update API key permission
-└── DELETE /{id}                    // Soft delete API key permission
+- GET /                           // List API key permissions
+- POST /                          // Create API key permission
+- GET /{id}                       // Get API key permission
+- PUT /{id}                       // Update API key permission
+- DELETE /{id}                    // Soft delete API key permission
 
 /api/v<version>/user-mfas/
-├── GET /                           // List user MFA configs
-├── POST /                          // Create user MFA config
-├── GET /{id}                       // Get user MFA by ID
-├── PUT /{id}                       // Update user MFA
-├── DELETE /{id}                    // Soft delete user MFA
-├── POST /{id}/verify               // Verify MFA code
-├── POST /{id}/enable               // Enable MFA
-└── POST /{id}/disable              // Disable MFA
+- GET /                           // List user MFA configs
+- POST /                          // Create user MFA config
+- GET /{id}                       // Get user MFA by ID
+- PUT /{id}                       // Update user MFA
+- DELETE /{id}                    // Soft delete user MFA
+- POST /{id}/verify               // Verify MFA code
+- POST /{id}/enable               // Enable MFA
+- POST /{id}/disable              // Disable MFA
 
 /api/v<version>/oauth-accounts/
-├── GET /                           // List OAuth accounts
-├── POST /                          // Link OAuth account
-├── GET /{id}                       // Get OAuth account by ID
-├── PUT /{id}                       // Update OAuth account
-└── DELETE /{id}                    // Soft delete OAuth account
+- GET /                           // List OAuth accounts
+- POST /                          // Link OAuth account
+- GET /{id}                       // Get OAuth account by ID
+- PUT /{id}                       // Update OAuth account
+- DELETE /{id}                    // Soft delete OAuth account
 ```
 
 ## 4. Patient Registry & Demographics
 ```javascript
 /api/v<version>/patients/
-├── GET /                           // List patients with pagination
-├── POST /                          // Create patient
-├── GET /{id}                       // Get patient by ID
-├── PUT /{id}                       // Update patient
-├── DELETE /{id}                    // Soft delete patient
-├── GET /{id}/identifiers           // Get patient identifiers
-├── GET /{id}/contacts              // Get patient contacts
-├── GET /{id}/guardians             // Get patient guardians
-├── GET /{id}/allergies             // Get patient allergies
-├── GET /{id}/medical-histories     // Get patient medical history
-└── GET /{id}/documents             // Get patient documents
+- GET /                           // List patients with pagination
+- POST /                          // Create patient
+- GET /{id}                       // Get patient by ID
+- PUT /{id}                       // Update patient
+- DELETE /{id}                    // Soft delete patient
+- GET /{id}/identifiers           // Get patient identifiers
+- GET /{id}/contacts              // Get patient contacts
+- GET /{id}/guardians             // Get patient guardians
+- GET /{id}/allergies             // Get patient allergies
+- GET /{id}/medical-histories     // Get patient medical history
+- GET /{id}/documents             // Get patient documents
 
 /api/v<version>/patient-identifiers/
-├── GET /                           // List patient identifiers
-├── POST /                          // Create patient identifier
-├── GET /{id}                       // Get patient identifier by ID
-├── PUT /{id}                       // Update patient identifier
-└── DELETE /{id}                    // Soft delete patient identifier
+- GET /                           // List patient identifiers
+- POST /                          // Create patient identifier
+- GET /{id}                       // Get patient identifier by ID
+- PUT /{id}                       // Update patient identifier
+- DELETE /{id}                    // Soft delete patient identifier
 
 /api/v<version>/patient-contacts/
-├── GET /                           // List patient contacts
-├── POST /                          // Create patient contact
-├── GET /{id}                       // Get patient contact by ID
-├── PUT /{id}                       // Update patient contact
-└── DELETE /{id}                    // Soft delete patient contact
+- GET /                           // List patient contacts
+- POST /                          // Create patient contact
+- GET /{id}                       // Get patient contact by ID
+- PUT /{id}                       // Update patient contact
+- DELETE /{id}                    // Soft delete patient contact
 
 /api/v<version>/patient-guardians/
-├── GET /                           // List patient guardians
-├── POST /                          // Create patient guardian
-├── GET /{id}                       // Get patient guardian by ID
-├── PUT /{id}                       // Update patient guardian
-└── DELETE /{id}                    // Soft delete patient guardian
+- GET /                           // List patient guardians
+- POST /                          // Create patient guardian
+- GET /{id}                       // Get patient guardian by ID
+- PUT /{id}                       // Update patient guardian
+- DELETE /{id}                    // Soft delete patient guardian
 
 /api/v<version>/patient-allergies/
-├── GET /                           // List patient allergies
-├── POST /                          // Create patient allergy
-├── GET /{id}                       // Get patient allergy by ID
-├── PUT /{id}                       // Update patient allergy
-└── DELETE /{id}                    // Soft delete patient allergy
+- GET /                           // List patient allergies
+- POST /                          // Create patient allergy
+- GET /{id}                       // Get patient allergy by ID
+- PUT /{id}                       // Update patient allergy
+- DELETE /{id}                    // Soft delete patient allergy
 
 /api/v<version>/patient-medical-histories/
-├── GET /                           // List patient medical histories
-├── POST /                          // Create patient medical history
-├── GET /{id}                       // Get patient medical history by ID
-├── PUT /{id}                       // Update patient medical history
-└── DELETE /{id}                    // Soft delete patient medical history
+- GET /                           // List patient medical histories
+- POST /                          // Create patient medical history
+- GET /{id}                       // Get patient medical history by ID
+- PUT /{id}                       // Update patient medical history
+- DELETE /{id}                    // Soft delete patient medical history
 
 /api/v<version>/patient-documents/
-├── GET /                           // List patient documents
-├── POST /                          // Upload patient document
-├── GET /{id}                       // Get patient document by ID
-├── PUT /{id}                       // Update patient document
-└── DELETE /{id}                    // Soft delete patient document
+- GET /                           // List patient documents
+- POST /                          // Upload patient document
+- GET /{id}                       // Get patient document by ID
+- PUT /{id}                       // Update patient document
+- DELETE /{id}                    // Soft delete patient document
 
 /api/v<version>/consents/
-├── GET /                           // List consents with pagination
-├── POST /                          // Create consent
-├── GET /{id}                       // Get consent by ID
-├── PUT /{id}                       // Update consent
-└── DELETE /{id}                    // Soft delete consent
+- GET /                           // List consents with pagination
+- POST /                          // Create consent
+- GET /{id}                       // Get consent by ID
+- PUT /{id}                       // Update consent
+- DELETE /{id}                    // Soft delete consent
 
 /api/v<version>/terms-acceptances/
-├── GET /                           // List terms acceptances with pagination
-├── POST /                          // Create terms acceptance
-├── GET /{id}                       // Get terms acceptance by ID
-└── DELETE /{id}                    // Soft delete terms acceptance
+- GET /                           // List terms acceptances with pagination
+- POST /                          // Create terms acceptance
+- GET /{id}                       // Get terms acceptance by ID
+- DELETE /{id}                    // Soft delete terms acceptance
 ```
 
 ## 5. Scheduling, Availability & Queues
 ```javascript
 /api/v<version>/appointments/
-├── GET /                           // List appointments with pagination
-├── POST /                          // Create appointment
-├── GET /{id}                       // Get appointment by ID
-├── PUT /{id}                       // Update appointment
-├── DELETE /{id}                    // Soft delete appointment
-└── POST /{id}/cancel               // Cancel appointment
+- GET /                           // List appointments with pagination
+- POST /                          // Create appointment
+- GET /{id}                       // Get appointment by ID
+- PUT /{id}                       // Update appointment
+- DELETE /{id}                    // Soft delete appointment
+- POST /{id}/cancel               // Cancel appointment
 
 /api/v<version>/appointment-participants/
-├── GET /                           // List appointment participants
-├── POST /                          // Create appointment participant
-├── GET /{id}                       // Get appointment participant by ID
-├── PUT /{id}                       // Update appointment participant
-└── DELETE /{id}                    // Soft delete appointment participant
+- GET /                           // List appointment participants
+- POST /                          // Create appointment participant
+- GET /{id}                       // Get appointment participant by ID
+- PUT /{id}                       // Update appointment participant
+- DELETE /{id}                    // Soft delete appointment participant
 
 /api/v<version>/appointment-reminders/
-├── GET /                           // List appointment reminders
-├── POST /                          // Create appointment reminder
-├── GET /{id}                       // Get appointment reminder by ID
-├── PUT /{id}                       // Update appointment reminder
-└── DELETE /{id}                    // Soft delete appointment reminder
+- GET /                           // List appointment reminders
+- POST /                          // Create appointment reminder
+- GET /{id}                       // Get appointment reminder by ID
+- PUT /{id}                       // Update appointment reminder
+- DELETE /{id}                    // Soft delete appointment reminder
 
 /api/v<version>/provider-schedules/
-├── GET /                           // List provider schedules
-├── POST /                          // Create provider schedule
-├── GET /{id}                       // Get provider schedule by ID
-├── PUT /{id}                       // Update provider schedule
-└── DELETE /{id}                    // Soft delete provider schedule
+- GET /                           // List provider schedules
+- POST /                          // Create provider schedule
+- GET /{id}                       // Get provider schedule by ID
+- PUT /{id}                       // Update provider schedule
+- DELETE /{id}                    // Soft delete provider schedule
 
 /api/v<version>/availability-slots/
-├── GET /                           // List availability slots
-├── POST /                          // Create availability slot
-├── GET /{id}                       // Get availability slot by ID
-├── PUT /{id}                       // Update availability slot
-└── DELETE /{id}                    // Soft delete availability slot
+- GET /                           // List availability slots
+- POST /                          // Create availability slot
+- GET /{id}                       // Get availability slot by ID
+- PUT /{id}                       // Update availability slot
+- DELETE /{id}                    // Soft delete availability slot
 
 /api/v<version>/visit-queues/
-├── GET /                           // List visit queues
-├── POST /                          // Create visit queue entry
-├── GET /{id}                       // Get visit queue entry by ID
-├── PUT /{id}                       // Update visit queue entry
-└── DELETE /{id}                    // Soft delete visit queue entry
+- GET /                           // List visit queues
+- POST /                          // Create visit queue entry
+- GET /{id}                       // Get visit queue entry by ID
+- PUT /{id}                       // Update visit queue entry
+- DELETE /{id}                    // Soft delete visit queue entry
 ```
 
 ## 6. Encounters & Clinical Documentation
 ```javascript
 /api/v<version>/encounters/
-├── GET /                           // List encounters with pagination
-├── POST /                          // Create encounter
-├── GET /{id}                       // Get encounter by ID
-├── PUT /{id}                       // Update encounter
-└── DELETE /{id}                    // Soft delete encounter
+- GET /                           // List encounters with pagination
+- POST /                          // Create encounter
+- GET /{id}                       // Get encounter by ID
+- PUT /{id}                       // Update encounter
+- DELETE /{id}                    // Soft delete encounter
 
 /api/v<version>/clinical-notes/
-├── GET /                           // List clinical notes
-├── POST /                          // Create clinical note
-├── GET /{id}                       // Get clinical note by ID
-├── PUT /{id}                       // Update clinical note
-└── DELETE /{id}                    // Soft delete clinical note
+- GET /                           // List clinical notes
+- POST /                          // Create clinical note
+- GET /{id}                       // Get clinical note by ID
+- PUT /{id}                       // Update clinical note
+- DELETE /{id}                    // Soft delete clinical note
 
 /api/v<version>/diagnoses/
-├── GET /                           // List diagnoses
-├── POST /                          // Create diagnosis
-├── GET /{id}                       // Get diagnosis by ID
-├── PUT /{id}                       // Update diagnosis
-└── DELETE /{id}                    // Soft delete diagnosis
+- GET /                           // List diagnoses
+- POST /                          // Create diagnosis
+- GET /{id}                       // Get diagnosis by ID
+- PUT /{id}                       // Update diagnosis
+- DELETE /{id}                    // Soft delete diagnosis
 
 /api/v<version>/procedures/
-├── GET /                           // List procedures
-├── POST /                          // Create procedure
-├── GET /{id}                       // Get procedure by ID
-├── PUT /{id}                       // Update procedure
-└── DELETE /{id}                    // Soft delete procedure
+- GET /                           // List procedures
+- POST /                          // Create procedure
+- GET /{id}                       // Get procedure by ID
+- PUT /{id}                       // Update procedure
+- DELETE /{id}                    // Soft delete procedure
 
 /api/v<version>/vital-signs/
-├── GET /                           // List vital signs
-├── POST /                          // Create vital sign record
-├── GET /{id}                       // Get vital sign by ID
-├── PUT /{id}                       // Update vital sign
-└── DELETE /{id}                    // Soft delete vital sign
+- GET /                           // List vital signs
+- POST /                          // Create vital sign record
+- GET /{id}                       // Get vital sign by ID
+- PUT /{id}                       // Update vital sign
+- DELETE /{id}                    // Soft delete vital sign
 
 /api/v<version>/care-plans/
-├── GET /                           // List care plans
-├── POST /                          // Create care plan
-├── GET /{id}                       // Get care plan by ID
-├── PUT /{id}                       // Update care plan
-└── DELETE /{id}                    // Soft delete care plan
+- GET /                           // List care plans
+- POST /                          // Create care plan
+- GET /{id}                       // Get care plan by ID
+- PUT /{id}                       // Update care plan
+- DELETE /{id}                    // Soft delete care plan
 
 /api/v<version>/clinical-alerts/
-├── GET /                           // List clinical alerts
-├── POST /                          // Create clinical alert
-├── GET /{id}                       // Get clinical alert by ID
-├── PUT /{id}                       // Update clinical alert
-└── DELETE /{id}                    // Soft delete clinical alert
+- GET /                           // List clinical alerts
+- POST /                          // Create clinical alert
+- GET /{id}                       // Get clinical alert by ID
+- PUT /{id}                       // Update clinical alert
+- DELETE /{id}                    // Soft delete clinical alert
 
 /api/v<version>/referrals/
-├── GET /                           // List referrals
-├── POST /                          // Create referral
-├── GET /{id}                       // Get referral by ID
-├── PUT /{id}                       // Update referral
-└── DELETE /{id}                    // Soft delete referral
+- GET /                           // List referrals
+- POST /                          // Create referral
+- GET /{id}                       // Get referral by ID
+- PUT /{id}                       // Update referral
+- DELETE /{id}                    // Soft delete referral
 
 /api/v<version>/follow-ups/
-├── GET /                           // List follow-ups
-├── POST /                          // Create follow-up
-├── GET /{id}                       // Get follow-up by ID
-├── PUT /{id}                       // Update follow-up
-└── DELETE /{id}                    // Soft delete follow-up
+- GET /                           // List follow-ups
+- POST /                          // Create follow-up
+- GET /{id}                       // Get follow-up by ID
+- PUT /{id}                       // Update follow-up
+- DELETE /{id}                    // Soft delete follow-up
 ```
 
 ## 7. Inpatient (IPD) & Bed Management
 ```javascript
 /api/v<version>/admissions/
-├── GET /                           // List admissions
-├── POST /                          // Create admission
-├── GET /{id}                       // Get admission by ID
-├── PUT /{id}                       // Update admission
-├── DELETE /{id}                    // Soft delete admission
-└── POST /{id}/discharge            // Discharge patient
+- GET /                           // List admissions
+- POST /                          // Create admission
+- GET /{id}                       // Get admission by ID
+- PUT /{id}                       // Update admission
+- DELETE /{id}                    // Soft delete admission
+- POST /{id}/discharge            // Discharge patient
 
 /api/v<version>/bed-assignments/
-├── GET /                           // List bed assignments
-├── POST /                          // Create bed assignment
-├── GET /{id}                       // Get bed assignment by ID
-├── PUT /{id}                       // Update bed assignment
-└── DELETE /{id}                    // Soft delete bed assignment
+- GET /                           // List bed assignments
+- POST /                          // Create bed assignment
+- GET /{id}                       // Get bed assignment by ID
+- PUT /{id}                       // Update bed assignment
+- DELETE /{id}                    // Soft delete bed assignment
 
 /api/v<version>/ward-rounds/
-├── GET /                           // List ward rounds
-├── POST /                          // Create ward round
-├── GET /{id}                       // Get ward round by ID
-├── PUT /{id}                       // Update ward round
-└── DELETE /{id}                    // Soft delete ward round
+- GET /                           // List ward rounds
+- POST /                          // Create ward round
+- GET /{id}                       // Get ward round by ID
+- PUT /{id}                       // Update ward round
+- DELETE /{id}                    // Soft delete ward round
 
 /api/v<version>/nursing-notes/
-├── GET /                           // List nursing notes
-├── POST /                          // Create nursing note
-├── GET /{id}                       // Get nursing note by ID
-├── PUT /{id}                       // Update nursing note
-└── DELETE /{id}                    // Soft delete nursing note
+- GET /                           // List nursing notes
+- POST /                          // Create nursing note
+- GET /{id}                       // Get nursing note by ID
+- PUT /{id}                       // Update nursing note
+- DELETE /{id}                    // Soft delete nursing note
 
 /api/v<version>/medication-administrations/
-├── GET /                           // List medication administrations
-├── POST /                          // Create medication administration
-├── GET /{id}                       // Get medication administration by ID
-├── PUT /{id}                       // Update medication administration
-└── DELETE /{id}                    // Soft delete medication administration
+- GET /                           // List medication administrations
+- POST /                          // Create medication administration
+- GET /{id}                       // Get medication administration by ID
+- PUT /{id}                       // Update medication administration
+- DELETE /{id}                    // Soft delete medication administration
 
 /api/v<version>/discharge-summaries/
-├── GET /                           // List discharge summaries
-├── POST /                          // Create discharge summary
-├── GET /{id}                       // Get discharge summary by ID
-├── PUT /{id}                       // Update discharge summary
-└── DELETE /{id}                    // Soft delete discharge summary
+- GET /                           // List discharge summaries
+- POST /                          // Create discharge summary
+- GET /{id}                       // Get discharge summary by ID
+- PUT /{id}                       // Update discharge summary
+- DELETE /{id}                    // Soft delete discharge summary
 
 /api/v<version>/transfer-requests/
-├── GET /                           // List transfer requests
-├── POST /                          // Create transfer request
-├── GET /{id}                       // Get transfer request by ID
-├── PUT /{id}                       // Update transfer request
-└── DELETE /{id}                    // Soft delete transfer request
+- GET /                           // List transfer requests
+- POST /                          // Create transfer request
+- GET /{id}                       // Get transfer request by ID
+- PUT /{id}                       // Update transfer request
+- DELETE /{id}                    // Soft delete transfer request
 ```
 
 ## 8. ICU & Critical Care
 ```javascript
 /api/v<version>/icu-stays/
-├── GET /                           // List ICU stays
-├── POST /                          // Create ICU stay
-├── GET /{id}                       // Get ICU stay by ID
-├── PUT /{id}                       // Update ICU stay
-└── DELETE /{id}                    // Soft delete ICU stay
+- GET /                           // List ICU stays
+- POST /                          // Create ICU stay
+- GET /{id}                       // Get ICU stay by ID
+- PUT /{id}                       // Update ICU stay
+- DELETE /{id}                    // Soft delete ICU stay
 
 /api/v<version>/icu-observations/
-├── GET /                           // List ICU observations
-├── POST /                          // Create ICU observation
-├── GET /{id}                       // Get ICU observation by ID
-├── PUT /{id}                       // Update ICU observation
-└── DELETE /{id}                    // Soft delete ICU observation
+- GET /                           // List ICU observations
+- POST /                          // Create ICU observation
+- GET /{id}                       // Get ICU observation by ID
+- PUT /{id}                       // Update ICU observation
+- DELETE /{id}                    // Soft delete ICU observation
 
 /api/v<version>/critical-alerts/
-├── GET /                           // List critical alerts
-├── POST /                          // Create critical alert
-├── GET /{id}                       // Get critical alert by ID
-├── PUT /{id}                       // Update critical alert
-└── DELETE /{id}                    // Soft delete critical alert
+- GET /                           // List critical alerts
+- POST /                          // Create critical alert
+- GET /{id}                       // Get critical alert by ID
+- PUT /{id}                       // Update critical alert
+- DELETE /{id}                    // Soft delete critical alert
 ```
 
 ## 9. Theatre & Anesthesia
 ```javascript
 /api/v<version>/theatre-cases/
-├── GET /                           // List theatre cases
-├── POST /                          // Create theatre case
-├── GET /{id}                       // Get theatre case by ID
-├── PUT /{id}                       // Update theatre case
-└── DELETE /{id}                    // Soft delete theatre case
+- GET /                           // List theatre cases
+- POST /                          // Create theatre case
+- GET /{id}                       // Get theatre case by ID
+- PUT /{id}                       // Update theatre case
+- DELETE /{id}                    // Soft delete theatre case
 
 /api/v<version>/anesthesia-records/
-├── GET /                           // List anesthesia records
-├── POST /                          // Create anesthesia record
-├── GET /{id}                       // Get anesthesia record by ID
-├── PUT /{id}                       // Update anesthesia record
-└── DELETE /{id}                    // Soft delete anesthesia record
+- GET /                           // List anesthesia records
+- POST /                          // Create anesthesia record
+- GET /{id}                       // Get anesthesia record by ID
+- PUT /{id}                       // Update anesthesia record
+- DELETE /{id}                    // Soft delete anesthesia record
 
 /api/v<version>/post-op-notes/
-├── GET /                           // List post-op notes
-├── POST /                          // Create post-op note
-├── GET /{id}                       // Get post-op note by ID
-├── PUT /{id}                       // Update post-op note
-└── DELETE /{id}                    // Soft delete post-op note
+- GET /                           // List post-op notes
+- POST /                          // Create post-op note
+- GET /{id}                       // Get post-op note by ID
+- PUT /{id}                       // Update post-op note
+- DELETE /{id}                    // Soft delete post-op note
 ```
 
 ## 10. Laboratory (LIS)
 ```javascript
 /api/v<version>/lab-tests/
-├── GET /                           // List lab tests
-├── POST /                          // Create lab test
-├── GET /{id}                       // Get lab test by ID
-├── PUT /{id}                       // Update lab test
-└── DELETE /{id}                    // Soft delete lab test
+- GET /                           // List lab tests
+- POST /                          // Create lab test
+- GET /{id}                       // Get lab test by ID
+- PUT /{id}                       // Update lab test
+- DELETE /{id}                    // Soft delete lab test
 
 /api/v<version>/lab-panels/
-├── GET /                           // List lab panels
-├── POST /                          // Create lab panel
-├── GET /{id}                       // Get lab panel by ID
-├── PUT /{id}                       // Update lab panel
-└── DELETE /{id}                    // Soft delete lab panel
+- GET /                           // List lab panels
+- POST /                          // Create lab panel
+- GET /{id}                       // Get lab panel by ID
+- PUT /{id}                       // Update lab panel
+- DELETE /{id}                    // Soft delete lab panel
 
 /api/v<version>/lab-orders/
-├── GET /                           // List lab orders
-├── POST /                          // Create lab order
-├── GET /{id}                       // Get lab order by ID
-├── PUT /{id}                       // Update lab order
-└── DELETE /{id}                    // Soft delete lab order
+- GET /                           // List lab orders
+- POST /                          // Create lab order
+- GET /{id}                       // Get lab order by ID
+- PUT /{id}                       // Update lab order
+- DELETE /{id}                    // Soft delete lab order
 
 /api/v<version>/lab-order-items/
-├── GET /                           // List lab order items
-├── POST /                          // Create lab order item
-├── GET /{id}                       // Get lab order item by ID
-├── PUT /{id}                       // Update lab order item
-└── DELETE /{id}                    // Soft delete lab order item
+- GET /                           // List lab order items
+- POST /                          // Create lab order item
+- GET /{id}                       // Get lab order item by ID
+- PUT /{id}                       // Update lab order item
+- DELETE /{id}                    // Soft delete lab order item
 
 /api/v<version>/lab-samples/
-├── GET /                           // List lab samples
-├── POST /                          // Create lab sample
-├── GET /{id}                       // Get lab sample by ID
-├── PUT /{id}                       // Update lab sample
-└── DELETE /{id}                    // Soft delete lab sample
+- GET /                           // List lab samples
+- POST /                          // Create lab sample
+- GET /{id}                       // Get lab sample by ID
+- PUT /{id}                       // Update lab sample
+- DELETE /{id}                    // Soft delete lab sample
 
 /api/v<version>/lab-results/
-├── GET /                           // List lab results
-├── POST /                          // Create lab result
-├── GET /{id}                       // Get lab result by ID
-├── PUT /{id}                       // Update lab result
-└── DELETE /{id}                    // Soft delete lab result
+- GET /                           // List lab results
+- POST /                          // Create lab result
+- GET /{id}                       // Get lab result by ID
+- PUT /{id}                       // Update lab result
+- DELETE /{id}                    // Soft delete lab result
 
 /api/v<version>/lab-qc-logs/
-├── GET /                           // List lab QC logs
-├── POST /                          // Create lab QC log
-├── GET /{id}                       // Get lab QC log by ID
-├── PUT /{id}                       // Update lab QC log
-└── DELETE /{id}                    // Soft delete lab QC log
+- GET /                           // List lab QC logs
+- POST /                          // Create lab QC log
+- GET /{id}                       // Get lab QC log by ID
+- PUT /{id}                       // Update lab QC log
+- DELETE /{id}                    // Soft delete lab QC log
 ```
 
 ## 11. Radiology (RIS / PACS)
 ```javascript
 /api/v<version>/radiology-tests/
-├── GET /                           // List radiology tests
-├── POST /                          // Create radiology test
-├── GET /{id}                       // Get radiology test by ID
-├── PUT /{id}                       // Update radiology test
-└── DELETE /{id}                    // Soft delete radiology test
+- GET /                           // List radiology tests
+- POST /                          // Create radiology test
+- GET /{id}                       // Get radiology test by ID
+- PUT /{id}                       // Update radiology test
+- DELETE /{id}                    // Soft delete radiology test
 
 /api/v<version>/radiology-orders/
-├── GET /                           // List radiology orders
-├── POST /                          // Create radiology order
-├── GET /{id}                       // Get radiology order by ID
-├── PUT /{id}                       // Update radiology order
-└── DELETE /{id}                    // Soft delete radiology order
+- GET /                           // List radiology orders
+- POST /                          // Create radiology order
+- GET /{id}                       // Get radiology order by ID
+- PUT /{id}                       // Update radiology order
+- DELETE /{id}                    // Soft delete radiology order
 
 /api/v<version>/radiology-results/
-├── GET /                           // List radiology results
-├── POST /                          // Create radiology result
-├── GET /{id}                       // Get radiology result by ID
-├── PUT /{id}                       // Update radiology result
-└── DELETE /{id}                    // Soft delete radiology result
+- GET /                           // List radiology results
+- POST /                          // Create radiology result
+- GET /{id}                       // Get radiology result by ID
+- PUT /{id}                       // Update radiology result
+- DELETE /{id}                    // Soft delete radiology result
 
 /api/v<version>/imaging-studies/
-├── GET /                           // List imaging studies
-├── POST /                          // Create imaging study
-├── GET /{id}                       // Get imaging study by ID
-├── PUT /{id}                       // Update imaging study
-└── DELETE /{id}                    // Soft delete imaging study
+- GET /                           // List imaging studies
+- POST /                          // Create imaging study
+- GET /{id}                       // Get imaging study by ID
+- PUT /{id}                       // Update imaging study
+- DELETE /{id}                    // Soft delete imaging study
 
 /api/v<version>/imaging-assets/
-├── GET /                           // List imaging assets
-├── POST /                          // Upload imaging asset
-├── GET /{id}                       // Get imaging asset by ID
-├── PUT /{id}                       // Update imaging asset
-└── DELETE /{id}                    // Soft delete imaging asset
+- GET /                           // List imaging assets
+- POST /                          // Upload imaging asset
+- GET /{id}                       // Get imaging asset by ID
+- PUT /{id}                       // Update imaging asset
+- DELETE /{id}                    // Soft delete imaging asset
 
 /api/v<version>/pacs-links/
-├── GET /                           // List PACS links
-├── POST /                          // Create PACS link
-├── GET /{id}                       // Get PACS link by ID
-├── PUT /{id}                       // Update PACS link
-└── DELETE /{id}                    // Soft delete PACS link
+- GET /                           // List PACS links
+- POST /                          // Create PACS link
+- GET /{id}                       // Get PACS link by ID
+- PUT /{id}                       // Update PACS link
+- DELETE /{id}                    // Soft delete PACS link
 ```
 
 ## 12. Pharmacy
 ```javascript
 /api/v<version>/drugs/
-├── GET /                           // List drugs
-├── POST /                          // Create drug
-├── GET /{id}                       // Get drug by ID
-├── PUT /{id}                       // Update drug
-└── DELETE /{id}                    // Soft delete drug
+- GET /                           // List drugs
+- POST /                          // Create drug
+- GET /{id}                       // Get drug by ID
+- PUT /{id}                       // Update drug
+- DELETE /{id}                    // Soft delete drug
 
 /api/v<version>/drug-batches/
-├── GET /                           // List drug batches
-├── POST /                          // Create drug batch
-├── GET /{id}                       // Get drug batch by ID
-├── PUT /{id}                       // Update drug batch
-└── DELETE /{id}                    // Soft delete drug batch
+- GET /                           // List drug batches
+- POST /                          // Create drug batch
+- GET /{id}                       // Get drug batch by ID
+- PUT /{id}                       // Update drug batch
+- DELETE /{id}                    // Soft delete drug batch
 
 /api/v<version>/formulary-items/
-├── GET /                           // List formulary items
-├── POST /                          // Create formulary item
-├── GET /{id}                       // Get formulary item by ID
-├── PUT /{id}                       // Update formulary item
-└── DELETE /{id}                    // Soft delete formulary item
+- GET /                           // List formulary items
+- POST /                          // Create formulary item
+- GET /{id}                       // Get formulary item by ID
+- PUT /{id}                       // Update formulary item
+- DELETE /{id}                    // Soft delete formulary item
 
 /api/v<version>/pharmacy-orders/
-├── GET /                           // List pharmacy orders
-├── POST /                          // Create pharmacy order
-├── GET /{id}                       // Get pharmacy order by ID
-├── PUT /{id}                       // Update pharmacy order
-└── DELETE /{id}                    // Soft delete pharmacy order
+- GET /                           // List pharmacy orders
+- POST /                          // Create pharmacy order
+- GET /{id}                       // Get pharmacy order by ID
+- PUT /{id}                       // Update pharmacy order
+- DELETE /{id}                    // Soft delete pharmacy order
 
 /api/v<version>/pharmacy-order-items/
-├── GET /                           // List pharmacy order items
-├── POST /                          // Create pharmacy order item
-├── GET /{id}                       // Get pharmacy order item by ID
-├── PUT /{id}                       // Update pharmacy order item
-└── DELETE /{id}                    // Soft delete pharmacy order item
+- GET /                           // List pharmacy order items
+- POST /                          // Create pharmacy order item
+- GET /{id}                       // Get pharmacy order item by ID
+- PUT /{id}                       // Update pharmacy order item
+- DELETE /{id}                    // Soft delete pharmacy order item
 
 /api/v<version>/dispense-logs/
-├── GET /                           // List dispense logs
-├── POST /                          // Create dispense log
-├── GET /{id}                       // Get dispense log by ID
-├── PUT /{id}                       // Update dispense log
-└── DELETE /{id}                    // Soft delete dispense log
+- GET /                           // List dispense logs
+- POST /                          // Create dispense log
+- GET /{id}                       // Get dispense log by ID
+- PUT /{id}                       // Update dispense log
+- DELETE /{id}                    // Soft delete dispense log
 
 /api/v<version>/adverse-events/
-├── GET /                           // List adverse events
-├── POST /                          // Create adverse event
-├── GET /{id}                       // Get adverse event by ID
-├── PUT /{id}                       // Update adverse event
-└── DELETE /{id}                    // Soft delete adverse event
+- GET /                           // List adverse events
+- POST /                          // Create adverse event
+- GET /{id}                       // Get adverse event by ID
+- PUT /{id}                       // Update adverse event
+- DELETE /{id}                    // Soft delete adverse event
 ```
 
 ## 13. Inventory & Procurement
 ```javascript
 /api/v<version>/inventory-items/
-├── GET /                           // List inventory items
-├── POST /                          // Create inventory item
-├── GET /{id}                       // Get inventory item by ID
-├── PUT /{id}                       // Update inventory item
-└── DELETE /{id}                    // Soft delete inventory item
+- GET /                           // List inventory items
+- POST /                          // Create inventory item
+- GET /{id}                       // Get inventory item by ID
+- PUT /{id}                       // Update inventory item
+- DELETE /{id}                    // Soft delete inventory item
 
 /api/v<version>/inventory-stocks/
-├── GET /                           // List inventory stocks
-├── POST /                          // Create inventory stock
-├── GET /{id}                       // Get inventory stock by ID
-├── PUT /{id}                       // Update inventory stock
-└── DELETE /{id}                    // Soft delete inventory stock
+- GET /                           // List inventory stocks
+- POST /                          // Create inventory stock
+- GET /{id}                       // Get inventory stock by ID
+- PUT /{id}                       // Update inventory stock
+- DELETE /{id}                    // Soft delete inventory stock
 
 /api/v<version>/stock-movements/
-├── GET /                           // List stock movements
-├── POST /                          // Create stock movement
-├── GET /{id}                       // Get stock movement by ID
-├── PUT /{id}                       // Update stock movement
-└── DELETE /{id}                    // Soft delete stock movement
+- GET /                           // List stock movements
+- POST /                          // Create stock movement
+- GET /{id}                       // Get stock movement by ID
+- PUT /{id}                       // Update stock movement
+- DELETE /{id}                    // Soft delete stock movement
 
 /api/v<version>/suppliers/
-├── GET /                           // List suppliers
-├── POST /                          // Create supplier
-├── GET /{id}                       // Get supplier by ID
-├── PUT /{id}                       // Update supplier
-└── DELETE /{id}                    // Soft delete supplier
+- GET /                           // List suppliers
+- POST /                          // Create supplier
+- GET /{id}                       // Get supplier by ID
+- PUT /{id}                       // Update supplier
+- DELETE /{id}                    // Soft delete supplier
 
 /api/v<version>/purchase-requests/
-├── GET /                           // List purchase requests
-├── POST /                          // Create purchase request
-├── GET /{id}                       // Get purchase request by ID
-├── PUT /{id}                       // Update purchase request
-└── DELETE /{id}                    // Soft delete purchase request
+- GET /                           // List purchase requests
+- POST /                          // Create purchase request
+- GET /{id}                       // Get purchase request by ID
+- PUT /{id}                       // Update purchase request
+- DELETE /{id}                    // Soft delete purchase request
 
 /api/v<version>/purchase-orders/
-├── GET /                           // List purchase orders
-├── POST /                          // Create purchase order
-├── GET /{id}                       // Get purchase order by ID
-├── PUT /{id}                       // Update purchase order
-└── DELETE /{id}                    // Soft delete purchase order
+- GET /                           // List purchase orders
+- POST /                          // Create purchase order
+- GET /{id}                       // Get purchase order by ID
+- PUT /{id}                       // Update purchase order
+- DELETE /{id}                    // Soft delete purchase order
 
 /api/v<version>/goods-receipts/
-├── GET /                           // List goods receipts
-├── POST /                          // Create goods receipt
-├── GET /{id}                       // Get goods receipt by ID
-├── PUT /{id}                       // Update goods receipt
-└── DELETE /{id}                    // Soft delete goods receipt
+- GET /                           // List goods receipts
+- POST /                          // Create goods receipt
+- GET /{id}                       // Get goods receipt by ID
+- PUT /{id}                       // Update goods receipt
+- DELETE /{id}                    // Soft delete goods receipt
 
 /api/v<version>/stock-adjustments/
-├── GET /                           // List stock adjustments
-├── POST /                          // Create stock adjustment
-├── GET /{id}                       // Get stock adjustment by ID
-├── PUT /{id}                       // Update stock adjustment
-└── DELETE /{id}                    // Soft delete stock adjustment
+- GET /                           // List stock adjustments
+- POST /                          // Create stock adjustment
+- GET /{id}                       // Get stock adjustment by ID
+- PUT /{id}                       // Update stock adjustment
+- DELETE /{id}                    // Soft delete stock adjustment
 ```
 
 ## 14. Emergency & Ambulance
 ```javascript
 /api/v<version>/emergency-cases/
-├── GET /                           // List emergency cases
-├── POST /                          // Create emergency case
-├── GET /{id}                       // Get emergency case by ID
-├── PUT /{id}                       // Update emergency case
-└── DELETE /{id}                    // Soft delete emergency case
+- GET /                           // List emergency cases
+- POST /                          // Create emergency case
+- GET /{id}                       // Get emergency case by ID
+- PUT /{id}                       // Update emergency case
+- DELETE /{id}                    // Soft delete emergency case
 
 /api/v<version>/triage-assessments/
-├── GET /                           // List triage assessments
-├── POST /                          // Create triage assessment
-├── GET /{id}                       // Get triage assessment by ID
-├── PUT /{id}                       // Update triage assessment
-└── DELETE /{id}                    // Soft delete triage assessment
+- GET /                           // List triage assessments
+- POST /                          // Create triage assessment
+- GET /{id}                       // Get triage assessment by ID
+- PUT /{id}                       // Update triage assessment
+- DELETE /{id}                    // Soft delete triage assessment
 
 /api/v<version>/emergency-responses/
-├── GET /                           // List emergency responses
-├── POST /                          // Create emergency response
-├── GET /{id}                       // Get emergency response by ID
-├── PUT /{id}                       // Update emergency response
-└── DELETE /{id}                    // Soft delete emergency response
+- GET /                           // List emergency responses
+- POST /                          // Create emergency response
+- GET /{id}                       // Get emergency response by ID
+- PUT /{id}                       // Update emergency response
+- DELETE /{id}                    // Soft delete emergency response
 
 /api/v<version>/ambulances/
-├── GET /                           // List ambulances
-├── POST /                          // Create ambulance
-├── GET /{id}                       // Get ambulance by ID
-├── PUT /{id}                       // Update ambulance
-└── DELETE /{id}                    // Soft delete ambulance
+- GET /                           // List ambulances
+- POST /                          // Create ambulance
+- GET /{id}                       // Get ambulance by ID
+- PUT /{id}                       // Update ambulance
+- DELETE /{id}                    // Soft delete ambulance
 
 /api/v<version>/ambulance-dispatches/
-├── GET /                           // List ambulance dispatches
-├── POST /                          // Create ambulance dispatch
-├── GET /{id}                       // Get ambulance dispatch by ID
-├── PUT /{id}                       // Update ambulance dispatch
-└── DELETE /{id}                    // Soft delete ambulance dispatch
+- GET /                           // List ambulance dispatches
+- POST /                          // Create ambulance dispatch
+- GET /{id}                       // Get ambulance dispatch by ID
+- PUT /{id}                       // Update ambulance dispatch
+- DELETE /{id}                    // Soft delete ambulance dispatch
 
 /api/v<version>/ambulance-trips/
-├── GET /                           // List ambulance trips
-├── POST /                          // Create ambulance trip
-├── GET /{id}                       // Get ambulance trip by ID
-├── PUT /{id}                       // Update ambulance trip
-└── DELETE /{id}                    // Soft delete ambulance trip
+- GET /                           // List ambulance trips
+- POST /                          // Create ambulance trip
+- GET /{id}                       // Get ambulance trip by ID
+- PUT /{id}                       // Update ambulance trip
+- DELETE /{id}                    // Soft delete ambulance trip
 ```
 
 ## 15. Billing, Payments & Insurance
 ```javascript
 /api/v<version>/invoices/
-├── GET /                           // List invoices
-├── POST /                          // Create invoice
-├── GET /{id}                       // Get invoice by ID
-├── PUT /{id}                       // Update invoice
-└── DELETE /{id}                    // Soft delete invoice
+- GET /                           // List invoices
+- POST /                          // Create invoice
+- GET /{id}                       // Get invoice by ID
+- PUT /{id}                       // Update invoice
+- DELETE /{id}                    // Soft delete invoice
 
 /api/v<version>/invoice-items/
-├── GET /                           // List invoice items
-├── POST /                          // Create invoice item
-├── GET /{id}                       // Get invoice item by ID
-├── PUT /{id}                       // Update invoice item
-└── DELETE /{id}                    // Soft delete invoice item
+- GET /                           // List invoice items
+- POST /                          // Create invoice item
+- GET /{id}                       // Get invoice item by ID
+- PUT /{id}                       // Update invoice item
+- DELETE /{id}                    // Soft delete invoice item
 
 /api/v<version>/payments/
-├── GET /                           // List payments
-├── POST /                          // Create payment
-├── GET /{id}                       // Get payment by ID
-├── PUT /{id}                       // Update payment
-└── DELETE /{id}                    // Soft delete payment
+- GET /                           // List payments
+- POST /                          // Create payment
+- GET /{id}                       // Get payment by ID
+- PUT /{id}                       // Update payment
+- DELETE /{id}                    // Soft delete payment
 
 /api/v<version>/refunds/
-├── GET /                           // List refunds
-├── POST /                          // Create refund
-├── GET /{id}                       // Get refund by ID
-├── PUT /{id}                       // Update refund
-└── DELETE /{id}                    // Soft delete refund
+- GET /                           // List refunds
+- POST /                          // Create refund
+- GET /{id}                       // Get refund by ID
+- PUT /{id}                       // Update refund
+- DELETE /{id}                    // Soft delete refund
 
 /api/v<version>/pricing-rules/
-├── GET /                           // List pricing rules
-├── POST /                          // Create pricing rule
-├── GET /{id}                       // Get pricing rule by ID
-├── PUT /{id}                       // Update pricing rule
-└── DELETE /{id}                    // Soft delete pricing rule
+- GET /                           // List pricing rules
+- POST /                          // Create pricing rule
+- GET /{id}                       // Get pricing rule by ID
+- PUT /{id}                       // Update pricing rule
+- DELETE /{id}                    // Soft delete pricing rule
 
 /api/v<version>/coverage-plans/
-├── GET /                           // List coverage plans
-├── POST /                          // Create coverage plan
-├── GET /{id}                       // Get coverage plan by ID
-├── PUT /{id}                       // Update coverage plan
-└── DELETE /{id}                    // Soft delete coverage plan
+- GET /                           // List coverage plans
+- POST /                          // Create coverage plan
+- GET /{id}                       // Get coverage plan by ID
+- PUT /{id}                       // Update coverage plan
+- DELETE /{id}                    // Soft delete coverage plan
 
 /api/v<version>/insurance-claims/
-├── GET /                           // List insurance claims
-├── POST /                          // Create insurance claim
-├── GET /{id}                       // Get insurance claim by ID
-├── PUT /{id}                       // Update insurance claim
-└── DELETE /{id}                    // Soft delete insurance claim
+- GET /                           // List insurance claims
+- POST /                          // Create insurance claim
+- GET /{id}                       // Get insurance claim by ID
+- PUT /{id}                       // Update insurance claim
+- DELETE /{id}                    // Soft delete insurance claim
 
 /api/v<version>/pre-authorizations/
-├── GET /                           // List pre-authorizations
-├── POST /                          // Create pre-authorization
-├── GET /{id}                       // Get pre-authorization by ID
-├── PUT /{id}                       // Update pre-authorization
-└── DELETE /{id}                    // Soft delete pre-authorization
+- GET /                           // List pre-authorizations
+- POST /                          // Create pre-authorization
+- GET /{id}                       // Get pre-authorization by ID
+- PUT /{id}                       // Update pre-authorization
+- DELETE /{id}                    // Soft delete pre-authorization
 
 /api/v<version>/billing-adjustments/
-├── GET /                           // List billing adjustments
-├── POST /                          // Create billing adjustment
-├── GET /{id}                       // Get billing adjustment by ID
-├── PUT /{id}                       // Update billing adjustment
-└── DELETE /{id}                    // Soft delete billing adjustment
+- GET /                           // List billing adjustments
+- POST /                          // Create billing adjustment
+- GET /{id}                       // Get billing adjustment by ID
+- PUT /{id}                       // Update billing adjustment
+- DELETE /{id}                    // Soft delete billing adjustment
 ```
 
 ## 16. HR, Payroll & Staffing
 ```javascript
 /api/v<version>/staff-positions/
-├── GET /                           // List staff positions
-├── POST /                          // Create staff position
-├── GET /{id}                       // Get staff position by ID
-├── PUT /{id}                       // Update staff position
-└── DELETE /{id}                    // Soft delete staff position
+- GET /                           // List staff positions
+- POST /                          // Create staff position
+- GET /{id}                       // Get staff position by ID
+- PUT /{id}                       // Update staff position
+- DELETE /{id}                    // Soft delete staff position
 
 /api/v<version>/staff-profiles/
-├── GET /                           // List staff profiles
-├── POST /                          // Create staff profile
-├── GET /{id}                       // Get staff profile by ID
-├── PUT /{id}                       // Update staff profile
-└── DELETE /{id}                    // Soft delete staff profile
+- GET /                           // List staff profiles
+- POST /                          // Create staff profile
+- GET /{id}                       // Get staff profile by ID
+- PUT /{id}                       // Update staff profile
+- DELETE /{id}                    // Soft delete staff profile
 
 /api/v<version>/staff-assignments/
-├── GET /                           // List staff assignments
-├── POST /                          // Create staff assignment
-├── GET /{id}                       // Get staff assignment by ID
-├── PUT /{id}                       // Update staff assignment
-└── DELETE /{id}                    // Soft delete staff assignment
+- GET /                           // List staff assignments
+- POST /                          // Create staff assignment
+- GET /{id}                       // Get staff assignment by ID
+- PUT /{id}                       // Update staff assignment
+- DELETE /{id}                    // Soft delete staff assignment
 
 /api/v<version>/staff-leaves/
-├── GET /                           // List staff leaves
-├── POST /                          // Create staff leave
-├── GET /{id}                       // Get staff leave by ID
-├── PUT /{id}                       // Update staff leave
-└── DELETE /{id}                    // Soft delete staff leave
+- GET /                           // List staff leaves
+- POST /                          // Create staff leave
+- GET /{id}                       // Get staff leave by ID
+- PUT /{id}                       // Update staff leave
+- DELETE /{id}                    // Soft delete staff leave
 
 /api/v<version>/shifts/
-├── GET /                           // List shifts
-├── POST /                          // Create shift
-├── GET /{id}                       // Get shift by ID
-├── PUT /{id}                       // Update shift
-├── DELETE /{id}                    // Soft delete shift
-└── POST /{id}/publish              // Publish shift schedule
+- GET /                           // List shifts
+- POST /                          // Create shift
+- GET /{id}                       // Get shift by ID
+- PUT /{id}                       // Update shift
+- DELETE /{id}                    // Soft delete shift
+- POST /{id}/publish              // Publish shift schedule
 
 /api/v<version>/shift-assignments/
-├── GET /                           // List shift assignments
-├── POST /                          // Create shift assignment
-├── GET /{id}                       // Get shift assignment by ID
-├── PUT /{id}                       // Update shift assignment
-└── DELETE /{id}                    // Soft delete shift assignment
+- GET /                           // List shift assignments
+- POST /                          // Create shift assignment
+- GET /{id}                       // Get shift assignment by ID
+- PUT /{id}                       // Update shift assignment
+- DELETE /{id}                    // Soft delete shift assignment
 
 /api/v<version>/shift-swap-requests/
-├── GET /                           // List shift swap requests
-├── POST /                          // Create shift swap request
-├── GET /{id}                       // Get shift swap request by ID
-├── PUT /{id}                       // Update shift swap request
-└── DELETE /{id}                    // Soft delete shift swap request
+- GET /                           // List shift swap requests
+- POST /                          // Create shift swap request
+- GET /{id}                       // Get shift swap request by ID
+- PUT /{id}                       // Update shift swap request
+- DELETE /{id}                    // Soft delete shift swap request
 
 /api/v<version>/nurse-rosters/
-├── GET /                           // List nurse rosters
-├── POST /                          // Create nurse roster
-├── GET /{id}                       // Get nurse roster by ID
-├── PUT /{id}                       // Update nurse roster
-├── DELETE /{id}                    // Soft delete nurse roster
-└── POST /{id}/publish              // Publish nurse roster
+- GET /                           // List nurse rosters
+- POST /                          // Create nurse roster
+- GET /{id}                       // Get nurse roster by ID
+- PUT /{id}                       // Update nurse roster
+- DELETE /{id}                    // Soft delete nurse roster
+- POST /{id}/publish              // Publish nurse roster
 
 /api/v<version>/shift-templates/
-├── GET /                           // List shift templates
-├── POST /                          // Create shift template
-├── GET /{id}                       // Get shift template by ID
-├── PUT /{id}                       // Update shift template
-└── DELETE /{id}                    // Soft delete shift template
+- GET /                           // List shift templates
+- POST /                          // Create shift template
+- GET /{id}                       // Get shift template by ID
+- PUT /{id}                       // Update shift template
+- DELETE /{id}                    // Soft delete shift template
 
 /api/v<version>/roster-day-offs/
-├── GET /                           // List roster days off
-├── POST /                          // Create roster day off
-├── GET /{id}                       // Get roster day off by ID
-├── PUT /{id}                       // Update roster day off
-└── DELETE /{id}                    // Soft delete roster day off
+- GET /                           // List roster days off
+- POST /                          // Create roster day off
+- GET /{id}                       // Get roster day off by ID
+- PUT /{id}                       // Update roster day off
+- DELETE /{id}                    // Soft delete roster day off
 
 /api/v<version>/staff-availabilities/
-├── GET /                           // List staff availabilities
-├── POST /                          // Create staff availability
-├── GET /{id}                       // Get staff availability by ID
-├── PUT /{id}                       // Update staff availability
-└── DELETE /{id}                    // Soft delete staff availability
+- GET /                           // List staff availabilities
+- POST /                          // Create staff availability
+- GET /{id}                       // Get staff availability by ID
+- PUT /{id}                       // Update staff availability
+- DELETE /{id}                    // Soft delete staff availability
 
 /api/v<version>/payroll-runs/
-├── GET /                           // List payroll runs
-├── POST /                          // Create payroll run
-├── GET /{id}                       // Get payroll run by ID
-├── PUT /{id}                       // Update payroll run
-└── DELETE /{id}                    // Soft delete payroll run
+- GET /                           // List payroll runs
+- POST /                          // Create payroll run
+- GET /{id}                       // Get payroll run by ID
+- PUT /{id}                       // Update payroll run
+- DELETE /{id}                    // Soft delete payroll run
 
 /api/v<version>/payroll-items/
-├── GET /                           // List payroll items
-├── POST /                          // Create payroll item
-├── GET /{id}                       // Get payroll item by ID
-├── PUT /{id}                       // Update payroll item
-└── DELETE /{id}                    // Soft delete payroll item
+- GET /                           // List payroll items
+- POST /                          // Create payroll item
+- GET /{id}                       // Get payroll item by ID
+- PUT /{id}                       // Update payroll item
+- DELETE /{id}                    // Soft delete payroll item
 ```
 
 ## 17. Housekeeping, Facilities & Biomedical
 ```javascript
 /api/v<version>/housekeeping-tasks/
-├── GET /                           // List housekeeping tasks
-├── POST /                          // Create housekeeping task
-├── GET /{id}                       // Get housekeeping task by ID
-├── PUT /{id}                       // Update housekeeping task
-└── DELETE /{id}                    // Soft delete housekeeping task
+- GET /                           // List housekeeping tasks
+- POST /                          // Create housekeeping task
+- GET /{id}                       // Get housekeeping task by ID
+- PUT /{id}                       // Update housekeeping task
+- DELETE /{id}                    // Soft delete housekeeping task
 
 /api/v<version>/housekeeping-schedules/
-├── GET /                           // List housekeeping schedules
-├── POST /                          // Create housekeeping schedule
-├── GET /{id}                       // Get housekeeping schedule by ID
-├── PUT /{id}                       // Update housekeeping schedule
-└── DELETE /{id}                    // Soft delete housekeeping schedule
+- GET /                           // List housekeeping schedules
+- POST /                          // Create housekeeping schedule
+- GET /{id}                       // Get housekeeping schedule by ID
+- PUT /{id}                       // Update housekeeping schedule
+- DELETE /{id}                    // Soft delete housekeeping schedule
 
 /api/v<version>/maintenance-requests/
-├── GET /                           // List maintenance requests
-├── POST /                          // Create maintenance request
-├── GET /{id}                       // Get maintenance request by ID
-├── PUT /{id}                       // Update maintenance request
-└── DELETE /{id}                    // Soft delete maintenance request
+- GET /                           // List maintenance requests
+- POST /                          // Create maintenance request
+- GET /{id}                       // Get maintenance request by ID
+- PUT /{id}                       // Update maintenance request
+- DELETE /{id}                    // Soft delete maintenance request
 
 /api/v<version>/assets/
-├── GET /                           // List assets
-├── POST /                          // Create asset
-├── GET /{id}                       // Get asset by ID
-├── PUT /{id}                       // Update asset
-└── DELETE /{id}                    // Soft delete asset
+- GET /                           // List assets
+- POST /                          // Create asset
+- GET /{id}                       // Get asset by ID
+- PUT /{id}                       // Update asset
+- DELETE /{id}                    // Soft delete asset
 
 /api/v<version>/asset-service-logs/
-├── GET /                           // List asset service logs
-├── POST /                          // Create asset service log
-├── GET /{id}                       // Get asset service log by ID
-├── PUT /{id}                       // Update asset service log
-└── DELETE /{id}                    // Soft delete asset service log
+- GET /                           // List asset service logs
+- POST /                          // Create asset service log
+- GET /{id}                       // Get asset service log by ID
+- PUT /{id}                       // Update asset service log
+- DELETE /{id}                    // Soft delete asset service log
 /api/v<version>/equipment-categories/
 GET /                           // List equipment categories
 POST /                          // Create equipment category
@@ -1048,186 +1048,186 @@ DELETE /{id}                    // Soft delete equipment disposal transfer
 ## 18. Notifications & Communications
 ```javascript
 /api/v<version>/notifications/
-├── GET /                           // List notifications
-├── POST /                          // Create notification
-├── GET /{id}                       // Get notification by ID
-├── PUT /{id}                       // Update notification
-└── DELETE /{id}                    // Soft delete notification
+- GET /                           // List notifications
+- POST /                          // Create notification
+- GET /{id}                       // Get notification by ID
+- PUT /{id}                       // Update notification
+- DELETE /{id}                    // Soft delete notification
 
 /api/v<version>/notification-deliveries/
-├── GET /                           // List notification deliveries
-├── POST /                          // Create notification delivery
-├── GET /{id}                       // Get notification delivery by ID
-├── PUT /{id}                       // Update notification delivery
-└── DELETE /{id}                    // Soft delete notification delivery
+- GET /                           // List notification deliveries
+- POST /                          // Create notification delivery
+- GET /{id}                       // Get notification delivery by ID
+- PUT /{id}                       // Update notification delivery
+- DELETE /{id}                    // Soft delete notification delivery
 
 /api/v<version>/conversations/
-├── GET /                           // List conversations
-├── POST /                          // Create conversation
-├── GET /{id}                       // Get conversation by ID
-├── PUT /{id}                       // Update conversation
-└── DELETE /{id}                    // Soft delete conversation
+- GET /                           // List conversations
+- POST /                          // Create conversation
+- GET /{id}                       // Get conversation by ID
+- PUT /{id}                       // Update conversation
+- DELETE /{id}                    // Soft delete conversation
 
 /api/v<version>/messages/
-├── GET /                           // List messages
-├── POST /                          // Create message
-├── GET /{id}                       // Get message by ID
-├── PUT /{id}                       // Update message
-└── DELETE /{id}                    // Soft delete message
+- GET /                           // List messages
+- POST /                          // Create message
+- GET /{id}                       // Get message by ID
+- PUT /{id}                       // Update message
+- DELETE /{id}                    // Soft delete message
 
 /api/v<version>/templates/
-├── GET /                           // List templates
-├── POST /                          // Create template
-├── GET /{id}                       // Get template by ID
-├── PUT /{id}                       // Update template
-└── DELETE /{id}                    // Soft delete template
+- GET /                           // List templates
+- POST /                          // Create template
+- GET /{id}                       // Get template by ID
+- PUT /{id}                       // Update template
+- DELETE /{id}                    // Soft delete template
 
 /api/v<version>/template-variables/
-├── GET /                           // List template variables
-├── POST /                          // Create template variable
-├── GET /{id}                       // Get template variable by ID
-├── PUT /{id}                       // Update template variable
-└── DELETE /{id}                    // Soft delete template variable
+- GET /                           // List template variables
+- POST /                          // Create template variable
+- GET /{id}                       // Get template variable by ID
+- PUT /{id}                       // Update template variable
+- DELETE /{id}                    // Soft delete template variable
 ```
 
 ## 19. Reporting & Analytics
 ```javascript
 /api/v<version>/report-definitions/
-├── GET /                           // List report definitions
-├── POST /                          // Create report definition
-├── GET /{id}                       // Get report definition by ID
-├── PUT /{id}                       // Update report definition
-└── DELETE /{id}                    // Soft delete report definition
+- GET /                           // List report definitions
+- POST /                          // Create report definition
+- GET /{id}                       // Get report definition by ID
+- PUT /{id}                       // Update report definition
+- DELETE /{id}                    // Soft delete report definition
 
 /api/v<version>/report-runs/
-├── GET /                           // List report runs
-├── POST /                          // Create report run
-├── GET /{id}                       // Get report run by ID
-├── PUT /{id}                       // Update report run
-└── DELETE /{id}                    // Soft delete report run
+- GET /                           // List report runs
+- POST /                          // Create report run
+- GET /{id}                       // Get report run by ID
+- PUT /{id}                       // Update report run
+- DELETE /{id}                    // Soft delete report run
 
 /api/v<version>/dashboard-widgets/
-├── GET /                           // List dashboard widgets
-├── POST /                          // Create dashboard widget
-├── GET /{id}                       // Get dashboard widget by ID
-├── PUT /{id}                       // Update dashboard widget
-└── DELETE /{id}                    // Soft delete dashboard widget
+- GET /                           // List dashboard widgets
+- POST /                          // Create dashboard widget
+- GET /{id}                       // Get dashboard widget by ID
+- PUT /{id}                       // Update dashboard widget
+- DELETE /{id}                    // Soft delete dashboard widget
 
 /api/v<version>/kpi-snapshots/
-├── GET /                           // List KPI snapshots
-├── POST /                          // Create KPI snapshot
-├── GET /{id}                       // Get KPI snapshot by ID
-├── PUT /{id}                       // Update KPI snapshot
-└── DELETE /{id}                    // Soft delete KPI snapshot
+- GET /                           // List KPI snapshots
+- POST /                          // Create KPI snapshot
+- GET /{id}                       // Get KPI snapshot by ID
+- PUT /{id}                       // Update KPI snapshot
+- DELETE /{id}                    // Soft delete KPI snapshot
 
 /api/v<version>/analytics-events/
-├── GET /                           // List analytics events
-├── POST /                          // Create analytics event
-├── GET /{id}                       // Get analytics event by ID
-├── PUT /{id}                       // Update analytics event
-└── DELETE /{id}                    // Soft delete analytics event
+- GET /                           // List analytics events
+- POST /                          // Create analytics event
+- GET /{id}                       // Get analytics event by ID
+- PUT /{id}                       // Update analytics event
+- DELETE /{id}                    // Soft delete analytics event
 ```
 
 ## 20. Subscriptions, Licensing & Modules
 ```javascript
 /api/v<version>/subscription-plans/
-├── GET /                           // List subscription plans
-├── POST /                          // Create subscription plan
-├── GET /{id}                       // Get subscription plan by ID
-├── PUT /{id}                       // Update subscription plan
-└── DELETE /{id}                    // Soft delete subscription plan
+- GET /                           // List subscription plans
+- POST /                          // Create subscription plan
+- GET /{id}                       // Get subscription plan by ID
+- PUT /{id}                       // Update subscription plan
+- DELETE /{id}                    // Soft delete subscription plan
 
 /api/v<version>/subscriptions/
-├── GET /                           // List subscriptions
-├── POST /                          // Create subscription
-├── GET /{id}                       // Get subscription by ID
-├── PUT /{id}                       // Update subscription
-└── DELETE /{id}                    // Soft delete subscription
+- GET /                           // List subscriptions
+- POST /                          // Create subscription
+- GET /{id}                       // Get subscription by ID
+- PUT /{id}                       // Update subscription
+- DELETE /{id}                    // Soft delete subscription
 
 /api/v<version>/subscription-invoices/
-├── GET /                           // List subscription invoices
-├── POST /                          // Create subscription invoice
-├── GET /{id}                       // Get subscription invoice by ID
-├── PUT /{id}                       // Update subscription invoice
-└── DELETE /{id}                    // Soft delete subscription invoice
+- GET /                           // List subscription invoices
+- POST /                          // Create subscription invoice
+- GET /{id}                       // Get subscription invoice by ID
+- PUT /{id}                       // Update subscription invoice
+- DELETE /{id}                    // Soft delete subscription invoice
 
 /api/v<version>/modules/
-├── GET /                           // List modules
-├── POST /                          // Create module
-├── GET /{id}                       // Get module by ID
-├── PUT /{id}                       // Update module
-└── DELETE /{id}                    // Soft delete module
+- GET /                           // List modules
+- POST /                          // Create module
+- GET /{id}                       // Get module by ID
+- PUT /{id}                       // Update module
+- DELETE /{id}                    // Soft delete module
 
 /api/v<version>/module-subscriptions/
-├── GET /                           // List module subscriptions
-├── POST /                          // Create module subscription
-├── GET /{id}                       // Get module subscription by ID
-├── PUT /{id}                       // Update module subscription
-└── DELETE /{id}                    // Soft delete module subscription
+- GET /                           // List module subscriptions
+- POST /                          // Create module subscription
+- GET /{id}                       // Get module subscription by ID
+- PUT /{id}                       // Update module subscription
+- DELETE /{id}                    // Soft delete module subscription
 
 /api/v<version>/licenses/
-├── GET /                           // List licenses
-├── POST /                          // Create license
-├── GET /{id}                       // Get license by ID
-├── PUT /{id}                       // Update license
-└── DELETE /{id}                    // Soft delete license
+- GET /                           // List licenses
+- POST /                          // Create license
+- GET /{id}                       // Get license by ID
+- PUT /{id}                       // Update license
+- DELETE /{id}                    // Soft delete license
 ```
 
 ## 21. Compliance, Audit & Security
 ```javascript
 /api/v<version>/audit-logs/
-├── GET /                           // List audit logs
-└── GET /{id}                       // Get audit log by ID
+- GET /                           // List audit logs
+- GET /{id}                       // Get audit log by ID
 
 /api/v<version>/phi-access-logs/
-├── GET /                           // List PHI access logs
-├── POST /                          // Create PHI access log
-├── GET /{id}                       // Get PHI access log by ID
-└── GET /user/{userId}              // Get user PHI access logs
+- GET /                           // List PHI access logs
+- POST /                          // Create PHI access log
+- GET /{id}                       // Get PHI access log by ID
+- GET /user/{userId}              // Get user PHI access logs
 
 /api/v<version>/data-processing-logs/
-├── GET /                           // List data processing logs
-├── POST /                          // Create data processing log
-├── GET /{id}                       // Get data processing log by ID
-├── PUT /{id}                       // Update data processing log
-└── DELETE /{id}                    // Soft delete data processing log
+- GET /                           // List data processing logs
+- POST /                          // Create data processing log
+- GET /{id}                       // Get data processing log by ID
+- PUT /{id}                       // Update data processing log
+- DELETE /{id}                    // Soft delete data processing log
 
 /api/v<version>/breach-notifications/
-├── GET /                           // List breach notifications
-├── POST /                          // Report breach
-├── GET /{id}                       // Get breach notification by ID
-├── PUT /{id}                       // Update breach notification
-└── POST /{id}/resolve              // Resolve breach notification
+- GET /                           // List breach notifications
+- POST /                          // Report breach
+- GET /{id}                       // Get breach notification by ID
+- PUT /{id}                       // Update breach notification
+- POST /{id}/resolve              // Resolve breach notification
 
 /api/v<version>/system-change-logs/
-├── GET /                           // List system change logs
-├── POST /                          // Create system change log
-├── GET /{id}                       // Get system change log by ID
-├── PUT /{id}                       // Update system change log
-├── POST /{id}/approve              // Approve system change
-└── POST /{id}/implement            // Implement system change
+- GET /                           // List system change logs
+- POST /                          // Create system change log
+- GET /{id}                       // Get system change log by ID
+- PUT /{id}                       // Update system change log
+- POST /{id}/approve              // Approve system change
+- POST /{id}/implement            // Implement system change
 ```
 
 ## 22. Integrations & Webhooks
 ```javascript
 /api/v<version>/integrations/
-├── GET /                           // List integrations
-├── POST /                          // Create integration
-├── GET /{id}                       // Get integration by ID
-├── PUT /{id}                       // Update integration
-└── DELETE /{id}                    // Soft delete integration
+- GET /                           // List integrations
+- POST /                          // Create integration
+- GET /{id}                       // Get integration by ID
+- PUT /{id}                       // Update integration
+- DELETE /{id}                    // Soft delete integration
 
 /api/v<version>/integration-logs/
-├── GET /                           // List integration logs
-├── GET /{id}                       // Get integration log by ID
-└── GET /integration/{integrationId} // Get integration logs by integration
+- GET /                           // List integration logs
+- GET /{id}                       // Get integration log by ID
+- GET /integration/{integrationId} // Get integration logs by integration
 
 /api/v<version>/webhook-subscriptions/
-├── GET /                           // List webhook subscriptions
-├── POST /                          // Create webhook subscription
-├── GET /{id}                       // Get webhook subscription by ID
-├── PUT /{id}                       // Update webhook subscription
-└── DELETE /{id}                    // Soft delete webhook subscription
+- GET /                           // List webhook subscriptions
+- POST /                          // Create webhook subscription
+- GET /{id}                       // Get webhook subscription by ID
+- PUT /{id}                       // Update webhook subscription
+- DELETE /{id}                    // Soft delete webhook subscription
 ```
 
 ## 23. Telemedicine & Patient Engagement (Feature Mapped)
@@ -1236,8 +1236,8 @@ Telemedicine, patient portal, and engagement features reuse existing resources:
 `radiology-results`, `prescriptions` (via pharmacy orders), and `notifications`.
 
 ## 24. Global Enforcement Rule
-❌ Any API module endpoint under `/api/v<version>/` that is not defined in this file **invalid**  
-✅ All refactors must **improve compliance**, never reduce it  
+[INVALID] Any API module endpoint under `/api/v<version>/` that is not defined in this file **invalid**  
+[VALID] All refactors must **improve compliance**, never reduce it  
 This file is **non-negotiable** and applies globally.
 
 ## 25. Workflow Contract Action Endpoints (Write-up Section 7)

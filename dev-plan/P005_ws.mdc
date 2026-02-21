@@ -1,4 +1,4 @@
-## Phase 5 – WebSockets
+## Phase 5 - WebSockets
 
 **Write-up alignment:** `write-up.md` sections 5.5, 6.16, 7.6, 7.10, 14.5  
 **Primary rules:** `websockets.mdc`, `auth-security.mdc`, `compliance.mdc`, `testing.mdc`
@@ -12,11 +12,11 @@
 ### Step 5.2: WebSocket gateway (task-atomic sub-steps)
 
 #### Step 5.2.1: Create WebSocket gateway file
-- Create `src/websockets/gateway.js` (handles connection routing, manages Map<UserID→WebSocket>)
+- Create `src/websockets/gateway.js` (handles connection routing, manages Map<UserID->WebSocket>)
 - **Verification**: `src/websockets/gateway.js` exists and exports gateway functions.
 
 #### Step 5.2.2: Implement connection map management
-- Implement Map<UserID→WebSocket> tracking
+- Implement Map<UserID->WebSocket> tracking
 - **Verification**: On disconnect, the user entry is removed.
 
 ### Step 5.3: WebSocket authentication (task-atomic sub-steps)

@@ -1,4 +1,4 @@
-﻿## Phase 15 - Performance & release readiness
+## Phase 15 - Performance & release readiness
 
 **Write-up alignment:** `write-up.md` sections 10.3, 14, 15, 18.2, 19, 20  
 **Primary rules:** `performance.mdc`, `offline-support.mdc`, `error-logging.mdc`, `documentation.mdc`

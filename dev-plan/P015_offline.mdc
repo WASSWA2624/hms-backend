@@ -2,7 +2,7 @@
 alwaysApply: true
 ---
 
-## Phase 8 – Offline support base
+## Phase 8 - Offline support base
 
 **Scope:** Applies to all HMS endpoints in `P010_api_endpoints.mdc` and modules in `P011_modules.mdc`. Responses must follow `response-format.mdc`.
 

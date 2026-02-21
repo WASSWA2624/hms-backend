@@ -2,7 +2,7 @@
 alwaysApply: true
 ---
 
-## Phase 13 – WebSocket app features
+## Phase 13 - WebSocket app features
 
 **Scope:** HMS-only real-time events aligned with `P009_models.mdc` and `P010_api_endpoints.mdc`. No legacy ecommerce events.
 

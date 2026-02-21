@@ -1,4 +1,4 @@
-## Phase 6 – Storage integration
+## Phase 6 - Storage integration
 
 **Write-up alignment:** `write-up.md` sections 6.2, 6.15, 6.15A, 7.10, 13.2  
 **Primary rules:** `storage.mdc`, `compliance.mdc`, `auth-security.mdc`, `testing.mdc`
@@ -32,7 +32,7 @@
 - **Verification**: Invalid upload payloads are rejected by validation middleware.
 
 #### Step 6.2.3: Verify middleware order (read-only)
-- Confirm route middleware order: validation → auth → RBAC → handler
+- Confirm route middleware order: validation -> auth -> RBAC -> handler
 - **Verification**: Media routes follow middleware order per `api.mdc`.
 
 #### Step 6.2.4: Enforce file handling and security rules
