@@ -1,4 +1,4 @@
-﻿Steps to review and implement (Phase 001: Core Utilities):
+Steps to review and implement (Phase 001: Core Utilities):
 - **1.1** Error handling foundation
 - **1.2** Response helpers
 - **1.3** Logging utilities
@@ -24,6 +24,7 @@ You must ensure 100% compliance with:
 - `hms-backend/dev-plan/index.md`
 - `hms-frontend/dev-plan/*.md` (when present)
 - Selected phase file in `hms-backend/dev-plan/*.mdc`
+- `hms-frontend/subscription-plan.md` (for subscription tiers, pricing, limits, add-ons, and eligibility)
 - `hms-frontend/write-up.md`
 - `hms-backend/.cursor/commands/backend-rules-dev.md`
 - Actual repository architecture and conventions already in `hms-backend/src/**`
@@ -81,8 +82,9 @@ Conflict resolution order (must match `hms-backend/dev-plan/index.md`):
 1. `hms-backend/.cursor/rules/index.mdc` and linked canonical rule files.
 2. `hms-frontend/dev-plan/*.md`.
 3. Selected file in `hms-backend/dev-plan/*.mdc`.
-4. `hms-frontend/write-up.md`.
-5. Ticket/chat notes.
+4. `hms-frontend/subscription-plan.md` (for subscription tiers, pricing, limits, add-ons, and eligibility).
+5. `hms-frontend/write-up.md`.
+6. Ticket/chat notes.
 
 ---
 
@@ -95,8 +97,8 @@ Conflict resolution order (must match `hms-backend/dev-plan/index.md`):
 ## Write-Up Alignment Contract (Mandatory)
 
 - Read the `Write-up alignment` declaration in the selected phase file and treat referenced sections as acceptance gates.
-- Enforce backend behavior/contracts required by `hms-frontend/write-up.md` for selected IDs.
-- Do not mark selected units complete until the selected phase file's write-up gates pass.
+- Enforce backend behavior/contracts required by `hms-frontend/write-up.md` and, where applicable, `hms-frontend/subscription-plan.md` (tiers, limits, add-ons, eligibility, and upgrade/downgrade suitability) for selected IDs.
+- Do not mark selected units complete until the selected phase file's write-up gates pass and relevant subscription-plan gates pass.
 
 ---
 
@@ -146,7 +148,7 @@ Conflict resolution order (must match `hms-backend/dev-plan/index.md`):
 4. Run relevant checks/tests and confirm pass/fail status.
 5. Verify no boundary violations.
 6. Verify no unselected-scope creep.
-7. Verify selected write-up alignment gates for the chosen IDs.
+7. Verify selected write-up alignment gates and applicable subscription-plan gates for the chosen IDs.
 
 ---
 
@@ -155,7 +157,7 @@ Conflict resolution order (must match `hms-backend/dev-plan/index.md`):
 - 100% compliance with all files in hms-backend/.cursor/rules/*.
 - Selected phase units from the referenced hms-backend/dev-plan/*.mdc are complete and production-ready.
 - Phase chronology and dependency contracts are preserved.
-- Selected write-up alignment gates from `hms-frontend/write-up.md` are satisfied for chosen IDs.
+- Selected write-up alignment gates from `hms-frontend/write-up.md` and applicable gates from `hms-frontend/subscription-plan.md` are satisfied for chosen IDs.
 - Tests and verification gates are satisfied for selected scope.
 - No out-of-scope phase/step work was introduced.
 
@@ -173,13 +175,15 @@ Return ONLY:
    - selected IDs implemented
    - rule compliance checks performed
    - chronology/dependency checks performed
-   - write-up alignment sections/gates validated
+   - write-up alignment sections/gates validated and applicable subscription-plan gates validated
    - any intentionally deferred work (must be out-of-scope and justified)
 
 Do NOT include files or logic outside selected phase unit(s).
 
 ---
 Role catalog sync (2026-02-16): canonical backend roles include SUPER_ADMIN, TENANT_ADMIN, FACILITY_ADMIN, DOCTOR, NURSE, LAB_TECH, PHARMACIST, RECEPTIONIST, BILLING, OPERATIONS, HR, PATIENT, BIOMED, HOUSE_KEEPER, OTHER.
+
+
 
 
 
