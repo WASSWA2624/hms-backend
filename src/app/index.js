@@ -27,6 +27,7 @@ const securityHeaders = require('@middlewares/security.middleware');
 const sessionMiddleware = require('@middlewares/session.middleware');
 const csrfMiddleware = require('@middlewares/csrf.middleware');
 const i18nMiddleware = require('@middlewares/i18n.middleware');
+const { initializeRequestContext } = require('@middlewares/request-context.middleware');
 const { defaultRateLimit } = require('@middlewares/rateLimit.middleware');
 const versioningMiddleware = require('@middlewares/versioning.middleware');
 const { offlineSupportMiddleware } = require('@middlewares/offline.middleware');
@@ -73,26 +74,29 @@ const createApp = () => {
     // 6. i18n locale detection middleware
     app.use(i18nMiddleware());
 
-    // 7. Rate limit middleware (before routes)
+    // 7. Request context middleware
+    app.use(initializeRequestContext());
+
+    // 8. Rate limit middleware (before routes)
     app.use(defaultRateLimit());
 
-    // 8. API versioning/deprecation headers
+    // 9. API versioning/deprecation headers
     app.use(versioningMiddleware());
 
-    // 8.5. Offline support contract (conditional GET, idempotency, sync metadata)
+    // 9.5. Offline support contract (conditional GET, idempotency, sync metadata)
     app.use(offlineSupportMiddleware());
     
-    // 9. CSRF middleware for state-changing routes
+    // 10. CSRF middleware for state-changing routes
     app.use(csrfMiddleware());
 
-    // 10. Performance monitoring middleware (before routes)
+    // 11. Performance monitoring middleware (before routes)
     app.use(performanceMiddleware());
     
-    // 11. Routes (mounted from router)
+    // 12. Routes (mounted from router)
     // Router will mount all module routes under /api/v1/ in Step 1.31
     app.use(router);
     
-    // 12. Error middleware (must be last - catches all errors)
+    // 13. Error middleware (must be last - catches all errors)
     app.use(errorMiddleware);
   } catch (err) {
     throw err;

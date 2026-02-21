@@ -24,6 +24,16 @@ const { formatDate, getCurrentTimestamp, getCurrentTimestampMs, getCurrentISO, g
 // Error utilities
 const { AppError, HttpError, handleApiError } = require('@lib/errors');
 
+// Adaptability guard utilities
+const {
+  buildGuardResult,
+  checkPolicyGuard,
+  checkWorkflowStateGuard,
+  runDynamicFormValidationHooks,
+  checkFeatureFlagGuard,
+  isFeatureFlagEnabled
+} = require('@lib/guards');
+
 // JWT utilities
 const { generateToken, generateRefreshToken, verifyToken } = require('@lib/jwt');
 
@@ -82,6 +92,14 @@ module.exports = {
   AppError,
   HttpError,
   handleApiError,
+
+  // Guards
+  buildGuardResult,
+  checkPolicyGuard,
+  checkWorkflowStateGuard,
+  runDynamicFormValidationHooks,
+  checkFeatureFlagGuard,
+  isFeatureFlagEnabled,
   
   // JWT
   generateToken,

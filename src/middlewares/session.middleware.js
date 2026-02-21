@@ -11,43 +11,46 @@ const env = require('@config/env');
 
 /**
  * Simple in-memory session store
- * In production, use Redis or similar
+ * In production, use Redis or similar.
  */
-class SessionStore {
+const store = {
   /**
-   * Get session by ID
+   * Get session by ID.
+   *
    * @param {string} sessionId - Session ID
    * @returns {Object|null} Session data or null
    */
-  get(sessionId) {
+  get: (sessionId) => {
     return sessions.get(sessionId) || null;
-  }
+  },
 
   /**
-   * Set session data
+   * Set session data.
+   *
    * @param {string} sessionId - Session ID
    * @param {Object} data - Session data
    */
-  set(sessionId, data) {
+  set: (sessionId, data) => {
     sessions.set(sessionId, {
-      ...this.get(sessionId),
+      ...(store.get(sessionId) || {}),
       ...data,
       lastAccessed: Date.now()
     });
-  }
+  },
 
   /**
-   * Delete session
+   * Delete session.
+   *
    * @param {string} sessionId - Session ID
    */
-  delete(sessionId) {
+  delete: (sessionId) => {
     sessions.delete(sessionId);
-  }
+  },
 
   /**
-   * Clear expired sessions (older than 24 hours)
+   * Clear expired sessions (older than 24 hours).
    */
-  clearExpired() {
+  clearExpired: () => {
     const now = Date.now();
     const maxAge = 24 * 60 * 60 * 1000; // 24 hours
 
@@ -57,9 +60,7 @@ class SessionStore {
       }
     }
   }
-}
-
-const store = new SessionStore();
+};
 
 /**
  * Session middleware

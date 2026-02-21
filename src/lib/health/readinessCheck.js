@@ -1,17 +1,19 @@
 /**
  * Readiness Check Utility
- * 
- * Checks if application is ready to serve traffic per health-checks.mdc
- * GET /ready endpoint: Returns 200 if ready, 503 if not ready
- * Checks database connectivity via Prisma (lightweight query)
- * Response format: { status: "ready" | "not_ready", timestamp: ISO 8601, checks: {...} }
+ *
+ * Checks if application is ready to serve traffic per health-checks.mdc:
+ * - Primary database check via Prisma query with 2s timeout.
+ * - Fallback direct mysql2 connectivity check with 5s timeout.
+ * - Total DB check budget is bounded by the primary + fallback path.
  */
 
 const { getCurrentISO } = require('@lib/dates');
 const { logger } = require('@lib/logging');
-const { DATABASE_URL, NODE_ENV } = require('@config/env');
+const { DATABASE_URL } = require('@config/env');
 
 const READINESS_CACHE_TTL_MS = 5000;
+const PRISMA_TIMEOUT_MS = 2000;
+const MYSQL_TIMEOUT_MS = 5000;
 
 let lastDatabaseCheckAt = 0;
 let lastDatabaseCheckResult = null;
@@ -28,7 +30,7 @@ const withTimeout = async (promise, timeoutMs, timeoutMessage) => {
   let timeoutId;
   const timeoutPromise = new Promise((_, reject) => {
     timeoutId = setTimeout(() => reject(new Error(timeoutMessage)), timeoutMs);
-    if (timeoutId && typeof timeoutId.unref === 'function') {
+    if (typeof timeoutId.unref === 'function') {
       timeoutId.unref();
     }
   });
@@ -43,51 +45,90 @@ const withTimeout = async (promise, timeoutMs, timeoutMessage) => {
 };
 
 /**
- * Check database connectivity using a short-lived mysql2 connection.
+ * Get initialized Prisma client if available.
  *
- * Readiness is polled frequently in development. Probing with Prisma can leave
- * background acquisition attempts alive after a timeout and produce noisy engine
- * pool timeout logs. The direct mysql2 check is deterministic and keeps readiness
- * output stable.
+ * @returns {Object|null} Prisma client or null
+ */
+const getInitializedPrismaClient = () => {
+  if (globalThis.prisma && typeof globalThis.prisma.$queryRaw === 'function') {
+    return globalThis.prisma;
+  }
+  return null;
+};
+
+/**
+ * Primary readiness check using Prisma.
  *
- * @returns {Promise<{status: string, error?: string}>} Database check result
+ * @returns {Promise<{status: string, source: string}>} Database check result
+ */
+const checkDatabaseWithPrisma = async () => {
+  const prisma = getInitializedPrismaClient();
+  if (!prisma) {
+    throw new Error('Prisma client not initialized');
+  }
+
+  await withTimeout(
+    prisma.$queryRaw`SELECT 1`,
+    PRISMA_TIMEOUT_MS,
+    'Prisma readiness check timeout'
+  );
+
+  return { status: 'ok', source: 'prisma' };
+};
+
+/**
+ * Fallback readiness check using direct mysql2 connection.
+ *
+ * @returns {Promise<{status: string, source: string, error?: string}>} Database check result
  */
 const checkDatabaseDirect = async () => {
+  let connection = null;
+
   try {
     const mysql = require('mysql2/promise');
-    
     const urlObj = new URL(DATABASE_URL);
-    let connection;
-    try {
-      connection = await mysql.createConnection({
+
+    connection = await withTimeout(
+      mysql.createConnection({
         host: urlObj.hostname,
         port: parseInt(urlObj.port || '3306', 10),
         user: urlObj.username,
         password: urlObj.password,
         database: urlObj.pathname.substring(1),
-      });
-    } catch (err) {
-      throw err;
-    }
-    
-    try {
-      await withTimeout(connection.query('SELECT 1'), 5000, 'Database check timeout');
-      await connection.end();
-      return { status: 'ok' };
-    } catch (err) {
-      await connection.end();
-      throw err;
-    }
+        connectTimeout: MYSQL_TIMEOUT_MS
+      }),
+      MYSQL_TIMEOUT_MS,
+      'mysql2 readiness connection timeout'
+    );
+
+    await withTimeout(
+      connection.query('SELECT 1'),
+      MYSQL_TIMEOUT_MS,
+      'mysql2 readiness query timeout'
+    );
+
+    return { status: 'ok', source: 'mysql2' };
   } catch (err) {
-    return { status: 'error', error: err?.message || err?.code || 'Database connection failed' };
+    return {
+      status: 'error',
+      source: 'mysql2',
+      error: err?.message || err?.code || 'Database connection failed'
+    };
+  } finally {
+    if (connection) {
+      try {
+        await connection.end();
+      } catch (_) {
+        // ignore connection close errors in readiness path
+      }
+    }
   }
 };
 
 /**
- * Check database connectivity
- * Uses lightweight query (SELECT 1) per health-checks.mdc
- * 
- * @returns {Promise<{status: string, error?: string}>} Database check result
+ * Check database connectivity with Prisma primary and mysql2 fallback.
+ *
+ * @returns {Promise<{status: string, source: string, error?: string}>} Database check result
  */
 const checkDatabase = async () => {
   const now = Date.now();
@@ -95,41 +136,56 @@ const checkDatabase = async () => {
     return lastDatabaseCheckResult;
   }
 
-  const result = await checkDatabaseDirect();
+  let prismaError = null;
+  try {
+    const prismaResult = await checkDatabaseWithPrisma();
+    lastDatabaseCheckAt = now;
+    lastDatabaseCheckResult = prismaResult;
+    return prismaResult;
+  } catch (error) {
+    prismaError = error;
+  }
+
+  const fallbackResult = await checkDatabaseDirect();
+  if (fallbackResult.status === 'ok') {
+    logger.warn('Readiness DB check used mysql2 fallback after Prisma failure', {
+      error: prismaError?.message || 'unknown'
+    });
+  } else {
+    logger.warn('Database readiness check failed', {
+      prisma_error: prismaError?.message || 'unknown',
+      fallback_error: fallbackResult.error
+    });
+  }
+
+  const result =
+    fallbackResult.status === 'ok'
+      ? fallbackResult
+      : {
+          status: 'error',
+          source: 'mysql2',
+          error: fallbackResult.error || prismaError?.message || 'Database unavailable'
+        };
+
   lastDatabaseCheckAt = now;
   lastDatabaseCheckResult = result;
   return result;
 };
 
 /**
- * Readiness check function
- * Checks all dependencies and returns readiness status
- * 
+ * Readiness check function.
+ *
  * @returns {Promise<Object>} Readiness check response
  */
 const readinessCheck = async () => {
   const timestamp = getCurrentISO();
-  const checks = {};
-  
-  // Check database connectivity
   const dbCheck = await checkDatabase();
-  checks.database = dbCheck.status;
-  
-  if (dbCheck.status === 'error' && dbCheck.error) {
-    logger.warn('Database readiness check failed', {
-      error: dbCheck.error
-    });
-  }
-  
-  // Determine overall readiness status
-  // For development: Application is ready even if database is unavailable (can reconnect)
-  // For production: Application is only ready if all critical checks pass
-  const isDevelopment = NODE_ENV === 'development';
-  const allChecksPass = isDevelopment 
-    ? true // In development, always consider ready for faster iteration
-    : Object.values(checks).every((status) => status === 'ok');
-  const status = allChecksPass ? 'ready' : 'not_ready';
-  
+  const checks = {
+    database: dbCheck.status
+  };
+
+  const status = checks.database === 'ok' ? 'ready' : 'not_ready';
+
   return {
     status,
     timestamp,

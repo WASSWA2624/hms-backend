@@ -14,6 +14,7 @@ const { healthCheck, readinessCheck, livenessCheck } = require('@lib/health');
 const { asyncHandler } = require('@lib/async');
 const { authenticate } = require('@middlewares/auth.middleware');
 const { hydrateRequestScope, enforceTenantScope } = require('@middlewares/tenant-scope.middleware');
+const { hydrateRequestContext } = require('@middlewares/request-context.middleware');
 const { enforceModuleEntitlement } = require('@middlewares/module-entitlement.middleware');
 
 /**
@@ -83,6 +84,7 @@ apiV1Router.use('/auth', require('../modules/auth/routes/auth.routes'));
 apiV1Router.use(authenticate());
 apiV1Router.use(hydrateRequestScope());
 apiV1Router.use(enforceTenantScope());
+apiV1Router.use(hydrateRequestContext());
 apiV1Router.use(enforceModuleEntitlement());
 
 apiV1Router.use('/user-sessions', require('../modules/user-session/routes/user-session.routes'));

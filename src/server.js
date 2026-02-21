@@ -50,13 +50,6 @@ try {
   throw err;
 }
 
-let createApp;
-try {
-  createApp = require('@app/index');
-} catch (err) {
-  throw err;
-}
-
 let PORT, HOST, NODE_ENV, HANDLE_SIGINT;
 try {
   const envConfig = require('@config/env');
@@ -64,6 +57,13 @@ try {
   HOST = envConfig.HOST;
   NODE_ENV = envConfig.NODE_ENV;
   HANDLE_SIGINT = envConfig.HANDLE_SIGINT;
+} catch (err) {
+  throw err;
+}
+
+let createApp;
+try {
+  createApp = require('@app/index');
 } catch (err) {
   throw err;
 }
