@@ -13,6 +13,17 @@ alwaysApply: true
 
 **Compliance:** All modules must follow `internationalization.mdc` - use translation keys (no hardcoded strings) and add keys to `src/locales/en.json` before completion.
 
+## Modularity and Chronological Execution Contract (Mandatory)
+
+- One module equals one atomic implementation unit; do not merge multiple modules into a single implementation task.
+- Execute modules strictly in the order defined in this file: Group `1` through `15`, then `15A`, then `16` through `20`; Group `21` remains feature-mapped verification only.
+- Do not skip forward to later groups while earlier-group modules are incomplete.
+- For each module, execute the `module-creation.mdc` 8-step process in order with no skipped/reordered steps.
+- Create module test structure before module implementation code, as required by `module-creation.mdc`.
+- A module is complete only when schemas, repository, service, controller, routes, mount, and all required tests are complete and passing.
+- Cross-module interactions must occur only through service/lib contracts (no direct cross-module repository/controller coupling).
+- When resuming from partial progress, restart from the first incomplete module in this sequence and continue forward.
+
 ## Implementation status snapshot (2026-02-17)
 
 - Planned atomic modules: **160**
