@@ -79,6 +79,7 @@ const apiV1Router = express.Router();
 // Mount module routes under /api/v1/
 // Per module-creation.mdc step 7: Use relative paths to mount modules
 apiV1Router.use('/auth', require('../modules/auth/routes/auth.routes'));
+apiV1Router.use('/public', require('../modules/public/routes/public.routes'));
 
 // Global protection for all non-auth API v1 routes.
 apiV1Router.use(authenticate());
@@ -127,6 +128,8 @@ apiV1Router.use('/bed-assignments', require('../modules/bed-assignment/routes/be
 apiV1Router.use('/ward-rounds', require('../modules/ward-round/routes/ward-round.routes'));
 apiV1Router.use('/visit-queues', require('../modules/visit-queue/routes/visit-queue.routes'));
 apiV1Router.use('/referrals', require('../modules/referral/routes/referral.routes'));
+apiV1Router.use('/campaigns', require('../modules/campaign/routes/campaign.routes'));
+apiV1Router.use('/feedback', require('../modules/feedback/routes/feedback.routes'));
 apiV1Router.use('/follow-ups', require('../modules/follow-up/routes/follow-up.routes'));
 apiV1Router.use('/vital-signs', require('../modules/vital-sign/routes/vital-sign.routes'));
 apiV1Router.use('/care-plans', require('../modules/care-plan/routes/care-plan.routes'));
@@ -246,6 +249,7 @@ apiV1Router.use('/system-change-logs', require('../modules/system-change-log/rou
 apiV1Router.use('/integrations', require('../modules/integration/routes/integration.routes'));
 apiV1Router.use('/integration-logs', require('../modules/integration-log/routes/integration-log.routes'));
 apiV1Router.use('/webhook-subscriptions', require('../modules/webhook-subscription/routes/webhook-subscription.routes'));
+apiV1Router.use('/interop', require('../modules/interop/routes/interop.routes'));
 
 // Mount API v1 router
 router.use('/api/v1', apiV1Router);

@@ -1,4 +1,4 @@
-const subject = require('@routes/public/public.routes');
+const subject = require('@routes/campaign/campaign.routes');
 
 const getRouteSignatures = (router) => {
   return router.stack
@@ -9,7 +9,7 @@ const getRouteSignatures = (router) => {
     .sort();
 };
 
-describe('public.routes contract', () => {
+describe('campaign.routes contract', () => {
   it('exports an express router with registered handlers', () => {
     expect(subject).toBeDefined();
     expect(typeof subject).toBe('function');
@@ -17,11 +17,10 @@ describe('public.routes contract', () => {
     expect(subject.stack.length).toBeGreaterThan(0);
   });
 
-  it('registers canonical public discovery endpoints', () => {
+  it('registers canonical campaign endpoints', () => {
     expect(getRouteSignatures(subject)).toEqual([
-      'GET /branches',
-      'GET /providers',
-      'GET /services'
+      'GET /',
+      'GET /:id/metrics'
     ]);
   });
 });

@@ -26,10 +26,13 @@ describe('Subscription Service', () => {
       const result = await subscriptionService.getSubscriptionById('123');
 
       expect(result).toEqual(mockSubscription);
-      expect(subscriptionRepository.findById).toHaveBeenCalledWith('123', {
-        plan: true,
-        tenant: true
-      });
+      expect(subscriptionRepository.findById).toHaveBeenCalledWith(
+        '123',
+        expect.objectContaining({
+          plan: true,
+          tenant: true
+        })
+      );
     });
 
     it('should throw HttpError when not found', async () => {

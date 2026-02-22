@@ -57,7 +57,11 @@ describe('Module Subscription Repository', () => {
         },
         include: {
           module: true,
-          subscription: true
+          subscription: {
+            include: {
+              plan: true
+            }
+          }
         }
       });
     });
@@ -101,7 +105,11 @@ describe('Module Subscription Repository', () => {
         data,
         include: {
           module: true,
-          subscription: true
+          subscription: {
+            include: {
+              plan: true
+            }
+          }
         }
       });
     });

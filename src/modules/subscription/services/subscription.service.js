@@ -8,7 +8,7 @@
  */
 
 const subscriptionRepository = require('@repositories/subscription/subscription.repository');
-const subscriptionPlanRepository = require('@repositories/subscription-plan/subscription-plan.repository');
+const subscriptionPlanService = require('@services/subscription-plan/subscription-plan.service');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 
@@ -49,6 +49,21 @@ const normalizeTierCode = (tierCode) => {
 const computePercent = (used, limit) => {
   if (!Number.isFinite(limit) || limit <= 0) return null;
   return Math.round((used / limit) * 10000) / 100;
+};
+
+const getSubscriptionPlanOrNull = async (planId) => {
+  if (!planId) {
+    return null;
+  }
+
+  try {
+    return await subscriptionPlanService.getSubscriptionPlanById(planId);
+  } catch (error) {
+    if (error instanceof HttpError && error.messageKey === 'errors.subscription_plan.not_found') {
+      return null;
+    }
+    throw error;
+  }
 };
 
 /**
@@ -292,7 +307,7 @@ const deleteSubscription = async (id, user, ip) => {
  */
 const upgradeSubscription = async (id, data, user, ip) => {
   const before = await getSubscriptionById(id);
-  const targetPlan = await subscriptionPlanRepository.findById(data.target_plan_id);
+  const targetPlan = await getSubscriptionPlanOrNull(data.target_plan_id);
 
   if (!targetPlan) {
     throw new HttpError('errors.subscription_plan.not_found', 404);
@@ -348,7 +363,7 @@ const upgradeSubscription = async (id, data, user, ip) => {
  */
 const downgradeSubscription = async (id, data, user, ip) => {
   const before = await getSubscriptionById(id);
-  const targetPlan = await subscriptionPlanRepository.findById(data.target_plan_id);
+  const targetPlan = await getSubscriptionPlanOrNull(data.target_plan_id);
 
   if (!targetPlan) {
     throw new HttpError('errors.subscription_plan.not_found', 404);
@@ -445,7 +460,7 @@ const renewSubscription = async (id, data = {}, user, ip) => {
 const getSubscriptionProrationPreview = async (id, targetPlanId) => {
   const subscription = await getSubscriptionById(id);
   const targetPlan = targetPlanId
-    ? await subscriptionPlanRepository.findById(targetPlanId)
+    ? await getSubscriptionPlanOrNull(targetPlanId)
     : (subscription.pending_plan || subscription.plan);
 
   if (!targetPlan) {
