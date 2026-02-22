@@ -13,6 +13,7 @@ const { authenticate } = require('@middlewares/auth.middleware');
 const {
   createPaymentSchema,
   updatePaymentSchema,
+  reconcilePaymentSchema,
   paymentIdParamsSchema,
   listPaymentsQuerySchema
 } = require('@validations/payment/payment.schema');
@@ -82,5 +83,18 @@ router.delete(
   paymentController.deletePayment
 );
 
-module.exports = router;
+router.post(
+  '/:id/reconcile',
+  validateRequest({ params: paymentIdParamsSchema, body: reconcilePaymentSchema }),
+  authenticate(),
+  paymentController.reconcilePayment
+);
 
+router.get(
+  '/:id/channel-breakdown',
+  validateRequest({ params: paymentIdParamsSchema }),
+  authenticate(),
+  paymentController.getPaymentChannelBreakdown
+);
+
+module.exports = router;

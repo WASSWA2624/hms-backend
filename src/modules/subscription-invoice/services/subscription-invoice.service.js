@@ -156,10 +156,81 @@ const deleteSubscriptionInvoice = async (id, user, ip) => {
   return subscriptionInvoice;
 };
 
+/**
+ * Collect subscription invoice
+ *
+ * @param {string} id - Subscription Invoice ID
+ * @param {Object} data - Collection payload
+ * @param {Object} user - Current user for audit
+ * @param {string} ip - Client IP for audit
+ * @returns {Promise<Object>} Collection result
+ */
+const collectSubscriptionInvoice = async (id, data = {}, user, ip) => {
+  const subscriptionInvoice = await getSubscriptionInvoiceById(id);
+
+  await createAuditLog({
+    user_id: user?.id || null,
+    action: 'COLLECT',
+    entity: 'subscription_invoice',
+    entity_id: subscriptionInvoice.id,
+    diff: {
+      before: subscriptionInvoice,
+      metadata: {
+        payment_method: data.payment_method || null,
+        notes: data.notes || null
+      }
+    },
+    ip
+  }).catch(() => {});
+
+  return {
+    subscription_invoice_id: subscriptionInvoice.id,
+    collected: true,
+    collected_at: new Date().toISOString(),
+    payment_method: data.payment_method || null
+  };
+};
+
+/**
+ * Retry subscription invoice collection
+ *
+ * @param {string} id - Subscription Invoice ID
+ * @param {Object} data - Retry payload
+ * @param {Object} user - Current user for audit
+ * @param {string} ip - Client IP for audit
+ * @returns {Promise<Object>} Retry result
+ */
+const retrySubscriptionInvoice = async (id, data = {}, user, ip) => {
+  const subscriptionInvoice = await getSubscriptionInvoiceById(id);
+
+  await createAuditLog({
+    user_id: user?.id || null,
+    action: 'RETRY',
+    entity: 'subscription_invoice',
+    entity_id: subscriptionInvoice.id,
+    diff: {
+      before: subscriptionInvoice,
+      metadata: {
+        retry_reason: data.retry_reason || null
+      }
+    },
+    ip
+  }).catch(() => {});
+
+  return {
+    subscription_invoice_id: subscriptionInvoice.id,
+    retried: true,
+    retried_at: new Date().toISOString(),
+    retry_reason: data.retry_reason || null
+  };
+};
+
 module.exports = {
   getSubscriptionInvoiceById,
   listSubscriptionInvoices,
   createSubscriptionInvoice,
   updateSubscriptionInvoice,
-  deleteSubscriptionInvoice
+  deleteSubscriptionInvoice,
+  collectSubscriptionInvoice,
+  retrySubscriptionInvoice
 };

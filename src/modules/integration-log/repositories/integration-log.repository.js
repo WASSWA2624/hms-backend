@@ -81,8 +81,29 @@ const count = async (filters = {}) => {
   }
 };
 
+/**
+ * Create integration log entry
+ *
+ * @param {Object} data - Integration log data
+ * @returns {Promise<Object>} Created integration log
+ */
+const create = async (data) => {
+  try {
+    return await prisma.integration_log.create({
+      data
+    });
+  } catch (error) {
+    if (error.code === 'P2003') {
+      const target = error.meta?.field_name || 'field';
+      throw new HttpError('errors.database.foreign_key_field', 400, [{ field: target }]);
+    }
+    throw new HttpError('errors.database.unexpected', 500, [{ originalError: error.message }]);
+  }
+};
+
 module.exports = {
   findById,
   findMany,
-  count
+  count,
+  create
 };

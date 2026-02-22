@@ -146,10 +146,97 @@ const deleteModuleSubscription = asyncHandler(async (req, res) => {
   res.status(204).send();
 });
 
+/**
+ * Activate module subscription
+ * POST /api/v1/module-subscriptions/:id/activate
+ *
+ * @param {Object} req - Express request
+ * @param {Object} res - Express response
+ * @returns {Promise<void>}
+ */
+const activateModuleSubscription = asyncHandler(async (req, res) => {
+  const locale = getLocale(req);
+  const { id } = req.params;
+  const context = {
+    user: req.user,
+    ip: req.ip,
+    tenant_id: req.user?.tenant_id
+  };
+
+  const moduleSubscription = await moduleSubscriptionService.activateModuleSubscription(id, req.body, context);
+
+  sendSuccess(
+    res,
+    200,
+    'messages.module_subscription.activate.success',
+    moduleSubscription,
+    locale
+  );
+});
+
+/**
+ * Deactivate module subscription
+ * POST /api/v1/module-subscriptions/:id/deactivate
+ *
+ * @param {Object} req - Express request
+ * @param {Object} res - Express response
+ * @returns {Promise<void>}
+ */
+const deactivateModuleSubscription = asyncHandler(async (req, res) => {
+  const locale = getLocale(req);
+  const { id } = req.params;
+  const context = {
+    user: req.user,
+    ip: req.ip,
+    tenant_id: req.user?.tenant_id
+  };
+
+  const moduleSubscription = await moduleSubscriptionService.deactivateModuleSubscription(id, req.body, context);
+
+  sendSuccess(
+    res,
+    200,
+    'messages.module_subscription.deactivate.success',
+    moduleSubscription,
+    locale
+  );
+});
+
+/**
+ * Check module subscription eligibility
+ * GET /api/v1/module-subscriptions/:id/eligibility-check
+ *
+ * @param {Object} req - Express request
+ * @param {Object} res - Express response
+ * @returns {Promise<void>}
+ */
+const checkModuleSubscriptionEligibility = asyncHandler(async (req, res) => {
+  const locale = getLocale(req);
+  const { id } = req.params;
+  const context = {
+    user: req.user,
+    ip: req.ip,
+    tenant_id: req.user?.tenant_id
+  };
+
+  const eligibility = await moduleSubscriptionService.checkModuleSubscriptionEligibility(id, context);
+
+  sendSuccess(
+    res,
+    200,
+    'messages.module_subscription.eligibility_check.success',
+    eligibility,
+    locale
+  );
+});
+
 module.exports = {
   listModuleSubscriptions,
   getModuleSubscriptionById,
   createModuleSubscription,
   updateModuleSubscription,
-  deleteModuleSubscription
+  deleteModuleSubscription,
+  activateModuleSubscription,
+  deactivateModuleSubscription,
+  checkModuleSubscriptionEligibility
 };

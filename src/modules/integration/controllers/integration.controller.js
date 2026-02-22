@@ -119,10 +119,54 @@ const deleteIntegration = async (req, res) => {
   return res.status(204).send();
 };
 
+/**
+ * Test integration connection
+ *
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @returns {Promise<void>}
+ */
+const testIntegrationConnection = async (req, res) => {
+  const { id } = req.params;
+
+  const auditContext = {
+    user_id: req.user?.id,
+    tenant_id: req.user?.tenant_id,
+    ip_address: req.ip
+  };
+
+  const result = await integrationService.testIntegrationConnection(id, req.body, auditContext);
+
+  return sendSuccess(res, 200, 'messages.integration.test_connection.success', result);
+};
+
+/**
+ * Trigger integration sync
+ *
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @returns {Promise<void>}
+ */
+const syncIntegrationNow = async (req, res) => {
+  const { id } = req.params;
+
+  const auditContext = {
+    user_id: req.user?.id,
+    tenant_id: req.user?.tenant_id,
+    ip_address: req.ip
+  };
+
+  const result = await integrationService.syncIntegrationNow(id, req.body, auditContext);
+
+  return sendSuccess(res, 200, 'messages.integration.sync_now.success', result);
+};
+
 module.exports = {
   getIntegration,
   listIntegrations,
   createIntegration,
   updateIntegration,
-  deleteIntegration
+  deleteIntegration,
+  testIntegrationConnection,
+  syncIntegrationNow
 };

@@ -34,6 +34,27 @@ const updateSubscriptionInvoiceSchema = z.object({
   invoice_id: uuidSchema.optional()
 });
 
+const collectSubscriptionInvoiceSchema = z.object({
+  payment_method: z.enum([
+    'CASH',
+    'CREDIT_CARD',
+    'DEBIT_CARD',
+    'PREPAID_CARD',
+    'GIFT_CARD',
+    'VOUCHER',
+    'BANK_CHECK',
+    'MOBILE_MONEY',
+    'BANK_TRANSFER',
+    'INSURANCE',
+    'OTHER'
+  ]).optional(),
+  notes: z.string().trim().max(10000).optional().nullable()
+});
+
+const retrySubscriptionInvoiceSchema = z.object({
+  retry_reason: z.string().trim().max(10000).optional().nullable()
+});
+
 // ==================== URL Params ====================
 
 /**
@@ -59,6 +80,8 @@ const listSubscriptionInvoicesQuerySchema = listQuerySchema.extend({
 module.exports = {
   createSubscriptionInvoiceSchema,
   updateSubscriptionInvoiceSchema,
+  collectSubscriptionInvoiceSchema,
+  retrySubscriptionInvoiceSchema,
   subscriptionInvoiceIdParamsSchema,
   listSubscriptionInvoicesQuerySchema
 };

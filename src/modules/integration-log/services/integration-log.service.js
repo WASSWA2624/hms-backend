@@ -8,6 +8,7 @@
  */
 
 const integrationLogRepository = require('@repositories/integration-log/integration-log.repository');
+const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 
 /**
@@ -114,8 +115,45 @@ const listIntegrationLogs = async (filters = {}, page = 1, limit = 20, sortBy = 
   };
 };
 
+/**
+ * Replay integration log
+ *
+ * @param {string} id - Integration log ID
+ * @param {Object} data - Replay payload
+ * @param {Object} context - Request context
+ * @returns {Promise<Object>} Replayed integration log
+ */
+const replayIntegrationLog = async (id, data = {}, context = {}) => {
+  const existingLog = await getIntegrationLogById(id);
+
+  const replayedLog = await integrationLogRepository.create({
+    integration_id: existingLog.integration_id,
+    status: existingLog.status,
+    message: `[REPLAY] ${existingLog.message || 'No message'}`
+  });
+
+  await createAuditLog({
+    user_id: context.user_id,
+    tenant_id: context.tenant_id,
+    action: 'REPLAY',
+    entity: 'integration_log',
+    entity_id: replayedLog.id,
+    diff: {
+      before: existingLog,
+      after: replayedLog,
+      metadata: {
+        notes: data.notes || null
+      }
+    },
+    ip_address: context.ip_address
+  }).catch(() => {});
+
+  return replayedLog;
+};
+
 module.exports = {
   getIntegrationLogById,
   getIntegrationLogsByIntegrationId,
-  listIntegrationLogs
+  listIntegrationLogs,
+  replayIntegrationLog
 };

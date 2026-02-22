@@ -79,8 +79,28 @@ const listIntegrationLogs = async (req, res) => {
   );
 };
 
+/**
+ * Replay integration log
+ *
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @returns {Promise<void>}
+ */
+const replayIntegrationLog = async (req, res) => {
+  const { id } = req.params;
+
+  const replayedLog = await integrationLogService.replayIntegrationLog(id, req.body, {
+    user_id: req.user?.id,
+    tenant_id: req.user?.tenant_id,
+    ip_address: req.ip
+  });
+
+  return sendSuccess(res, 200, 'messages.integration_log.replay.success', replayedLog);
+};
+
 module.exports = {
   getIntegrationLog,
   getIntegrationLogsByIntegrationId,
-  listIntegrationLogs
+  listIntegrationLogs,
+  replayIntegrationLog
 };

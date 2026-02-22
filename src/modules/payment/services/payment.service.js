@@ -191,11 +191,98 @@ const deletePayment = async (id, userId, ipAddress) => {
   }
 };
 
+/**
+ * Reconcile payment
+ *
+ * @param {string} id - Payment ID
+ * @param {Object} data - Reconciliation payload
+ * @param {string} userId - User ID for audit
+ * @param {string} ipAddress - Client IP address
+ * @returns {Promise<Object>}
+ */
+const reconcilePayment = async (id, data = {}, userId, ipAddress) => {
+  try {
+    const before = await paymentRepository.findById(id);
+    if (!before) {
+      throw new HttpError('errors.payment.not_found', 404);
+    }
+
+    const payment = await paymentRepository.update(id, {
+      status: data.status || 'COMPLETED',
+      paid_at: before.paid_at || new Date()
+    });
+
+    createAuditLog({
+      tenant_id: before.tenant_id,
+      user_id: userId,
+      action: 'RECONCILE',
+      entity: 'payment',
+      entity_id: payment.id,
+      diff: {
+        before,
+        after: payment,
+        metadata: {
+          notes: data.notes || null
+        }
+      },
+      ip_address: ipAddress
+    }).catch(() => {});
+
+    return payment;
+  } catch (error) {
+    if (error instanceof HttpError) throw error;
+    throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
+  }
+};
+
+/**
+ * Get payment channel breakdown for the payment tenant
+ *
+ * @param {string} id - Payment ID
+ * @returns {Promise<Object>}
+ */
+const getPaymentChannelBreakdown = async (id) => {
+  try {
+    const payment = await paymentRepository.findById(id);
+    if (!payment) {
+      throw new HttpError('errors.payment.not_found', 404);
+    }
+
+    const tenantPayments = await paymentRepository.findMany(
+      { tenant_id: payment.tenant_id },
+      0,
+      1000,
+      { created_at: 'desc' }
+    );
+
+    const channelBreakdown = tenantPayments.reduce((acc, item) => {
+      const method = item.method || 'OTHER';
+      const amount = Number(item.amount || 0);
+      if (!acc[method]) {
+        acc[method] = { count: 0, amount: 0 };
+      }
+      acc[method].count += 1;
+      acc[method].amount = Math.round((acc[method].amount + amount) * 100) / 100;
+      return acc;
+    }, {});
+
+    return {
+      tenant_id: payment.tenant_id,
+      total_payments: tenantPayments.length,
+      channel_breakdown: channelBreakdown
+    };
+  } catch (error) {
+    if (error instanceof HttpError) throw error;
+    throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
+  }
+};
+
 module.exports = {
   listPayments,
   getPaymentById,
   createPayment,
   updatePayment,
-  deletePayment
+  deletePayment,
+  reconcilePayment,
+  getPaymentChannelBreakdown
 };
-

@@ -15,6 +15,8 @@ const { validate } = require('@middlewares/validate.middleware');
 const {
   createSubscriptionInvoiceSchema,
   updateSubscriptionInvoiceSchema,
+  collectSubscriptionInvoiceSchema,
+  retrySubscriptionInvoiceSchema,
   subscriptionInvoiceIdParamsSchema,
   listSubscriptionInvoicesQuerySchema
 } = require('@validations/subscription-invoice/subscription-invoice.schema');
@@ -56,6 +58,18 @@ router.get(
   '/:id',
   validate({ params: subscriptionInvoiceIdParamsSchema }),
   asyncHandler(subscriptionInvoiceController.getSubscriptionInvoice)
+);
+
+router.post(
+  '/:id/collect',
+  validate({ params: subscriptionInvoiceIdParamsSchema, body: collectSubscriptionInvoiceSchema }),
+  asyncHandler(subscriptionInvoiceController.collectSubscriptionInvoice)
+);
+
+router.post(
+  '/:id/retry',
+  validate({ params: subscriptionInvoiceIdParamsSchema, body: retrySubscriptionInvoiceSchema }),
+  asyncHandler(subscriptionInvoiceController.retrySubscriptionInvoice)
 );
 
 /**

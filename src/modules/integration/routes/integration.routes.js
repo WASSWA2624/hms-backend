@@ -15,6 +15,8 @@ const integrationController = require('@controllers/integration/integration.cont
 const {
   createIntegrationSchema,
   updateIntegrationSchema,
+  testConnectionSchema,
+  syncNowSchema,
   integrationIdParamsSchema,
   listIntegrationsQuerySchema
 } = require('@validations/integration/integration.schema');
@@ -42,7 +44,7 @@ const {
  */
 router.get(
   '/',
-  validate(null, null, listIntegrationsQuerySchema),
+  validate({ query: listIntegrationsQuerySchema }),
   asyncHandler(integrationController.listIntegrations)
 );
 
@@ -62,8 +64,20 @@ router.get(
  */
 router.get(
   '/:id',
-  validate(null, integrationIdParamsSchema, null),
+  validate({ params: integrationIdParamsSchema }),
   asyncHandler(integrationController.getIntegration)
+);
+
+router.post(
+  '/:id/test-connection',
+  validate({ params: integrationIdParamsSchema, body: testConnectionSchema }),
+  asyncHandler(integrationController.testIntegrationConnection)
+);
+
+router.post(
+  '/:id/sync-now',
+  validate({ params: integrationIdParamsSchema, body: syncNowSchema }),
+  asyncHandler(integrationController.syncIntegrationNow)
 );
 
 /**
@@ -86,7 +100,7 @@ router.get(
  */
 router.post(
   '/',
-  validate(createIntegrationSchema, null, null),
+  validate({ body: createIntegrationSchema }),
   asyncHandler(integrationController.createIntegration)
 );
 
@@ -110,7 +124,7 @@ router.post(
  */
 router.put(
   '/:id',
-  validate(updateIntegrationSchema, integrationIdParamsSchema, null),
+  validate({ params: integrationIdParamsSchema, body: updateIntegrationSchema }),
   asyncHandler(integrationController.updateIntegration)
 );
 
@@ -130,7 +144,7 @@ router.put(
  */
 router.delete(
   '/:id',
-  validate(null, integrationIdParamsSchema, null),
+  validate({ params: integrationIdParamsSchema }),
   asyncHandler(integrationController.deleteIntegration)
 );
 

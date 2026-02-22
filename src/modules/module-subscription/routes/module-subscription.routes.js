@@ -15,6 +15,7 @@ const { authenticate } = require('@middlewares/auth.middleware');
 const {
   createModuleSubscriptionSchema,
   updateModuleSubscriptionSchema,
+  moduleSubscriptionActivationSchema,
   moduleSubscriptionIdParamsSchema,
   listModuleSubscriptionsQuerySchema
 } = require('@validations/module-subscription/module-subscription.schema');
@@ -38,7 +39,8 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',  validateRequest({ query: listModuleSubscriptionsQuerySchema }),
+  '/',
+  validateRequest({ query: listModuleSubscriptionsQuerySchema }),
 
   authenticate(),
   moduleSubscriptionController.listModuleSubscriptions
@@ -58,7 +60,8 @@ router.get(
  * @throws 404 Module subscription not found
  */
 router.get(
-  '/:id',  validateRequest({ params: moduleSubscriptionIdParamsSchema }),
+  '/:id',
+  validateRequest({ params: moduleSubscriptionIdParamsSchema }),
 
   authenticate(),
   moduleSubscriptionController.getModuleSubscriptionById
@@ -81,7 +84,8 @@ router.get(
  * @throws 409 Duplicate module-subscription combination
  */
 router.post(
-  '/',  validateRequest({ body: createModuleSubscriptionSchema }),
+  '/',
+  validateRequest({ body: createModuleSubscriptionSchema }),
 
   authenticate(),
   moduleSubscriptionController.createModuleSubscription
@@ -105,7 +109,8 @@ router.post(
  * @throws 409 Duplicate module-subscription combination
  */
 router.put(
-  '/:id',  validateRequest({ params: moduleSubscriptionIdParamsSchema, body: updateModuleSubscriptionSchema }),
+  '/:id',
+  validateRequest({ params: moduleSubscriptionIdParamsSchema, body: updateModuleSubscriptionSchema }),
 
   authenticate(),
   moduleSubscriptionController.updateModuleSubscription
@@ -125,10 +130,35 @@ router.put(
  * @throws 404 Module subscription not found
  */
 router.delete(
-  '/:id',  validateRequest({ params: moduleSubscriptionIdParamsSchema }),
+  '/:id',
+  validateRequest({ params: moduleSubscriptionIdParamsSchema }),
 
   authenticate(),
   moduleSubscriptionController.deleteModuleSubscription
+);
+
+router.post(
+  '/:id/activate',
+  validateRequest({ params: moduleSubscriptionIdParamsSchema, body: moduleSubscriptionActivationSchema }),
+
+  authenticate(),
+  moduleSubscriptionController.activateModuleSubscription
+);
+
+router.post(
+  '/:id/deactivate',
+  validateRequest({ params: moduleSubscriptionIdParamsSchema, body: moduleSubscriptionActivationSchema }),
+
+  authenticate(),
+  moduleSubscriptionController.deactivateModuleSubscription
+);
+
+router.get(
+  '/:id/eligibility-check',
+  validateRequest({ params: moduleSubscriptionIdParamsSchema }),
+
+  authenticate(),
+  moduleSubscriptionController.checkModuleSubscriptionEligibility
 );
 
 module.exports = router;

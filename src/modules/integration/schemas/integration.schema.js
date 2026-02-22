@@ -51,6 +51,22 @@ const updateIntegrationSchema = z.object({
   config_json: z.any().optional().nullable()
 });
 
+/**
+ * Test connection request schema
+ */
+const testConnectionSchema = z.object({
+  timeout_ms: z.number().int().positive().max(120000).optional(),
+  dry_run: z.boolean().optional()
+});
+
+/**
+ * Sync now request schema
+ */
+const syncNowSchema = z.object({
+  force: z.boolean().optional(),
+  scope: z.string().trim().max(120).optional().nullable()
+});
+
 // ==================== URL Params ====================
 
 /**
@@ -79,6 +95,8 @@ const listIntegrationsQuerySchema = listQuerySchema.extend({
 module.exports = {
   createIntegrationSchema,
   updateIntegrationSchema,
+  testConnectionSchema,
+  syncNowSchema,
   integrationIdParamsSchema,
   listIntegrationsQuerySchema,
   IntegrationTypeEnum,

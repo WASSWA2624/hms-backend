@@ -96,10 +96,38 @@ const deleteSubscriptionInvoice = async (req, res) => {
   return res.status(204).send();
 };
 
+/**
+ * Collect subscription invoice
+ *
+ * @param {Object} req - Express request
+ * @param {Object} res - Express response
+ * @returns {Promise<void>}
+ */
+const collectSubscriptionInvoice = async (req, res) => {
+  const { id } = req.params;
+  const result = await subscriptionInvoiceService.collectSubscriptionInvoice(id, req.body, req.user, req.ip);
+  return sendSuccess(res, 200, 'messages.subscription_invoice.collect.success', result);
+};
+
+/**
+ * Retry subscription invoice collection
+ *
+ * @param {Object} req - Express request
+ * @param {Object} res - Express response
+ * @returns {Promise<void>}
+ */
+const retrySubscriptionInvoice = async (req, res) => {
+  const { id } = req.params;
+  const result = await subscriptionInvoiceService.retrySubscriptionInvoice(id, req.body, req.user, req.ip);
+  return sendSuccess(res, 200, 'messages.subscription_invoice.retry.success', result);
+};
+
 module.exports = {
   getSubscriptionInvoice,
   listSubscriptionInvoices,
   createSubscriptionInvoice,
   updateSubscriptionInvoice,
-  deleteSubscriptionInvoice
+  deleteSubscriptionInvoice,
+  collectSubscriptionInvoice,
+  retrySubscriptionInvoice
 };

@@ -95,11 +95,32 @@ const deletePayment = asyncHandler(async (req, res) => {
   sendNoContent(res);
 });
 
+/**
+ * Reconcile payment
+ * POST /api/v1/payments/:id/reconcile
+ */
+const reconcilePayment = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const payment = await paymentService.reconcilePayment(id, req.body, req.user?.id, req.ip);
+  sendSuccess(res, 200, 'messages.payment.reconcile.success', payment);
+});
+
+/**
+ * Get payment channel breakdown for tenant scope
+ * GET /api/v1/payments/:id/channel-breakdown
+ */
+const getPaymentChannelBreakdown = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const breakdown = await paymentService.getPaymentChannelBreakdown(id, req.user?.id, req.ip);
+  sendSuccess(res, 200, 'messages.payment.channel_breakdown.success', breakdown);
+});
+
 module.exports = {
   listPayments,
   getPaymentById,
   createPayment,
   updatePayment,
-  deletePayment
+  deletePayment,
+  reconcilePayment,
+  getPaymentChannelBreakdown
 };
-

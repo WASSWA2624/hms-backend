@@ -52,9 +52,14 @@ const listIntegrationLogsQuerySchema = listQuerySchema.extend({
   search: z.string().trim().optional()
 });
 
+const replayIntegrationLogSchema = z.object({
+  notes: z.string().trim().max(10000).optional().nullable()
+});
+
 module.exports = {
   integrationLogIdParamsSchema,
   integrationIdParamsSchema,
   listIntegrationLogsQuerySchema,
+  replayIntegrationLogSchema,
   IntegrationStatusEnum
 };

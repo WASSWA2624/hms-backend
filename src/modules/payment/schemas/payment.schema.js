@@ -53,6 +53,11 @@ const updatePaymentSchema = z.object({
   transaction_ref: z.string().trim().max(120).optional().nullable()
 });
 
+const reconcilePaymentSchema = z.object({
+  status: z.enum(['COMPLETED', 'FAILED', 'REFUNDED']).optional(),
+  notes: z.string().trim().max(10000).optional().nullable()
+});
+
 /**
  * Payment ID URL parameter validation
  */
@@ -78,7 +83,7 @@ const listPaymentsQuerySchema = listQuerySchema.extend({
 module.exports = {
   createPaymentSchema,
   updatePaymentSchema,
+  reconcilePaymentSchema,
   paymentIdParamsSchema,
   listPaymentsQuerySchema
 };
-

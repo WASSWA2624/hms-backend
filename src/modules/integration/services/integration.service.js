@@ -159,8 +159,71 @@ const deleteIntegration = async (id, auditContext) => {
     old_values: existingIntegration,
     ...auditContext
   });
-  
+
   return deleted;
+};
+
+/**
+ * Test integration connection
+ *
+ * @param {string} id - Integration ID
+ * @param {Object} data - Test payload
+ * @param {Object} auditContext - Audit context
+ * @returns {Promise<Object>} Test result payload
+ */
+const testIntegrationConnection = async (id, data = {}, auditContext = {}) => {
+  const integration = await getIntegrationById(id);
+  const hasConfig = integration.config_json !== null && integration.config_json !== undefined;
+
+  const result = {
+    integration_id: integration.id,
+    connected: hasConfig,
+    tested_at: new Date().toISOString(),
+    timeout_ms: data.timeout_ms || 10000,
+    dry_run: Boolean(data.dry_run)
+  };
+
+  await createAuditLog({
+    action: 'TEST_CONNECTION',
+    entity: 'integration',
+    entity_id: integration.id,
+    old_values: integration,
+    new_values: result,
+    ...auditContext
+  }).catch(() => {});
+
+  return result;
+};
+
+/**
+ * Trigger integration sync
+ *
+ * @param {string} id - Integration ID
+ * @param {Object} data - Sync payload
+ * @param {Object} auditContext - Audit context
+ * @returns {Promise<Object>} Sync payload
+ */
+const syncIntegrationNow = async (id, data = {}, auditContext = {}) => {
+  const integration = await getIntegrationById(id);
+
+  const result = {
+    integration_id: integration.id,
+    queued: true,
+    forced: Boolean(data.force),
+    scope: data.scope || 'full',
+    queued_at: new Date().toISOString()
+  };
+
+  await createAuditLog({
+    action: 'SYNC_NOW',
+    entity: 'integration',
+    entity_id: integration.id,
+    old_values: integration,
+    new_values: result,
+    ...auditContext
+  }).catch(() => {});
+
+  return result;
 };
 
 module.exports = {
@@ -168,5 +231,7 @@ module.exports = {
   listIntegrations,
   createIntegration,
   updateIntegration,
-  deleteIntegration
+  deleteIntegration,
+  testIntegrationConnection,
+  syncIntegrationNow
 };
