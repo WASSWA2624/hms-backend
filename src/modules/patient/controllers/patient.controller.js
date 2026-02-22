@@ -127,10 +127,171 @@ const deletePatient = asyncHandler(async (req, res) => {
   sendNoContent(res);
 });
 
+/**
+ * Get patient identifiers (nested resource)
+ * GET /api/v1/patients/:id/identifiers
+ */
+const getPatientIdentifiers = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const {
+    page = DEFAULT_PAGE,
+    limit = DEFAULT_PAGE_LIMIT,
+    sort_by,
+    order = 'desc'
+  } = req.query;
+
+  const result = await patientService.getPatientIdentifiers(
+    id,
+    parseInt(page),
+    parseInt(limit),
+    sort_by,
+    order,
+    req.user?.id,
+    req.ip
+  );
+
+  sendPaginated(res, 'messages.patient.identifiers.list.success', result.patientIdentifiers, result.pagination);
+});
+
+/**
+ * Get patient contacts (nested resource)
+ * GET /api/v1/patients/:id/contacts
+ */
+const getPatientContacts = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const {
+    page = DEFAULT_PAGE,
+    limit = DEFAULT_PAGE_LIMIT,
+    sort_by,
+    order = 'desc'
+  } = req.query;
+
+  const result = await patientService.getPatientContacts(
+    id,
+    parseInt(page),
+    parseInt(limit),
+    sort_by,
+    order,
+    req.user?.id,
+    req.ip
+  );
+
+  sendPaginated(res, 'messages.patient.contacts.list.success', result.patientContacts, result.pagination);
+});
+
+/**
+ * Get patient guardians (nested resource)
+ * GET /api/v1/patients/:id/guardians
+ */
+const getPatientGuardians = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const {
+    page = DEFAULT_PAGE,
+    limit = DEFAULT_PAGE_LIMIT,
+    sort_by,
+    order = 'desc'
+  } = req.query;
+
+  const result = await patientService.getPatientGuardians(
+    id,
+    parseInt(page),
+    parseInt(limit),
+    sort_by,
+    order,
+    req.user?.id,
+    req.ip
+  );
+
+  sendPaginated(res, 'messages.patient.guardians.list.success', result.patientGuardians, result.pagination);
+});
+
+/**
+ * Get patient allergies (nested resource)
+ * GET /api/v1/patients/:id/allergies
+ */
+const getPatientAllergies = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const {
+    page = DEFAULT_PAGE,
+    limit = DEFAULT_PAGE_LIMIT,
+    sort_by,
+    order = 'desc'
+  } = req.query;
+
+  const result = await patientService.getPatientAllergies(
+    id,
+    parseInt(page),
+    parseInt(limit),
+    sort_by,
+    order
+  );
+
+  sendPaginated(res, 'messages.patient.allergies.list.success', result.patientAllergies, result.pagination);
+});
+
+/**
+ * Get patient medical histories (nested resource)
+ * GET /api/v1/patients/:id/medical-histories
+ */
+const getPatientMedicalHistories = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const {
+    page = DEFAULT_PAGE,
+    limit = DEFAULT_PAGE_LIMIT,
+    sort_by,
+    order = 'desc'
+  } = req.query;
+
+  const result = await patientService.getPatientMedicalHistories(
+    id,
+    parseInt(page),
+    parseInt(limit),
+    sort_by,
+    order
+  );
+
+  sendPaginated(
+    res,
+    'messages.patient.medical_histories.list.success',
+    result.patientMedicalHistories,
+    result.pagination
+  );
+});
+
+/**
+ * Get patient documents (nested resource)
+ * GET /api/v1/patients/:id/documents
+ */
+const getPatientDocuments = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const {
+    page = DEFAULT_PAGE,
+    limit = DEFAULT_PAGE_LIMIT,
+    sort_by,
+    order = 'desc'
+  } = req.query;
+
+  const result = await patientService.getPatientDocuments(
+    id,
+    parseInt(page),
+    parseInt(limit),
+    sort_by,
+    order
+  );
+
+  sendPaginated(res, 'messages.patient.documents.list.success', result.patientDocuments, result.pagination);
+});
+
 module.exports = {
   listPatients,
   getPatientById,
   createPatient,
   updatePatient,
-  deletePatient
+  deletePatient,
+  getPatientIdentifiers,
+  getPatientContacts,
+  getPatientGuardians,
+  getPatientAllergies,
+  getPatientMedicalHistories,
+  getPatientDocuments
 };

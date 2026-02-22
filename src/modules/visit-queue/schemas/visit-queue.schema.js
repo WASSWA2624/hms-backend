@@ -42,6 +42,15 @@ const updateVisitQueueSchema = z.object({
   queued_at: z.string().datetime().optional()
 });
 
+/**
+ * Prioritize visit queue entry body validation
+ * Used for POST /visit-queues/:id/prioritize endpoint
+ */
+const prioritizeVisitQueueSchema = z.object({
+  reason: z.string().trim().max(65535).optional().nullable(),
+  status: z.enum(['SCHEDULED', 'CONFIRMED', 'IN_PROGRESS']).optional()
+});
+
 // ==================== URL Params ====================
 
 /**
@@ -72,6 +81,7 @@ const listVisitQueuesQuerySchema = listQuerySchema.extend({
 module.exports = {
   createVisitQueueSchema,
   updateVisitQueueSchema,
+  prioritizeVisitQueueSchema,
   visitQueueIdParamsSchema,
   listVisitQueuesQuerySchema
 };

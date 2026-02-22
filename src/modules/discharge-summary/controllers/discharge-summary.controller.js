@@ -117,10 +117,28 @@ const deleteDischargeSummary = asyncHandler(async (req, res) => {
   sendNoContent(res);
 });
 
+/**
+ * Finalize discharge summary
+ * POST /api/v1/discharge-summaries/:id/finalize
+ *
+ * @param {Object} req - Express request
+ * @param {Object} res - Express response
+ */
+const finalizeDischargeSummary = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user?.id;
+  const ipAddress = req.ip;
+
+  const dischargeSummary = await dischargeSummaryService.finalizeDischargeSummary(id, req.body, userId, ipAddress);
+
+  sendSuccess(res, 200, 'messages.discharge_summary.finalize.success', dischargeSummary);
+});
+
 module.exports = {
   listDischargeSummaries,
   getDischargeSummaryById,
   createDischargeSummary,
   updateDischargeSummary,
-  deleteDischargeSummary
+  deleteDischargeSummary,
+  finalizeDischargeSummary
 };

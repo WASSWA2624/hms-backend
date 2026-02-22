@@ -93,16 +93,4 @@ router.post(
   systemChangeLogController.implementSystemChangeLog
 );
 
-/**
- * @description Delete system change log (soft delete)
- * @method DELETE
- * @route /api/v1/system-change-logs/:id
- */
-router.delete(
-  '/:id',  validateRequest({ params: systemChangeLogIdParamsSchema }),
-
-  authenticate(),
-  systemChangeLogController.deleteSystemChangeLog
-);
-
 module.exports = router;

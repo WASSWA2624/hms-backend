@@ -16,6 +16,7 @@ const {
   createAdmissionSchema,
   updateAdmissionSchema,
   dischargeAdmissionSchema,
+  transferAdmissionSchema,
   admissionIdParamsSchema,
   listAdmissionsQuerySchema
 } = require('@validations/admission/admission.schema');
@@ -160,6 +161,26 @@ router.post(
 
   authenticate(),
   admissionController.dischargeAdmission
+);
+
+/**
+ * @description Transfer admission
+ * @method POST
+ * @route /api/v1/admissions/:id/transfer
+ * @authentication Required (JWT)
+ * @permissions Authenticated users
+ * @urlParams {string} id - Admission ID (UUID)
+ * @bodyParams {string} [facility_id] - Destination facility ID (UUID)
+ * @bodyParams {string} [notes] - Transfer notes
+ * @returns {Object} Updated admission
+ * @throws 401 Unauthorized
+ * @throws 404 Admission not found
+ */
+router.post(
+  '/:id/transfer',
+  validateRequest({ params: admissionIdParamsSchema, body: transferAdmissionSchema }),
+  authenticate(),
+  admissionController.transferAdmission
 );
 
 module.exports = router;

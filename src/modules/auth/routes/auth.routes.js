@@ -11,7 +11,6 @@ const authController = require('@controllers/auth/auth.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
 const { authenticate } = require('@middlewares/auth.middleware');
 const {
-  identifyBodySchema,
   loginBodySchema,
   registerBodySchema,
   verifyEmailBodySchema,
@@ -23,27 +22,6 @@ const {
   refreshTokenBodySchema,
   logoutBodySchema
 } = require('@validations/auth/auth.schema');
-
-/**
- * @route GET /api/v1/auth/csrf-token
- * @desc Get CSRF token for POST/PUT/DELETE requests
- * @access Public
- */
-router.get(
-  '/csrf-token',
-  authController.getCsrfToken
-);
-
-/**
- * @route POST /api/v1/auth/identify
- * @desc Identify users by identifier (email/phone) - returns tenant list
- * @access Public
- */
-router.post(
-  '/identify',
-  validateRequest({ body: identifyBodySchema }),
-  authController.identify
-);
 
 /**
  * @route POST /api/v1/auth/login

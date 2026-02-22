@@ -16,35 +16,11 @@ const validate = require('@middlewares/validate.middleware');
 // Schemas
 const {
   auditLogIdParamsSchema,
-  userIdParamsSchema,
-  entityParamsSchema,
   listAuditLogsQuerySchema
 } = require('@modules/audit-log/schemas/audit-log.schema');
 
 // Controller
 const auditLogController = require('@modules/audit-log/controllers/audit-log.controller');
-
-/**
- * @route GET /api/v1/audit-logs/user/:userId
- * @desc Get audit logs by user ID
- * @access Private (requires authentication)
- */
-router.get(
-  '/user/:userId',
-  validate({ params: userIdParamsSchema, query: listAuditLogsQuerySchema }),
-  auditLogController.getAuditLogsByUserId
-);
-
-/**
- * @route GET /api/v1/audit-logs/entity/:entity/:entityId
- * @desc Get audit logs by entity
- * @access Private (requires authentication)
- */
-router.get(
-  '/entity/:entity/:entityId',
-  validate({ params: entityParamsSchema, query: listAuditLogsQuerySchema }),
-  auditLogController.getAuditLogsByEntity
-);
 
 /**
  * @route GET /api/v1/audit-logs/:id

@@ -182,10 +182,64 @@ const deleteDischargeSummary = async (id, userId, ipAddress) => {
   }
 };
 
+/**
+ * Finalize discharge summary (workflow action)
+ * Per prisma.mdc: Mutations must create audit logs
+ *
+ * @param {string} id - Discharge summary ID
+ * @param {Object} data - Finalization data
+ * @param {string} [data.discharged_at] - Final discharged timestamp
+ * @param {string} [data.notes] - Finalization notes
+ * @param {string} userId - User ID for audit
+ * @param {string} ipAddress - User IP for audit
+ * @returns {Promise<Object>} Updated discharge summary
+ */
+const finalizeDischargeSummary = async (id, data = {}, userId, ipAddress) => {
+  try {
+    const before = await dischargeSummaryRepository.findById(id);
+
+    if (!before) {
+      throw new HttpError('errors.discharge_summary.not_found', 404);
+    }
+
+    if (before.status === 'CANCELLED') {
+      throw new HttpError('errors.discharge_summary.cannot_finalize_cancelled', 400);
+    }
+
+    const updateData = {
+      status: 'COMPLETED',
+      discharged_at: data.discharged_at || new Date().toISOString()
+    };
+
+    const dischargeSummary = await dischargeSummaryRepository.update(id, updateData);
+
+    createAuditLog({
+      user_id: userId,
+      action: 'FINALIZE',
+      entity: 'discharge_summary',
+      entity_id: dischargeSummary.id,
+      diff: {
+        before,
+        after: dischargeSummary,
+        metadata: {
+          notes: data.notes || null
+        }
+      },
+      ip_address: ipAddress
+    }).catch(() => {});
+
+    return dischargeSummary;
+  } catch (error) {
+    if (error instanceof HttpError) throw error;
+    throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
+  }
+};
+
 module.exports = {
   listDischargeSummaries,
   getDischargeSummaryById,
   createDischargeSummary,
   updateDischargeSummary,
-  deleteDischargeSummary
+  deleteDischargeSummary,
+  finalizeDischargeSummary
 };

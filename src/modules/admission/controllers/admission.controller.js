@@ -140,11 +140,29 @@ const dischargeAdmission = asyncHandler(async (req, res) => {
   sendSuccess(res, 200, 'messages.admission.discharge.success', admission);
 });
 
+/**
+ * Transfer admission
+ * POST /api/v1/admissions/:id/transfer
+ *
+ * @param {Object} req - Express request
+ * @param {Object} res - Express response
+ */
+const transferAdmission = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user?.id;
+  const ipAddress = req.ip;
+
+  const admission = await admissionService.transferAdmission(id, req.body, userId, ipAddress);
+
+  sendSuccess(res, 200, 'messages.admission.transfer.success', admission);
+});
+
 module.exports = {
   listAdmissions,
   getAdmissionById,
   createAdmission,
   updateAdmission,
   deleteAdmission,
-  dischargeAdmission
+  dischargeAdmission,
+  transferAdmission
 };

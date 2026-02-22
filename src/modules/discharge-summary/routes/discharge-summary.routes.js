@@ -15,6 +15,7 @@ const { authenticate } = require('@middlewares/auth.middleware');
 const {
   createDischargeSummarySchema,
   updateDischargeSummarySchema,
+  finalizeDischargeSummarySchema,
   dischargeSummaryIdParamsSchema,
   listDischargeSummariesQuerySchema
 } = require('@validations/discharge-summary/discharge-summary.schema');
@@ -131,6 +132,26 @@ router.delete(
 
   authenticate(),
   dischargeSummaryController.deleteDischargeSummary
+);
+
+/**
+ * @description Finalize discharge summary
+ * @method POST
+ * @route /api/v1/discharge-summaries/:id/finalize
+ * @authentication Required (JWT)
+ * @permissions Authenticated users
+ * @urlParams {string} id - Discharge summary ID (UUID)
+ * @bodyParams {string} [discharged_at] - Final discharge timestamp
+ * @bodyParams {string} [notes] - Finalization notes
+ * @returns {Object} Updated discharge summary
+ * @throws 401 Unauthorized
+ * @throws 404 Discharge summary not found
+ */
+router.post(
+  '/:id/finalize',
+  validateRequest({ params: dischargeSummaryIdParamsSchema, body: finalizeDischargeSummarySchema }),
+  authenticate(),
+  dischargeSummaryController.finalizeDischargeSummary
 );
 
 module.exports = router;

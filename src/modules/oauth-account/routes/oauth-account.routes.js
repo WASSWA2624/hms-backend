@@ -16,7 +16,6 @@ const {
   createOAuthAccountSchema,
   updateOAuthAccountSchema,
   oauthAccountIdParamsSchema,
-  userIdParamsSchema,
   listOAuthAccountsQuerySchema
 } = require('@validations/oauth-account/oauth-account.schema');
 
@@ -46,20 +45,6 @@ router.get(
 
   authenticate(),
   oauthAccountController.getOAuthAccountById
-);
-
-/**
- * @description Get OAuth accounts by user ID
- * @method GET
- * @route /api/v1/oauth-accounts/user/:userId
- * @authentication Required (JWT)
- * @permissions Authenticated users
- */
-router.get(
-  '/user/:userId',  validateRequest({ params: userIdParamsSchema }),
-
-  authenticate(),
-  oauthAccountController.getOAuthAccountsByUserId
 );
 
 /**

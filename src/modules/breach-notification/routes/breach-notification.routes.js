@@ -80,16 +80,4 @@ router.post(
   breachNotificationController.resolveBreachNotification
 );
 
-/**
- * @description Delete breach notification (soft delete)
- * @method DELETE
- * @route /api/v1/breach-notifications/:id
- */
-router.delete(
-  '/:id',  validateRequest({ params: breachNotificationIdParamsSchema }),
-
-  authenticate(),
-  breachNotificationController.deleteBreachNotification
-);
-
 module.exports = router;

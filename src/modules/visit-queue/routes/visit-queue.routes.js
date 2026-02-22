@@ -15,6 +15,7 @@ const { authenticate } = require('@middlewares/auth.middleware');
 const {
   createVisitQueueSchema,
   updateVisitQueueSchema,
+  prioritizeVisitQueueSchema,
   visitQueueIdParamsSchema,
   listVisitQueuesQuerySchema
 } = require('@validations/visit-queue/visit-queue.schema');
@@ -139,6 +140,26 @@ router.delete(
 
   authenticate(),
   visitQueueController.deleteVisitQueue
+);
+
+/**
+ * @description Prioritize visit queue entry
+ * @method POST
+ * @route /api/v1/visit-queues/:id/prioritize
+ * @authentication Required (JWT)
+ * @permissions Authenticated users
+ * @urlParams {string} id - Visit queue entry ID (UUID)
+ * @bodyParams {string} [reason] - Triage reason
+ * @bodyParams {string} [status] - Updated queue status
+ * @returns {Object} Prioritized visit queue entry
+ * @throws 401 Unauthorized
+ * @throws 404 Visit queue entry not found
+ */
+router.post(
+  '/:id/prioritize',
+  validateRequest({ params: visitQueueIdParamsSchema, body: prioritizeVisitQueueSchema }),
+  authenticate(),
+  visitQueueController.prioritizeVisitQueue
 );
 
 module.exports = router;

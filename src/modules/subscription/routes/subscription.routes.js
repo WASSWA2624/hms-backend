@@ -79,46 +79,6 @@ router.post(
 );
 
 /**
- * @description Cancel subscription
- * @method POST
- * @route /api/v1/subscriptions/:id/cancel
- * @authentication Required (JWT)
- * @permissions TBD
- * @urlParams id (UUID)
- * @queryParams None
- * @bodyParams None
- * @returns {Object} Cancelled subscription
- * @throws 400 Bad request (already cancelled)
- * @throws 401 Unauthorized
- * @throws 404 Not found
- */
-router.post(
-  '/:id/cancel',
-  validate({ params: subscriptionIdParamsSchema }),
-  asyncHandler(subscriptionController.cancelSubscription)
-);
-
-/**
- * @description Reactivate subscription
- * @method POST
- * @route /api/v1/subscriptions/:id/reactivate
- * @authentication Required (JWT)
- * @permissions TBD
- * @urlParams id (UUID)
- * @queryParams None
- * @bodyParams None
- * @returns {Object} Reactivated subscription
- * @throws 400 Bad request (not cancelled)
- * @throws 401 Unauthorized
- * @throws 404 Not found
- */
-router.post(
-  '/:id/reactivate',
-  validate({ params: subscriptionIdParamsSchema }),
-  asyncHandler(subscriptionController.reactivateSubscription)
-);
-
-/**
  * @description Update subscription
  * @method PUT
  * @route /api/v1/subscriptions/:id

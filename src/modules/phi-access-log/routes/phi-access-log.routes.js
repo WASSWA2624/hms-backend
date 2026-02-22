@@ -16,7 +16,6 @@ const validate = require('@middlewares/validate.middleware');
 // Schemas
 const {
   createPhiAccessLogSchema,
-  updatePhiAccessLogSchema,
   phiAccessLogIdParamsSchema,
   userIdParamsSchema,
   listPhiAccessLogsQuerySchema
@@ -67,28 +66,6 @@ router.post(
   '/',
   validate({ body: createPhiAccessLogSchema }),
   phiAccessLogController.createPhiAccessLog
-);
-
-/**
- * @route PUT /api/v1/phi-access-logs/:id
- * @desc Update PHI access log
- * @access Private (requires authentication)
- */
-router.put(
-  '/:id',
-  validate({ params: phiAccessLogIdParamsSchema, body: updatePhiAccessLogSchema }),
-  phiAccessLogController.updatePhiAccessLog
-);
-
-/**
- * @route DELETE /api/v1/phi-access-logs/:id
- * @desc Delete PHI access log (soft delete)
- * @access Private (requires authentication)
- */
-router.delete(
-  '/:id',
-  validate({ params: phiAccessLogIdParamsSchema }),
-  phiAccessLogController.deletePhiAccessLog
 );
 
 module.exports = router;

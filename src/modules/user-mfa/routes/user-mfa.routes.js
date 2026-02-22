@@ -19,7 +19,6 @@ const {
   enableMfaSchema,
   disableMfaSchema,
   userMfaIdParamsSchema,
-  userIdParamsSchema,
   listUserMfasQuerySchema
 } = require('@validations/user-mfa/user-mfa.schema');
 
@@ -66,25 +65,6 @@ router.get(
 
   authenticate(),
   userMfaController.getUserMfaById
-);
-
-/**
- * @description Get user MFA configurations by user ID
- * @method GET
- * @route /api/v1/user-mfas/user/:userId
- * @authentication Required (JWT)
- * @permissions Authenticated users
- * @urlParams {string} userId - User ID (UUID)
- * @queryParams None
- * @bodyParams None
- * @returns {Array} List of user MFA configurations
- * @throws 401 Unauthorized
- */
-router.get(
-  '/user/:userId',  validateRequest({ params: userIdParamsSchema }),
-
-  authenticate(),
-  userMfaController.getUserMfasByUserId
 );
 
 /**

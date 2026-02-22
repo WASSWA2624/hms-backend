@@ -234,11 +234,68 @@ const dischargeAdmission = async (id, data, userId, ipAddress) => {
   }
 };
 
+/**
+ * Transfer admission (workflow action)
+ * Per prisma.mdc: Mutations must create audit logs
+ *
+ * @param {string} id - Admission ID
+ * @param {Object} data - Transfer data
+ * @param {string} [data.facility_id] - Destination facility ID
+ * @param {string} [data.notes] - Transfer notes
+ * @param {string} userId - User ID for audit
+ * @param {string} ipAddress - User IP for audit
+ * @returns {Promise<Object>} Updated admission
+ */
+const transferAdmission = async (id, data, userId, ipAddress) => {
+  try {
+    const before = await admissionRepository.findById(id);
+
+    if (!before) {
+      throw new HttpError('errors.admission.not_found', 404);
+    }
+
+    if (before.status === 'DISCHARGED' || before.status === 'CANCELLED') {
+      throw new HttpError('errors.admission.cannot_transfer_terminal_status', 400);
+    }
+
+    const updateData = {
+      status: 'TRANSFERRED'
+    };
+
+    if (Object.prototype.hasOwnProperty.call(data, 'facility_id')) {
+      updateData.facility_id = data.facility_id;
+    }
+
+    const admission = await admissionRepository.update(id, updateData);
+
+    createAuditLog({
+      user_id: userId,
+      action: 'TRANSFER',
+      entity: 'admission',
+      entity_id: admission.id,
+      diff: {
+        before,
+        after: admission,
+        metadata: {
+          notes: data.notes || null
+        }
+      },
+      ip_address: ipAddress
+    }).catch(() => {});
+
+    return admission;
+  } catch (error) {
+    if (error instanceof HttpError) throw error;
+    throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
+  }
+};
+
 module.exports = {
   listAdmissions,
   getAdmissionById,
   createAdmission,
   updateAdmission,
   deleteAdmission,
-  dischargeAdmission
+  dischargeAdmission,
+  transferAdmission
 };

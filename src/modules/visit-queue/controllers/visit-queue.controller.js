@@ -134,10 +134,35 @@ const deleteVisitQueue = asyncHandler(async (req, res) => {
   return sendNoContent(res);
 });
 
+/**
+ * Prioritize visit queue entry
+ *
+ * @param {Object} req - Express request
+ * @param {Object} res - Express response
+ * @returns {Promise<void>}
+ */
+const prioritizeVisitQueue = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { reason, status } = req.body;
+
+  const context = {
+    user_id: req.user?.id,
+    tenant_id: req.user?.tenant_id,
+    facility_id: req.user?.facility_id,
+    ip_address: req.ip,
+    user_agent: req.get('user-agent')
+  };
+
+  const entry = await visitQueueService.prioritizeVisitQueue(id, { reason, status }, context);
+
+  return sendSuccess(res, 200, 'messages.visit_queue.prioritize.success', entry);
+});
+
 module.exports = {
   listVisitQueues,
   getVisitQueueById,
   createVisitQueue,
   updateVisitQueue,
-  deleteVisitQueue
+  deleteVisitQueue,
+  prioritizeVisitQueue
 };

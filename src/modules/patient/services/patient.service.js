@@ -11,6 +11,14 @@ const patientRepository = require('@repositories/patient/patient.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 
+const ensurePatientExists = async (id) => {
+  const patient = await patientRepository.findById(id);
+  if (!patient) {
+    throw new HttpError('errors.patient.not_found', 404);
+  }
+  return patient;
+};
+
 /**
  * List patients with pagination and filtering
  *
@@ -194,10 +202,181 @@ const deletePatient = async (id, userId, ipAddress) => {
   }
 };
 
+/**
+ * Get patient identifiers (nested resource)
+ *
+ * @param {string} patientId - Patient ID
+ * @param {number} page - Page number
+ * @param {number} limit - Items per page
+ * @param {string} sortBy - Sort field
+ * @param {string} order - Sort order
+ * @param {string} userId - User ID for audit
+ * @param {string} ipAddress - User IP for audit
+ * @returns {Promise<Object>} Patient identifiers with pagination
+ */
+const getPatientIdentifiers = async (patientId, page = 1, limit = 20, sortBy = 'created_at', order = 'desc', userId, ipAddress) => {
+  try {
+    await ensurePatientExists(patientId);
+    const patientIdentifierService = require('@services/patient-identifier/patient-identifier.service');
+    const result = await patientIdentifierService.listPatientIdentifiers(
+      { patient_id: patientId },
+      page,
+      limit,
+      sortBy,
+      order,
+      userId,
+      ipAddress
+    );
+
+    return {
+      patientIdentifiers: result.patientIdentifiers || [],
+      pagination: result.pagination
+    };
+  } catch (error) {
+    if (error instanceof HttpError) throw error;
+    throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
+  }
+};
+
+/**
+ * Get patient contacts (nested resource)
+ */
+const getPatientContacts = async (patientId, page = 1, limit = 20, sortBy = 'created_at', order = 'desc', userId, ipAddress) => {
+  try {
+    await ensurePatientExists(patientId);
+    const patientContactService = require('@services/patient-contact/patient-contact.service');
+    const result = await patientContactService.listPatientContacts(
+      { patient_id: patientId },
+      page,
+      limit,
+      sortBy,
+      order,
+      userId,
+      ipAddress
+    );
+
+    return {
+      patientContacts: result.patientContacts || [],
+      pagination: result.pagination
+    };
+  } catch (error) {
+    if (error instanceof HttpError) throw error;
+    throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
+  }
+};
+
+/**
+ * Get patient guardians (nested resource)
+ */
+const getPatientGuardians = async (patientId, page = 1, limit = 20, sortBy = 'created_at', order = 'desc', userId, ipAddress) => {
+  try {
+    await ensurePatientExists(patientId);
+    const patientGuardianService = require('@services/patient-guardian/patient-guardian.service');
+    const result = await patientGuardianService.listPatientGuardians(
+      { patient_id: patientId },
+      page,
+      limit,
+      sortBy,
+      order,
+      userId,
+      ipAddress
+    );
+
+    return {
+      patientGuardians: result.patientGuardians || [],
+      pagination: result.pagination
+    };
+  } catch (error) {
+    if (error instanceof HttpError) throw error;
+    throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
+  }
+};
+
+/**
+ * Get patient allergies (nested resource)
+ */
+const getPatientAllergies = async (patientId, page = 1, limit = 20, sortBy = 'created_at', order = 'desc') => {
+  try {
+    await ensurePatientExists(patientId);
+    const patientAllergyService = require('@services/patient-allergy/patient-allergy.service');
+    const result = await patientAllergyService.listPatientAllergies(
+      { patient_id: patientId },
+      page,
+      limit,
+      sortBy,
+      order
+    );
+
+    return {
+      patientAllergies: result.items || [],
+      pagination: result.pagination
+    };
+  } catch (error) {
+    if (error instanceof HttpError) throw error;
+    throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
+  }
+};
+
+/**
+ * Get patient medical histories (nested resource)
+ */
+const getPatientMedicalHistories = async (patientId, page = 1, limit = 20, sortBy = 'created_at', order = 'desc') => {
+  try {
+    await ensurePatientExists(patientId);
+    const patientMedicalHistoryService = require('@services/patient-medical-history/patient-medical-history.service');
+    const result = await patientMedicalHistoryService.listPatientMedicalHistories(
+      { patient_id: patientId },
+      page,
+      limit,
+      sortBy,
+      order
+    );
+
+    return {
+      patientMedicalHistories: result.items || [],
+      pagination: result.pagination
+    };
+  } catch (error) {
+    if (error instanceof HttpError) throw error;
+    throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
+  }
+};
+
+/**
+ * Get patient documents (nested resource)
+ */
+const getPatientDocuments = async (patientId, page = 1, limit = 20, sortBy = 'created_at', order = 'desc') => {
+  try {
+    await ensurePatientExists(patientId);
+    const patientDocumentService = require('@services/patient-document/patient-document.service');
+    const result = await patientDocumentService.listPatientDocuments(
+      { patient_id: patientId },
+      page,
+      limit,
+      sortBy,
+      order
+    );
+
+    return {
+      patientDocuments: result.items || [],
+      pagination: result.pagination
+    };
+  } catch (error) {
+    if (error instanceof HttpError) throw error;
+    throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
+  }
+};
+
 module.exports = {
   listPatients,
   getPatientById,
   createPatient,
   updatePatient,
-  deletePatient
+  deletePatient,
+  getPatientIdentifiers,
+  getPatientContacts,
+  getPatientGuardians,
+  getPatientAllergies,
+  getPatientMedicalHistories,
+  getPatientDocuments
 };

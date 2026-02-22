@@ -16,7 +16,6 @@ const {
   createMessageSchema,
   updateMessageSchema,
   messageIdParamsSchema,
-  conversationIdParamsSchema,
   listMessagesQuerySchema
 } = require('@validations/message/message.schema');
 
@@ -51,23 +50,6 @@ router.get(
   '/:id',
   validate({ params: messageIdParamsSchema }),
   asyncHandler(messageController.getMessage)
-);
-
-/**
- * @description Get messages by conversation ID
- * @method GET
- * @route /api/v1/messages/conversation/:conversationId
- * @authentication Required (JWT)
- * @permissions Authenticated users
- * @urlParams conversationId (UUID)
- * @queryParams page, limit, sort_by, order
- * @returns {Object} Paginated message list for conversation
- * @throws 401 Unauthorized
- */
-router.get(
-  '/conversation/:conversationId',
-  validate({ params: conversationIdParamsSchema }),
-  asyncHandler(messageController.getMessagesByConversation)
 );
 
 /**

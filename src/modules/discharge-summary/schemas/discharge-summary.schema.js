@@ -40,6 +40,15 @@ const updateDischargeSummarySchema = z.object({
   discharged_at: z.string().datetime().optional()
 });
 
+/**
+ * Finalize discharge summary body validation
+ * Used for POST /discharge-summaries/:id/finalize endpoint
+ */
+const finalizeDischargeSummarySchema = z.object({
+  discharged_at: z.string().datetime().optional(),
+  notes: z.string().trim().max(65535).optional().nullable()
+});
+
 // ==================== URL Params ====================
 
 /**
@@ -65,6 +74,7 @@ const listDischargeSummariesQuerySchema = listQuerySchema.extend({
 module.exports = {
   createDischargeSummarySchema,
   updateDischargeSummarySchema,
+  finalizeDischargeSummarySchema,
   dischargeSummaryIdParamsSchema,
   listDischargeSummariesQuerySchema
 };

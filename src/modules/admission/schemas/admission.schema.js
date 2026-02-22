@@ -50,6 +50,15 @@ const dischargeAdmissionSchema = z.object({
   discharged_at: isoDateSchema.optional()
 });
 
+/**
+ * Transfer admission body validation
+ * Used for POST /admissions/:id/transfer endpoint
+ */
+const transferAdmissionSchema = z.object({
+  facility_id: uuidSchema.optional().nullable(),
+  notes: z.string().trim().max(65535).optional().nullable()
+});
+
 // ==================== URL Params ====================
 
 /**
@@ -79,6 +88,7 @@ module.exports = {
   createAdmissionSchema,
   updateAdmissionSchema,
   dischargeAdmissionSchema,
+  transferAdmissionSchema,
   admissionIdParamsSchema,
   listAdmissionsQuerySchema
 };

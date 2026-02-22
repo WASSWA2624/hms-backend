@@ -225,10 +225,67 @@ const deleteVisitQueue = async (id, context = {}) => {
   });
 };
 
+/**
+ * Prioritize visit queue entry (workflow action)
+ *
+ * @param {string} id - Visit queue entry ID
+ * @param {Object} data - Prioritization data
+ * @param {string} [data.reason] - Prioritization reason
+ * @param {string} [data.status] - Status override
+ * @param {Object} context - Request context for audit
+ * @returns {Promise<Object>} Updated visit queue entry
+ */
+const prioritizeVisitQueue = async (id, data = {}, context = {}) => {
+  // Check if entry exists and get before state
+  const beforeEntry = await visitQueueRepository.findById(id);
+
+  if (!beforeEntry) {
+    throw new HttpError('errors.visit_queue.not_found', 404);
+  }
+
+  // Prevent invalid transitions for terminal statuses.
+  if (beforeEntry.status === 'COMPLETED' || beforeEntry.status === 'CANCELLED' || beforeEntry.status === 'NO_SHOW') {
+    throw new HttpError('errors.visit_queue.cannot_prioritize_terminal_status', 400);
+  }
+
+  const updateData = {
+    // Keep queue recency at the front when prioritized.
+    queued_at: new Date(),
+    status: data.status || 'CONFIRMED'
+  };
+
+  const updatedEntry = await visitQueueRepository.update(id, updateData);
+
+  await createAuditLog({
+    action: 'VISIT_QUEUE_PRIORITIZED',
+    entity: 'visit_queue',
+    entity_id: id,
+    user_id: context.user_id,
+    tenant_id: context.tenant_id,
+    facility_id: context.facility_id,
+    ip_address: context.ip_address,
+    user_agent: context.user_agent,
+    details: {
+      reason: data.reason || null,
+      before: {
+        status: beforeEntry.status,
+        queued_at: beforeEntry.queued_at
+      },
+      after: {
+        status: updatedEntry.status,
+        queued_at: updatedEntry.queued_at
+      }
+    }
+  });
+
+  return updatedEntry;
+};
+
 module.exports = {
   listVisitQueues,
   getVisitQueueById,
   createVisitQueue,
   updateVisitQueue,
-  deleteVisitQueue
+  deleteVisitQueue,
+  prioritizeVisitQueue
 };

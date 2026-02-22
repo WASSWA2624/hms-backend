@@ -18,6 +18,7 @@ const {
   patientIdParamsSchema,
   listPatientsQuerySchema
 } = require('@validations/patient/patient.schema');
+const { listQuerySchema } = require('@lib/validation/zod');
 
 /**
  * @description List patients with pagination and filters
@@ -66,6 +67,120 @@ router.get(
 
   authenticate(),
   patientController.getPatientById
+);
+
+/**
+ * @description Get patient identifiers
+ * @method GET
+ * @route /api/v1/patients/:id/identifiers
+ * @authentication Required (JWT)
+ * @permissions Authenticated users
+ * @urlParams {string} id - Patient ID (UUID)
+ * @queryParams {number} [page=1], {number} [limit=20], {string} [sort_by], {string} [order]
+ * @returns {Object} Paginated list of patient identifiers
+ * @throws 401 Unauthorized
+ * @throws 404 Patient not found
+ */
+router.get(
+  '/:id/identifiers',
+  validateRequest({ params: patientIdParamsSchema, query: listQuerySchema }),
+  authenticate(),
+  patientController.getPatientIdentifiers
+);
+
+/**
+ * @description Get patient contacts
+ * @method GET
+ * @route /api/v1/patients/:id/contacts
+ * @authentication Required (JWT)
+ * @permissions Authenticated users
+ * @urlParams {string} id - Patient ID (UUID)
+ * @queryParams {number} [page=1], {number} [limit=20], {string} [sort_by], {string} [order]
+ * @returns {Object} Paginated list of patient contacts
+ * @throws 401 Unauthorized
+ * @throws 404 Patient not found
+ */
+router.get(
+  '/:id/contacts',
+  validateRequest({ params: patientIdParamsSchema, query: listQuerySchema }),
+  authenticate(),
+  patientController.getPatientContacts
+);
+
+/**
+ * @description Get patient guardians
+ * @method GET
+ * @route /api/v1/patients/:id/guardians
+ * @authentication Required (JWT)
+ * @permissions Authenticated users
+ * @urlParams {string} id - Patient ID (UUID)
+ * @queryParams {number} [page=1], {number} [limit=20], {string} [sort_by], {string} [order]
+ * @returns {Object} Paginated list of patient guardians
+ * @throws 401 Unauthorized
+ * @throws 404 Patient not found
+ */
+router.get(
+  '/:id/guardians',
+  validateRequest({ params: patientIdParamsSchema, query: listQuerySchema }),
+  authenticate(),
+  patientController.getPatientGuardians
+);
+
+/**
+ * @description Get patient allergies
+ * @method GET
+ * @route /api/v1/patients/:id/allergies
+ * @authentication Required (JWT)
+ * @permissions Authenticated users
+ * @urlParams {string} id - Patient ID (UUID)
+ * @queryParams {number} [page=1], {number} [limit=20], {string} [sort_by], {string} [order]
+ * @returns {Object} Paginated list of patient allergies
+ * @throws 401 Unauthorized
+ * @throws 404 Patient not found
+ */
+router.get(
+  '/:id/allergies',
+  validateRequest({ params: patientIdParamsSchema, query: listQuerySchema }),
+  authenticate(),
+  patientController.getPatientAllergies
+);
+
+/**
+ * @description Get patient medical histories
+ * @method GET
+ * @route /api/v1/patients/:id/medical-histories
+ * @authentication Required (JWT)
+ * @permissions Authenticated users
+ * @urlParams {string} id - Patient ID (UUID)
+ * @queryParams {number} [page=1], {number} [limit=20], {string} [sort_by], {string} [order]
+ * @returns {Object} Paginated list of patient medical histories
+ * @throws 401 Unauthorized
+ * @throws 404 Patient not found
+ */
+router.get(
+  '/:id/medical-histories',
+  validateRequest({ params: patientIdParamsSchema, query: listQuerySchema }),
+  authenticate(),
+  patientController.getPatientMedicalHistories
+);
+
+/**
+ * @description Get patient documents
+ * @method GET
+ * @route /api/v1/patients/:id/documents
+ * @authentication Required (JWT)
+ * @permissions Authenticated users
+ * @urlParams {string} id - Patient ID (UUID)
+ * @queryParams {number} [page=1], {number} [limit=20], {string} [sort_by], {string} [order]
+ * @returns {Object} Paginated list of patient documents
+ * @throws 401 Unauthorized
+ * @throws 404 Patient not found
+ */
+router.get(
+  '/:id/documents',
+  validateRequest({ params: patientIdParamsSchema, query: listQuerySchema }),
+  authenticate(),
+  patientController.getPatientDocuments
 );
 
 /**
