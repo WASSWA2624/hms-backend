@@ -41,6 +41,15 @@ const CONSENT_STATUS_VALUES = new Set([
   'REVOKED',
   'PENDING'
 ]);
+const APPOINTMENT_STATUS_VALUES = new Set([
+  'SCHEDULED',
+  'CONFIRMED',
+  'IN_PROGRESS',
+  'COMPLETED',
+  'CANCELLED',
+  'NO_SHOW'
+]);
+const DATE_ONLY_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 
 const PATIENT_RELATION_CONTEXT_INCLUDE = {
   tenant: {
@@ -73,10 +82,51 @@ const resolveEnumSearchClauses = (token, allowedValues, fieldName) => {
   return [{ [fieldName]: enumToken }];
 };
 
+const parseDateFilter = (value, endOfDay = false) => {
+  const normalized = String(value || '').trim();
+  if (!normalized) return null;
+
+  if (DATE_ONLY_REGEX.test(normalized)) {
+    const date = new Date(
+      `${normalized}${endOfDay ? 'T23:59:59.999Z' : 'T00:00:00.000Z'}`
+    );
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+
+  const date = new Date(normalized);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const buildTemporalFilter = ({ exactValue, fromValue, toValue }) => {
+  if (exactValue) {
+    const exactStart = parseDateFilter(exactValue, false);
+    if (!exactStart) return null;
+    if (DATE_ONLY_REGEX.test(String(exactValue).trim())) {
+      const exactEnd = parseDateFilter(exactValue, true);
+      if (!exactEnd) return null;
+      return { gte: exactStart, lte: exactEnd };
+    }
+    return { equals: exactStart };
+  }
+
+  const fromDate = parseDateFilter(fromValue, false);
+  const toDate = parseDateFilter(toValue, true);
+  const rangeFilter = {};
+  if (fromDate) rangeFilter.gte = fromDate;
+  if (toDate) rangeFilter.lte = toDate;
+
+  return Object.keys(rangeFilter).length > 0 ? rangeFilter : null;
+};
+
 const buildSearchTokenClause = (token) => {
   const contactTypeClauses = resolveEnumSearchClauses(token, CONTACT_TYPE_VALUES, 'contact_type');
   const consentTypeClauses = resolveEnumSearchClauses(token, CONSENT_TYPE_VALUES, 'consent_type');
   const consentStatusClauses = resolveEnumSearchClauses(token, CONSENT_STATUS_VALUES, 'status');
+  const appointmentStatusClauses = resolveEnumSearchClauses(
+    token,
+    APPOINTMENT_STATUS_VALUES,
+    'status'
+  );
 
   return {
     OR: [
@@ -171,9 +221,44 @@ const buildSearchTokenClause = (token) => {
             ]
           }
         }
+      },
+      {
+        appointments: {
+          some: {
+            deleted_at: null,
+            OR: [
+              { human_friendly_id: { contains: token } },
+              { reason: { contains: token } },
+              ...appointmentStatusClauses
+            ]
+          }
+        }
       }
     ]
   };
+};
+
+const buildAppointmentFilter = (filters = {}) => {
+  const filter = {
+    deleted_at: null
+  };
+  let hasAppliedFilter = false;
+
+  if (filters.appointment_status) {
+    filter.status = filters.appointment_status;
+    hasAppliedFilter = true;
+  }
+
+  const scheduledStartFilter = buildTemporalFilter({
+    fromValue: filters.appointment_from,
+    toValue: filters.appointment_to
+  });
+  if (scheduledStartFilter) {
+    filter.scheduled_start = scheduledStartFilter;
+    hasAppliedFilter = true;
+  }
+
+  return hasAppliedFilter ? filter : null;
 };
 
 const buildPatientWhereClause = (filters = {}) => {
@@ -182,10 +267,42 @@ const buildPatientWhereClause = (filters = {}) => {
 
   if (filters.tenant_id) whereClause.tenant_id = filters.tenant_id;
   if (filters.facility_id) whereClause.facility_id = filters.facility_id;
+  if (filters.patient_id) whereClause.human_friendly_id = { contains: filters.patient_id };
   if (filters.gender) whereClause.gender = filters.gender;
   if (filters.is_active !== undefined) whereClause.is_active = filters.is_active;
   if (filters.first_name) whereClause.first_name = { contains: filters.first_name };
   if (filters.last_name) whereClause.last_name = { contains: filters.last_name };
+
+  const dateOfBirthFilter = buildTemporalFilter({
+    exactValue: filters.date_of_birth,
+    fromValue: filters.date_of_birth_from,
+    toValue: filters.date_of_birth_to
+  });
+  if (dateOfBirthFilter) whereClause.date_of_birth = dateOfBirthFilter;
+
+  const createdAtFilter = buildTemporalFilter({
+    exactValue: filters.created_at,
+    fromValue: filters.created_from,
+    toValue: filters.created_to
+  });
+  if (createdAtFilter) whereClause.created_at = createdAtFilter;
+
+  if (filters.contact) {
+    whereClause.contacts = {
+      some: {
+        deleted_at: null,
+        OR: [
+          { human_friendly_id: { contains: filters.contact } },
+          { value: { contains: filters.contact } }
+        ]
+      }
+    };
+  }
+
+  const appointmentFilter = buildAppointmentFilter(filters);
+  if (appointmentFilter) {
+    whereClause.appointments = { some: appointmentFilter };
+  }
 
   if (searchTokens.length > 0) {
     whereClause.AND = searchTokens.map(buildSearchTokenClause);

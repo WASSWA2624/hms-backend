@@ -155,9 +155,20 @@ describe('Patient Schemas', () => {
       const data = {
         tenant_id: '550e8400-e29b-41d4-a716-446655440000',
         facility_id: '550e8400-e29b-41d4-a716-446655440001',
+        patient_id: 'PAT-00021',
         first_name: 'John',
         last_name: 'Doe',
+        date_of_birth: '1990-01-02',
+        date_of_birth_from: '1980-01-01',
+        date_of_birth_to: '2000-12-31',
         gender: 'MALE',
+        contact: '+256700000001',
+        appointment_status: 'CONFIRMED',
+        created_at: '2026-02-01',
+        created_from: '2026-01-01',
+        created_to: '2026-02-28',
+        appointment_from: '2026-02-01',
+        appointment_to: '2026-03-01',
         is_active: 'true',
         search: 'test'
       };
@@ -198,8 +209,20 @@ describe('Patient Schemas', () => {
       expect(result.success).toBe(false);
     });
 
+    it('should reject invalid date filter strings', () => {
+      const data = { created_from: 'not-a-date' };
+      const result = listPatientsQuerySchema.safeParse(data);
+      expect(result.success).toBe(false);
+    });
+
     it('should validate gender enum in query', () => {
       const data = { gender: 'INVALID' };
+      const result = listPatientsQuerySchema.safeParse(data);
+      expect(result.success).toBe(false);
+    });
+
+    it('should validate appointment status enum in query', () => {
+      const data = { appointment_status: 'INVALID' };
       const result = listPatientsQuerySchema.safeParse(data);
       expect(result.success).toBe(false);
     });

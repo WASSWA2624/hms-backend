@@ -66,15 +66,73 @@ describe('Patient Service', () => {
       const identifierSearch = relationSearchClauses.find((entry) => entry.identifiers?.some);
       const guardianSearch = relationSearchClauses.find((entry) => entry.guardians?.some);
       const consentSearch = relationSearchClauses.find((entry) => entry.consents?.some);
+      const appointmentSearch = relationSearchClauses.find((entry) => entry.appointments?.some);
 
       expect(contactSearch.contacts.some.deleted_at).toBeNull();
       expect(identifierSearch.identifiers.some.deleted_at).toBeNull();
       expect(guardianSearch.guardians.some.deleted_at).toBeNull();
       expect(consentSearch.consents.some.deleted_at).toBeNull();
+      expect(appointmentSearch.appointments.some.deleted_at).toBeNull();
       expect(contactSearch.contacts.some.OR).toEqual(
         expect.arrayContaining([
           expect.objectContaining({ value: { contains: 'john' } })
         ])
+      );
+    });
+
+    it('should build comprehensive combination filters for patient fields and date ranges', async () => {
+      patientRepository.findMany.mockResolvedValue([]);
+      patientRepository.count.mockResolvedValue(0);
+
+      await patientService.listPatients(
+        {
+          patient_id: 'PAT-0200',
+          first_name: 'Jan',
+          last_name: 'Do',
+          date_of_birth: '1990-01-02',
+          gender: 'FEMALE',
+          contact: '+256700000010',
+          appointment_status: 'CONFIRMED',
+          created_from: '2026-01-01',
+          created_to: '2026-01-31',
+          appointment_from: '2026-02-01',
+          appointment_to: '2026-02-28',
+        },
+        1,
+        20,
+        'created_at',
+        'desc',
+        mockUserId,
+        mockIpAddress
+      );
+
+      const whereClause = patientRepository.findMany.mock.calls[0][0];
+      expect(whereClause.human_friendly_id).toEqual({ contains: 'PAT-0200' });
+      expect(whereClause.first_name).toEqual({ contains: 'Jan' });
+      expect(whereClause.last_name).toEqual({ contains: 'Do' });
+      expect(whereClause.gender).toBe('FEMALE');
+      expect(whereClause.date_of_birth.gte).toBeInstanceOf(Date);
+      expect(whereClause.date_of_birth.lte).toBeInstanceOf(Date);
+      expect(whereClause.created_at.gte).toBeInstanceOf(Date);
+      expect(whereClause.created_at.lte).toBeInstanceOf(Date);
+      expect(whereClause.contacts).toEqual(
+        expect.objectContaining({
+          some: expect.objectContaining({
+            deleted_at: null,
+          }),
+        })
+      );
+      expect(whereClause.appointments).toEqual(
+        expect.objectContaining({
+          some: expect.objectContaining({
+            deleted_at: null,
+            status: 'CONFIRMED',
+            scheduled_start: expect.objectContaining({
+              gte: expect.any(Date),
+              lte: expect.any(Date),
+            }),
+          }),
+        })
       );
     });
 
@@ -263,4 +321,3 @@ describe('Patient Service', () => {
     });
   });
 });
-

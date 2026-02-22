@@ -13,6 +13,39 @@ const {
   listQuerySchema
 } = require('@lib/validation/zod');
 
+const DATE_ONLY_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+const APPOINTMENT_STATUS_VALUES = [
+  'SCHEDULED',
+  'CONFIRMED',
+  'IN_PROGRESS',
+  'COMPLETED',
+  'CANCELLED',
+  'NO_SHOW'
+];
+
+const normalizeOptionalTextQuery = (maxLength = 120) =>
+  z
+    .string()
+    .trim()
+    .max(maxLength)
+    .optional()
+    .transform((value) => (value ? value : undefined));
+
+const isValidDateQueryInput = (value) => {
+  const normalized = String(value || '').trim();
+  if (!normalized) return false;
+  if (DATE_ONLY_REGEX.test(normalized)) return true;
+  return !Number.isNaN(Date.parse(normalized));
+};
+
+const dateQuerySchema = z
+  .string()
+  .trim()
+  .max(40)
+  .refine(isValidDateQueryInput, 'Invalid date filter value')
+  .optional()
+  .transform((value) => (value ? value : undefined));
+
 const searchQuerySchema = z
   .string()
   .trim()
@@ -71,9 +104,20 @@ const patientIdParamsSchema = z.object({
 const listPatientsQuerySchema = listQuerySchema.extend({
   tenant_id: uuidSchema.optional(),
   facility_id: uuidSchema.optional(),
-  first_name: z.string().trim().optional(),
-  last_name: z.string().trim().optional(),
+  patient_id: normalizeOptionalTextQuery(64),
+  first_name: normalizeOptionalTextQuery(120),
+  last_name: normalizeOptionalTextQuery(120),
+  date_of_birth: dateQuerySchema,
+  date_of_birth_from: dateQuerySchema,
+  date_of_birth_to: dateQuerySchema,
   gender: z.enum(['MALE', 'FEMALE', 'OTHER', 'UNKNOWN']).optional(),
+  contact: normalizeOptionalTextQuery(255),
+  appointment_status: z.enum(APPOINTMENT_STATUS_VALUES).optional(),
+  created_at: dateQuerySchema,
+  created_from: dateQuerySchema,
+  created_to: dateQuerySchema,
+  appointment_from: dateQuerySchema,
+  appointment_to: dateQuerySchema,
   is_active: z.string().transform(val => val === 'true').optional(),
   search: searchQuerySchema
 });

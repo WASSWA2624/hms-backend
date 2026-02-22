@@ -63,6 +63,14 @@ describe('Patient Controller', () => {
         order: 'asc',
         tenant_id: '123',
         gender: 'MALE',
+        patient_id: 'PAT-0099',
+        date_of_birth: '1990-01-01',
+        contact: '0700000000',
+        appointment_status: 'CONFIRMED',
+        created_from: '2026-01-01',
+        created_to: '2026-02-01',
+        appointment_from: '2026-02-10',
+        appointment_to: '2026-02-20',
         search: 'John'
       };
       patientService.listPatients.mockResolvedValue({
@@ -76,6 +84,14 @@ describe('Patient Controller', () => {
         expect.objectContaining({
           tenant_id: '123',
           gender: 'MALE',
+          patient_id: 'PAT-0099',
+          date_of_birth: '1990-01-01',
+          contact: '0700000000',
+          appointment_status: 'CONFIRMED',
+          created_from: '2026-01-01',
+          created_to: '2026-02-01',
+          appointment_from: '2026-02-10',
+          appointment_to: '2026-02-20',
           search: 'John'
         }),
         2,

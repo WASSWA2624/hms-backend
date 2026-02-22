@@ -34,11 +34,22 @@ const { listQuerySchema } = require('@lib/validation/zod');
  * @queryParams {string} [order=desc] - Sort order (asc/desc)
  * @queryParams {string} [tenant_id] - Filter by tenant ID (UUID)
  * @queryParams {string} [facility_id] - Filter by facility ID (UUID)
+ * @queryParams {string} [patient_id] - Filter by patient human-friendly ID (partial match)
  * @queryParams {string} [first_name] - Filter by first name (partial match)
  * @queryParams {string} [last_name] - Filter by last name (partial match)
+ * @queryParams {string} [date_of_birth] - Filter by exact date of birth (date or datetime)
+ * @queryParams {string} [date_of_birth_from] - Filter by date of birth from range start
+ * @queryParams {string} [date_of_birth_to] - Filter by date of birth to range end
  * @queryParams {string} [gender] - Filter by gender (MALE, FEMALE, OTHER, UNKNOWN)
+ * @queryParams {string} [contact] - Filter by linked contact value or contact human-friendly ID
+ * @queryParams {string} [appointment_status] - Filter by linked appointment status
+ * @queryParams {string} [created_at] - Filter by exact patient creation timestamp/date
+ * @queryParams {string} [created_from] - Filter by patient creation range start
+ * @queryParams {string} [created_to] - Filter by patient creation range end
+ * @queryParams {string} [appointment_from] - Filter by linked appointment scheduled start range start
+ * @queryParams {string} [appointment_to] - Filter by linked appointment scheduled start range end
  * @queryParams {string} [is_active] - Filter by active status (true/false)
- * @queryParams {string} [search] - Search in first_name and last_name fields
+ * @queryParams {string} [search] - Deep relational search across patient and linked resources
  * @bodyParams None
  * @returns {Object} Paginated list of patients
  * @throws 401 Unauthorized
