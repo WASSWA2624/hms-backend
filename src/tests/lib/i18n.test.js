@@ -47,8 +47,8 @@ describe('i18n utilities', () => {
   });
 
   test('translate falls back to key when missing', () => {
-    const value = translate('messages.missing.key', 'en');
-    expect(value).toBe('messages.missing.key');
+    const value = translate('messages.__definitely_missing_key__', 'en');
+    expect(value).toBe('messages.__definitely_missing_key__');
   });
 
   test('resolveLocale handles base locale fallback', () => {
