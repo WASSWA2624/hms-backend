@@ -625,8 +625,11 @@ model human_id_counter {
   last_value        Int      @default(0)
   created_at        DateTime @default(now())
   updated_at        DateTime @updatedAt
+  deleted_at        DateTime?
+  version           Int      @default(1)
 
   @@unique([model_name, prefix, scope_key])
+  @@index([deleted_at])
   @@index([human_friendly_id])
 }
 
