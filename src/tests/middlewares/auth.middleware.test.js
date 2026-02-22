@@ -39,4 +39,38 @@ describe('auth middleware', () => {
     expect(error).toBeInstanceOf(HttpError);
     expect(error.statusCode).toBe(403);
   });
+
+  it('authorizes patient read permission from role mapping', () => {
+    const middleware = authorize('patient:read', 'permission');
+    const req = {
+      user: {
+        role: 'RECEPTIONIST',
+        roles: ['RECEPTIONIST']
+      }
+    };
+    const res = {};
+    const next = jest.fn();
+
+    middleware(req, res, next);
+
+    expect(next).toHaveBeenCalledWith();
+  });
+
+  it('rejects patient write permission when role is read-only', () => {
+    const middleware = authorize('patient:write', 'permission');
+    const req = {
+      user: {
+        role: 'PATIENT',
+        roles: ['PATIENT']
+      }
+    };
+    const res = {};
+    const next = jest.fn();
+
+    middleware(req, res, next);
+
+    const [error] = next.mock.calls[0];
+    expect(error).toBeInstanceOf(HttpError);
+    expect(error.statusCode).toBe(403);
+  });
 });

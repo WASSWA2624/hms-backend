@@ -11,7 +11,8 @@ const express = require('express');
 const router = express.Router();
 const patientController = require('@controllers/patient/patient.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
-const { authenticate } = require('@middlewares/auth.middleware');
+const { authenticate, authorize } = require('@middlewares/auth.middleware');
+const { PERMISSIONS } = require('@config/permissions');
 const {
   createPatientSchema,
   updatePatientSchema,
@@ -43,9 +44,10 @@ const { listQuerySchema } = require('@lib/validation/zod');
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',  validateRequest({ query: listPatientsQuerySchema }),
-
+  '/',
+  validateRequest({ query: listPatientsQuerySchema }),
   authenticate(),
+  authorize(PERMISSIONS.PATIENT_READ, 'permission'),
   patientController.listPatients
 );
 
@@ -63,9 +65,10 @@ router.get(
  * @throws 404 Patient not found
  */
 router.get(
-  '/:id',  validateRequest({ params: patientIdParamsSchema }),
-
+  '/:id',
+  validateRequest({ params: patientIdParamsSchema }),
   authenticate(),
+  authorize(PERMISSIONS.PATIENT_READ, 'permission'),
   patientController.getPatientById
 );
 
@@ -85,6 +88,7 @@ router.get(
   '/:id/identifiers',
   validateRequest({ params: patientIdParamsSchema, query: listQuerySchema }),
   authenticate(),
+  authorize(PERMISSIONS.PATIENT_READ, 'permission'),
   patientController.getPatientIdentifiers
 );
 
@@ -104,6 +108,7 @@ router.get(
   '/:id/contacts',
   validateRequest({ params: patientIdParamsSchema, query: listQuerySchema }),
   authenticate(),
+  authorize(PERMISSIONS.PATIENT_READ, 'permission'),
   patientController.getPatientContacts
 );
 
@@ -123,6 +128,7 @@ router.get(
   '/:id/guardians',
   validateRequest({ params: patientIdParamsSchema, query: listQuerySchema }),
   authenticate(),
+  authorize(PERMISSIONS.PATIENT_READ, 'permission'),
   patientController.getPatientGuardians
 );
 
@@ -142,6 +148,7 @@ router.get(
   '/:id/allergies',
   validateRequest({ params: patientIdParamsSchema, query: listQuerySchema }),
   authenticate(),
+  authorize(PERMISSIONS.PATIENT_READ, 'permission'),
   patientController.getPatientAllergies
 );
 
@@ -161,6 +168,7 @@ router.get(
   '/:id/medical-histories',
   validateRequest({ params: patientIdParamsSchema, query: listQuerySchema }),
   authenticate(),
+  authorize(PERMISSIONS.PATIENT_READ, 'permission'),
   patientController.getPatientMedicalHistories
 );
 
@@ -180,6 +188,7 @@ router.get(
   '/:id/documents',
   validateRequest({ params: patientIdParamsSchema, query: listQuerySchema }),
   authenticate(),
+  authorize(PERMISSIONS.PATIENT_READ, 'permission'),
   patientController.getPatientDocuments
 );
 
@@ -205,9 +214,10 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',  validateRequest({ body: createPatientSchema }),
-
+  '/',
+  validateRequest({ body: createPatientSchema }),
   authenticate(),
+  authorize(PERMISSIONS.PATIENT_WRITE, 'permission'),
   patientController.createPatient
 );
 
@@ -233,9 +243,10 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',  validateRequest({ params: patientIdParamsSchema, body: updatePatientSchema }),
-
+  '/:id',
+  validateRequest({ params: patientIdParamsSchema, body: updatePatientSchema }),
   authenticate(),
+  authorize(PERMISSIONS.PATIENT_WRITE, 'permission'),
   patientController.updatePatient
 );
 
@@ -253,9 +264,10 @@ router.put(
  * @throws 404 Patient not found
  */
 router.delete(
-  '/:id',  validateRequest({ params: patientIdParamsSchema }),
-
+  '/:id',
+  validateRequest({ params: patientIdParamsSchema }),
   authenticate(),
+  authorize(PERMISSIONS.PATIENT_DELETE, 'permission'),
   patientController.deletePatient
 );
 

@@ -1482,6 +1482,7 @@ model patient_contact {
   @@index([tenant_id])
   @@index([patient_id])
   @@index([contact_type])
+  @@index([value])
   @@index([deleted_at])
   @@index([human_friendly_id])
 }
@@ -1505,6 +1506,8 @@ model patient_guardian {
 
   @@index([tenant_id])
   @@index([patient_id])
+  @@index([phone])
+  @@index([email])
   @@index([deleted_at])
   @@index([human_friendly_id])
 }
@@ -1529,6 +1532,7 @@ model patient_allergy {
   @@index([tenant_id])
   @@index([patient_id])
   @@index([severity])
+  @@index([allergen])
   @@index([deleted_at])
   @@index([human_friendly_id])
 }
@@ -1551,6 +1555,7 @@ model patient_medical_history {
 
   @@index([tenant_id])
   @@index([patient_id])
+  @@index([condition])
   @@index([deleted_at])
   @@index([human_friendly_id])
 }
@@ -1575,6 +1580,7 @@ model patient_document {
   @@index([tenant_id])
   @@index([patient_id])
   @@index([document_type])
+  @@index([file_name])
   @@index([deleted_at])
   @@index([human_friendly_id])
 }

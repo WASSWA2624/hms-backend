@@ -11,7 +11,8 @@ const express = require('express');
 const router = express.Router();
 const consentController = require('@controllers/consent/consent.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
-const { authenticate } = require('@middlewares/auth.middleware');
+const { authenticate, authorize } = require('@middlewares/auth.middleware');
+const { PERMISSIONS } = require('@config/permissions');
 const {
   createConsentSchema,
   updateConsentSchema,
@@ -38,9 +39,10 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',  validateRequest({ query: listConsentsQuerySchema }),
-
+  '/',
+  validateRequest({ query: listConsentsQuerySchema }),
   authenticate(),
+  authorize(PERMISSIONS.PATIENT_READ, 'permission'),
   consentController.listConsents
 );
 
@@ -58,9 +60,10 @@ router.get(
  * @throws 404 Consent not found
  */
 router.get(
-  '/:id',  validateRequest({ params: consentIdParamsSchema }),
-
+  '/:id',
+  validateRequest({ params: consentIdParamsSchema }),
   authenticate(),
+  authorize(PERMISSIONS.PATIENT_READ, 'permission'),
   consentController.getConsentById
 );
 
@@ -83,9 +86,10 @@ router.get(
  * @throws 400 Foreign key constraint violation
  */
 router.post(
-  '/',  validateRequest({ body: createConsentSchema }),
-
+  '/',
+  validateRequest({ body: createConsentSchema }),
   authenticate(),
+  authorize(PERMISSIONS.PATIENT_WRITE, 'permission'),
   consentController.createConsent
 );
 
@@ -107,9 +111,10 @@ router.post(
  * @throws 404 Consent not found
  */
 router.put(
-  '/:id',  validateRequest({ params: consentIdParamsSchema, body: updateConsentSchema }),
-
+  '/:id',
+  validateRequest({ params: consentIdParamsSchema, body: updateConsentSchema }),
   authenticate(),
+  authorize(PERMISSIONS.PATIENT_WRITE, 'permission'),
   consentController.updateConsent
 );
 
@@ -127,9 +132,10 @@ router.put(
  * @throws 404 Consent not found
  */
 router.delete(
-  '/:id',  validateRequest({ params: consentIdParamsSchema }),
-
+  '/:id',
+  validateRequest({ params: consentIdParamsSchema }),
   authenticate(),
+  authorize(PERMISSIONS.PATIENT_DELETE, 'permission'),
   consentController.deleteConsent
 );
 

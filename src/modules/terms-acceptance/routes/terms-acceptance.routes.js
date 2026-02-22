@@ -12,7 +12,8 @@ const express = require('express');
 const router = express.Router();
 const termsAcceptanceController = require('@controllers/terms-acceptance/terms-acceptance.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
-const { authenticate } = require('@middlewares/auth.middleware');
+const { authenticate, authorize } = require('@middlewares/auth.middleware');
+const { PERMISSIONS } = require('@config/permissions');
 const {
   createTermsAcceptanceSchema,
   termsAcceptanceIdParamsSchema,
@@ -37,9 +38,10 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',  validateRequest({ query: listTermsAcceptancesQuerySchema }),
-
+  '/',
+  validateRequest({ query: listTermsAcceptancesQuerySchema }),
   authenticate(),
+  authorize(PERMISSIONS.PATIENT_READ, 'permission'),
   termsAcceptanceController.listTermsAcceptances
 );
 
@@ -57,9 +59,10 @@ router.get(
  * @throws 404 Terms acceptance not found
  */
 router.get(
-  '/:id',  validateRequest({ params: termsAcceptanceIdParamsSchema }),
-
+  '/:id',
+  validateRequest({ params: termsAcceptanceIdParamsSchema }),
   authenticate(),
+  authorize(PERMISSIONS.PATIENT_READ, 'permission'),
   termsAcceptanceController.getTermsAcceptanceById
 );
 
@@ -79,9 +82,10 @@ router.get(
  * @throws 400 Foreign key constraint violation
  */
 router.post(
-  '/',  validateRequest({ body: createTermsAcceptanceSchema }),
-
+  '/',
+  validateRequest({ body: createTermsAcceptanceSchema }),
   authenticate(),
+  authorize(PERMISSIONS.PATIENT_WRITE, 'permission'),
   termsAcceptanceController.createTermsAcceptance
 );
 
@@ -99,9 +103,10 @@ router.post(
  * @throws 404 Terms acceptance not found
  */
 router.delete(
-  '/:id',  validateRequest({ params: termsAcceptanceIdParamsSchema }),
-
+  '/:id',
+  validateRequest({ params: termsAcceptanceIdParamsSchema }),
   authenticate(),
+  authorize(PERMISSIONS.PATIENT_DELETE, 'permission'),
   termsAcceptanceController.deleteTermsAcceptance
 );
 

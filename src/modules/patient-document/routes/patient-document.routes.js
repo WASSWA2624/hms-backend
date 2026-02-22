@@ -12,7 +12,8 @@ const router = express.Router();
 const { asyncHandler } = require('@lib/async');
 const patientDocumentController = require('@controllers/patient-document/patient-document.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
-const { authenticate } = require('@middlewares/auth.middleware');
+const { authenticate, authorize } = require('@middlewares/auth.middleware');
+const { PERMISSIONS } = require('@config/permissions');
 const {
   createPatientDocumentSchema,
   updatePatientDocumentSchema,
@@ -40,9 +41,10 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',  validateRequest({ query: listPatientDocumentsQuerySchema }),
-
+  '/',
+  validateRequest({ query: listPatientDocumentsQuerySchema }),
   authenticate(),
+  authorize(PERMISSIONS.PATIENT_READ, 'permission'),
   asyncHandler(patientDocumentController.listPatientDocuments)
 );
 
@@ -60,9 +62,10 @@ router.get(
  * @throws 404 Patient document not found
  */
 router.get(
-  '/:id',  validateRequest({ params: patientDocumentIdParamsSchema }),
-
+  '/:id',
+  validateRequest({ params: patientDocumentIdParamsSchema }),
   authenticate(),
+  authorize(PERMISSIONS.PATIENT_READ, 'permission'),
   asyncHandler(patientDocumentController.getPatientDocumentById)
 );
 
@@ -86,9 +89,10 @@ router.get(
  * @throws 400 Foreign key constraint violation
  */
 router.post(
-  '/',  validateRequest({ body: createPatientDocumentSchema }),
-
+  '/',
+  validateRequest({ body: createPatientDocumentSchema }),
   authenticate(),
+  authorize(PERMISSIONS.PATIENT_WRITE, 'permission'),
   asyncHandler(patientDocumentController.createPatientDocument)
 );
 
@@ -110,9 +114,10 @@ router.post(
  * @throws 404 Patient document not found
  */
 router.put(
-  '/:id',  validateRequest({ params: patientDocumentIdParamsSchema, body: updatePatientDocumentSchema }),
-
+  '/:id',
+  validateRequest({ params: patientDocumentIdParamsSchema, body: updatePatientDocumentSchema }),
   authenticate(),
+  authorize(PERMISSIONS.PATIENT_WRITE, 'permission'),
   asyncHandler(patientDocumentController.updatePatientDocument)
 );
 
@@ -130,9 +135,10 @@ router.put(
  * @throws 404 Patient document not found
  */
 router.delete(
-  '/:id',  validateRequest({ params: patientDocumentIdParamsSchema }),
-
+  '/:id',
+  validateRequest({ params: patientDocumentIdParamsSchema }),
   authenticate(),
+  authorize(PERMISSIONS.PATIENT_DELETE, 'permission'),
   asyncHandler(patientDocumentController.deletePatientDocument)
 );
 

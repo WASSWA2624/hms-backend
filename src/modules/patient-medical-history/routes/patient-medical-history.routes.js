@@ -12,7 +12,8 @@ const router = express.Router();
 const { asyncHandler } = require('@lib/async');
 const patientMedicalHistoryController = require('@controllers/patient-medical-history/patient-medical-history.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
-const { authenticate } = require('@middlewares/auth.middleware');
+const { authenticate, authorize } = require('@middlewares/auth.middleware');
+const { PERMISSIONS } = require('@config/permissions');
 const {
   createPatientMedicalHistorySchema,
   updatePatientMedicalHistorySchema,
@@ -40,9 +41,10 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',  validateRequest({ query: listPatientMedicalHistoriesQuerySchema }),
-
+  '/',
+  validateRequest({ query: listPatientMedicalHistoriesQuerySchema }),
   authenticate(),
+  authorize(PERMISSIONS.PATIENT_READ, 'permission'),
   asyncHandler(patientMedicalHistoryController.listPatientMedicalHistories)
 );
 
@@ -60,9 +62,10 @@ router.get(
  * @throws 404 Patient medical history not found
  */
 router.get(
-  '/:id',  validateRequest({ params: patientMedicalHistoryIdParamsSchema }),
-
+  '/:id',
+  validateRequest({ params: patientMedicalHistoryIdParamsSchema }),
   authenticate(),
+  authorize(PERMISSIONS.PATIENT_READ, 'permission'),
   asyncHandler(patientMedicalHistoryController.getPatientMedicalHistoryById)
 );
 
@@ -85,9 +88,10 @@ router.get(
  * @throws 400 Foreign key constraint violation
  */
 router.post(
-  '/',  validateRequest({ body: createPatientMedicalHistorySchema }),
-
+  '/',
+  validateRequest({ body: createPatientMedicalHistorySchema }),
   authenticate(),
+  authorize(PERMISSIONS.PATIENT_WRITE, 'permission'),
   asyncHandler(patientMedicalHistoryController.createPatientMedicalHistory)
 );
 
@@ -108,9 +112,10 @@ router.post(
  * @throws 404 Patient medical history not found
  */
 router.put(
-  '/:id',  validateRequest({ params: patientMedicalHistoryIdParamsSchema, body: updatePatientMedicalHistorySchema }),
-
+  '/:id',
+  validateRequest({ params: patientMedicalHistoryIdParamsSchema, body: updatePatientMedicalHistorySchema }),
   authenticate(),
+  authorize(PERMISSIONS.PATIENT_WRITE, 'permission'),
   asyncHandler(patientMedicalHistoryController.updatePatientMedicalHistory)
 );
 
@@ -128,9 +133,10 @@ router.put(
  * @throws 404 Patient medical history not found
  */
 router.delete(
-  '/:id',  validateRequest({ params: patientMedicalHistoryIdParamsSchema }),
-
+  '/:id',
+  validateRequest({ params: patientMedicalHistoryIdParamsSchema }),
   authenticate(),
+  authorize(PERMISSIONS.PATIENT_DELETE, 'permission'),
   asyncHandler(patientMedicalHistoryController.deletePatientMedicalHistory)
 );
 

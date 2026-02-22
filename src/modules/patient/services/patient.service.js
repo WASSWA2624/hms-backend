@@ -11,6 +11,221 @@ const patientRepository = require('@repositories/patient/patient.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 
+const MAX_SEARCH_TOKENS = 5;
+const CONTACT_TYPE_VALUES = new Set([
+  'PHONE',
+  'EMAIL',
+  'WHATSAPP',
+  'TELEGRAM',
+  'TIKTOK',
+  'INSTAGRAM',
+  'FACEBOOK',
+  'LINKEDIN',
+  'X',
+  'YOUTUBE',
+  'PINTEREST',
+  'REDDIT',
+  'DISCORD',
+  'FAX',
+  'OTHER'
+]);
+const CONSENT_TYPE_VALUES = new Set([
+  'TREATMENT',
+  'DATA_SHARING',
+  'RESEARCH',
+  'BILLING',
+  'OTHER'
+]);
+const CONSENT_STATUS_VALUES = new Set([
+  'GRANTED',
+  'REVOKED',
+  'PENDING'
+]);
+
+const PATIENT_RELATION_CONTEXT_INCLUDE = {
+  tenant: {
+    select: {
+      human_friendly_id: true,
+      name: true
+    }
+  },
+  facility: {
+    select: {
+      human_friendly_id: true,
+      name: true
+    }
+  }
+};
+
+const normalizeSearchTokens = (search) =>
+  String(search || '')
+    .trim()
+    .split(/\s+/)
+    .map((token) => token.trim())
+    .filter(Boolean)
+    .slice(0, MAX_SEARCH_TOKENS);
+
+const resolveEnumSearchClauses = (token, allowedValues, fieldName) => {
+  const enumToken = String(token || '').toUpperCase();
+  if (!allowedValues.has(enumToken)) {
+    return [];
+  }
+  return [{ [fieldName]: enumToken }];
+};
+
+const buildSearchTokenClause = (token) => {
+  const contactTypeClauses = resolveEnumSearchClauses(token, CONTACT_TYPE_VALUES, 'contact_type');
+  const consentTypeClauses = resolveEnumSearchClauses(token, CONSENT_TYPE_VALUES, 'consent_type');
+  const consentStatusClauses = resolveEnumSearchClauses(token, CONSENT_STATUS_VALUES, 'status');
+
+  return {
+    OR: [
+      { human_friendly_id: { contains: token } },
+      { first_name: { contains: token } },
+      { last_name: { contains: token } },
+      {
+        identifiers: {
+          some: {
+            deleted_at: null,
+            OR: [
+              { human_friendly_id: { contains: token } },
+              { identifier_type: { contains: token } },
+              { identifier_value: { contains: token } }
+            ]
+          }
+        }
+      },
+      {
+        contacts: {
+          some: {
+            deleted_at: null,
+            OR: [
+              { human_friendly_id: { contains: token } },
+              { value: { contains: token } },
+              ...contactTypeClauses
+            ]
+          }
+        }
+      },
+      {
+        guardians: {
+          some: {
+            deleted_at: null,
+            OR: [
+              { human_friendly_id: { contains: token } },
+              { name: { contains: token } },
+              { relationship: { contains: token } },
+              { phone: { contains: token } },
+              { email: { contains: token } }
+            ]
+          }
+        }
+      },
+      {
+        allergies: {
+          some: {
+            deleted_at: null,
+            OR: [
+              { human_friendly_id: { contains: token } },
+              { allergen: { contains: token } },
+              { reaction: { contains: token } },
+              { notes: { contains: token } }
+            ]
+          }
+        }
+      },
+      {
+        medical_history: {
+          some: {
+            deleted_at: null,
+            OR: [
+              { human_friendly_id: { contains: token } },
+              { condition: { contains: token } },
+              { notes: { contains: token } }
+            ]
+          }
+        }
+      },
+      {
+        documents: {
+          some: {
+            deleted_at: null,
+            OR: [
+              { human_friendly_id: { contains: token } },
+              { document_type: { contains: token } },
+              { file_name: { contains: token } },
+              { storage_key: { contains: token } },
+              { content_type: { contains: token } }
+            ]
+          }
+        }
+      },
+      {
+        consents: {
+          some: {
+            deleted_at: null,
+            OR: [
+              { human_friendly_id: { contains: token } },
+              ...consentTypeClauses,
+              ...consentStatusClauses
+            ]
+          }
+        }
+      }
+    ]
+  };
+};
+
+const buildPatientWhereClause = (filters = {}) => {
+  const whereClause = {};
+  const searchTokens = normalizeSearchTokens(filters.search);
+
+  if (filters.tenant_id) whereClause.tenant_id = filters.tenant_id;
+  if (filters.facility_id) whereClause.facility_id = filters.facility_id;
+  if (filters.gender) whereClause.gender = filters.gender;
+  if (filters.is_active !== undefined) whereClause.is_active = filters.is_active;
+  if (filters.first_name) whereClause.first_name = { contains: filters.first_name };
+  if (filters.last_name) whereClause.last_name = { contains: filters.last_name };
+
+  if (searchTokens.length > 0) {
+    whereClause.AND = searchTokens.map(buildSearchTokenClause);
+  }
+
+  return whereClause;
+};
+
+const decoratePatientContext = (patient) => {
+  if (!patient || typeof patient !== 'object') return patient;
+
+  const tenantContext = patient.tenant || null;
+  const facilityContext = patient.facility || null;
+  const {
+    tenant,
+    facility,
+    ...rest
+  } = patient;
+
+  return {
+    ...rest,
+    tenant_context: tenantContext
+      ? {
+          id: tenantContext.human_friendly_id || null,
+          label: tenantContext.name || null
+        }
+      : null,
+    facility_context: facilityContext
+      ? {
+          id: facilityContext.human_friendly_id || null,
+          label: facilityContext.name || null
+        }
+      : null,
+    tenant_human_friendly_id: tenantContext?.human_friendly_id || null,
+    tenant_label: tenantContext?.name || null,
+    facility_human_friendly_id: facilityContext?.human_friendly_id || null,
+    facility_label: facilityContext?.name || null
+  };
+};
+
 const ensurePatientExists = async (id) => {
   const patient = await patientRepository.findById(id);
   if (!patient) {
@@ -35,32 +250,22 @@ const listPatients = async (filters, page, limit, sortBy, order, userId, ipAddre
   try {
     const skip = (page - 1) * limit;
     const orderBy = sortBy ? { [sortBy]: order } : { created_at: 'desc' };
-
-    // Build filter object
-    const whereClause = {};
-    
-    if (filters.tenant_id) whereClause.tenant_id = filters.tenant_id;
-    if (filters.facility_id) whereClause.facility_id = filters.facility_id;
-    if (filters.gender) whereClause.gender = filters.gender;
-    if (filters.is_active !== undefined) whereClause.is_active = filters.is_active;
-    if (filters.first_name) whereClause.first_name = { contains: filters.first_name };
-    if (filters.last_name) whereClause.last_name = { contains: filters.last_name };
-    
-    // Search filter (searches in first_name, last_name)
-    if (filters.search) {
-      whereClause.OR = [
-        { first_name: { contains: filters.search } },
-        { last_name: { contains: filters.search } }
-      ];
-    }
+    const whereClause = buildPatientWhereClause(filters);
 
     const [patients, total] = await Promise.all([
-      patientRepository.findMany(whereClause, skip, limit, orderBy),
+      patientRepository.findMany(
+        whereClause,
+        skip,
+        limit,
+        orderBy,
+        PATIENT_RELATION_CONTEXT_INCLUDE
+      ),
       patientRepository.count(whereClause)
     ]);
+    const normalizedPatients = patients.map(decoratePatientContext);
 
     return {
-      patients,
+      patients: normalizedPatients,
       pagination: {
         page,
         limit,
@@ -86,13 +291,13 @@ const listPatients = async (filters, page, limit, sortBy, order, userId, ipAddre
  */
 const getPatientById = async (id, userId, ipAddress) => {
   try {
-    const patient = await patientRepository.findById(id);
+    const patient = await patientRepository.findById(id, PATIENT_RELATION_CONTEXT_INCLUDE);
 
     if (!patient) {
       throw new HttpError('errors.patient.not_found', 404);
     }
 
-    return patient;
+    return decoratePatientContext(patient);
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);

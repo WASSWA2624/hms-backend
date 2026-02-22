@@ -11,7 +11,8 @@ const express = require('express');
 const router = express.Router();
 const patientIdentifierController = require('@controllers/patient-identifier/patient-identifier.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
-const { authenticate } = require('@middlewares/auth.middleware');
+const { authenticate, authorize } = require('@middlewares/auth.middleware');
+const { PERMISSIONS } = require('@config/permissions');
 const {
   createPatientIdentifierSchema,
   updatePatientIdentifierSchema,
@@ -40,9 +41,10 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',  validateRequest({ query: listPatientIdentifiersQuerySchema }),
-
+  '/',
+  validateRequest({ query: listPatientIdentifiersQuerySchema }),
   authenticate(),
+  authorize(PERMISSIONS.PATIENT_READ, 'permission'),
   patientIdentifierController.listPatientIdentifiers
 );
 
@@ -60,9 +62,10 @@ router.get(
  * @throws 404 Patient Identifier not found
  */
 router.get(
-  '/:id',  validateRequest({ params: patientIdentifierIdParamsSchema }),
-
+  '/:id',
+  validateRequest({ params: patientIdentifierIdParamsSchema }),
   authenticate(),
+  authorize(PERMISSIONS.PATIENT_READ, 'permission'),
   patientIdentifierController.getPatientIdentifierById
 );
 
@@ -86,9 +89,10 @@ router.get(
  * @throws 409 Unique constraint violation (duplicate identifier_value in tenant)
  */
 router.post(
-  '/',  validateRequest({ body: createPatientIdentifierSchema }),
-
+  '/',
+  validateRequest({ body: createPatientIdentifierSchema }),
   authenticate(),
+  authorize(PERMISSIONS.PATIENT_WRITE, 'permission'),
   patientIdentifierController.createPatientIdentifier
 );
 
@@ -111,9 +115,10 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',  validateRequest({ params: patientIdentifierIdParamsSchema, body: updatePatientIdentifierSchema }),
-
+  '/:id',
+  validateRequest({ params: patientIdentifierIdParamsSchema, body: updatePatientIdentifierSchema }),
   authenticate(),
+  authorize(PERMISSIONS.PATIENT_WRITE, 'permission'),
   patientIdentifierController.updatePatientIdentifier
 );
 
@@ -131,9 +136,10 @@ router.put(
  * @throws 404 Patient Identifier not found
  */
 router.delete(
-  '/:id',  validateRequest({ params: patientIdentifierIdParamsSchema }),
-
+  '/:id',
+  validateRequest({ params: patientIdentifierIdParamsSchema }),
   authenticate(),
+  authorize(PERMISSIONS.PATIENT_DELETE, 'permission'),
   patientIdentifierController.deletePatientIdentifier
 );
 

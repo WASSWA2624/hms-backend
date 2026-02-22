@@ -13,6 +13,14 @@ const {
   listQuerySchema
 } = require('@lib/validation/zod');
 
+const searchQuerySchema = z
+  .string()
+  .trim()
+  .max(120)
+  .transform((value) => value.replace(/\s+/g, ' ').trim())
+  .optional()
+  .transform((value) => (value ? value : undefined));
+
 // ==================== Body Schemas ====================
 
 /**
@@ -67,7 +75,7 @@ const listPatientsQuerySchema = listQuerySchema.extend({
   last_name: z.string().trim().optional(),
   gender: z.enum(['MALE', 'FEMALE', 'OTHER', 'UNKNOWN']).optional(),
   is_active: z.string().transform(val => val === 'true').optional(),
-  search: z.string().trim().optional()
+  search: searchQuerySchema
 });
 
 module.exports = {

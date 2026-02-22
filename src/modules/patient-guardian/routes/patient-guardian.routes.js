@@ -11,7 +11,8 @@ const express = require('express');
 const router = express.Router();
 const patientGuardianController = require('@controllers/patient-guardian/patient-guardian.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
-const { authenticate } = require('@middlewares/auth.middleware');
+const { authenticate, authorize } = require('@middlewares/auth.middleware');
+const { PERMISSIONS } = require('@config/permissions');
 const {
   createPatientGuardianSchema,
   updatePatientGuardianSchema,
@@ -40,9 +41,10 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',  validateRequest({ query: listPatientGuardiansQuerySchema }),
-
+  '/',
+  validateRequest({ query: listPatientGuardiansQuerySchema }),
   authenticate(),
+  authorize(PERMISSIONS.PATIENT_READ, 'permission'),
   patientGuardianController.listPatientGuardians
 );
 
@@ -60,9 +62,10 @@ router.get(
  * @throws 404 Patient Guardian not found
  */
 router.get(
-  '/:id',  validateRequest({ params: patientGuardianIdParamsSchema }),
-
+  '/:id',
+  validateRequest({ params: patientGuardianIdParamsSchema }),
   authenticate(),
+  authorize(PERMISSIONS.PATIENT_READ, 'permission'),
   patientGuardianController.getPatientGuardianById
 );
 
@@ -87,9 +90,10 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',  validateRequest({ body: createPatientGuardianSchema }),
-
+  '/',
+  validateRequest({ body: createPatientGuardianSchema }),
   authenticate(),
+  authorize(PERMISSIONS.PATIENT_WRITE, 'permission'),
   patientGuardianController.createPatientGuardian
 );
 
@@ -113,9 +117,10 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',  validateRequest({ params: patientGuardianIdParamsSchema, body: updatePatientGuardianSchema }),
-
+  '/:id',
+  validateRequest({ params: patientGuardianIdParamsSchema, body: updatePatientGuardianSchema }),
   authenticate(),
+  authorize(PERMISSIONS.PATIENT_WRITE, 'permission'),
   patientGuardianController.updatePatientGuardian
 );
 
@@ -133,9 +138,10 @@ router.put(
  * @throws 404 Patient Guardian not found
  */
 router.delete(
-  '/:id',  validateRequest({ params: patientGuardianIdParamsSchema }),
-
+  '/:id',
+  validateRequest({ params: patientGuardianIdParamsSchema }),
   authenticate(),
+  authorize(PERMISSIONS.PATIENT_DELETE, 'permission'),
   patientGuardianController.deletePatientGuardian
 );
 

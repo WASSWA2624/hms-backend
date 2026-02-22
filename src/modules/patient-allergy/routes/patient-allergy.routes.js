@@ -12,7 +12,8 @@ const router = express.Router();
 const { asyncHandler } = require('@lib/async');
 const patientAllergyController = require('@controllers/patient-allergy/patient-allergy.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
-const { authenticate } = require('@middlewares/auth.middleware');
+const { authenticate, authorize } = require('@middlewares/auth.middleware');
+const { PERMISSIONS } = require('@config/permissions');
 const {
   createPatientAllergySchema,
   updatePatientAllergySchema,
@@ -41,9 +42,10 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',  validateRequest({ query: listPatientAllergiesQuerySchema }),
-
+  '/',
+  validateRequest({ query: listPatientAllergiesQuerySchema }),
   authenticate(),
+  authorize(PERMISSIONS.PATIENT_READ, 'permission'),
   asyncHandler(patientAllergyController.listPatientAllergies)
 );
 
@@ -61,9 +63,10 @@ router.get(
  * @throws 404 Patient allergy not found
  */
 router.get(
-  '/:id',  validateRequest({ params: patientAllergyIdParamsSchema }),
-
+  '/:id',
+  validateRequest({ params: patientAllergyIdParamsSchema }),
   authenticate(),
+  authorize(PERMISSIONS.PATIENT_READ, 'permission'),
   asyncHandler(patientAllergyController.getPatientAllergyById)
 );
 
@@ -87,9 +90,10 @@ router.get(
  * @throws 400 Foreign key constraint violation
  */
 router.post(
-  '/',  validateRequest({ body: createPatientAllergySchema }),
-
+  '/',
+  validateRequest({ body: createPatientAllergySchema }),
   authenticate(),
+  authorize(PERMISSIONS.PATIENT_WRITE, 'permission'),
   asyncHandler(patientAllergyController.createPatientAllergy)
 );
 
@@ -111,9 +115,10 @@ router.post(
  * @throws 404 Patient allergy not found
  */
 router.put(
-  '/:id',  validateRequest({ params: patientAllergyIdParamsSchema, body: updatePatientAllergySchema }),
-
+  '/:id',
+  validateRequest({ params: patientAllergyIdParamsSchema, body: updatePatientAllergySchema }),
   authenticate(),
+  authorize(PERMISSIONS.PATIENT_WRITE, 'permission'),
   asyncHandler(patientAllergyController.updatePatientAllergy)
 );
 
@@ -131,9 +136,10 @@ router.put(
  * @throws 404 Patient allergy not found
  */
 router.delete(
-  '/:id',  validateRequest({ params: patientAllergyIdParamsSchema }),
-
+  '/:id',
+  validateRequest({ params: patientAllergyIdParamsSchema }),
   authenticate(),
+  authorize(PERMISSIONS.PATIENT_DELETE, 'permission'),
   asyncHandler(patientAllergyController.deletePatientAllergy)
 );
 

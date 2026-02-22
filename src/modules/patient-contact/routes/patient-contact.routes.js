@@ -11,7 +11,8 @@ const express = require('express');
 const router = express.Router();
 const patientContactController = require('@controllers/patient-contact/patient-contact.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
-const { authenticate } = require('@middlewares/auth.middleware');
+const { authenticate, authorize } = require('@middlewares/auth.middleware');
+const { PERMISSIONS } = require('@config/permissions');
 const {
   createPatientContactSchema,
   updatePatientContactSchema,
@@ -40,9 +41,10 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',  validateRequest({ query: listPatientContactsQuerySchema }),
-
+  '/',
+  validateRequest({ query: listPatientContactsQuerySchema }),
   authenticate(),
+  authorize(PERMISSIONS.PATIENT_READ, 'permission'),
   patientContactController.listPatientContacts
 );
 
@@ -60,9 +62,10 @@ router.get(
  * @throws 404 Patient Contact not found
  */
 router.get(
-  '/:id',  validateRequest({ params: patientContactIdParamsSchema }),
-
+  '/:id',
+  validateRequest({ params: patientContactIdParamsSchema }),
   authenticate(),
+  authorize(PERMISSIONS.PATIENT_READ, 'permission'),
   patientContactController.getPatientContactById
 );
 
@@ -86,9 +89,10 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',  validateRequest({ body: createPatientContactSchema }),
-
+  '/',
+  validateRequest({ body: createPatientContactSchema }),
   authenticate(),
+  authorize(PERMISSIONS.PATIENT_WRITE, 'permission'),
   patientContactController.createPatientContact
 );
 
@@ -111,9 +115,10 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',  validateRequest({ params: patientContactIdParamsSchema, body: updatePatientContactSchema }),
-
+  '/:id',
+  validateRequest({ params: patientContactIdParamsSchema, body: updatePatientContactSchema }),
   authenticate(),
+  authorize(PERMISSIONS.PATIENT_WRITE, 'permission'),
   patientContactController.updatePatientContact
 );
 
@@ -131,9 +136,10 @@ router.put(
  * @throws 404 Patient Contact not found
  */
 router.delete(
-  '/:id',  validateRequest({ params: patientContactIdParamsSchema }),
-
+  '/:id',
+  validateRequest({ params: patientContactIdParamsSchema }),
   authenticate(),
+  authorize(PERMISSIONS.PATIENT_DELETE, 'permission'),
   patientContactController.deletePatientContact
 );
 

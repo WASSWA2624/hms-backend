@@ -174,6 +174,30 @@ describe('Patient Schemas', () => {
       }
     });
 
+    it('should normalize search by trimming and collapsing whitespace', () => {
+      const data = { search: '   john    guardian   phone   ' };
+      const result = listPatientsQuerySchema.safeParse(data);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.search).toBe('john guardian phone');
+      }
+    });
+
+    it('should coerce blank search to undefined', () => {
+      const data = { search: '     ' };
+      const result = listPatientsQuerySchema.safeParse(data);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.search).toBeUndefined();
+      }
+    });
+
+    it('should reject search longer than 120 characters', () => {
+      const data = { search: 'a'.repeat(121) };
+      const result = listPatientsQuerySchema.safeParse(data);
+      expect(result.success).toBe(false);
+    });
+
     it('should validate gender enum in query', () => {
       const data = { gender: 'INVALID' };
       const result = listPatientsQuerySchema.safeParse(data);
