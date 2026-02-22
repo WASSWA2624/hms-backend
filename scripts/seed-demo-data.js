@@ -7,7 +7,6 @@
  * Usage:
  *   node scripts/seed-demo-data.js
  *   node scripts/seed-demo-data.js --skip-default-accounts
- *   DEMO_RECORDS_PER_TABLE=20 node scripts/seed-demo-data.js
  *
  * @module scripts/seed-demo-data
  */
@@ -52,11 +51,22 @@ try {
 }
 
 const prisma = require('@prisma/client');
+const env = require('@config/env');
+const {
+  DEFAULT_SEED_RECORD_COUNT,
+  SEED_COUNTS: DEFAULT_SEED_COUNTS
+} = require('@config/constants');
+const {
+  resolveSeedExecutionOrder,
+  seedPhase12SupplementalScenarios,
+  verifyRequiredModelCoverage
+} = require('./seed-phase12-supplemental');
 
-const DEFAULT_TARGET_RECORDS_PER_MODEL = 50;
+const DEFAULT_TARGET_RECORDS_PER_MODEL = DEFAULT_SEED_RECORD_COUNT;
 const DEFAULT_RANDOM_SEED = 20260217;
 const MAX_CREATE_ATTEMPTS_MULTIPLIER = 12;
 const MAX_CREATE_ATTEMPTS_FLOOR = 80;
+const DETERMINISTIC_BASE_TIMESTAMP = Date.UTC(2026, 0, 1, 8, 0, 0);
 
 const EXCLUDED_MODELS = new Set([
   'human_id_counter',
@@ -81,6 +91,26 @@ const sequenceByModel = new Map();
 let activeRandomSeed = DEFAULT_RANDOM_SEED;
 
 const isMissingTableError = (error) => error?.code === 'P2021';
+
+const deterministicHashHex = (value) =>
+  crypto.createHash('sha256').update(String(value || '')).digest('hex');
+
+const deterministicUuid = (value) => {
+  const hex = deterministicHashHex(value);
+  return [
+    hex.slice(0, 8),
+    hex.slice(8, 12),
+    `4${hex.slice(13, 16)}`,
+    `a${hex.slice(17, 20)}`,
+    hex.slice(20, 32)
+  ].join('-');
+};
+
+const getDeterministicDate = (sequence = 0, minuteOffset = 0) => {
+  const seedOffsetMs = (Math.abs(Number(activeRandomSeed) || DEFAULT_RANDOM_SEED) % 100000) * 1000;
+  const sequenceOffsetMs = (Number(sequence) + Number(minuteOffset)) * 60 * 1000;
+  return new Date(DETERMINISTIC_BASE_TIMESTAMP + seedOffsetMs + sequenceOffsetMs);
+};
 
 const stripInlineComment = (line) => {
   const commentStart = line.indexOf('//');
@@ -378,7 +408,7 @@ const generateStringValue = (field, modelName, sequence) => {
 
   let candidate;
   if (fieldName === 'id') {
-    candidate = crypto.randomUUID();
+    candidate = deterministicUuid(`${modelName}:${field.name}:${sequence}:${activeRandomSeed}`);
   } else if (fieldName.includes('email')) {
     candidate = faker.internet.email({
       firstName: modelToken,
@@ -447,15 +477,14 @@ const generateFieldValue = (field, modelName, sequence, enumValuesByName) => {
     case 'Boolean':
       return sequence % 2 === 0;
     case 'DateTime': {
-      const now = Date.now();
       const lowerFieldName = field.name.toLowerCase();
       if (lowerFieldName.includes('end')) {
-        return new Date(now + sequence * 60 * 1000);
+        return getDeterministicDate(sequence, 30);
       }
       if (lowerFieldName.includes('start')) {
-        return new Date(now - sequence * 60 * 1000);
+        return getDeterministicDate(sequence, -45);
       }
-      return new Date(now - sequence * 30 * 1000);
+      return getDeterministicDate(sequence, -5);
     }
     case 'Json':
       return {
@@ -658,15 +687,31 @@ const ensureDefaultAccounts = () => {
 
 const seedDemoData = async ({
   targetCount = DEFAULT_TARGET_RECORDS_PER_MODEL,
-  targetCountsByModel = {},
+  targetCountsByModel = DEFAULT_SEED_COUNTS,
   randomSeed = DEFAULT_RANDOM_SEED,
   skipDefaultAccounts = false
 } = {}) => {
+  if (env.NODE_ENV === 'production') {
+    console.warn('Skipping seed: NODE_ENV=production');
+    return {
+      skipped: true,
+      reason: 'production_environment'
+    };
+  }
+
+  referenceRowsCache.clear();
+  usedFieldValuesCache.clear();
+  sequenceByModel.clear();
+
   const parsedTarget = Number.parseInt(String(targetCount), 10);
   const safeTargetCount = Number.isFinite(parsedTarget) && parsedTarget >= 0
     ? parsedTarget
     : DEFAULT_TARGET_RECORDS_PER_MODEL;
-  const normalizedTargetCountsByModel = Object.entries(targetCountsByModel || {}).reduce(
+  const mergedTargetCountsByModel = {
+    ...DEFAULT_SEED_COUNTS,
+    ...(targetCountsByModel || {})
+  };
+  const normalizedTargetCountsByModel = Object.entries(mergedTargetCountsByModel).reduce(
     (acc, [modelName, count]) => {
       const parsed = Number.parseInt(String(count), 10);
       if (Number.isFinite(parsed) && parsed >= 0) {
@@ -687,7 +732,8 @@ const seedDemoData = async ({
 
   const schemaPath = path.join(process.cwd(), 'prisma', 'schema.prisma');
   const { enumValuesByName, modelsByName } = parseSchemaMetadata(schemaPath);
-  const orderedModels = getTopologicalModelOrder(modelsByName);
+  const topologicalModelOrder = getTopologicalModelOrder(modelsByName);
+  const orderedModels = resolveSeedExecutionOrder(topologicalModelOrder);
 
   const seedableModelNames = orderedModels.filter((modelName) => {
     if (EXCLUDED_MODELS.has(modelName)) return false;
@@ -712,6 +758,15 @@ const seedDemoData = async ({
     );
   }
 
+  const supplementalSummary = await seedPhase12SupplementalScenarios({
+    randomSeed: activeRandomSeed,
+    isMissingTableError
+  });
+
+  const coverageSummary = await verifyRequiredModelCoverage({
+    isMissingTableError
+  });
+
   const totals = results.reduce(
     (acc, result) => {
       acc.created += result.created;
@@ -730,16 +785,35 @@ const seedDemoData = async ({
   console.log(`- models partial: ${totals.partial}`);
   console.log(`- models skipped: ${totals.skipped}`);
   console.log(`- total records created: ${totals.created}`);
+  console.log(`- supplemental scenarios seeded: ${supplementalSummary.skipped ? 0 : supplementalSummary.subscriptionsSeeded || 0}`);
+  console.log(`- coverage missing models: ${coverageSummary.missingModels.length}`);
+  console.log(`- coverage unavailable models: ${coverageSummary.unavailableModels.length}`);
+
+  if (coverageSummary.missingModels.length > 0) {
+    console.warn(`[WARN] Models with zero records: ${coverageSummary.missingModels.join(', ')}`);
+  }
+
+  if (coverageSummary.unavailableModels.length > 0) {
+    console.warn(`[WARN] Models unavailable for coverage check: ${coverageSummary.unavailableModels.join(', ')}`);
+  }
+
+  return {
+    skipped: false,
+    totals,
+    supplementalSummary,
+    coverageSummary
+  };
 };
 
 const main = async () => {
   const skipDefaultAccounts = process.argv.includes('--skip-default-accounts');
-  const targetCountFromEnv = process.env.DEMO_RECORDS_PER_TABLE || DEFAULT_TARGET_RECORDS_PER_MODEL;
-  const randomSeedFromEnv = process.env.SEED_RANDOM_SEED || DEFAULT_RANDOM_SEED;
+  const targetCountFromEnv = env.SEED_RECORD_COUNT || DEFAULT_TARGET_RECORDS_PER_MODEL;
+  const randomSeedFromEnv = env.SEED_RANDOM_SEED || DEFAULT_RANDOM_SEED;
 
   try {
     await seedDemoData({
       targetCount: targetCountFromEnv,
+      targetCountsByModel: DEFAULT_SEED_COUNTS,
       randomSeed: randomSeedFromEnv,
       skipDefaultAccounts
     });
@@ -755,4 +829,8 @@ if (require.main === module) {
   main();
 }
 
-module.exports = { seedDemoData };
+module.exports = {
+  seedDemoData,
+  deterministicUuid,
+  getDeterministicDate
+};
