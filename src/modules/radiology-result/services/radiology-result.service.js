@@ -187,10 +187,61 @@ const deleteRadiologyResult = async (id, userId, ipAddress) => {
   }
 };
 
+/**
+ * Sign off radiology result
+ *
+ * @param {string} id - Radiology Result ID
+ * @param {Object} data - Sign-off payload
+ * @param {string} userId - User ID for audit
+ * @param {string} ipAddress - User IP for audit
+ * @returns {Promise<Object>} Updated radiology result
+ */
+const signOffRadiologyResult = async (id, data = {}, userId, ipAddress) => {
+  try {
+    const before = await radiologyResultRepository.findById(id);
+
+    if (!before) {
+      throw new HttpError('errors.radiology_result.not_found', 404);
+    }
+
+    if (before.status === 'FINAL') {
+      throw new HttpError('errors.radiology_result.already_signed_off', 400);
+    }
+
+    const updateData = {
+      status: 'FINAL',
+      reported_at: data.reported_at ? new Date(data.reported_at) : new Date()
+    };
+
+    const radiologyResult = await radiologyResultRepository.update(id, updateData);
+
+    createAuditLog({
+      user_id: userId,
+      action: 'SIGN_OFF',
+      entity: 'radiology_result',
+      entity_id: radiologyResult.id,
+      diff: {
+        before,
+        after: radiologyResult,
+        metadata: {
+          notes: data.notes || null
+        }
+      },
+      ip_address: ipAddress
+    }).catch(() => {});
+
+    return radiologyResult;
+  } catch (error) {
+    if (error instanceof HttpError) throw error;
+    throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
+  }
+};
+
 module.exports = {
   listRadiologyResults,
   getRadiologyResultById,
   createRadiologyResult,
   updateRadiologyResult,
-  deleteRadiologyResult
+  deleteRadiologyResult,
+  signOffRadiologyResult
 };

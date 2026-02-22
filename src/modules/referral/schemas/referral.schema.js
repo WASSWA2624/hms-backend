@@ -39,6 +39,14 @@ const updateReferralSchema = z.object({
   status: z.enum(['REQUESTED', 'APPROVED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']).optional()
 });
 
+/**
+ * Redeem referral body validation
+ * Used for POST /referrals/:id/redeem endpoint
+ */
+const redeemReferralSchema = z.object({
+  notes: z.string().trim().max(10000).optional().nullable()
+});
+
 // ==================== URL Params ====================
 
 /**
@@ -66,6 +74,7 @@ const listReferralsQuerySchema = listQuerySchema.extend({
 module.exports = {
   createReferralSchema,
   updateReferralSchema,
+  redeemReferralSchema,
   referralIdParamsSchema,
   listReferralsQuerySchema
 };

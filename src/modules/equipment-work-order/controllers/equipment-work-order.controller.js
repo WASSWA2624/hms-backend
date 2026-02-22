@@ -29,4 +29,30 @@ const deleteEquipmentWorkOrder = asyncHandler(async (req, res) => {
   sendNoContent(res);
 });
 
-module.exports = { listEquipmentWorkOrders, getEquipmentWorkOrderById, createEquipmentWorkOrder, updateEquipmentWorkOrder, deleteEquipmentWorkOrder };
+const startEquipmentWorkOrder = asyncHandler(async (req, res) => {
+  const item = await equipmentWorkOrderService.startEquipmentWorkOrder(
+    req.params.id,
+    req.body,
+    { user_id: req.user?.id, tenant_id: req.user?.tenant_id, ip_address: req.ip }
+  );
+  sendSuccess(res, 200, 'messages.equipment_work_order.start.success', item);
+});
+
+const returnToServiceEquipmentWorkOrder = asyncHandler(async (req, res) => {
+  const item = await equipmentWorkOrderService.returnToServiceEquipmentWorkOrder(
+    req.params.id,
+    req.body,
+    { user_id: req.user?.id, tenant_id: req.user?.tenant_id, ip_address: req.ip }
+  );
+  sendSuccess(res, 200, 'messages.equipment_work_order.return_to_service.success', item);
+});
+
+module.exports = {
+  listEquipmentWorkOrders,
+  getEquipmentWorkOrderById,
+  createEquipmentWorkOrder,
+  updateEquipmentWorkOrder,
+  deleteEquipmentWorkOrder,
+  startEquipmentWorkOrder,
+  returnToServiceEquipmentWorkOrder
+};

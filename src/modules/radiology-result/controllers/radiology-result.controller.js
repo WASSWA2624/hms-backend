@@ -119,10 +119,28 @@ const deleteRadiologyResult = asyncHandler(async (req, res) => {
   sendNoContent(res);
 });
 
+/**
+ * Sign off radiology result
+ * POST /api/v1/radiology-results/:id/sign-off
+ *
+ * @param {Object} req - Express request
+ * @param {Object} res - Express response
+ */
+const signOffRadiologyResult = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user?.id;
+  const ipAddress = req.ip;
+
+  const radiologyResult = await radiologyResultService.signOffRadiologyResult(id, req.body, userId, ipAddress);
+
+  sendSuccess(res, 200, 'messages.radiology_result.sign_off.success', radiologyResult);
+});
+
 module.exports = {
   listRadiologyResults,
   getRadiologyResultById,
   createRadiologyResult,
   updateRadiologyResult,
-  deleteRadiologyResult
+  deleteRadiologyResult,
+  signOffRadiologyResult
 };

@@ -15,6 +15,8 @@ const { authenticate } = require('@middlewares/auth.middleware');
 const {
   createInsuranceClaimSchema,
   updateInsuranceClaimSchema,
+  submitInsuranceClaimSchema,
+  reconcileInsuranceClaimSchema,
   insuranceClaimIdParamsSchema,
   listInsuranceClaimsQuerySchema
 } = require('@validations/insurance-claim/insurance-claim.schema');
@@ -40,7 +42,8 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',  validateRequest({ query: listInsuranceClaimsQuerySchema }),
+  '/',
+  validateRequest({ query: listInsuranceClaimsQuerySchema }),
 
   authenticate(),
   insuranceClaimController.listInsuranceClaims
@@ -60,7 +63,8 @@ router.get(
  * @throws 404 Insurance claim not found
  */
 router.get(
-  '/:id',  validateRequest({ params: insuranceClaimIdParamsSchema }),
+  '/:id',
+  validateRequest({ params: insuranceClaimIdParamsSchema }),
 
   authenticate(),
   insuranceClaimController.getInsuranceClaimById
@@ -85,7 +89,8 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',  validateRequest({ body: createInsuranceClaimSchema }),
+  '/',
+  validateRequest({ body: createInsuranceClaimSchema }),
 
   authenticate(),
   insuranceClaimController.createInsuranceClaim
@@ -111,7 +116,8 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',  validateRequest({ params: insuranceClaimIdParamsSchema, body: updateInsuranceClaimSchema }),
+  '/:id',
+  validateRequest({ params: insuranceClaimIdParamsSchema, body: updateInsuranceClaimSchema }),
 
   authenticate(),
   insuranceClaimController.updateInsuranceClaim
@@ -131,10 +137,53 @@ router.put(
  * @throws 404 Insurance claim not found
  */
 router.delete(
-  '/:id',  validateRequest({ params: insuranceClaimIdParamsSchema }),
+  '/:id',
+  validateRequest({ params: insuranceClaimIdParamsSchema }),
 
   authenticate(),
   insuranceClaimController.deleteInsuranceClaim
+);
+
+/**
+ * @description Submit insurance claim
+ * @method POST
+ * @route /api/v1/insurance-claims/:id/submit
+ * @authentication Required (JWT)
+ * @permissions Authenticated users
+ * @urlParams {string} id - Insurance claim ID (UUID)
+ * @bodyParams {string} [submitted_at] - Submission timestamp
+ * @bodyParams {string} [notes] - Submission notes
+ * @returns {Object} Updated insurance claim
+ * @throws 401 Unauthorized
+ * @throws 404 Insurance claim not found
+ */
+router.post(
+  '/:id/submit',
+  validateRequest({ params: insuranceClaimIdParamsSchema, body: submitInsuranceClaimSchema }),
+
+  authenticate(),
+  insuranceClaimController.submitInsuranceClaim
+);
+
+/**
+ * @description Reconcile insurance claim
+ * @method POST
+ * @route /api/v1/insurance-claims/:id/reconcile
+ * @authentication Required (JWT)
+ * @permissions Authenticated users
+ * @urlParams {string} id - Insurance claim ID (UUID)
+ * @bodyParams {string} [status] - Reconciled status (APPROVED/REJECTED/PAID)
+ * @bodyParams {string} [notes] - Reconciliation notes
+ * @returns {Object} Updated insurance claim
+ * @throws 401 Unauthorized
+ * @throws 404 Insurance claim not found
+ */
+router.post(
+  '/:id/reconcile',
+  validateRequest({ params: insuranceClaimIdParamsSchema, body: reconcileInsuranceClaimSchema }),
+
+  authenticate(),
+  insuranceClaimController.reconcileInsuranceClaim
 );
 
 module.exports = router;

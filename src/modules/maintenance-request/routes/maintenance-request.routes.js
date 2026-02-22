@@ -15,6 +15,7 @@ const { authenticate } = require('@middlewares/auth.middleware');
 const {
   createMaintenanceRequestSchema,
   updateMaintenanceRequestSchema,
+  triageMaintenanceRequestSchema,
   maintenanceRequestIdParamsSchema,
   listMaintenanceRequestsQuerySchema
 } = require('@validations/maintenance-request/maintenance-request.schema');
@@ -39,7 +40,8 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',  validateRequest({ query: listMaintenanceRequestsQuerySchema }),
+  '/',
+  validateRequest({ query: listMaintenanceRequestsQuerySchema }),
 
   authenticate(),
   maintenanceRequestController.listMaintenanceRequests
@@ -59,7 +61,8 @@ router.get(
  * @throws 404 Maintenance request not found
  */
 router.get(
-  '/:id',  validateRequest({ params: maintenanceRequestIdParamsSchema }),
+  '/:id',
+  validateRequest({ params: maintenanceRequestIdParamsSchema }),
 
   authenticate(),
   maintenanceRequestController.getMaintenanceRequestById
@@ -86,7 +89,8 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',  validateRequest({ body: createMaintenanceRequestSchema }),
+  '/',
+  validateRequest({ body: createMaintenanceRequestSchema }),
 
   authenticate(),
   maintenanceRequestController.createMaintenanceRequest
@@ -113,7 +117,8 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',  validateRequest({ params: maintenanceRequestIdParamsSchema, body: updateMaintenanceRequestSchema }),
+  '/:id',
+  validateRequest({ params: maintenanceRequestIdParamsSchema, body: updateMaintenanceRequestSchema }),
 
   authenticate(),
   maintenanceRequestController.updateMaintenanceRequest
@@ -133,10 +138,34 @@ router.put(
  * @throws 404 Maintenance request not found
  */
 router.delete(
-  '/:id',  validateRequest({ params: maintenanceRequestIdParamsSchema }),
+  '/:id',
+  validateRequest({ params: maintenanceRequestIdParamsSchema }),
 
   authenticate(),
   maintenanceRequestController.deleteMaintenanceRequest
+);
+
+/**
+ * @description Triage maintenance request
+ * @method POST
+ * @route /api/v1/maintenance-requests/:id/triage
+ * @authentication Required (JWT)
+ * @permissions Authenticated users
+ * @urlParams {string} id - Maintenance request ID (UUID)
+ * @bodyParams {string} [status] - Triage status override (OPEN/IN_PROGRESS)
+ * @bodyParams {string} [triage_summary] - Triage summary
+ * @bodyParams {string} [assigned_engineer] - Assigned engineer name
+ * @bodyParams {number} [sla_hours] - SLA hours target
+ * @returns {Object} Updated maintenance request
+ * @throws 401 Unauthorized
+ * @throws 404 Maintenance request not found
+ */
+router.post(
+  '/:id/triage',
+  validateRequest({ params: maintenanceRequestIdParamsSchema, body: triageMaintenanceRequestSchema }),
+
+  authenticate(),
+  maintenanceRequestController.triageMaintenanceRequest
 );
 
 module.exports = router;

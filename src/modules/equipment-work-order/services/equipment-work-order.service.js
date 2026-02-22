@@ -84,4 +84,79 @@ const deleteEquipmentWorkOrder = async (id, context = {}) => {
   }).catch(() => {});
 };
 
-module.exports = { listEquipmentWorkOrders, getEquipmentWorkOrderById, createEquipmentWorkOrder, updateEquipmentWorkOrder, deleteEquipmentWorkOrder };
+const startEquipmentWorkOrder = async (id, data = {}, context = {}) => {
+  const before = await equipmentWorkOrderRepository.findById(id);
+  if (!before) throw new HttpError('errors.equipment_work_order.not_found', 404);
+
+  const currentStatus = String(before.status || '').toUpperCase();
+  if (['COMPLETED', 'CLOSED', 'CANCELLED', 'RETURNED_TO_SERVICE'].includes(currentStatus)) {
+    throw new HttpError('errors.equipment_work_order.cannot_start_terminal_status', 400);
+  }
+
+  const item = await equipmentWorkOrderRepository.update(id, {
+    status: 'IN_REPAIR',
+    started_at: data.started_at ? new Date(data.started_at) : new Date()
+  });
+
+  createAuditLog({
+    tenant_id: before.tenant_id || context.tenant_id,
+    user_id: context.user_id || context.user?.id,
+    action: 'START',
+    entity: 'equipment_work_order',
+    entity_id: item.id,
+    diff: {
+      before,
+      after: item,
+      metadata: {
+        notes: data.notes || null
+      }
+    },
+    ip_address: context.ip_address || context.ip
+  }).catch(() => {});
+
+  return item;
+};
+
+const returnToServiceEquipmentWorkOrder = async (id, data = {}, context = {}) => {
+  const before = await equipmentWorkOrderRepository.findById(id);
+  if (!before) throw new HttpError('errors.equipment_work_order.not_found', 404);
+
+  if (!before.started_at) {
+    throw new HttpError('errors.equipment_work_order.cannot_return_before_start', 400);
+  }
+
+  const item = await equipmentWorkOrderRepository.update(id, {
+    status: 'RETURNED_TO_SERVICE',
+    completed_at: new Date(),
+    closed_at: new Date(),
+    resolution_notes: data.notes || before.resolution_notes
+  });
+
+  createAuditLog({
+    tenant_id: before.tenant_id || context.tenant_id,
+    user_id: context.user_id || context.user?.id,
+    action: 'RETURN_TO_SERVICE',
+    entity: 'equipment_work_order',
+    entity_id: item.id,
+    diff: {
+      before,
+      after: item,
+      metadata: {
+        verification_evidence: data.verification_evidence
+      }
+    },
+    ip_address: context.ip_address || context.ip
+  }).catch(() => {});
+
+  return item;
+};
+
+module.exports = {
+  listEquipmentWorkOrders,
+  getEquipmentWorkOrderById,
+  createEquipmentWorkOrder,
+  updateEquipmentWorkOrder,
+  deleteEquipmentWorkOrder,
+  startEquipmentWorkOrder,
+  returnToServiceEquipmentWorkOrder
+};

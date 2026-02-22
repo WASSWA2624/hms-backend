@@ -15,6 +15,7 @@ const { authenticate } = require('@middlewares/auth.middleware');
 const {
   createRadiologyResultSchema,
   updateRadiologyResultSchema,
+  signOffRadiologyResultSchema,
   radiologyResultIdParamsSchema,
   listRadiologyResultsQuerySchema
 } = require('@validations/radiology-result/radiology-result.schema');
@@ -38,7 +39,8 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',  validateRequest({ query: listRadiologyResultsQuerySchema }),
+  '/',
+  validateRequest({ query: listRadiologyResultsQuerySchema }),
 
   authenticate(),
   radiologyResultController.listRadiologyResults
@@ -58,7 +60,8 @@ router.get(
  * @throws 404 Radiology result not found
  */
 router.get(
-  '/:id',  validateRequest({ params: radiologyResultIdParamsSchema }),
+  '/:id',
+  validateRequest({ params: radiologyResultIdParamsSchema }),
 
   authenticate(),
   radiologyResultController.getRadiologyResultById
@@ -83,7 +86,8 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',  validateRequest({ body: createRadiologyResultSchema }),
+  '/',
+  validateRequest({ body: createRadiologyResultSchema }),
 
   authenticate(),
   radiologyResultController.createRadiologyResult
@@ -109,7 +113,8 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',  validateRequest({ params: radiologyResultIdParamsSchema, body: updateRadiologyResultSchema }),
+  '/:id',
+  validateRequest({ params: radiologyResultIdParamsSchema, body: updateRadiologyResultSchema }),
 
   authenticate(),
   radiologyResultController.updateRadiologyResult
@@ -129,10 +134,32 @@ router.put(
  * @throws 404 Radiology result not found
  */
 router.delete(
-  '/:id',  validateRequest({ params: radiologyResultIdParamsSchema }),
+  '/:id',
+  validateRequest({ params: radiologyResultIdParamsSchema }),
 
   authenticate(),
   radiologyResultController.deleteRadiologyResult
+);
+
+/**
+ * @description Sign off radiology result
+ * @method POST
+ * @route /api/v1/radiology-results/:id/sign-off
+ * @authentication Required (JWT)
+ * @permissions Authenticated users
+ * @urlParams {string} id - Radiology Result ID (UUID)
+ * @bodyParams {string} [reported_at] - Sign-off timestamp (ISO 8601 datetime)
+ * @bodyParams {string} [notes] - Sign-off notes
+ * @returns {Object} Signed-off radiology result
+ * @throws 401 Unauthorized
+ * @throws 404 Radiology result not found
+ */
+router.post(
+  '/:id/sign-off',
+  validateRequest({ params: radiologyResultIdParamsSchema, body: signOffRadiologyResultSchema }),
+
+  authenticate(),
+  radiologyResultController.signOffRadiologyResult
 );
 
 module.exports = router;

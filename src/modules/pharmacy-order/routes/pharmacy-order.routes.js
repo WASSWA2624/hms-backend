@@ -15,6 +15,7 @@ const { authenticate } = require('@middlewares/auth.middleware');
 const {
   createPharmacyOrderSchema,
   updatePharmacyOrderSchema,
+  dispensePharmacyOrderSchema,
   pharmacyOrderIdParamsSchema,
   listPharmacyOrdersQuerySchema
 } = require('@validations/pharmacy-order/pharmacy-order.schema');
@@ -40,7 +41,8 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',  validateRequest({ query: listPharmacyOrdersQuerySchema }),
+  '/',
+  validateRequest({ query: listPharmacyOrdersQuerySchema }),
 
   authenticate(),
   pharmacyOrderController.listPharmacyOrders
@@ -60,7 +62,8 @@ router.get(
  * @throws 404 Pharmacy order not found
  */
 router.get(
-  '/:id',  validateRequest({ params: pharmacyOrderIdParamsSchema }),
+  '/:id',
+  validateRequest({ params: pharmacyOrderIdParamsSchema }),
 
   authenticate(),
   pharmacyOrderController.getPharmacyOrderById
@@ -85,7 +88,8 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',  validateRequest({ body: createPharmacyOrderSchema }),
+  '/',
+  validateRequest({ body: createPharmacyOrderSchema }),
 
   authenticate(),
   pharmacyOrderController.createPharmacyOrder
@@ -111,7 +115,8 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',  validateRequest({ params: pharmacyOrderIdParamsSchema, body: updatePharmacyOrderSchema }),
+  '/:id',
+  validateRequest({ params: pharmacyOrderIdParamsSchema, body: updatePharmacyOrderSchema }),
 
   authenticate(),
   pharmacyOrderController.updatePharmacyOrder
@@ -131,10 +136,32 @@ router.put(
  * @throws 404 Pharmacy order not found
  */
 router.delete(
-  '/:id',  validateRequest({ params: pharmacyOrderIdParamsSchema }),
+  '/:id',
+  validateRequest({ params: pharmacyOrderIdParamsSchema }),
 
   authenticate(),
   pharmacyOrderController.deletePharmacyOrder
+);
+
+/**
+ * @description Dispense pharmacy order
+ * @method POST
+ * @route /api/v1/pharmacy-orders/:id/dispense
+ * @authentication Required (JWT)
+ * @permissions Authenticated users
+ * @urlParams {string} id - Pharmacy order ID (UUID)
+ * @bodyParams {string} [status] - Dispense status override (DISPENSED/PARTIALLY_DISPENSED)
+ * @bodyParams {string} [notes] - Dispense notes
+ * @returns {Object} Updated pharmacy order
+ * @throws 401 Unauthorized
+ * @throws 404 Pharmacy order not found
+ */
+router.post(
+  '/:id/dispense',
+  validateRequest({ params: pharmacyOrderIdParamsSchema, body: dispensePharmacyOrderSchema }),
+
+  authenticate(),
+  pharmacyOrderController.dispensePharmacyOrder
 );
 
 module.exports = router;

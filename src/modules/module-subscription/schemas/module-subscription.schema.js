@@ -36,6 +36,13 @@ const updateModuleSubscriptionSchema = z.object({
   is_active: z.boolean().optional()
 });
 
+/**
+ * Activate/deactivate request schema
+ */
+const moduleSubscriptionActivationSchema = z.object({
+  reason: z.string().trim().max(10000).optional().nullable()
+});
+
 // ==================== URL Params ====================
 
 /**
@@ -62,6 +69,7 @@ const listModuleSubscriptionsQuerySchema = listQuerySchema.extend({
 module.exports = {
   createModuleSubscriptionSchema,
   updateModuleSubscriptionSchema,
+  moduleSubscriptionActivationSchema,
   moduleSubscriptionIdParamsSchema,
   listModuleSubscriptionsQuerySchema
 };

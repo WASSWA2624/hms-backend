@@ -15,6 +15,8 @@ const { validate } = require('@middlewares/validate.middleware');
 const {
   createSubscriptionSchema,
   updateSubscriptionSchema,
+  changeSubscriptionPlanSchema,
+  renewSubscriptionSchema,
   subscriptionIdParamsSchema,
   listSubscriptionsQuerySchema
 } = require('@validations/subscription/subscription.schema');
@@ -56,6 +58,48 @@ router.get(
   '/:id',
   validate({ params: subscriptionIdParamsSchema }),
   asyncHandler(subscriptionController.getSubscription)
+);
+
+router.post(
+  '/:id/upgrade',
+  validate({ params: subscriptionIdParamsSchema, body: changeSubscriptionPlanSchema }),
+  asyncHandler(subscriptionController.upgradeSubscription)
+);
+
+router.post(
+  '/:id/downgrade',
+  validate({ params: subscriptionIdParamsSchema, body: changeSubscriptionPlanSchema }),
+  asyncHandler(subscriptionController.downgradeSubscription)
+);
+
+router.post(
+  '/:id/renew',
+  validate({ params: subscriptionIdParamsSchema, body: renewSubscriptionSchema }),
+  asyncHandler(subscriptionController.renewSubscription)
+);
+
+router.get(
+  '/:id/proration-preview',
+  validate({ params: subscriptionIdParamsSchema }),
+  asyncHandler(subscriptionController.getSubscriptionProrationPreview)
+);
+
+router.get(
+  '/:id/usage-summary',
+  validate({ params: subscriptionIdParamsSchema }),
+  asyncHandler(subscriptionController.getSubscriptionUsageSummary)
+);
+
+router.get(
+  '/:id/fit-check',
+  validate({ params: subscriptionIdParamsSchema }),
+  asyncHandler(subscriptionController.getSubscriptionFitCheck)
+);
+
+router.get(
+  '/:id/upgrade-recommendation',
+  validate({ params: subscriptionIdParamsSchema }),
+  asyncHandler(subscriptionController.getSubscriptionUpgradeRecommendation)
 );
 
 /**

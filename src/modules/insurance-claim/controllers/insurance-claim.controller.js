@@ -123,10 +123,46 @@ const deleteInsuranceClaim = asyncHandler(async (req, res) => {
   sendNoContent(res);
 });
 
+/**
+ * Submit insurance claim
+ * POST /api/v1/insurance-claims/:id/submit
+ *
+ * @param {Object} req - Express request
+ * @param {Object} res - Express response
+ */
+const submitInsuranceClaim = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user?.id;
+  const ipAddress = req.ip;
+
+  const insuranceClaim = await insuranceClaimService.submitInsuranceClaim(id, req.body, userId, ipAddress);
+
+  sendSuccess(res, 200, 'messages.insurance_claim.submit.success', insuranceClaim);
+});
+
+/**
+ * Reconcile insurance claim
+ * POST /api/v1/insurance-claims/:id/reconcile
+ *
+ * @param {Object} req - Express request
+ * @param {Object} res - Express response
+ */
+const reconcileInsuranceClaim = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user?.id;
+  const ipAddress = req.ip;
+
+  const insuranceClaim = await insuranceClaimService.reconcileInsuranceClaim(id, req.body, userId, ipAddress);
+
+  sendSuccess(res, 200, 'messages.insurance_claim.reconcile.success', insuranceClaim);
+});
+
 module.exports = {
   listInsuranceClaims,
   getInsuranceClaimById,
   createInsuranceClaim,
   updateInsuranceClaim,
-  deleteInsuranceClaim
+  deleteInsuranceClaim,
+  submitInsuranceClaim,
+  reconcileInsuranceClaim
 };

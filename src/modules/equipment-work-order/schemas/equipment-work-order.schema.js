@@ -7,6 +7,16 @@ const createEquipmentWorkOrderSchema = z.object({
 
 const updateEquipmentWorkOrderSchema = z.object({}).passthrough();
 
+const startEquipmentWorkOrderSchema = z.object({
+  notes: z.string().trim().max(10000).optional().nullable(),
+  started_at: z.string().datetime().optional().nullable()
+});
+
+const returnToServiceEquipmentWorkOrderSchema = z.object({
+  verification_evidence: z.string().trim().min(1).max(10000),
+  notes: z.string().trim().max(10000).optional().nullable()
+});
+
 const equipmentWorkOrderIdParamsSchema = z.object({
   id: uuidSchema
 });
@@ -19,6 +29,8 @@ const listEquipmentWorkOrdersQuerySchema = listQuerySchema.extend({
 module.exports = {
   createEquipmentWorkOrderSchema,
   updateEquipmentWorkOrderSchema,
+  startEquipmentWorkOrderSchema,
+  returnToServiceEquipmentWorkOrderSchema,
   equipmentWorkOrderIdParamsSchema,
   listEquipmentWorkOrdersQuerySchema
 };

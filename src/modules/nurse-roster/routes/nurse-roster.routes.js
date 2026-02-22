@@ -16,50 +16,65 @@ const {
   createNurseRosterSchema,
   updateNurseRosterSchema,
   publishNurseRosterSchema,
+  generateNurseRosterSchema,
   nurseRosterIdParamsSchema,
   listNurseRostersQuerySchema
 } = require('@validations/nurse-roster/nurse-roster.schema');
 
 router.get(
-  '/',  validateRequest({ query: listNurseRostersQuerySchema }),
+  '/',
+  validateRequest({ query: listNurseRostersQuerySchema }),
 
   authenticate(),
   nurseRosterController.listNurseRosters
 );
 
 router.get(
-  '/:id',  validateRequest({ params: nurseRosterIdParamsSchema }),
+  '/:id',
+  validateRequest({ params: nurseRosterIdParamsSchema }),
 
   authenticate(),
   nurseRosterController.getNurseRosterById
 );
 
 router.post(
-  '/',  validateRequest({ body: createNurseRosterSchema }),
+  '/',
+  validateRequest({ body: createNurseRosterSchema }),
 
   authenticate(),
   nurseRosterController.createNurseRoster
 );
 
 router.put(
-  '/:id',  validateRequest({ params: nurseRosterIdParamsSchema, body: updateNurseRosterSchema }),
+  '/:id',
+  validateRequest({ params: nurseRosterIdParamsSchema, body: updateNurseRosterSchema }),
 
   authenticate(),
   nurseRosterController.updateNurseRoster
 );
 
 router.delete(
-  '/:id',  validateRequest({ params: nurseRosterIdParamsSchema }),
+  '/:id',
+  validateRequest({ params: nurseRosterIdParamsSchema }),
 
   authenticate(),
   nurseRosterController.deleteNurseRoster
 );
 
 router.post(
-  '/:id/publish',  validateRequest({ params: nurseRosterIdParamsSchema, body: publishNurseRosterSchema }),
+  '/:id/publish',
+  validateRequest({ params: nurseRosterIdParamsSchema, body: publishNurseRosterSchema }),
 
   authenticate(),
   nurseRosterController.publishNurseRoster
+);
+
+router.post(
+  '/:id/generate',
+  validateRequest({ params: nurseRosterIdParamsSchema, body: generateNurseRosterSchema }),
+
+  authenticate(),
+  nurseRosterController.generateNurseRoster
 );
 
 module.exports = router;

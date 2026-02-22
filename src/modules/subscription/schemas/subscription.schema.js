@@ -39,6 +39,23 @@ const updateSubscriptionSchema = z.object({
   end_date: z.string().datetime().optional().nullable()
 });
 
+/**
+ * Upgrade/downgrade request schema
+ */
+const changeSubscriptionPlanSchema = z.object({
+  target_plan_id: uuidSchema,
+  effective_at: z.string().datetime().optional().nullable(),
+  reason: z.string().trim().max(10000).optional().nullable()
+});
+
+/**
+ * Renew subscription schema
+ */
+const renewSubscriptionSchema = z.object({
+  end_date: z.string().datetime().optional().nullable(),
+  reason: z.string().trim().max(10000).optional().nullable()
+});
+
 // ==================== URL Params ====================
 
 /**
@@ -66,6 +83,8 @@ const listSubscriptionsQuerySchema = listQuerySchema.extend({
 module.exports = {
   createSubscriptionSchema,
   updateSubscriptionSchema,
+  changeSubscriptionPlanSchema,
+  renewSubscriptionSchema,
   subscriptionIdParamsSchema,
   listSubscriptionsQuerySchema
 };

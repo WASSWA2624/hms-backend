@@ -121,10 +121,28 @@ const deleteMaintenanceRequest = asyncHandler(async (req, res) => {
   sendNoContent(res);
 });
 
+/**
+ * Triage maintenance request
+ * POST /api/v1/maintenance-requests/:id/triage
+ *
+ * @param {Object} req - Express request
+ * @param {Object} res - Express response
+ */
+const triageMaintenanceRequest = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user?.id;
+  const ipAddress = req.ip;
+
+  const maintenanceRequest = await maintenanceRequestService.triageMaintenanceRequest(id, req.body, userId, ipAddress);
+
+  sendSuccess(res, 200, 'messages.maintenance_request.triage.success', maintenanceRequest);
+});
+
 module.exports = {
   listMaintenanceRequests,
   getMaintenanceRequestById,
   createMaintenanceRequest,
   updateMaintenanceRequest,
-  deleteMaintenanceRequest
+  deleteMaintenanceRequest,
+  triageMaintenanceRequest
 };

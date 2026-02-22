@@ -173,11 +173,60 @@ const publishNurseRoster = async (id, notifyStaff, userId, ipAddress) => {
   }
 };
 
+const generateNurseRoster = async (id, data = {}, userId, ipAddress) => {
+  try {
+    const before = await nurseRosterRepository.findById(id);
+
+    if (!before) {
+      throw new HttpError('errors.nurse_roster.not_found', 404);
+    }
+
+    if (before.status === 'PUBLISHED') {
+      throw new HttpError('errors.nurse_roster.cannot_generate_published', 400);
+    }
+
+    const updateData = {
+      status: 'DRAFT',
+      published_at: null
+    };
+
+    if (Object.prototype.hasOwnProperty.call(data, 'period_start')) {
+      updateData.period_start = new Date(data.period_start);
+    }
+
+    if (Object.prototype.hasOwnProperty.call(data, 'period_end')) {
+      updateData.period_end = new Date(data.period_end);
+    }
+
+    if (Object.prototype.hasOwnProperty.call(data, 'constraints')) {
+      updateData.constraints = data.constraints;
+    }
+
+    const roster = await nurseRosterRepository.update(id, updateData);
+
+    createAuditLog({
+      user_id: userId,
+      action: 'GENERATE',
+      entity: 'nurse_roster',
+      entity_id: roster.id,
+      tenant_id: roster.tenant_id,
+      diff: { before, after: roster },
+      ip_address: ipAddress
+    }).catch(() => {});
+
+    return roster;
+  } catch (error) {
+    if (error instanceof HttpError) throw error;
+    throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
+  }
+};
+
 module.exports = {
   listNurseRosters,
   getNurseRosterById,
   createNurseRoster,
   updateNurseRoster,
   deleteNurseRoster,
-  publishNurseRoster
+  publishNurseRoster,
+  generateNurseRoster
 };

@@ -101,11 +101,22 @@ const publishNurseRoster = asyncHandler(async (req, res) => {
   sendSuccess(res, 200, 'messages.nurse_roster.publish.success', roster);
 });
 
+const generateNurseRoster = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user?.id;
+  const ipAddress = req.ip;
+
+  const roster = await nurseRosterService.generateNurseRoster(id, req.body, userId, ipAddress);
+
+  sendSuccess(res, 200, 'messages.nurse_roster.generate.success', roster);
+});
+
 module.exports = {
   listNurseRosters,
   getNurseRosterById,
   createNurseRoster,
   updateNurseRoster,
   deleteNurseRoster,
-  publishNurseRoster
+  publishNurseRoster,
+  generateNurseRoster
 };

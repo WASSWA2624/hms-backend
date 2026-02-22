@@ -122,6 +122,97 @@ const deleteSubscription = async (req, res) => {
   return res.status(204).send();
 };
 
+/**
+ * Upgrade subscription
+ *
+ * @param {Object} req - Express request
+ * @param {Object} res - Express response
+ * @returns {Promise<void>}
+ */
+const upgradeSubscription = async (req, res) => {
+  const { id } = req.params;
+  const subscription = await subscriptionService.upgradeSubscription(id, req.body, req.user, req.ip);
+  return sendSuccess(res, 200, 'messages.subscription.upgrade.success', subscription);
+};
+
+/**
+ * Downgrade subscription
+ *
+ * @param {Object} req - Express request
+ * @param {Object} res - Express response
+ * @returns {Promise<void>}
+ */
+const downgradeSubscription = async (req, res) => {
+  const { id } = req.params;
+  const subscription = await subscriptionService.downgradeSubscription(id, req.body, req.user, req.ip);
+  return sendSuccess(res, 200, 'messages.subscription.downgrade.success', subscription);
+};
+
+/**
+ * Renew subscription
+ *
+ * @param {Object} req - Express request
+ * @param {Object} res - Express response
+ * @returns {Promise<void>}
+ */
+const renewSubscription = async (req, res) => {
+  const { id } = req.params;
+  const subscription = await subscriptionService.renewSubscription(id, req.body, req.user, req.ip);
+  return sendSuccess(res, 200, 'messages.subscription.renew.success', subscription);
+};
+
+/**
+ * Get proration preview
+ *
+ * @param {Object} req - Express request
+ * @param {Object} res - Express response
+ * @returns {Promise<void>}
+ */
+const getSubscriptionProrationPreview = async (req, res) => {
+  const { id } = req.params;
+  const preview = await subscriptionService.getSubscriptionProrationPreview(id, req.query.target_plan_id);
+  return sendSuccess(res, 200, 'messages.subscription.proration_preview.success', preview);
+};
+
+/**
+ * Get usage summary
+ *
+ * @param {Object} req - Express request
+ * @param {Object} res - Express response
+ * @returns {Promise<void>}
+ */
+const getSubscriptionUsageSummary = async (req, res) => {
+  const { id } = req.params;
+  const summary = await subscriptionService.getSubscriptionUsageSummary(id);
+  return sendSuccess(res, 200, 'messages.subscription.usage_summary.success', summary);
+};
+
+/**
+ * Get fit check
+ *
+ * @param {Object} req - Express request
+ * @param {Object} res - Express response
+ * @returns {Promise<void>}
+ */
+const getSubscriptionFitCheck = async (req, res) => {
+  const { id } = req.params;
+  const fitCheck = await subscriptionService.getSubscriptionFitCheck(id);
+  return sendSuccess(res, 200, 'messages.subscription.fit_check.success', fitCheck);
+};
+
+/**
+ * Get upgrade recommendation
+ *
+ * @param {Object} req - Express request
+ * @param {Object} res - Express response
+ * @returns {Promise<void>}
+ */
+const getSubscriptionUpgradeRecommendation = async (req, res) => {
+  const { id } = req.params;
+  const recommendation = await subscriptionService.getSubscriptionUpgradeRecommendation(id);
+  return sendSuccess(res, 200, 'messages.subscription.upgrade_recommendation.success', recommendation);
+};
+
 module.exports = {
   getSubscription,
   listSubscriptions,
@@ -129,5 +220,12 @@ module.exports = {
   updateSubscription,
   cancelSubscription,
   reactivateSubscription,
-  deleteSubscription
+  deleteSubscription,
+  upgradeSubscription,
+  downgradeSubscription,
+  renewSubscription,
+  getSubscriptionProrationPreview,
+  getSubscriptionUsageSummary,
+  getSubscriptionFitCheck,
+  getSubscriptionUpgradeRecommendation
 };

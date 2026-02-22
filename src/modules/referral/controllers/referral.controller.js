@@ -121,10 +121,28 @@ const deleteReferral = asyncHandler(async (req, res) => {
   sendNoContent(res);
 });
 
+/**
+ * Redeem referral
+ * POST /api/v1/referrals/:id/redeem
+ *
+ * @param {Object} req - Express request
+ * @param {Object} res - Express response
+ */
+const redeemReferral = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user?.id;
+  const ipAddress = req.ip;
+
+  const referral = await referralService.redeemReferral(id, req.body, userId, ipAddress);
+
+  sendSuccess(res, 200, 'messages.referral.redeem.success', referral);
+});
+
 module.exports = {
   listReferrals,
   getReferralById,
   createReferral,
   updateReferral,
-  deleteReferral
+  deleteReferral,
+  redeemReferral
 };

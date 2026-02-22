@@ -25,7 +25,11 @@ const findById = async (id) => {
       },
       include: {
         module: true,
-        subscription: true
+        subscription: {
+          include: {
+            plan: true
+          }
+        }
       }
     });
   } catch (error) {
@@ -57,7 +61,11 @@ const findMany = async (filters = {}, skip = 0, take = 20, orderBy = { created_a
       orderBy,
       include: {
         module: true,
-        subscription: true
+        subscription: {
+          include: {
+            plan: true
+          }
+        }
       }
     });
   } catch (error) {
@@ -96,7 +104,11 @@ const create = async (data) => {
       data,
       include: {
         module: true,
-        subscription: true
+        subscription: {
+          include: {
+            plan: true
+          }
+        }
       }
     });
   } catch (error) {
@@ -127,7 +139,11 @@ const update = async (id, data) => {
       data,
       include: {
         module: true,
-        subscription: true
+        subscription: {
+          include: {
+            plan: true
+          }
+        }
       }
     });
   } catch (error) {

@@ -118,10 +118,51 @@ const deleteLabResult = async (id, userId, ipAddress) => {
   }
 };
 
+const releaseLabResult = async (id, data = {}, userId, ipAddress) => {
+  try {
+    const before = await labResultRepository.findById(id);
+    if (!before) {
+      throw new HttpError('errors.lab_result.not_found', 404);
+    }
+
+    if (before.status !== 'PENDING') {
+      throw new HttpError('errors.lab_result.already_released', 400);
+    }
+
+    const updateData = {
+      status: data.status || 'NORMAL',
+      reported_at: data.reported_at ? new Date(data.reported_at) : new Date()
+    };
+
+    const labResult = await labResultRepository.update(id, updateData);
+
+    createAuditLog({
+      user_id: userId,
+      action: 'RELEASE',
+      entity: 'lab_result',
+      entity_id: labResult.id,
+      diff: {
+        before,
+        after: labResult,
+        metadata: {
+          notes: data.notes || null
+        }
+      },
+      ip_address: ipAddress
+    }).catch(() => {});
+
+    return labResult;
+  } catch (error) {
+    if (error instanceof HttpError) throw error;
+    throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
+  }
+};
+
 module.exports = {
   listLabResults,
   getLabResultById,
   createLabResult,
   updateLabResult,
-  deleteLabResult
+  deleteLabResult,
+  releaseLabResult
 };

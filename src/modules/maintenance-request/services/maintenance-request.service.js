@@ -205,10 +205,78 @@ const deleteMaintenanceRequest = async (id, userId, ipAddress) => {
   }
 };
 
+/**
+ * Triage maintenance request
+ *
+ * @param {string} id - Maintenance request ID
+ * @param {Object} data - Triage payload
+ * @param {string} userId - User ID for audit
+ * @param {string} ipAddress - User IP for audit
+ * @returns {Promise<Object>} Updated maintenance request
+ */
+const triageMaintenanceRequest = async (id, data = {}, userId, ipAddress) => {
+  try {
+    const before = await maintenanceRequestRepository.findById(id);
+
+    if (!before) {
+      throw new HttpError('errors.maintenance_request.not_found', 404);
+    }
+
+    if (before.status === 'COMPLETED' || before.status === 'CANCELLED') {
+      throw new HttpError('errors.maintenance_request.cannot_triage_terminal_status', 400);
+    }
+
+    const updateData = {
+      status: data.status || 'IN_PROGRESS'
+    };
+
+    const summaryParts = [];
+    if (data.assigned_engineer) {
+      summaryParts.push(`assigned_engineer=${data.assigned_engineer}`);
+    }
+    if (data.sla_hours) {
+      summaryParts.push(`sla_hours=${data.sla_hours}`);
+    }
+    if (data.triage_summary) {
+      summaryParts.push(`triage_summary=${data.triage_summary}`);
+    }
+
+    if (summaryParts.length > 0) {
+      const existingDescription = before.description ? `${before.description}\n\n` : '';
+      updateData.description = `${existingDescription}[TRIAGE] ${summaryParts.join('; ')}`.trim();
+    }
+
+    const maintenanceRequest = await maintenanceRequestRepository.update(id, updateData);
+
+    createAuditLog({
+      user_id: userId,
+      action: 'TRIAGE',
+      entity: 'maintenance_request',
+      entity_id: maintenanceRequest.id,
+      diff: {
+        before,
+        after: maintenanceRequest,
+        metadata: {
+          assigned_engineer: data.assigned_engineer || null,
+          sla_hours: data.sla_hours || null,
+          triage_summary: data.triage_summary || null
+        }
+      },
+      ip_address: ipAddress
+    }).catch(() => {});
+
+    return maintenanceRequest;
+  } catch (error) {
+    if (error instanceof HttpError) throw error;
+    throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
+  }
+};
+
 module.exports = {
   listMaintenanceRequests,
   getMaintenanceRequestById,
   createMaintenanceRequest,
   updateMaintenanceRequest,
-  deleteMaintenanceRequest
+  deleteMaintenanceRequest,
+  triageMaintenanceRequest
 };

@@ -59,6 +59,40 @@ router.get(
 );
 
 /**
+ * @description Get subscription plan entitlements
+ * @method GET
+ * @route /api/v1/subscription-plans/:id/entitlements
+ * @authentication Required (JWT)
+ * @permissions TBD
+ * @urlParams id (UUID)
+ * @queryParams None
+ * @bodyParams None
+ * @returns {Object} Plan entitlements
+ */
+router.get(
+  '/:id/entitlements',
+  validate({ params: subscriptionPlanIdParamsSchema }),
+  asyncHandler(subscriptionPlanController.getSubscriptionPlanEntitlements)
+);
+
+/**
+ * @description Get subscription plan add-on eligibility
+ * @method GET
+ * @route /api/v1/subscription-plans/:id/add-on-eligibility
+ * @authentication Required (JWT)
+ * @permissions TBD
+ * @urlParams id (UUID)
+ * @queryParams None
+ * @bodyParams None
+ * @returns {Object} Add-on eligibility
+ */
+router.get(
+  '/:id/add-on-eligibility',
+  validate({ params: subscriptionPlanIdParamsSchema }),
+  asyncHandler(subscriptionPlanController.getSubscriptionPlanAddOnEligibility)
+);
+
+/**
  * @description Create new subscription plan
  * @method POST
  * @route /api/v1/subscription-plans

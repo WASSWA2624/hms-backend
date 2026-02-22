@@ -49,6 +49,17 @@ const updateMaintenanceRequestSchema = z.object({
   resolved_at: z.string().datetime().optional().nullable()
 });
 
+/**
+ * Triage maintenance request body validation
+ * Used for POST /maintenance-requests/:id/triage endpoint
+ */
+const triageMaintenanceRequestSchema = z.object({
+  status: z.enum(['OPEN', 'IN_PROGRESS']).optional(),
+  triage_summary: z.string().trim().max(10000).optional().nullable(),
+  assigned_engineer: z.string().trim().max(120).optional().nullable(),
+  sla_hours: z.number().int().positive().max(10000).optional().nullable()
+});
+
 // ==================== URL Params ====================
 
 /**
@@ -76,6 +87,7 @@ const listMaintenanceRequestsQuerySchema = listQuerySchema.extend({
 module.exports = {
   createMaintenanceRequestSchema,
   updateMaintenanceRequestSchema,
+  triageMaintenanceRequestSchema,
   maintenanceRequestIdParamsSchema,
   listMaintenanceRequestsQuerySchema,
   maintenanceStatusEnum

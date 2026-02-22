@@ -38,6 +38,15 @@ const updateRadiologyResultSchema = z.object({
   reported_at: z.string().datetime().optional().nullable()
 });
 
+/**
+ * Sign off radiology result body validation
+ * Used for POST /radiology-results/:id/sign-off endpoint
+ */
+const signOffRadiologyResultSchema = z.object({
+  reported_at: z.string().datetime().optional().nullable(),
+  notes: z.string().trim().max(10000).optional().nullable()
+});
+
 // ==================== URL Params ====================
 
 /**
@@ -64,6 +73,7 @@ const listRadiologyResultsQuerySchema = listQuerySchema.extend({
 module.exports = {
   createRadiologyResultSchema,
   updateRadiologyResultSchema,
+  signOffRadiologyResultSchema,
   radiologyResultIdParamsSchema,
   listRadiologyResultsQuerySchema
 };

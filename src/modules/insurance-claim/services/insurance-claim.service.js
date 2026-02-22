@@ -190,10 +190,107 @@ const deleteInsuranceClaim = async (id, userId, ipAddress) => {
   }
 };
 
+/**
+ * Submit insurance claim
+ *
+ * @param {string} id - Insurance claim ID
+ * @param {Object} data - Submission payload
+ * @param {string} userId - User ID for audit
+ * @param {string} ipAddress - User IP for audit
+ * @returns {Promise<Object>} Updated insurance claim
+ */
+const submitInsuranceClaim = async (id, data = {}, userId, ipAddress) => {
+  try {
+    const before = await insuranceClaimRepository.findById(id);
+
+    if (!before) {
+      throw new HttpError('errors.insurance_claim.not_found', 404);
+    }
+
+    if (before.status === 'CANCELLED') {
+      throw new HttpError('errors.insurance_claim.cannot_submit_cancelled', 400);
+    }
+
+    const insuranceClaim = await insuranceClaimRepository.update(id, {
+      status: 'SUBMITTED',
+      submitted_at: data.submitted_at ? new Date(data.submitted_at) : new Date()
+    });
+
+    createAuditLog({
+      user_id: userId,
+      action: 'SUBMIT',
+      entity: 'insurance_claim',
+      entity_id: insuranceClaim.id,
+      diff: {
+        before,
+        after: insuranceClaim,
+        metadata: {
+          notes: data.notes || null
+        }
+      },
+      ip_address: ipAddress
+    }).catch(() => {});
+
+    return insuranceClaim;
+  } catch (error) {
+    if (error instanceof HttpError) throw error;
+    throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
+  }
+};
+
+/**
+ * Reconcile insurance claim
+ *
+ * @param {string} id - Insurance claim ID
+ * @param {Object} data - Reconciliation payload
+ * @param {string} userId - User ID for audit
+ * @param {string} ipAddress - User IP for audit
+ * @returns {Promise<Object>} Updated insurance claim
+ */
+const reconcileInsuranceClaim = async (id, data = {}, userId, ipAddress) => {
+  try {
+    const before = await insuranceClaimRepository.findById(id);
+
+    if (!before) {
+      throw new HttpError('errors.insurance_claim.not_found', 404);
+    }
+
+    if (before.status === 'CANCELLED') {
+      throw new HttpError('errors.insurance_claim.cannot_reconcile_cancelled', 400);
+    }
+
+    const insuranceClaim = await insuranceClaimRepository.update(id, {
+      status: data.status || 'PAID'
+    });
+
+    createAuditLog({
+      user_id: userId,
+      action: 'RECONCILE',
+      entity: 'insurance_claim',
+      entity_id: insuranceClaim.id,
+      diff: {
+        before,
+        after: insuranceClaim,
+        metadata: {
+          notes: data.notes || null
+        }
+      },
+      ip_address: ipAddress
+    }).catch(() => {});
+
+    return insuranceClaim;
+  } catch (error) {
+    if (error instanceof HttpError) throw error;
+    throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
+  }
+};
+
 module.exports = {
   listInsuranceClaims,
   getInsuranceClaimById,
   createInsuranceClaim,
   updateInsuranceClaim,
-  deleteInsuranceClaim
+  deleteInsuranceClaim,
+  submitInsuranceClaim,
+  reconcileInsuranceClaim
 };

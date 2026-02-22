@@ -38,6 +38,24 @@ const updateInsuranceClaimSchema = z.object({
   submitted_at: z.string().datetime().optional()
 });
 
+/**
+ * Submit insurance claim body validation
+ * Used for POST /insurance-claims/:id/submit endpoint
+ */
+const submitInsuranceClaimSchema = z.object({
+  submitted_at: z.string().datetime().optional().nullable(),
+  notes: z.string().trim().max(10000).optional().nullable()
+});
+
+/**
+ * Reconcile insurance claim body validation
+ * Used for POST /insurance-claims/:id/reconcile endpoint
+ */
+const reconcileInsuranceClaimSchema = z.object({
+  status: z.enum(['APPROVED', 'REJECTED', 'PAID']).optional(),
+  notes: z.string().trim().max(10000).optional().nullable()
+});
+
 // ==================== URL Params ====================
 
 /**
@@ -66,6 +84,8 @@ const listInsuranceClaimsQuerySchema = listQuerySchema.extend({
 module.exports = {
   createInsuranceClaimSchema,
   updateInsuranceClaimSchema,
+  submitInsuranceClaimSchema,
+  reconcileInsuranceClaimSchema,
   insuranceClaimIdParamsSchema,
   listInsuranceClaimsQuerySchema
 };

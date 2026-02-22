@@ -96,10 +96,38 @@ const deleteSubscriptionPlan = async (req, res) => {
   return res.status(204).send();
 };
 
+/**
+ * Get plan entitlements
+ *
+ * @param {Object} req - Express request
+ * @param {Object} res - Express response
+ * @returns {Promise<void>}
+ */
+const getSubscriptionPlanEntitlements = async (req, res) => {
+  const { id } = req.params;
+  const entitlements = await subscriptionPlanService.getPlanEntitlements(id);
+  return sendSuccess(res, 200, 'messages.subscription_plan.entitlements.success', entitlements);
+};
+
+/**
+ * Get plan add-on eligibility
+ *
+ * @param {Object} req - Express request
+ * @param {Object} res - Express response
+ * @returns {Promise<void>}
+ */
+const getSubscriptionPlanAddOnEligibility = async (req, res) => {
+  const { id } = req.params;
+  const eligibility = await subscriptionPlanService.getPlanAddOnEligibility(id);
+  return sendSuccess(res, 200, 'messages.subscription_plan.add_on_eligibility.success', eligibility);
+};
+
 module.exports = {
   getSubscriptionPlan,
   listSubscriptionPlans,
   createSubscriptionPlan,
   updateSubscriptionPlan,
-  deleteSubscriptionPlan
+  deleteSubscriptionPlan,
+  getSubscriptionPlanEntitlements,
+  getSubscriptionPlanAddOnEligibility
 };

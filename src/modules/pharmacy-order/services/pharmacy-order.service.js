@@ -190,10 +190,62 @@ const deletePharmacyOrder = async (id, userId, ipAddress) => {
   }
 };
 
+/**
+ * Dispense pharmacy order
+ *
+ * @param {string} id - Pharmacy order ID
+ * @param {Object} data - Dispense payload
+ * @param {string} userId - User ID for audit
+ * @param {string} ipAddress - User IP for audit
+ * @returns {Promise<Object>} Updated pharmacy order
+ */
+const dispensePharmacyOrder = async (id, data = {}, userId, ipAddress) => {
+  try {
+    const before = await pharmacyOrderRepository.findById(id);
+
+    if (!before) {
+      throw new HttpError('errors.pharmacy_order.not_found', 404);
+    }
+
+    if (before.status === 'CANCELLED') {
+      throw new HttpError('errors.pharmacy_order.cannot_dispense_cancelled', 400);
+    }
+
+    if (before.status === 'DISPENSED') {
+      throw new HttpError('errors.pharmacy_order.already_dispensed', 400);
+    }
+
+    const pharmacyOrder = await pharmacyOrderRepository.update(id, {
+      status: data.status || 'DISPENSED'
+    });
+
+    createAuditLog({
+      user_id: userId,
+      action: 'DISPENSE',
+      entity: 'pharmacy_order',
+      entity_id: pharmacyOrder.id,
+      diff: {
+        before,
+        after: pharmacyOrder,
+        metadata: {
+          notes: data.notes || null
+        }
+      },
+      ip_address: ipAddress
+    }).catch(() => {});
+
+    return pharmacyOrder;
+  } catch (error) {
+    if (error instanceof HttpError) throw error;
+    throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
+  }
+};
+
 module.exports = {
   listPharmacyOrders,
   getPharmacyOrderById,
   createPharmacyOrder,
   updatePharmacyOrder,
-  deletePharmacyOrder
+  deletePharmacyOrder,
+  dispensePharmacyOrder
 };

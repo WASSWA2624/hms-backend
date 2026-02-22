@@ -184,10 +184,62 @@ const deleteReferral = async (id, userId, ipAddress) => {
   }
 };
 
+/**
+ * Redeem referral
+ *
+ * @param {string} id - Referral ID
+ * @param {Object} data - Redemption payload
+ * @param {string} userId - User ID for audit
+ * @param {string} ipAddress - User IP for audit
+ * @returns {Promise<Object>} Updated referral
+ */
+const redeemReferral = async (id, data = {}, userId, ipAddress) => {
+  try {
+    const before = await referralRepository.findById(id);
+
+    if (!before) {
+      throw new HttpError('errors.referral.not_found', 404);
+    }
+
+    if (before.status === 'CANCELLED') {
+      throw new HttpError('errors.referral.cannot_redeem_cancelled', 400);
+    }
+
+    if (before.status === 'COMPLETED') {
+      throw new HttpError('errors.referral.already_redeemed', 400);
+    }
+
+    const referral = await referralRepository.update(id, {
+      status: 'COMPLETED'
+    });
+
+    createAuditLog({
+      user_id: userId,
+      action: 'REDEEM',
+      entity: 'referral',
+      entity_id: referral.id,
+      diff: {
+        before,
+        after: referral,
+        metadata: {
+          notes: data.notes || null
+        }
+      },
+      ip_address: ipAddress
+    }).catch(() => {});
+
+    return referral;
+  } catch (error) {
+    if (error instanceof HttpError) throw error;
+    throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
+  }
+};
+
 module.exports = {
   listReferrals,
   getReferralById,
   createReferral,
   updateReferral,
-  deleteReferral
+  deleteReferral,
+  redeemReferral
 };

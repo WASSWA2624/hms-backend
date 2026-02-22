@@ -63,6 +63,22 @@ const publishNurseRosterSchema = z.object({
   notify_staff: z.boolean().default(true)
 });
 
+const generateNurseRosterSchema = z.object({
+  period_start: isoDateSchema.optional(),
+  period_end: isoDateSchema.optional(),
+  constraints: constraintsSchema
+}).refine((data) => {
+  if (data.period_start && data.period_end) {
+    const start = new Date(data.period_start);
+    const end = new Date(data.period_end);
+    return end > start;
+  }
+  return true;
+}, {
+  message: 'period_end must be after period_start',
+  path: ['period_end']
+});
+
 const nurseRosterIdParamsSchema = z.object({
   id: uuidSchema
 });
@@ -80,6 +96,7 @@ module.exports = {
   createNurseRosterSchema,
   updateNurseRosterSchema,
   publishNurseRosterSchema,
+  generateNurseRosterSchema,
   nurseRosterIdParamsSchema,
   listNurseRostersQuerySchema
 };

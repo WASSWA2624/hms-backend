@@ -38,6 +38,15 @@ const updatePharmacyOrderSchema = z.object({
   ordered_at: z.string().datetime().optional()
 });
 
+/**
+ * Dispense pharmacy order body validation
+ * Used for POST /pharmacy-orders/:id/dispense endpoint
+ */
+const dispensePharmacyOrderSchema = z.object({
+  status: z.enum(['DISPENSED', 'PARTIALLY_DISPENSED']).optional(),
+  notes: z.string().trim().max(10000).optional().nullable()
+});
+
 // ==================== URL Params ====================
 
 /**
@@ -66,6 +75,7 @@ const listPharmacyOrdersQuerySchema = listQuerySchema.extend({
 module.exports = {
   createPharmacyOrderSchema,
   updatePharmacyOrderSchema,
+  dispensePharmacyOrderSchema,
   pharmacyOrderIdParamsSchema,
   listPharmacyOrdersQuerySchema
 };

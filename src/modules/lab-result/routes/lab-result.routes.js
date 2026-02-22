@@ -10,6 +10,7 @@ const { authenticate } = require('@middlewares/auth.middleware');
 const {
   createLabResultSchema,
   updateLabResultSchema,
+  releaseLabResultSchema,
   labResultIdParamsSchema,
   listLabResultsQuerySchema
 } = require('@validations/lab-result/lab-result.schema');
@@ -18,7 +19,8 @@ const {
  * @route GET /api/v1/lab-results/
  */
 router.get(
-  '/',  validateRequest({ query: listLabResultsQuerySchema }),
+  '/',
+  validateRequest({ query: listLabResultsQuerySchema }),
 
   authenticate(),
   labResultController.listLabResults
@@ -28,7 +30,8 @@ router.get(
  * @route GET /api/v1/lab-results/:id
  */
 router.get(
-  '/:id',  validateRequest({ params: labResultIdParamsSchema }),
+  '/:id',
+  validateRequest({ params: labResultIdParamsSchema }),
 
   authenticate(),
   labResultController.getLabResultById
@@ -38,7 +41,8 @@ router.get(
  * @route POST /api/v1/lab-results/
  */
 router.post(
-  '/',  validateRequest({ body: createLabResultSchema }),
+  '/',
+  validateRequest({ body: createLabResultSchema }),
 
   authenticate(),
   labResultController.createLabResult
@@ -48,7 +52,8 @@ router.post(
  * @route PUT /api/v1/lab-results/:id
  */
 router.put(
-  '/:id',  validateRequest({ params: labResultIdParamsSchema, body: updateLabResultSchema }),
+  '/:id',
+  validateRequest({ params: labResultIdParamsSchema, body: updateLabResultSchema }),
 
   authenticate(),
   labResultController.updateLabResult
@@ -58,10 +63,22 @@ router.put(
  * @route DELETE /api/v1/lab-results/:id
  */
 router.delete(
-  '/:id',  validateRequest({ params: labResultIdParamsSchema }),
+  '/:id',
+  validateRequest({ params: labResultIdParamsSchema }),
 
   authenticate(),
   labResultController.deleteLabResult
+);
+
+/**
+ * @route POST /api/v1/lab-results/:id/release
+ */
+router.post(
+  '/:id/release',
+  validateRequest({ params: labResultIdParamsSchema, body: releaseLabResultSchema }),
+
+  authenticate(),
+  labResultController.releaseLabResult
 );
 
 module.exports = router;

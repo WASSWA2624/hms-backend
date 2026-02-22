@@ -123,10 +123,28 @@ const deletePharmacyOrder = asyncHandler(async (req, res) => {
   sendNoContent(res);
 });
 
+/**
+ * Dispense pharmacy order
+ * POST /api/v1/pharmacy-orders/:id/dispense
+ *
+ * @param {Object} req - Express request
+ * @param {Object} res - Express response
+ */
+const dispensePharmacyOrder = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user?.id;
+  const ipAddress = req.ip;
+
+  const pharmacyOrder = await pharmacyOrderService.dispensePharmacyOrder(id, req.body, userId, ipAddress);
+
+  sendSuccess(res, 200, 'messages.pharmacy_order.dispense.success', pharmacyOrder);
+});
+
 module.exports = {
   listPharmacyOrders,
   getPharmacyOrderById,
   createPharmacyOrder,
   updatePharmacyOrder,
-  deletePharmacyOrder
+  deletePharmacyOrder,
+  dispensePharmacyOrder
 };

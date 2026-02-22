@@ -15,6 +15,7 @@ const { authenticate } = require('@middlewares/auth.middleware');
 const {
   createReferralSchema,
   updateReferralSchema,
+  redeemReferralSchema,
   referralIdParamsSchema,
   listReferralsQuerySchema
 } = require('@validations/referral/referral.schema');
@@ -39,7 +40,8 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',  validateRequest({ query: listReferralsQuerySchema }),
+  '/',
+  validateRequest({ query: listReferralsQuerySchema }),
 
   authenticate(),
   referralController.listReferrals
@@ -59,7 +61,8 @@ router.get(
  * @throws 404 Referral not found
  */
 router.get(
-  '/:id',  validateRequest({ params: referralIdParamsSchema }),
+  '/:id',
+  validateRequest({ params: referralIdParamsSchema }),
 
   authenticate(),
   referralController.getReferralById
@@ -84,7 +87,8 @@ router.get(
  * @throws 400 Foreign key constraint violation
  */
 router.post(
-  '/',  validateRequest({ body: createReferralSchema }),
+  '/',
+  validateRequest({ body: createReferralSchema }),
 
   authenticate(),
   referralController.createReferral
@@ -108,7 +112,8 @@ router.post(
  * @throws 404 Referral not found
  */
 router.put(
-  '/:id',  validateRequest({ params: referralIdParamsSchema, body: updateReferralSchema }),
+  '/:id',
+  validateRequest({ params: referralIdParamsSchema, body: updateReferralSchema }),
 
   authenticate(),
   referralController.updateReferral
@@ -128,10 +133,31 @@ router.put(
  * @throws 404 Referral not found
  */
 router.delete(
-  '/:id',  validateRequest({ params: referralIdParamsSchema }),
+  '/:id',
+  validateRequest({ params: referralIdParamsSchema }),
 
   authenticate(),
   referralController.deleteReferral
+);
+
+/**
+ * @description Redeem referral
+ * @method POST
+ * @route /api/v1/referrals/:id/redeem
+ * @authentication Required (JWT)
+ * @permissions Authenticated users
+ * @urlParams {string} id - Referral ID (UUID)
+ * @bodyParams {string} [notes] - Redemption notes
+ * @returns {Object} Updated referral
+ * @throws 401 Unauthorized
+ * @throws 404 Referral not found
+ */
+router.post(
+  '/:id/redeem',
+  validateRequest({ params: referralIdParamsSchema, body: redeemReferralSchema }),
+
+  authenticate(),
+  referralController.redeemReferral
 );
 
 module.exports = router;
