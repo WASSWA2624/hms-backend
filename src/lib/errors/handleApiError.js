@@ -195,7 +195,7 @@ const resolveMessage = (message, locale, statusCode) => {
 
 const resolveErrors = (errors, locale) => {
   if (!Array.isArray(errors)) {
-    return undefined;
+    return [];
   }
   const resolved = errors.map((error) => {
     if (!error || typeof error !== 'object') {
@@ -206,7 +206,7 @@ const resolveErrors = (errors, locale) => {
       : error.message;
     return { ...error, message: resolvedMessage };
   });
-  return resolved.length > 0 ? resolved : undefined;
+  return resolved;
 };
 
 const handleApiError = (err, req, res, next) => {

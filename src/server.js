@@ -156,8 +156,18 @@ const startServer = () => {
     }
     
     // Graceful shutdown handling
-    const gracefulShutdown = (signal) => {
+    let isShuttingDown = false;
+    const gracefulShutdown = (signal, reason = null) => {
+      if (isShuttingDown) {
+        logger.warn('Shutdown already in progress', { signal });
+        return;
+      }
+      isShuttingDown = true;
+
       logger.info(`Received ${signal}, shutting down gracefully...`);
+      if (reason) {
+        logger.error(`Shutdown reason: ${signal}`, reason);
+      }
 
       // Stop accepting new connections
       server.close(async () => {
@@ -190,7 +200,7 @@ const startServer = () => {
           });
         }
 
-        process.exit(0);
+        process.exit(signal === 'SIGTERM' || signal === 'SIGINT' ? 0 : 1);
       });
 
       // Force close after 30 seconds
@@ -215,14 +225,20 @@ const startServer = () => {
       });
     }
     
-    // Handle uncaught exceptions (log only; keep server running)
+    // Handle uncaught exceptions via graceful shutdown.
     process.on('uncaughtException', (err) => {
-      logger.error('Uncaught exception', { error: err.message, stack: err.stack });
+      gracefulShutdown('UNCAUGHT_EXCEPTION', {
+        error: err?.message || 'Unknown uncaught exception',
+        stack: err?.stack
+      });
     });
     
-    // Handle unhandled promise rejections (log only; keep server running)
+    // Handle unhandled promise rejections via graceful shutdown.
     process.on('unhandledRejection', (reason, promise) => {
-      logger.error('Unhandled promise rejection', { reason, promise });
+      gracefulShutdown('UNHANDLED_REJECTION', {
+        reason,
+        promise
+      });
     });
     
     return server;

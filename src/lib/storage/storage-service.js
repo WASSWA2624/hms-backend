@@ -34,36 +34,83 @@ const sanitizeFilename = (filename) => {
   return sanitized;
 };
 
-/**
- * Create a base StorageService interface with required methods.
- *
- * @returns {Object} Storage service base interface
- */
-const createStorageServiceBase = () => {
-  return {
-    upload: async () => {
-      throw new Error('upload() method must be implemented by storage provider');
-    },
-    delete: async () => {
-      throw new Error('delete() method must be implemented by storage provider');
-    },
-    getUrl: async () => {
-      throw new Error('getUrl() method must be implemented by storage provider');
-    },
-    exists: async () => {
-      throw new Error('exists() method must be implemented by storage provider');
-    },
-    getMetadata: async () => {
-      throw new Error('getMetadata() method must be implemented by storage provider');
-    },
-    download: async () => {
-      throw new Error('download() method must be implemented by storage provider');
-    },
-    sanitizeFilename
-  };
-};
+class StorageService {
+  /**
+   * Upload file to configured storage provider.
+   *
+   * @returns {Promise<Object>} Upload result metadata
+   * @throws {Error} Always; must be implemented by provider
+   */
+  async upload() {
+    throw new Error('upload() method must be implemented by storage provider');
+  }
+
+  /**
+   * Delete file from storage provider.
+   *
+   * @returns {Promise<boolean>} True if deleted
+   * @throws {Error} Always; must be implemented by provider
+   */
+  async delete() {
+    throw new Error('delete() method must be implemented by storage provider');
+  }
+
+  /**
+   * Resolve addressable URL/path for stored file.
+   *
+   * @returns {Promise<string>} URL or relative path
+   * @throws {Error} Always; must be implemented by provider
+   */
+  async getUrl() {
+    throw new Error('getUrl() method must be implemented by storage provider');
+  }
+
+  /**
+   * Check whether a stored file exists.
+   *
+   * @returns {Promise<boolean>} Existence flag
+   * @throws {Error} Always; must be implemented by provider
+   */
+  async exists() {
+    throw new Error('exists() method must be implemented by storage provider');
+  }
+
+  /**
+   * Get file metadata from storage provider.
+   *
+   * @returns {Promise<Object>} Metadata
+   * @throws {Error} Always; must be implemented by provider
+   */
+  async getMetadata() {
+    throw new Error('getMetadata() method must be implemented by storage provider');
+  }
+
+  /**
+   * Download file bytes from storage provider.
+   *
+   * @returns {Promise<Buffer>} File payload
+   * @throws {Error} Always; must be implemented by provider
+   */
+  async download() {
+    throw new Error('download() method must be implemented by storage provider');
+  }
+
+  /**
+   * Utility wrapper exposed on provider instances for path sanitization.
+   *
+   * @param {string} filename - Original filename
+   * @returns {string} Sanitized filename
+   */
+  sanitizeFilename(filename) {
+    return sanitizeFilename(filename);
+  }
+}
+
+// Backward-compatible factory for existing call sites/tests.
+const createStorageServiceBase = () => new StorageService();
 
 module.exports = {
+  StorageService,
   createStorageServiceBase,
   sanitizeFilename
 };

@@ -14,6 +14,7 @@
 const { verifyToken } = require('@lib/jwt');
 const { HttpError } = require('@lib/errors');
 const { normalizeRoleName } = require('@config/roles');
+const { ROLE_PERMISSIONS } = require('@config/permissions');
 
 /**
  * Normalize decoded JWT payload into a consistent request user object.
@@ -57,6 +58,26 @@ const normalizeUserContext = (decoded = {}) => {
     roles,
     permissions
   };
+};
+
+/**
+ * Resolve effective permissions from request user context.
+ * Prefers explicit token permissions, then falls back to role-permission mapping.
+ *
+ * @param {Object} user - Normalized user context
+ * @returns {string[]} Effective permission list
+ */
+const getUserPermissions = (user = {}) => {
+  const explicitPermissions = Array.isArray(user.permissions)
+    ? user.permissions.map((permission) => String(permission || '').trim()).filter(Boolean)
+    : [];
+
+  const rolePermissions = (Array.isArray(user.roles) ? user.roles : [user.role])
+    .map((role) => normalizeRoleName(role) || String(role || '').trim().toUpperCase())
+    .filter(Boolean)
+    .flatMap((normalizedRole) => ROLE_PERMISSIONS[normalizedRole] || []);
+
+  return Array.from(new Set([...explicitPermissions, ...rolePermissions]));
 };
 
 /**
@@ -147,7 +168,7 @@ const authorize = (requiredRole, type = 'role') => {
         }
       } else if (type === 'permission') {
         // Permission-based check
-        const userPermissions = req.user.permissions || [];
+        const userPermissions = getUserPermissions(req.user);
         const permissionsArray = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
         
         const hasRequiredPermission = permissionsArray.some(permission => 

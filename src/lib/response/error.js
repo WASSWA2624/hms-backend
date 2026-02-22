@@ -22,7 +22,7 @@ const resolveMessage = (message, locale) => {
 
 const resolveErrors = (errors, locale) => {
   if (!Array.isArray(errors)) {
-    return undefined;
+    return [];
   }
   const resolved = errors.map((error) => {
     if (!error || typeof error !== 'object') {
@@ -31,7 +31,7 @@ const resolveErrors = (errors, locale) => {
     const message = resolveMessage(error.message, locale);
     return { ...error, message };
   });
-  return resolved.length > 0 ? resolved : undefined;
+  return resolved;
 };
 
 const sendError = (res, status, message, errors = []) => {

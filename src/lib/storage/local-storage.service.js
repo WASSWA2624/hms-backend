@@ -7,33 +7,35 @@
 const fs = require('fs').promises;
 const path = require('path');
 const { createWriteStream } = require('fs');
-const { createStorageServiceBase, sanitizeFilename } = require('@lib/storage/storage-service');
+const { StorageService, sanitizeFilename } = require('@lib/storage/storage-service');
 const { encryptBuffer, decryptBuffer } = require('@lib/crypto');
 const { STORAGE_ENCRYPTION_MAGIC } = require('@config/constants');
 
 /**
- * Create local storage service.
- *
- * @param {string} [basePath='uploads'] - Base directory for file storage
- * @returns {Object} Local storage service implementation
+ * Local filesystem storage provider.
  */
-const createLocalStorageService = (basePath = 'uploads') => {
-  const service = createStorageServiceBase();
-  const resolvedBasePath = path.resolve(process.cwd(), basePath);
+class LocalStorageService extends StorageService {
+  /**
+   * @param {string} [basePath='uploads'] - Base directory for file storage
+   */
+  constructor(basePath = 'uploads') {
+    super();
+    this.resolvedBasePath = path.resolve(process.cwd(), basePath);
+  }
 
-  const ensureDirectory = async () => {
+  async ensureDirectory() {
     try {
-      await fs.mkdir(resolvedBasePath, { recursive: true });
+      await fs.mkdir(this.resolvedBasePath, { recursive: true });
     } catch (err) {
       throw new Error(`Failed to create storage directory: ${err.message}`);
     }
-  };
+  }
 
-  const upload = async (file, filename, options = {}) => {
+  async upload(file, filename, options = {}) {
     const sanitizedFilename = sanitizeFilename(filename);
-    const filePath = path.join(resolvedBasePath, sanitizedFilename);
+    const filePath = path.join(this.resolvedBasePath, sanitizedFilename);
 
-    await ensureDirectory();
+    await this.ensureDirectory();
 
     try {
       if (Buffer.isBuffer(file)) {
@@ -67,11 +69,11 @@ const createLocalStorageService = (basePath = 'uploads') => {
     } catch (err) {
       throw new Error(`Failed to upload file: ${err.message}`);
     }
-  };
+  }
 
-  const deleteFile = async (filePath) => {
+  async delete(filePath) {
     const sanitizedPath = sanitizeFilename(filePath);
-    const fullPath = path.join(resolvedBasePath, sanitizedPath);
+    const fullPath = path.join(this.resolvedBasePath, sanitizedPath);
 
     try {
       await fs.unlink(fullPath);
@@ -82,22 +84,22 @@ const createLocalStorageService = (basePath = 'uploads') => {
       }
       throw new Error(`Failed to delete file: ${err.message}`);
     }
-  };
+  }
 
-  const getUrl = async (filePath) => {
+  async getUrl(filePath) {
     const sanitizedPath = sanitizeFilename(filePath);
 
-    const fileExists = await exists(filePath);
+    const fileExists = await this.exists(filePath);
     if (!fileExists) {
       throw new Error(`File not found: ${filePath}`);
     }
 
     return sanitizedPath;
-  };
+  }
 
-  const exists = async (filePath) => {
+  async exists(filePath) {
     const sanitizedPath = sanitizeFilename(filePath);
-    const fullPath = path.join(resolvedBasePath, sanitizedPath);
+    const fullPath = path.join(this.resolvedBasePath, sanitizedPath);
 
     try {
       await fs.access(fullPath);
@@ -105,11 +107,11 @@ const createLocalStorageService = (basePath = 'uploads') => {
     } catch {
       return false;
     }
-  };
+  }
 
-  const getMetadata = async (filePath) => {
+  async getMetadata(filePath) {
     const sanitizedPath = sanitizeFilename(filePath);
-    const fullPath = path.join(resolvedBasePath, sanitizedPath);
+    const fullPath = path.join(this.resolvedBasePath, sanitizedPath);
 
     try {
       const stats = await fs.stat(fullPath);
@@ -126,11 +128,11 @@ const createLocalStorageService = (basePath = 'uploads') => {
       }
       throw new Error(`Failed to get file metadata: ${err.message}`);
     }
-  };
+  }
 
-  const download = async (filePath) => {
+  async download(filePath) {
     const sanitizedPath = sanitizeFilename(filePath);
-    const fullPath = path.join(resolvedBasePath, sanitizedPath);
+    const fullPath = path.join(this.resolvedBasePath, sanitizedPath);
 
     try {
       const data = await fs.readFile(fullPath);
@@ -145,17 +147,15 @@ const createLocalStorageService = (basePath = 'uploads') => {
       }
       throw new Error(`Failed to download file: ${err.message}`);
     }
-  };
+  }
+}
 
-  return {
-    ...service,
-    upload,
-    delete: deleteFile,
-    getUrl,
-    exists,
-    getMetadata,
-    download
-  };
-};
+/**
+ * Backward-compatible local storage factory.
+ *
+ * @param {string} [basePath='uploads'] - Base directory for file storage
+ * @returns {LocalStorageService} Local storage provider instance
+ */
+const createLocalStorageService = (basePath = 'uploads') => new LocalStorageService(basePath);
 
-module.exports = { createLocalStorageService };
+module.exports = { LocalStorageService, createLocalStorageService };

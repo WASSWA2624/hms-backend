@@ -4,29 +4,35 @@
  * AWS S3 storage implementation.
  */
 
-const { createStorageServiceBase, sanitizeFilename } = require('@lib/storage/storage-service');
+const { StorageService, sanitizeFilename } = require('@lib/storage/storage-service');
 const { encryptBuffer, decryptBuffer } = require('@lib/crypto');
 const { STORAGE_ENCRYPTION_MAGIC } = require('@config/constants');
 
 /**
- * Create S3 storage service.
- *
- * @param {Object} config - S3 configuration
- * @returns {Object} S3 storage service implementation
+ * AWS S3 storage provider.
  */
-const createS3StorageService = (config) => {
-  if (!config?.accessKeyId || !config?.secretAccessKey || !config?.region || !config?.bucket) {
-    throw new Error('S3 configuration requires accessKeyId, secretAccessKey, region, and bucket');
+class S3StorageService extends StorageService {
+  /**
+   * @param {Object} config - S3 configuration
+   */
+  constructor(config) {
+    super();
+
+    if (!config?.accessKeyId || !config?.secretAccessKey || !config?.region || !config?.bucket) {
+      throw new Error('S3 configuration requires accessKeyId, secretAccessKey, region, and bucket');
+    }
+
+    this.config = config;
+    this.s3Client = null;
+    this.PutObjectCommand = null;
+    this.DeleteObjectCommand = null;
+    this.GetObjectCommand = null;
+    this.HeadObjectCommand = null;
+
+    this.initializeClient();
   }
 
-  const service = createStorageServiceBase();
-  let s3Client = null;
-  let PutObjectCommand;
-  let DeleteObjectCommand;
-  let GetObjectCommand;
-  let HeadObjectCommand;
-
-  const initializeClient = () => {
+  initializeClient() {
     try {
       const {
         S3Client,
@@ -36,29 +42,27 @@ const createS3StorageService = (config) => {
         HeadObjectCommand: Head
       } = require('@aws-sdk/client-s3');
 
-      s3Client = new S3Client({
-        region: config.region,
+      this.s3Client = new S3Client({
+        region: this.config.region,
         credentials: {
-          accessKeyId: config.accessKeyId,
-          secretAccessKey: config.secretAccessKey
+          accessKeyId: this.config.accessKeyId,
+          secretAccessKey: this.config.secretAccessKey
         }
       });
 
-      PutObjectCommand = Put;
-      DeleteObjectCommand = Delete;
-      GetObjectCommand = Get;
-      HeadObjectCommand = Head;
+      this.PutObjectCommand = Put;
+      this.DeleteObjectCommand = Delete;
+      this.GetObjectCommand = Get;
+      this.HeadObjectCommand = Head;
     } catch (err) {
       throw new Error(
         'AWS SDK not installed. Please install @aws-sdk/client-s3: npm install @aws-sdk/client-s3'
       );
     }
-  };
+  }
 
-  initializeClient();
-
-  const upload = async (file, filename, options = {}) => {
-    if (!s3Client) {
+  async upload(file, filename, options = {}) {
+    if (!this.s3Client) {
       throw new Error('S3 client not initialized');
     }
 
@@ -80,8 +84,8 @@ const createS3StorageService = (config) => {
 
       const toUpload = options.encrypt ? encryptBuffer(fileBuffer) : fileBuffer;
 
-      const command = new PutObjectCommand({
-        Bucket: config.bucket,
+      const command = new this.PutObjectCommand({
+        Bucket: this.config.bucket,
         Key: sanitizedKey,
         Body: toUpload,
         ContentType: options.mimeType || 'application/octet-stream',
@@ -91,8 +95,8 @@ const createS3StorageService = (config) => {
         }
       });
 
-      await s3Client.send(command);
-      const url = await getUrl(sanitizedKey);
+      await this.s3Client.send(command);
+      const url = await this.getUrl(sanitizedKey);
 
       return {
         path: sanitizedKey,
@@ -105,57 +109,57 @@ const createS3StorageService = (config) => {
     } catch (err) {
       throw new Error(`Failed to upload file to S3: ${err.message}`);
     }
-  };
+  }
 
-  const deleteFile = async (filePath) => {
-    if (!s3Client) {
+  async delete(filePath) {
+    if (!this.s3Client) {
       throw new Error('S3 client not initialized');
     }
 
     const sanitizedKey = sanitizeFilename(filePath);
 
     try {
-      const command = new DeleteObjectCommand({
-        Bucket: config.bucket,
+      const command = new this.DeleteObjectCommand({
+        Bucket: this.config.bucket,
         Key: sanitizedKey
       });
 
-      await s3Client.send(command);
+      await this.s3Client.send(command);
       return true;
     } catch (err) {
       throw new Error(`Failed to delete file from S3: ${err.message}`);
     }
-  };
+  }
 
-  const getUrl = async (filePath) => {
-    if (!s3Client) {
+  async getUrl(filePath) {
+    if (!this.s3Client) {
       throw new Error('S3 client not initialized');
     }
 
     const sanitizedKey = sanitizeFilename(filePath);
 
-    const fileExists = await exists(filePath);
+    const fileExists = await this.exists(filePath);
     if (!fileExists) {
       throw new Error(`File not found: ${filePath}`);
     }
 
-    return `https://${config.bucket}.s3.${config.region}.amazonaws.com/${sanitizedKey}`;
-  };
+    return `https://${this.config.bucket}.s3.${this.config.region}.amazonaws.com/${sanitizedKey}`;
+  }
 
-  const exists = async (filePath) => {
-    if (!s3Client) {
+  async exists(filePath) {
+    if (!this.s3Client) {
       throw new Error('S3 client not initialized');
     }
 
     const sanitizedKey = sanitizeFilename(filePath);
 
     try {
-      const command = new HeadObjectCommand({
-        Bucket: config.bucket,
+      const command = new this.HeadObjectCommand({
+        Bucket: this.config.bucket,
         Key: sanitizedKey
       });
 
-      await s3Client.send(command);
+      await this.s3Client.send(command);
       return true;
     } catch (err) {
       if (err.name === 'NotFound' || err.$metadata?.httpStatusCode === 404) {
@@ -163,22 +167,22 @@ const createS3StorageService = (config) => {
       }
       throw new Error(`Failed to check file existence: ${err.message}`);
     }
-  };
+  }
 
-  const getMetadata = async (filePath) => {
-    if (!s3Client) {
+  async getMetadata(filePath) {
+    if (!this.s3Client) {
       throw new Error('S3 client not initialized');
     }
 
     const sanitizedKey = sanitizeFilename(filePath);
 
     try {
-      const command = new HeadObjectCommand({
-        Bucket: config.bucket,
+      const command = new this.HeadObjectCommand({
+        Bucket: this.config.bucket,
         Key: sanitizedKey
       });
 
-      const response = await s3Client.send(command);
+      const response = await this.s3Client.send(command);
 
       return {
         size: response.ContentLength,
@@ -193,22 +197,22 @@ const createS3StorageService = (config) => {
       }
       throw new Error(`Failed to get file metadata: ${err.message}`);
     }
-  };
+  }
 
-  const download = async (filePath) => {
-    if (!s3Client) {
+  async download(filePath) {
+    if (!this.s3Client) {
       throw new Error('S3 client not initialized');
     }
 
     const sanitizedKey = sanitizeFilename(filePath);
 
     try {
-      const command = new GetObjectCommand({
-        Bucket: config.bucket,
+      const command = new this.GetObjectCommand({
+        Bucket: this.config.bucket,
         Key: sanitizedKey
       });
 
-      const response = await s3Client.send(command);
+      const response = await this.s3Client.send(command);
 
       const chunks = [];
       for await (const chunk of response.Body) {
@@ -226,17 +230,15 @@ const createS3StorageService = (config) => {
       }
       throw new Error(`Failed to download file: ${err.message}`);
     }
-  };
+  }
+}
 
-  return {
-    ...service,
-    upload,
-    delete: deleteFile,
-    getUrl,
-    exists,
-    getMetadata,
-    download
-  };
-};
+/**
+ * Backward-compatible S3 storage factory.
+ *
+ * @param {Object} config - S3 configuration
+ * @returns {S3StorageService} S3 storage provider instance
+ */
+const createS3StorageService = (config) => new S3StorageService(config);
 
-module.exports = { createS3StorageService };
+module.exports = { S3StorageService, createS3StorageService };
