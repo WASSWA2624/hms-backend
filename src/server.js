@@ -163,6 +163,7 @@ const startServer = () => {
         return;
       }
       isShuttingDown = true;
+      let forcedShutdownTimer = null;
 
       logger.info(`Received ${signal}, shutting down gracefully...`);
       if (reason) {
@@ -171,6 +172,10 @@ const startServer = () => {
 
       // Stop accepting new connections
       server.close(async () => {
+        if (forcedShutdownTimer) {
+          clearTimeout(forcedShutdownTimer);
+        }
+
         logger.info('HTTP server closed');
 
         try {
@@ -204,7 +209,7 @@ const startServer = () => {
       });
 
       // Force close after 30 seconds
-      const forcedShutdownTimer = setTimeout(() => {
+      forcedShutdownTimer = setTimeout(() => {
         logger.error('Forced shutdown after timeout');
         process.exit(1);
       }, 30000);
