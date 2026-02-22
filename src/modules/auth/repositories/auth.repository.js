@@ -29,6 +29,14 @@ const userInclude = {
   }
 };
 
+const facilitySelect = {
+  id: true,
+  tenant_id: true,
+  name: true,
+  facility_type: true,
+  is_active: true,
+};
+
 const normalizeSlug = (value) =>
   String(value || '')
     .toLowerCase()
@@ -126,7 +134,9 @@ const findUserById = async (id) => {
       include: {
         profile: true,
         tenant: true,
-        facility: true
+        facility: {
+          select: facilitySelect
+        }
       }
     });
   } catch (error) {
@@ -239,7 +249,9 @@ const registerFacilityOwner = async (data) => {
         include: {
           profile: true,
           tenant: true,
-          facility: true,
+          facility: {
+            select: facilitySelect
+          },
           roles: {
             where: { deleted_at: null },
             include: { role: true },
@@ -622,7 +634,9 @@ const findUserByEmail = async (email) => {
       include: {
         profile: true,
         tenant: true,
-        facility: true
+        facility: {
+          select: facilitySelect
+        }
       }
     });
   } catch (error) {
@@ -652,7 +666,9 @@ const findUserByPhone = async (phone) => {
       include: {
         profile: true,
         tenant: true,
-        facility: true
+        facility: {
+          select: facilitySelect
+        }
       }
     });
   } catch (error) {
@@ -753,8 +769,8 @@ const getUserFacilities = async (userId, tenantId) => {
         tenant_id: tenantId,
         deleted_at: null
       },
-      include: {
-        facility: true
+      select: {
+        facility_id: true
       }
     });
 
@@ -799,7 +815,8 @@ const getUserFacilities = async (userId, tenantId) => {
         tenant_id: tenantId,
         deleted_at: null,
         is_active: true
-      }
+      },
+      select: facilitySelect
     });
 
     return facilities;

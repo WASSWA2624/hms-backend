@@ -20,6 +20,12 @@ jest.mock('@prisma/client', () => ({
     update: jest.fn(),
     updateMany: jest.fn()
   },
+  user_role: {
+    findMany: jest.fn()
+  },
+  facility: {
+    findMany: jest.fn()
+  },
   verification_token: {
     create: jest.fn(),
     findFirst: jest.fn(),
@@ -45,7 +51,8 @@ const {
   createVerificationToken,
   findVerificationToken,
   markTokenAsUsed,
-  deleteExpiredTokens
+  deleteExpiredTokens,
+  getUserFacilities,
 } = require('@repositories/auth/auth.repository');
 
 const prisma = require('@prisma/client');
@@ -590,6 +597,61 @@ describe('Auth Repository', () => {
           },
         },
       });
+    });
+  });
+
+  describe('getUserFacilities', () => {
+    it('should return facilities using minimal schema-safe selects', async () => {
+      prisma.user.findFirst.mockResolvedValue({
+        facility_id: 'facility-1',
+      });
+      prisma.user_role.findMany.mockResolvedValue([
+        { facility_id: 'facility-2', role: { facility_id: 'facility-3' } },
+      ]);
+      prisma.facility.findMany.mockResolvedValue([
+        { id: 'facility-1', name: 'Main', facility_type: 'HOSPITAL', tenant_id: 'tenant-1', is_active: true },
+      ]);
+
+      const result = await getUserFacilities('user-1', 'tenant-1');
+
+      expect(result).toEqual([
+        { id: 'facility-1', name: 'Main', facility_type: 'HOSPITAL', tenant_id: 'tenant-1', is_active: true },
+      ]);
+      expect(prisma.user.findFirst).toHaveBeenCalledWith({
+        where: {
+          id: 'user-1',
+          tenant_id: 'tenant-1',
+          deleted_at: null,
+        },
+        select: {
+          facility_id: true,
+        },
+      });
+      expect(prisma.facility.findMany).toHaveBeenCalledWith({
+        where: {
+          id: { in: expect.arrayContaining(['facility-1', 'facility-2', 'facility-3']) },
+          tenant_id: 'tenant-1',
+          deleted_at: null,
+          is_active: true,
+        },
+        select: {
+          id: true,
+          tenant_id: true,
+          name: true,
+          facility_type: true,
+          is_active: true,
+        },
+      });
+    });
+
+    it('should return empty array when user has no facility assignments', async () => {
+      prisma.user.findFirst.mockResolvedValue({ facility_id: null });
+      prisma.user_role.findMany.mockResolvedValue([]);
+
+      const result = await getUserFacilities('user-1', 'tenant-1');
+
+      expect(result).toEqual([]);
+      expect(prisma.facility.findMany).not.toHaveBeenCalled();
     });
   });
 });

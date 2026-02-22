@@ -1,4 +1,4 @@
-﻿-- AlterTable
+-- AlterTable
 ALTER TABLE `tenant` ADD COLUMN `configuration_version_id` VARCHAR(36) NULL,
     ADD COLUMN `extension_json` JSON NULL;
 
