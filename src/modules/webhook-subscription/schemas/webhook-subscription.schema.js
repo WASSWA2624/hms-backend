@@ -40,6 +40,11 @@ const updateWebhookSubscriptionSchema = z.object({
   is_active: z.boolean().optional()
 });
 
+const replayWebhookSubscriptionSchema = z.object({
+  payload_json: z.any().optional().nullable(),
+  notes: z.string().trim().max(10000).optional().nullable()
+});
+
 // ==================== URL Params ====================
 
 /**
@@ -68,6 +73,7 @@ const listWebhookSubscriptionsQuerySchema = listQuerySchema.extend({
 module.exports = {
   createWebhookSubscriptionSchema,
   updateWebhookSubscriptionSchema,
+  replayWebhookSubscriptionSchema,
   webhookSubscriptionIdParamsSchema,
   listWebhookSubscriptionsQuerySchema
 };

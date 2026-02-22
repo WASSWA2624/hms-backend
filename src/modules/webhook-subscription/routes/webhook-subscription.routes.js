@@ -15,6 +15,7 @@ const webhookSubscriptionController = require('@controllers/webhook-subscription
 const {
   createWebhookSubscriptionSchema,
   updateWebhookSubscriptionSchema,
+  replayWebhookSubscriptionSchema,
   webhookSubscriptionIdParamsSchema,
   listWebhookSubscriptionsQuerySchema
 } = require('@validations/webhook-subscription/webhook-subscription.schema');
@@ -42,7 +43,7 @@ const {
  */
 router.get(
   '/',
-  validate(null, null, listWebhookSubscriptionsQuerySchema),
+  validate({ query: listWebhookSubscriptionsQuerySchema }),
   asyncHandler(webhookSubscriptionController.listWebhookSubscriptions)
 );
 
@@ -62,8 +63,14 @@ router.get(
  */
 router.get(
   '/:id',
-  validate(null, webhookSubscriptionIdParamsSchema, null),
+  validate({ params: webhookSubscriptionIdParamsSchema }),
   asyncHandler(webhookSubscriptionController.getWebhookSubscription)
+);
+
+router.post(
+  '/:id/replay',
+  validate({ params: webhookSubscriptionIdParamsSchema, body: replayWebhookSubscriptionSchema }),
+  asyncHandler(webhookSubscriptionController.replayWebhookSubscription)
 );
 
 /**
@@ -86,7 +93,7 @@ router.get(
  */
 router.post(
   '/',
-  validate(createWebhookSubscriptionSchema, null, null),
+  validate({ body: createWebhookSubscriptionSchema }),
   asyncHandler(webhookSubscriptionController.createWebhookSubscription)
 );
 
@@ -110,7 +117,7 @@ router.post(
  */
 router.put(
   '/:id',
-  validate(updateWebhookSubscriptionSchema, webhookSubscriptionIdParamsSchema, null),
+  validate({ params: webhookSubscriptionIdParamsSchema, body: updateWebhookSubscriptionSchema }),
   asyncHandler(webhookSubscriptionController.updateWebhookSubscription)
 );
 
@@ -130,7 +137,7 @@ router.put(
  */
 router.delete(
   '/:id',
-  validate(null, webhookSubscriptionIdParamsSchema, null),
+  validate({ params: webhookSubscriptionIdParamsSchema }),
   asyncHandler(webhookSubscriptionController.deleteWebhookSubscription)
 );
 

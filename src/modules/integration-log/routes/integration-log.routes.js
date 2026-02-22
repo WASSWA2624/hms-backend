@@ -16,7 +16,8 @@ const integrationLogController = require('@controllers/integration-log/integrati
 const {
   integrationLogIdParamsSchema,
   integrationIdParamsSchema,
-  listIntegrationLogsQuerySchema
+  listIntegrationLogsQuerySchema,
+  replayIntegrationLogSchema
 } = require('@validations/integration-log/integration-log.schema');
 
 /**
@@ -40,7 +41,7 @@ const {
  */
 router.get(
   '/',
-  validate(null, null, listIntegrationLogsQuerySchema),
+  validate({ query: listIntegrationLogsQuerySchema }),
   asyncHandler(integrationLogController.listIntegrationLogs)
 );
 
@@ -60,8 +61,14 @@ router.get(
  */
 router.get(
   '/:id',
-  validate(null, integrationLogIdParamsSchema, null),
+  validate({ params: integrationLogIdParamsSchema }),
   asyncHandler(integrationLogController.getIntegrationLog)
+);
+
+router.post(
+  '/:id/replay',
+  validate({ params: integrationLogIdParamsSchema, body: replayIntegrationLogSchema }),
+  asyncHandler(integrationLogController.replayIntegrationLog)
 );
 
 /**
@@ -82,7 +89,7 @@ router.get(
  */
 router.get(
   '/integration/:integrationId',
-  validate(null, integrationIdParamsSchema, listIntegrationLogsQuerySchema),
+  validate({ params: integrationIdParamsSchema, query: listIntegrationLogsQuerySchema }),
   asyncHandler(integrationLogController.getIntegrationLogsByIntegrationId)
 );
 

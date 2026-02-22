@@ -166,8 +166,40 @@ const deleteWebhookSubscription = async (id, auditContext) => {
     old_values: existingWebhookSubscription,
     ...auditContext
   });
-  
+
   return deleted;
+};
+
+/**
+ * Replay webhook subscription event
+ *
+ * @param {string} id - Webhook subscription ID
+ * @param {Object} data - Replay payload
+ * @param {Object} auditContext - Audit context
+ * @returns {Promise<Object>} Replay result
+ */
+const replayWebhookSubscription = async (id, data = {}, auditContext = {}) => {
+  const webhookSubscription = await getWebhookSubscriptionById(id);
+
+  const replayResult = {
+    webhook_subscription_id: webhookSubscription.id,
+    event: webhookSubscription.event,
+    target_url: webhookSubscription.target_url,
+    replayed: true,
+    replayed_at: new Date().toISOString(),
+    payload_json: data.payload_json || null
+  };
+
+  await createAuditLog({
+    action: 'REPLAY',
+    entity: 'webhook_subscription',
+    entity_id: webhookSubscription.id,
+    old_values: webhookSubscription,
+    new_values: replayResult,
+    ...auditContext
+  }).catch(() => {});
+
+  return replayResult;
 };
 
 module.exports = {
@@ -175,5 +207,6 @@ module.exports = {
   listWebhookSubscriptions,
   createWebhookSubscription,
   updateWebhookSubscription,
-  deleteWebhookSubscription
+  deleteWebhookSubscription,
+  replayWebhookSubscription
 };

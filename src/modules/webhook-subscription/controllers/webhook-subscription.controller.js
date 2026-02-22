@@ -119,10 +119,32 @@ const deleteWebhookSubscription = async (req, res) => {
   return res.status(204).send();
 };
 
+/**
+ * Replay webhook subscription
+ *
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @returns {Promise<void>}
+ */
+const replayWebhookSubscription = async (req, res) => {
+  const { id } = req.params;
+
+  const auditContext = {
+    user_id: req.user?.id,
+    tenant_id: req.user?.tenant_id,
+    ip_address: req.ip
+  };
+
+  const result = await webhookSubscriptionService.replayWebhookSubscription(id, req.body, auditContext);
+
+  return sendSuccess(res, 200, 'messages.webhook_subscription.replay.success', result);
+};
+
 module.exports = {
   getWebhookSubscription,
   listWebhookSubscriptions,
   createWebhookSubscription,
   updateWebhookSubscription,
-  deleteWebhookSubscription
+  deleteWebhookSubscription,
+  replayWebhookSubscription
 };
