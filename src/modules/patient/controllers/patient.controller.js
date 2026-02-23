@@ -12,10 +12,39 @@ const { asyncHandler } = require('@lib/async');
 const { sendSuccess, sendPaginated, sendNoContent } = require('@lib/response');
 const { DEFAULT_PAGE, DEFAULT_PAGE_LIMIT } = require('@config/constants');
 
-const buildPatientScope = (req = {}) => ({
-  tenant_id: req.user?.tenant_id || req.query?.tenant_id,
-  facility_id: req.user?.facility_id || req.query?.facility_id
-});
+const GLOBAL_SCOPE_ROLES = new Set(['SUPER_ADMIN', 'APP_ADMIN', 'SYSTEM_ADMIN', 'PLATFORM_ADMIN']);
+
+const normalizeScopeValue = (value) => {
+  if (typeof value !== 'string') return '';
+  return value.trim();
+};
+
+const hasGlobalScopeAccess = (user = {}) => {
+  const roles = [
+    ...(Array.isArray(user.roles) ? user.roles : []),
+    user.role
+  ]
+    .map((role) => String(role || '').trim().toUpperCase())
+    .filter(Boolean);
+
+  return roles.some((role) => GLOBAL_SCOPE_ROLES.has(role));
+};
+
+const buildPatientScope = (req = {}) => {
+  const queryTenantId = normalizeScopeValue(req.query?.tenant_id);
+  const queryFacilityId = normalizeScopeValue(req.query?.facility_id);
+  const userTenantId = normalizeScopeValue(req.user?.tenant_id);
+  const userFacilityId = normalizeScopeValue(req.user?.facility_id);
+
+  const isGlobalUser = hasGlobalScopeAccess(req.user);
+  const tenantId = isGlobalUser ? queryTenantId : (userTenantId || queryTenantId);
+  const facilityId = isGlobalUser ? queryFacilityId : (userFacilityId || queryFacilityId);
+
+  return {
+    ...(tenantId ? { tenant_id: tenantId } : {}),
+    ...(facilityId ? { facility_id: facilityId } : {})
+  };
+};
 
 /**
  * List patients with pagination
@@ -70,12 +99,16 @@ const listPatients = asyncHandler(async (req, res) => {
     is_active,
     search
   };
+  const scopedFilters = {
+    ...filters,
+    ...buildPatientScope(req)
+  };
 
   const userId = req.user?.id;
   const ipAddress = req.ip;
 
   const result = await patientService.listPatients(
-    filters,
+    scopedFilters,
     parseInt(page),
     parseInt(limit),
     sort_by,

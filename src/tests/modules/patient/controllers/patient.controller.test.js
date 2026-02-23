@@ -86,7 +86,8 @@ describe('Patient Controller', () => {
 
       expect(patientService.listPatients).toHaveBeenCalledWith(
         expect.objectContaining({
-          tenant_id: '123',
+          tenant_id: '550e8400-e29b-41d4-a716-446655440040',
+          facility_id: '550e8400-e29b-41d4-a716-446655440041',
           gender: 'MALE',
           patient_id: 'PAT-0099',
           date_of_birth: '1990-01-01',
@@ -145,6 +146,32 @@ describe('Patient Controller', () => {
         }
       );
       expect(sendSuccess).toHaveBeenCalledWith(mockRes, 200, 'messages.patient.get.success', mockPatient);
+    });
+
+    it('should not force tenant/facility scope for global roles', async () => {
+      mockReq.params.id = 'PAT0000001';
+      mockReq.query = {
+        tenant_id: 'TEN0001',
+        facility_id: 'FAC0001'
+      };
+      mockReq.user = {
+        ...mockReq.user,
+        role: 'SUPER_ADMIN'
+      };
+      const mockPatient = { id: 'patient-1', human_friendly_id: 'PAT0000001' };
+      patientService.getPatientById.mockResolvedValue(mockPatient);
+
+      await patientController.getPatientById(mockReq, mockRes);
+
+      expect(patientService.getPatientById).toHaveBeenCalledWith(
+        'PAT0000001',
+        'user-123',
+        '127.0.0.1',
+        {
+          tenant_id: 'TEN0001',
+          facility_id: 'FAC0001'
+        }
+      );
     });
   });
 
