@@ -63,6 +63,25 @@ const PATIENT_RELATION_CONTEXT_INCLUDE = {
       human_friendly_id: true,
       name: true
     }
+  },
+  contacts: {
+    where: {
+      deleted_at: null
+    },
+    orderBy: [
+      { is_primary: 'desc' },
+      { updated_at: 'desc' }
+    ],
+    take: 3,
+    select: {
+      id: true,
+      human_friendly_id: true,
+      contact_type: true,
+      value: true,
+      is_primary: true,
+      created_at: true,
+      updated_at: true
+    }
   }
 };
 
@@ -316,6 +335,8 @@ const decoratePatientContext = (patient) => {
 
   const tenantContext = patient.tenant || null;
   const facilityContext = patient.facility || null;
+  const contacts = Array.isArray(patient.contacts) ? patient.contacts : [];
+  const primaryContact = contacts.find((entry) => entry?.is_primary) || contacts[0] || null;
   const {
     tenant,
     facility,
@@ -324,6 +345,11 @@ const decoratePatientContext = (patient) => {
 
   return {
     ...rest,
+    contact: primaryContact?.value || null,
+    contact_value: primaryContact?.value || null,
+    contact_label: primaryContact?.value || null,
+    primary_contact: primaryContact?.value || null,
+    primary_contact_details: primaryContact || null,
     tenant_context: tenantContext
       ? {
           id: tenantContext.human_friendly_id || null,

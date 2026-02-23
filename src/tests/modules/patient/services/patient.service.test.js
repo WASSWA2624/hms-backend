@@ -163,6 +163,14 @@ describe('Patient Service', () => {
         {
           id: '1',
           first_name: 'John',
+          contacts: [
+            {
+              id: 'contact-1',
+              contact_type: 'PHONE',
+              value: '+256783230321',
+              is_primary: true
+            }
+          ],
           tenant: {
             human_friendly_id: 'TEN-0001',
             name: 'Alpha Tenant'
@@ -185,11 +193,20 @@ describe('Patient Service', () => {
         expect.any(Object),
         expect.objectContaining({
           tenant: expect.any(Object),
-          facility: expect.any(Object)
+          facility: expect.any(Object),
+          contacts: expect.any(Object)
         })
       );
       expect(result.patients[0]).toEqual(
         expect.objectContaining({
+          contact: '+256783230321',
+          contact_value: '+256783230321',
+          contact_label: '+256783230321',
+          primary_contact: '+256783230321',
+          primary_contact_details: expect.objectContaining({
+            id: 'contact-1',
+            value: '+256783230321'
+          }),
           tenant_context: {
             id: 'TEN-0001',
             label: 'Alpha Tenant'
