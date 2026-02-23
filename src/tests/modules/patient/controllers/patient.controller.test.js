@@ -27,7 +27,11 @@ describe('Patient Controller', () => {
       query: {},
       params: {},
       body: {},
-      user: { id: 'user-123' },
+      user: {
+        id: 'user-123',
+        tenant_id: '550e8400-e29b-41d4-a716-446655440040',
+        facility_id: '550e8400-e29b-41d4-a716-446655440041'
+      },
       ip: '127.0.0.1'
     };
     mockRes = {
@@ -131,7 +135,15 @@ describe('Patient Controller', () => {
 
       await patientController.getPatientById(mockReq, mockRes);
 
-      expect(patientService.getPatientById).toHaveBeenCalledWith('123', 'user-123', '127.0.0.1');
+      expect(patientService.getPatientById).toHaveBeenCalledWith(
+        '123',
+        'user-123',
+        '127.0.0.1',
+        {
+          tenant_id: '550e8400-e29b-41d4-a716-446655440040',
+          facility_id: '550e8400-e29b-41d4-a716-446655440041'
+        }
+      );
       expect(sendSuccess).toHaveBeenCalledWith(mockRes, 200, 'messages.patient.get.success', mockPatient);
     });
   });
@@ -164,7 +176,16 @@ describe('Patient Controller', () => {
 
       await patientController.updatePatient(mockReq, mockRes);
 
-      expect(patientService.updatePatient).toHaveBeenCalledWith('123', mockReq.body, 'user-123', '127.0.0.1');
+      expect(patientService.updatePatient).toHaveBeenCalledWith(
+        '123',
+        mockReq.body,
+        'user-123',
+        '127.0.0.1',
+        {
+          tenant_id: '550e8400-e29b-41d4-a716-446655440040',
+          facility_id: '550e8400-e29b-41d4-a716-446655440041'
+        }
+      );
       expect(sendSuccess).toHaveBeenCalledWith(mockRes, 200, 'messages.patient.update.success', mockPatient);
     });
   });
@@ -176,7 +197,15 @@ describe('Patient Controller', () => {
 
       await patientController.deletePatient(mockReq, mockRes);
 
-      expect(patientService.deletePatient).toHaveBeenCalledWith('123', 'user-123', '127.0.0.1');
+      expect(patientService.deletePatient).toHaveBeenCalledWith(
+        '123',
+        'user-123',
+        '127.0.0.1',
+        {
+          tenant_id: '550e8400-e29b-41d4-a716-446655440040',
+          facility_id: '550e8400-e29b-41d4-a716-446655440041'
+        }
+      );
       expect(sendNoContent).toHaveBeenCalledWith(mockRes);
     });
   });

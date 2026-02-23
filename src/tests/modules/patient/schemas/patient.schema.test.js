@@ -127,7 +127,16 @@ describe('Patient Schemas', () => {
       expect(result.success).toBe(true);
     });
 
-    it('should reject invalid UUID', () => {
+    it('should validate human-friendly id param and normalize to uppercase', () => {
+      const data = { id: 'pat0000001' };
+      const result = patientIdParamsSchema.safeParse(data);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.id).toBe('PAT0000001');
+      }
+    });
+
+    it('should reject invalid patient identifier', () => {
       const data = { id: 'invalid-uuid' };
       const result = patientIdParamsSchema.safeParse(data);
       expect(result.success).toBe(false);

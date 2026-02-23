@@ -46,6 +46,30 @@ describe('Patient Repository', () => {
       expect(result).toBeNull();
     });
 
+    it('should include optional tenant and facility scope filters', async () => {
+      const mockPatient = { id: '123', first_name: 'John' };
+      prisma.patient.findFirst.mockResolvedValue(mockPatient);
+
+      await patientRepository.findById(
+        'PAT0000001',
+        {},
+        {
+          tenant_id: '550e8400-e29b-41d4-a716-446655440010',
+          facility_id: '550e8400-e29b-41d4-a716-446655440011'
+        }
+      );
+
+      expect(prisma.patient.findFirst).toHaveBeenCalledWith({
+        where: {
+          id: 'PAT0000001',
+          deleted_at: null,
+          tenant_id: '550e8400-e29b-41d4-a716-446655440010',
+          facility_id: '550e8400-e29b-41d4-a716-446655440011'
+        },
+        include: {}
+      });
+    });
+
     it('should throw HttpError on database error', async () => {
       prisma.patient.findFirst.mockRejectedValue(new Error('DB Error'));
 
@@ -108,16 +132,19 @@ describe('Patient Repository', () => {
   describe('update', () => {
     it('should update patient', async () => {
       const mockPatient = { id: '123', first_name: 'Jane', last_name: 'Doe' };
+      prisma.patient.findFirst.mockResolvedValue({ id: '123' });
       prisma.patient.update.mockResolvedValue(mockPatient);
 
       const result = await patientRepository.update('123', { first_name: 'Jane' });
       expect(result).toEqual(mockPatient);
+      expect(prisma.patient.update).toHaveBeenCalledWith({
+        where: { id: '123' },
+        data: { first_name: 'Jane' }
+      });
     });
 
     it('should throw HttpError if patient not found', async () => {
-      const error = new Error('Record not found');
-      error.code = 'P2025';
-      prisma.patient.update.mockRejectedValue(error);
+      prisma.patient.findFirst.mockResolvedValue(null);
 
       await expect(patientRepository.update('nonexistent', {})).rejects.toThrow(HttpError);
     });
@@ -126,6 +153,7 @@ describe('Patient Repository', () => {
   describe('softDelete', () => {
     it('should soft delete patient', async () => {
       const mockPatient = { id: '123', deleted_at: new Date() };
+      prisma.patient.findFirst.mockResolvedValue({ id: '123' });
       prisma.patient.update.mockResolvedValue(mockPatient);
 
       const result = await patientRepository.softDelete('123');
@@ -137,9 +165,7 @@ describe('Patient Repository', () => {
     });
 
     it('should throw HttpError if patient not found', async () => {
-      const error = new Error('Record not found');
-      error.code = 'P2025';
-      prisma.patient.update.mockRejectedValue(error);
+      prisma.patient.findFirst.mockResolvedValue(null);
 
       await expect(patientRepository.softDelete('nonexistent')).rejects.toThrow(HttpError);
     });

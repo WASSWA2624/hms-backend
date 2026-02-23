@@ -68,7 +68,7 @@ router.get(
  * @route /api/v1/patients/:id
  * @authentication Required (JWT)
  * @permissions Authenticated users
- * @urlParams {string} id - Patient ID (UUID)
+ * @urlParams {string} id - Patient ID (UUID or human-friendly ID)
  * @queryParams None
  * @bodyParams None
  * @returns {Object} Patient data
@@ -89,7 +89,7 @@ router.get(
  * @route /api/v1/patients/:id/identifiers
  * @authentication Required (JWT)
  * @permissions Authenticated users
- * @urlParams {string} id - Patient ID (UUID)
+ * @urlParams {string} id - Patient ID (UUID or human-friendly ID)
  * @queryParams {number} [page=1], {number} [limit=20], {string} [sort_by], {string} [order]
  * @returns {Object} Paginated list of patient identifiers
  * @throws 401 Unauthorized
@@ -109,7 +109,7 @@ router.get(
  * @route /api/v1/patients/:id/contacts
  * @authentication Required (JWT)
  * @permissions Authenticated users
- * @urlParams {string} id - Patient ID (UUID)
+ * @urlParams {string} id - Patient ID (UUID or human-friendly ID)
  * @queryParams {number} [page=1], {number} [limit=20], {string} [sort_by], {string} [order]
  * @returns {Object} Paginated list of patient contacts
  * @throws 401 Unauthorized
@@ -129,7 +129,7 @@ router.get(
  * @route /api/v1/patients/:id/guardians
  * @authentication Required (JWT)
  * @permissions Authenticated users
- * @urlParams {string} id - Patient ID (UUID)
+ * @urlParams {string} id - Patient ID (UUID or human-friendly ID)
  * @queryParams {number} [page=1], {number} [limit=20], {string} [sort_by], {string} [order]
  * @returns {Object} Paginated list of patient guardians
  * @throws 401 Unauthorized
@@ -149,7 +149,7 @@ router.get(
  * @route /api/v1/patients/:id/allergies
  * @authentication Required (JWT)
  * @permissions Authenticated users
- * @urlParams {string} id - Patient ID (UUID)
+ * @urlParams {string} id - Patient ID (UUID or human-friendly ID)
  * @queryParams {number} [page=1], {number} [limit=20], {string} [sort_by], {string} [order]
  * @returns {Object} Paginated list of patient allergies
  * @throws 401 Unauthorized
@@ -169,7 +169,7 @@ router.get(
  * @route /api/v1/patients/:id/medical-histories
  * @authentication Required (JWT)
  * @permissions Authenticated users
- * @urlParams {string} id - Patient ID (UUID)
+ * @urlParams {string} id - Patient ID (UUID or human-friendly ID)
  * @queryParams {number} [page=1], {number} [limit=20], {string} [sort_by], {string} [order]
  * @returns {Object} Paginated list of patient medical histories
  * @throws 401 Unauthorized
@@ -189,7 +189,7 @@ router.get(
  * @route /api/v1/patients/:id/documents
  * @authentication Required (JWT)
  * @permissions Authenticated users
- * @urlParams {string} id - Patient ID (UUID)
+ * @urlParams {string} id - Patient ID (UUID or human-friendly ID)
  * @queryParams {number} [page=1], {number} [limit=20], {string} [sort_by], {string} [order]
  * @returns {Object} Paginated list of patient documents
  * @throws 401 Unauthorized
@@ -238,7 +238,7 @@ router.post(
  * @route /api/v1/patients/:id
  * @authentication Required (JWT)
  * @permissions Authenticated users
- * @urlParams {string} id - Patient ID (UUID)
+ * @urlParams {string} id - Patient ID (UUID or human-friendly ID)
  * @queryParams None
  * @bodyParams {string} [facility_id] - Facility ID (UUID)
  * @bodyParams {string} [first_name] - Patient first name (max 120 chars)
@@ -267,7 +267,7 @@ router.put(
  * @route /api/v1/patients/:id
  * @authentication Required (JWT)
  * @permissions Authenticated users
- * @urlParams {string} id - Patient ID (UUID)
+ * @urlParams {string} id - Patient ID (UUID or human-friendly ID)
  * @queryParams None
  * @bodyParams None
  * @returns {void} 204 No Content

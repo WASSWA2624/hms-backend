@@ -10,19 +10,41 @@
 const prisma = require('@prisma/client');
 const { HttpError } = require('@lib/errors');
 
+const normalizeScopeFilters = (scope = {}) => {
+  const normalized = {};
+
+  if (typeof scope.tenant_id === 'string' && scope.tenant_id.trim()) {
+    normalized.tenant_id = scope.tenant_id.trim();
+  }
+  if (typeof scope.facility_id === 'string' && scope.facility_id.trim()) {
+    normalized.facility_id = scope.facility_id.trim();
+  }
+
+  return normalized;
+};
+
+const resolveCanonicalPatientId = async (id, scope = {}) => {
+  const existing = await findById(id, {}, scope);
+  return existing?.id || null;
+};
+
 /**
  * Find patient by ID
  *
  * @param {string} id - Patient ID
  * @param {Object} include - Relations to include
+ * @param {Object} scope - Optional scope filters (tenant_id, facility_id)
  * @returns {Promise<Object|null>} Patient object or null
  */
-const findById = async (id, include = {}) => {
+const findById = async (id, include = {}, scope = {}) => {
   try {
+    const scopeFilters = normalizeScopeFilters(scope);
+
     return await prisma.patient.findFirst({
       where: {
         id,
-        deleted_at: null
+        deleted_at: null,
+        ...scopeFilters
       },
       include
     });
@@ -111,15 +133,24 @@ const create = async (data) => {
  *
  * @param {string} id - Patient ID
  * @param {Object} data - Update data
+ * @param {Object} scope - Optional scope filters (tenant_id, facility_id)
  * @returns {Promise<Object>} Updated patient
  */
-const update = async (id, data) => {
+const update = async (id, data, scope = {}) => {
   try {
+    const canonicalId = await resolveCanonicalPatientId(id, scope);
+    if (!canonicalId) {
+      throw new HttpError('errors.patient.not_found', 404);
+    }
+
     return await prisma.patient.update({
-      where: { id },
+      where: { id: canonicalId },
       data
     });
   } catch (error) {
+    if (error instanceof HttpError) {
+      throw error;
+    }
     if (error.code === 'P2025') {
       throw new HttpError('errors.patient.not_found', 404);
     }
@@ -142,17 +173,26 @@ const update = async (id, data) => {
  * Per prisma.mdc: Only soft deletes allowed
  *
  * @param {string} id - Patient ID
+ * @param {Object} scope - Optional scope filters (tenant_id, facility_id)
  * @returns {Promise<Object>} Deleted patient
  */
-const softDelete = async (id) => {
+const softDelete = async (id, scope = {}) => {
   try {
+    const canonicalId = await resolveCanonicalPatientId(id, scope);
+    if (!canonicalId) {
+      throw new HttpError('errors.patient.not_found', 404);
+    }
+
     return await prisma.patient.update({
-      where: { id },
+      where: { id: canonicalId },
       data: {
         deleted_at: new Date()
       }
     });
   } catch (error) {
+    if (error instanceof HttpError) {
+      throw error;
+    }
     if (error.code === 'P2025') {
       throw new HttpError('errors.patient.not_found', 404);
     }

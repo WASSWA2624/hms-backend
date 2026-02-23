@@ -343,8 +343,21 @@ const decoratePatientContext = (patient) => {
   };
 };
 
-const ensurePatientExists = async (id) => {
-  const patient = await patientRepository.findById(id);
+const normalizeScopeValue = (value) =>
+  typeof value === 'string' && value.trim() ? value.trim() : null;
+
+const buildPatientScope = (scope = {}) => {
+  const tenantId = normalizeScopeValue(scope.tenant_id);
+  const facilityId = normalizeScopeValue(scope.facility_id);
+
+  return {
+    ...(tenantId ? { tenant_id: tenantId } : {}),
+    ...(facilityId ? { facility_id: facilityId } : {})
+  };
+};
+
+const ensurePatientExists = async (id, scope = {}) => {
+  const patient = await patientRepository.findById(id, {}, buildPatientScope(scope));
   if (!patient) {
     throw new HttpError('errors.patient.not_found', 404);
   }
@@ -406,9 +419,13 @@ const listPatients = async (filters, page, limit, sortBy, order, userId, ipAddre
  * @param {string} ipAddress - User IP for audit
  * @returns {Promise<Object>} Patient data
  */
-const getPatientById = async (id, userId, ipAddress) => {
+const getPatientById = async (id, userId, ipAddress, scope = {}) => {
   try {
-    const patient = await patientRepository.findById(id, PATIENT_RELATION_CONTEXT_INCLUDE);
+    const patient = await patientRepository.findById(
+      id,
+      PATIENT_RELATION_CONTEXT_INCLUDE,
+      buildPatientScope(scope)
+    );
 
     if (!patient) {
       throw new HttpError('errors.patient.not_found', 404);
@@ -461,16 +478,18 @@ const createPatient = async (data, userId, ipAddress) => {
  * @param {string} ipAddress - User IP for audit
  * @returns {Promise<Object>} Updated patient
  */
-const updatePatient = async (id, data, userId, ipAddress) => {
+const updatePatient = async (id, data, userId, ipAddress, scope = {}) => {
   try {
+    const patientScope = buildPatientScope(scope);
+
     // Get current state for audit
-    const before = await patientRepository.findById(id);
+    const before = await patientRepository.findById(id, {}, patientScope);
 
     if (!before) {
       throw new HttpError('errors.patient.not_found', 404);
     }
 
-    const patient = await patientRepository.update(id, data);
+    const patient = await patientRepository.update(id, data, patientScope);
 
     // Create audit log (non-blocking)
     createAuditLog({
@@ -498,16 +517,18 @@ const updatePatient = async (id, data, userId, ipAddress) => {
  * @param {string} ipAddress - User IP for audit
  * @returns {Promise<void>}
  */
-const deletePatient = async (id, userId, ipAddress) => {
+const deletePatient = async (id, userId, ipAddress, scope = {}) => {
   try {
+    const patientScope = buildPatientScope(scope);
+
     // Get current state for audit
-    const before = await patientRepository.findById(id);
+    const before = await patientRepository.findById(id, {}, patientScope);
 
     if (!before) {
       throw new HttpError('errors.patient.not_found', 404);
     }
 
-    await patientRepository.softDelete(id);
+    await patientRepository.softDelete(id, patientScope);
 
     // Create audit log (non-blocking)
     createAuditLog({
@@ -536,12 +557,21 @@ const deletePatient = async (id, userId, ipAddress) => {
  * @param {string} ipAddress - User IP for audit
  * @returns {Promise<Object>} Patient identifiers with pagination
  */
-const getPatientIdentifiers = async (patientId, page = 1, limit = 20, sortBy = 'created_at', order = 'desc', userId, ipAddress) => {
+const getPatientIdentifiers = async (
+  patientId,
+  page = 1,
+  limit = 20,
+  sortBy = 'created_at',
+  order = 'desc',
+  userId,
+  ipAddress,
+  scope = {}
+) => {
   try {
-    await ensurePatientExists(patientId);
+    const patient = await ensurePatientExists(patientId, scope);
     const patientIdentifierService = require('@services/patient-identifier/patient-identifier.service');
     const result = await patientIdentifierService.listPatientIdentifiers(
-      { patient_id: patientId },
+      { patient_id: patient.id },
       page,
       limit,
       sortBy,
@@ -563,12 +593,21 @@ const getPatientIdentifiers = async (patientId, page = 1, limit = 20, sortBy = '
 /**
  * Get patient contacts (nested resource)
  */
-const getPatientContacts = async (patientId, page = 1, limit = 20, sortBy = 'created_at', order = 'desc', userId, ipAddress) => {
+const getPatientContacts = async (
+  patientId,
+  page = 1,
+  limit = 20,
+  sortBy = 'created_at',
+  order = 'desc',
+  userId,
+  ipAddress,
+  scope = {}
+) => {
   try {
-    await ensurePatientExists(patientId);
+    const patient = await ensurePatientExists(patientId, scope);
     const patientContactService = require('@services/patient-contact/patient-contact.service');
     const result = await patientContactService.listPatientContacts(
-      { patient_id: patientId },
+      { patient_id: patient.id },
       page,
       limit,
       sortBy,
@@ -590,12 +629,21 @@ const getPatientContacts = async (patientId, page = 1, limit = 20, sortBy = 'cre
 /**
  * Get patient guardians (nested resource)
  */
-const getPatientGuardians = async (patientId, page = 1, limit = 20, sortBy = 'created_at', order = 'desc', userId, ipAddress) => {
+const getPatientGuardians = async (
+  patientId,
+  page = 1,
+  limit = 20,
+  sortBy = 'created_at',
+  order = 'desc',
+  userId,
+  ipAddress,
+  scope = {}
+) => {
   try {
-    await ensurePatientExists(patientId);
+    const patient = await ensurePatientExists(patientId, scope);
     const patientGuardianService = require('@services/patient-guardian/patient-guardian.service');
     const result = await patientGuardianService.listPatientGuardians(
-      { patient_id: patientId },
+      { patient_id: patient.id },
       page,
       limit,
       sortBy,
@@ -617,12 +665,19 @@ const getPatientGuardians = async (patientId, page = 1, limit = 20, sortBy = 'cr
 /**
  * Get patient allergies (nested resource)
  */
-const getPatientAllergies = async (patientId, page = 1, limit = 20, sortBy = 'created_at', order = 'desc') => {
+const getPatientAllergies = async (
+  patientId,
+  page = 1,
+  limit = 20,
+  sortBy = 'created_at',
+  order = 'desc',
+  scope = {}
+) => {
   try {
-    await ensurePatientExists(patientId);
+    const patient = await ensurePatientExists(patientId, scope);
     const patientAllergyService = require('@services/patient-allergy/patient-allergy.service');
     const result = await patientAllergyService.listPatientAllergies(
-      { patient_id: patientId },
+      { patient_id: patient.id },
       page,
       limit,
       sortBy,
@@ -642,12 +697,19 @@ const getPatientAllergies = async (patientId, page = 1, limit = 20, sortBy = 'cr
 /**
  * Get patient medical histories (nested resource)
  */
-const getPatientMedicalHistories = async (patientId, page = 1, limit = 20, sortBy = 'created_at', order = 'desc') => {
+const getPatientMedicalHistories = async (
+  patientId,
+  page = 1,
+  limit = 20,
+  sortBy = 'created_at',
+  order = 'desc',
+  scope = {}
+) => {
   try {
-    await ensurePatientExists(patientId);
+    const patient = await ensurePatientExists(patientId, scope);
     const patientMedicalHistoryService = require('@services/patient-medical-history/patient-medical-history.service');
     const result = await patientMedicalHistoryService.listPatientMedicalHistories(
-      { patient_id: patientId },
+      { patient_id: patient.id },
       page,
       limit,
       sortBy,
@@ -667,12 +729,19 @@ const getPatientMedicalHistories = async (patientId, page = 1, limit = 20, sortB
 /**
  * Get patient documents (nested resource)
  */
-const getPatientDocuments = async (patientId, page = 1, limit = 20, sortBy = 'created_at', order = 'desc') => {
+const getPatientDocuments = async (
+  patientId,
+  page = 1,
+  limit = 20,
+  sortBy = 'created_at',
+  order = 'desc',
+  scope = {}
+) => {
   try {
-    await ensurePatientExists(patientId);
+    const patient = await ensurePatientExists(patientId, scope);
     const patientDocumentService = require('@services/patient-document/patient-document.service');
     const result = await patientDocumentService.listPatientDocuments(
-      { patient_id: patientId },
+      { patient_id: patient.id },
       page,
       limit,
       sortBy,

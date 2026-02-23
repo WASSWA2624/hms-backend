@@ -1431,6 +1431,7 @@ model patient {
   contact_entries            contact[]                 @relation("patient_contact")
   adverse_events             adverse_event[]
 
+  @@unique([facility_id, human_friendly_id])
   @@index([tenant_id])
   @@index([facility_id])
   @@index([is_active])

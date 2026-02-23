@@ -12,6 +12,11 @@ const { asyncHandler } = require('@lib/async');
 const { sendSuccess, sendPaginated, sendNoContent } = require('@lib/response');
 const { DEFAULT_PAGE, DEFAULT_PAGE_LIMIT } = require('@config/constants');
 
+const buildPatientScope = (req = {}) => ({
+  tenant_id: req.user?.tenant_id || req.query?.tenant_id,
+  facility_id: req.user?.facility_id || req.query?.facility_id
+});
+
 /**
  * List patients with pagination
  * GET /api/v1/patients
@@ -94,7 +99,7 @@ const getPatientById = asyncHandler(async (req, res) => {
   const userId = req.user?.id;
   const ipAddress = req.ip;
 
-  const patient = await patientService.getPatientById(id, userId, ipAddress);
+  const patient = await patientService.getPatientById(id, userId, ipAddress, buildPatientScope(req));
 
   sendSuccess(res, 200, 'messages.patient.get.success', patient);
 });
@@ -127,7 +132,13 @@ const updatePatient = asyncHandler(async (req, res) => {
   const userId = req.user?.id;
   const ipAddress = req.ip;
 
-  const patient = await patientService.updatePatient(id, req.body, userId, ipAddress);
+  const patient = await patientService.updatePatient(
+    id,
+    req.body,
+    userId,
+    ipAddress,
+    buildPatientScope(req)
+  );
 
   sendSuccess(res, 200, 'messages.patient.update.success', patient);
 });
@@ -144,7 +155,7 @@ const deletePatient = asyncHandler(async (req, res) => {
   const userId = req.user?.id;
   const ipAddress = req.ip;
 
-  await patientService.deletePatient(id, userId, ipAddress);
+  await patientService.deletePatient(id, userId, ipAddress, buildPatientScope(req));
 
   sendNoContent(res);
 });
@@ -169,7 +180,8 @@ const getPatientIdentifiers = asyncHandler(async (req, res) => {
     sort_by,
     order,
     req.user?.id,
-    req.ip
+    req.ip,
+    buildPatientScope(req)
   );
 
   sendPaginated(res, 'messages.patient.identifiers.list.success', result.patientIdentifiers, result.pagination);
@@ -195,7 +207,8 @@ const getPatientContacts = asyncHandler(async (req, res) => {
     sort_by,
     order,
     req.user?.id,
-    req.ip
+    req.ip,
+    buildPatientScope(req)
   );
 
   sendPaginated(res, 'messages.patient.contacts.list.success', result.patientContacts, result.pagination);
@@ -221,7 +234,8 @@ const getPatientGuardians = asyncHandler(async (req, res) => {
     sort_by,
     order,
     req.user?.id,
-    req.ip
+    req.ip,
+    buildPatientScope(req)
   );
 
   sendPaginated(res, 'messages.patient.guardians.list.success', result.patientGuardians, result.pagination);
@@ -245,7 +259,8 @@ const getPatientAllergies = asyncHandler(async (req, res) => {
     parseInt(page),
     parseInt(limit),
     sort_by,
-    order
+    order,
+    buildPatientScope(req)
   );
 
   sendPaginated(res, 'messages.patient.allergies.list.success', result.patientAllergies, result.pagination);
@@ -269,7 +284,8 @@ const getPatientMedicalHistories = asyncHandler(async (req, res) => {
     parseInt(page),
     parseInt(limit),
     sort_by,
-    order
+    order,
+    buildPatientScope(req)
   );
 
   sendPaginated(
@@ -298,7 +314,8 @@ const getPatientDocuments = asyncHandler(async (req, res) => {
     parseInt(page),
     parseInt(limit),
     sort_by,
-    order
+    order,
+    buildPatientScope(req)
   );
 
   sendPaginated(res, 'messages.patient.documents.list.success', result.patientDocuments, result.pagination);

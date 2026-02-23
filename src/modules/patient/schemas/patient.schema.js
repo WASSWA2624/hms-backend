@@ -54,6 +54,16 @@ const searchQuerySchema = z
   .optional()
   .transform((value) => (value ? value : undefined));
 
+const patientFriendlyIdSchema = z
+  .string()
+  .trim()
+  .min(2)
+  .max(64)
+  .regex(/^(?=.*\d)[A-Za-z][A-Za-z0-9_-]*$/, 'Invalid patient identifier format')
+  .transform((value) => value.toUpperCase());
+
+const patientRouteIdSchema = z.union([uuidSchema, patientFriendlyIdSchema]);
+
 // ==================== Body Schemas ====================
 
 /**
@@ -91,7 +101,7 @@ const updatePatientSchema = z.object({
  * Used for GET /:id, PUT /:id, and DELETE /:id endpoints
  */
 const patientIdParamsSchema = z.object({
-  id: uuidSchema
+  id: patientRouteIdSchema
 });
 
 // ==================== Query Params ====================

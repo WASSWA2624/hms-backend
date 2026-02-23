@@ -10,10 +10,14 @@ const patientService = require('@services/patient/patient.service');
 const patientRepository = require('@repositories/patient/patient.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
+const patientDocumentService = require('@services/patient-document/patient-document.service');
 
 // Mock dependencies
 jest.mock('@repositories/patient/patient.repository');
 jest.mock('@lib/audit');
+jest.mock('@services/patient-document/patient-document.service', () => ({
+  listPatientDocuments: jest.fn()
+}));
 
 describe('Patient Service', () => {
   const mockUserId = 'user-123';
@@ -219,7 +223,11 @@ describe('Patient Service', () => {
       };
       patientRepository.findById.mockResolvedValue(mockPatient);
 
-      const result = await patientService.getPatientById('123', mockUserId, mockIpAddress);
+      const scope = {
+        tenant_id: '550e8400-e29b-41d4-a716-446655440020',
+        facility_id: '550e8400-e29b-41d4-a716-446655440021'
+      };
+      const result = await patientService.getPatientById('PAT0000001', mockUserId, mockIpAddress, scope);
 
       expect(result).toEqual(
         expect.objectContaining({
@@ -237,11 +245,12 @@ describe('Patient Service', () => {
         })
       );
       expect(patientRepository.findById).toHaveBeenCalledWith(
-        '123',
+        'PAT0000001',
         expect.objectContaining({
           tenant: expect.any(Object),
           facility: expect.any(Object)
-        })
+        }),
+        scope
       );
     });
 
@@ -251,6 +260,39 @@ describe('Patient Service', () => {
       await expect(
         patientService.getPatientById('nonexistent', mockUserId, mockIpAddress)
       ).rejects.toThrow(HttpError);
+    });
+  });
+
+  describe('getPatientDocuments', () => {
+    it('should resolve route identifier to canonical patient UUID before listing documents', async () => {
+      patientRepository.findById.mockResolvedValue({ id: '550e8400-e29b-41d4-a716-446655440030' });
+      patientDocumentService.listPatientDocuments.mockResolvedValue({
+        items: [{ id: 'doc-1' }],
+        pagination: { page: 1, limit: 20, total: 1, totalPages: 1, hasNextPage: false, hasPreviousPage: false }
+      });
+
+      const result = await patientService.getPatientDocuments(
+        'PAT0000001',
+        1,
+        20,
+        'created_at',
+        'desc',
+        { facility_id: '550e8400-e29b-41d4-a716-446655440021' }
+      );
+
+      expect(patientRepository.findById).toHaveBeenCalledWith(
+        'PAT0000001',
+        {},
+        { facility_id: '550e8400-e29b-41d4-a716-446655440021' }
+      );
+      expect(patientDocumentService.listPatientDocuments).toHaveBeenCalledWith(
+        { patient_id: '550e8400-e29b-41d4-a716-446655440030' },
+        1,
+        20,
+        'created_at',
+        'desc'
+      );
+      expect(result.patientDocuments).toEqual([{ id: 'doc-1' }]);
     });
   });
 
@@ -305,7 +347,7 @@ describe('Patient Service', () => {
 
       await patientService.deletePatient('123', mockUserId, mockIpAddress);
 
-      expect(patientRepository.softDelete).toHaveBeenCalledWith('123');
+      expect(patientRepository.softDelete).toHaveBeenCalledWith('123', {});
       expect(createAuditLog).toHaveBeenCalledWith(expect.objectContaining({
         action: 'DELETE',
         entity: 'patient'
