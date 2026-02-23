@@ -10,18 +10,67 @@
 const prisma = require('@prisma/client');
 const { HttpError } = require('@lib/errors');
 
-const normalizeScopeFilters = (scope = {}) => {
-  const normalized = {};
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-  if (typeof scope.tenant_id === 'string' && scope.tenant_id.trim()) {
-    normalized.tenant_id = scope.tenant_id.trim();
-  }
-  if (typeof scope.facility_id === 'string' && scope.facility_id.trim()) {
-    normalized.facility_id = scope.facility_id.trim();
+const normalizeIdentifier = (value) =>
+  typeof value === 'string' ? value.trim() : '';
+
+const isUuid = (value) => UUID_REGEX.test(value);
+
+const normalizeScopeValue = (value) =>
+  typeof value === 'string' ? value.trim() : '';
+
+const resolveScopeFilter = (value, relationName, foreignKeyName) => {
+  const normalized = normalizeScopeValue(value);
+  if (!normalized) return null;
+
+  if (isUuid(normalized)) {
+    return {
+      type: 'uuid',
+      value: normalized,
+      where: { [foreignKeyName]: normalized }
+    };
   }
 
-  return normalized;
+  return {
+    type: 'friendly_id',
+    value: normalized.toUpperCase(),
+    where: {
+      [relationName]: {
+        human_friendly_id: normalized.toUpperCase()
+      }
+    }
+  };
 };
+
+const buildScopeState = (scope = {}) => {
+  const tenantScope = resolveScopeFilter(scope.tenant_id, 'tenant', 'tenant_id');
+  const facilityScope = resolveScopeFilter(scope.facility_id, 'facility', 'facility_id');
+
+  return {
+    tenantScope,
+    facilityScope,
+    primaryWhere: {
+      ...(tenantScope?.where || {}),
+      ...(facilityScope?.where || {})
+    }
+  };
+};
+
+const buildIdentifierFilter = (identifier) =>
+  isUuid(identifier)
+    ? { id: identifier }
+    : { human_friendly_id: identifier.toUpperCase() };
+
+const findFirstByIdentifier = async (identifier, include = {}, scopeFilters = {}) =>
+  prisma.patient.findFirst({
+    where: {
+      deleted_at: null,
+      ...scopeFilters,
+      ...buildIdentifierFilter(identifier)
+    },
+    include
+  });
 
 const resolveCanonicalPatientId = async (id, scope = {}) => {
   const existing = await findById(id, {}, scope);
@@ -38,16 +87,32 @@ const resolveCanonicalPatientId = async (id, scope = {}) => {
  */
 const findById = async (id, include = {}, scope = {}) => {
   try {
-    const scopeFilters = normalizeScopeFilters(scope);
+    const identifier = normalizeIdentifier(id);
+    if (!identifier) return null;
 
-    return await prisma.patient.findFirst({
-      where: {
-        id,
-        deleted_at: null,
-        ...scopeFilters
-      },
-      include
-    });
+    const scopeState = buildScopeState(scope);
+    const patient = await findFirstByIdentifier(identifier, include, scopeState.primaryWhere);
+    if (patient) return patient;
+
+    const hasTenantScope = Boolean(scopeState.tenantScope);
+    const hasFacilityScope = Boolean(scopeState.facilityScope);
+    if (hasTenantScope && hasFacilityScope) {
+      // Some tenants keep "unassigned" patients with null facility.
+      const tenantScopedUnassignedPatient = await findFirstByIdentifier(identifier, include, {
+        ...(scopeState.tenantScope?.where || {}),
+        facility_id: null
+      });
+      if (tenantScopedUnassignedPatient) return tenantScopedUnassignedPatient;
+
+      // Final fallback: keep tenant scoping, but relax facility scoping so
+      // human-friendly routes can still resolve records created in another facility.
+      const tenantScopedPatient = await findFirstByIdentifier(identifier, include, {
+        ...(scopeState.tenantScope?.where || {})
+      });
+      if (tenantScopedPatient) return tenantScopedPatient;
+    }
+
+    return null;
   } catch (error) {
     throw new HttpError('errors.database.unexpected', 500, [{ originalError: error.message }]);
   }

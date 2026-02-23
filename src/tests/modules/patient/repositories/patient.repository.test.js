@@ -28,13 +28,20 @@ describe('Patient Repository', () => {
 
   describe('findById', () => {
     it('should find patient by id', async () => {
-      const mockPatient = { id: '123', first_name: 'John', last_name: 'Doe' };
+      const mockPatient = {
+        id: '550e8400-e29b-41d4-a716-446655440001',
+        first_name: 'John',
+        last_name: 'Doe'
+      };
       prisma.patient.findFirst.mockResolvedValue(mockPatient);
 
-      const result = await patientRepository.findById('123');
+      const result = await patientRepository.findById('550e8400-e29b-41d4-a716-446655440001');
       expect(result).toEqual(mockPatient);
       expect(prisma.patient.findFirst).toHaveBeenCalledWith({
-        where: { id: '123', deleted_at: null },
+        where: {
+          id: '550e8400-e29b-41d4-a716-446655440001',
+          deleted_at: null
+        },
         include: {}
       });
     });
@@ -51,7 +58,7 @@ describe('Patient Repository', () => {
       prisma.patient.findFirst.mockResolvedValue(mockPatient);
 
       await patientRepository.findById(
-        'PAT0000001',
+        'pat0000001',
         {},
         {
           tenant_id: '550e8400-e29b-41d4-a716-446655440010',
@@ -61,10 +68,124 @@ describe('Patient Repository', () => {
 
       expect(prisma.patient.findFirst).toHaveBeenCalledWith({
         where: {
-          id: 'PAT0000001',
+          human_friendly_id: 'PAT0000001',
           deleted_at: null,
           tenant_id: '550e8400-e29b-41d4-a716-446655440010',
           facility_id: '550e8400-e29b-41d4-a716-446655440011'
+        },
+        include: {}
+      });
+    });
+
+    it('should fall back to tenant-scoped unassigned facility records', async () => {
+      const mockPatient = { id: '123', first_name: 'John', facility_id: null };
+      prisma.patient.findFirst
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(mockPatient);
+
+      const result = await patientRepository.findById(
+        'PAT0000001',
+        {},
+        {
+          tenant_id: '550e8400-e29b-41d4-a716-446655440010',
+          facility_id: '550e8400-e29b-41d4-a716-446655440011'
+        }
+      );
+
+      expect(result).toEqual(mockPatient);
+      expect(prisma.patient.findFirst).toHaveBeenNthCalledWith(1, {
+        where: {
+          human_friendly_id: 'PAT0000001',
+          deleted_at: null,
+          tenant_id: '550e8400-e29b-41d4-a716-446655440010',
+          facility_id: '550e8400-e29b-41d4-a716-446655440011'
+        },
+        include: {}
+      });
+      expect(prisma.patient.findFirst).toHaveBeenNthCalledWith(2, {
+        where: {
+          human_friendly_id: 'PAT0000001',
+          deleted_at: null,
+          tenant_id: '550e8400-e29b-41d4-a716-446655440010',
+          facility_id: null
+        },
+        include: {}
+      });
+    });
+
+    it('should fall back to tenant-scoped records when facility-scoped lookup misses', async () => {
+      const mockPatient = {
+        id: '123',
+        first_name: 'John',
+        facility_id: '550e8400-e29b-41d4-a716-446655440099'
+      };
+      prisma.patient.findFirst
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(mockPatient);
+
+      const result = await patientRepository.findById(
+        'PAT0000001',
+        {},
+        {
+          tenant_id: '550e8400-e29b-41d4-a716-446655440010',
+          facility_id: '550e8400-e29b-41d4-a716-446655440011'
+        }
+      );
+
+      expect(result).toEqual(mockPatient);
+      expect(prisma.patient.findFirst).toHaveBeenNthCalledWith(1, {
+        where: {
+          human_friendly_id: 'PAT0000001',
+          deleted_at: null,
+          tenant_id: '550e8400-e29b-41d4-a716-446655440010',
+          facility_id: '550e8400-e29b-41d4-a716-446655440011'
+        },
+        include: {}
+      });
+      expect(prisma.patient.findFirst).toHaveBeenNthCalledWith(2, {
+        where: {
+          human_friendly_id: 'PAT0000001',
+          deleted_at: null,
+          tenant_id: '550e8400-e29b-41d4-a716-446655440010',
+          facility_id: null
+        },
+        include: {}
+      });
+      expect(prisma.patient.findFirst).toHaveBeenNthCalledWith(3, {
+        where: {
+          human_friendly_id: 'PAT0000001',
+          deleted_at: null,
+          tenant_id: '550e8400-e29b-41d4-a716-446655440010'
+        },
+        include: {}
+      });
+    });
+
+    it('should support tenant and facility scope with human-friendly IDs', async () => {
+      const mockPatient = { id: '123', first_name: 'John' };
+      prisma.patient.findFirst.mockResolvedValue(mockPatient);
+
+      const result = await patientRepository.findById(
+        'PAT0000001',
+        {},
+        {
+          tenant_id: 'TEN0000001',
+          facility_id: 'FAC0000001'
+        }
+      );
+
+      expect(result).toEqual(mockPatient);
+      expect(prisma.patient.findFirst).toHaveBeenCalledWith({
+        where: {
+          human_friendly_id: 'PAT0000001',
+          deleted_at: null,
+          tenant: {
+            human_friendly_id: 'TEN0000001'
+          },
+          facility: {
+            human_friendly_id: 'FAC0000001'
+          }
         },
         include: {}
       });

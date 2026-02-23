@@ -324,10 +324,26 @@ describe('Patient Service', () => {
       const result = await patientService.updatePatient('123', { first_name: 'Jane' }, mockUserId, mockIpAddress);
 
       expect(result).toEqual(mockAfter);
+      expect(patientRepository.update).toHaveBeenCalledWith('123', { first_name: 'Jane' }, {});
       expect(createAuditLog).toHaveBeenCalledWith(expect.objectContaining({
         action: 'UPDATE',
         diff: { before: mockBefore, after: mockAfter }
       }));
+    });
+
+    it('should resolve human-friendly route id to canonical UUID for update', async () => {
+      const mockBefore = { id: '550e8400-e29b-41d4-a716-446655440050', first_name: 'John' };
+      const mockAfter = { id: '550e8400-e29b-41d4-a716-446655440050', first_name: 'Jane' };
+      patientRepository.findById.mockResolvedValue(mockBefore);
+      patientRepository.update.mockResolvedValue(mockAfter);
+
+      await patientService.updatePatient('PAT0000001', { first_name: 'Jane' }, mockUserId, mockIpAddress);
+
+      expect(patientRepository.update).toHaveBeenCalledWith(
+        '550e8400-e29b-41d4-a716-446655440050',
+        { first_name: 'Jane' },
+        {}
+      );
     });
 
     it('should throw HttpError if patient not found', async () => {
@@ -350,8 +366,27 @@ describe('Patient Service', () => {
       expect(patientRepository.softDelete).toHaveBeenCalledWith('123', {});
       expect(createAuditLog).toHaveBeenCalledWith(expect.objectContaining({
         action: 'DELETE',
-        entity: 'patient'
+        entity: 'patient',
+        entity_id: '123'
       }));
+    });
+
+    it('should resolve human-friendly route id to canonical UUID for delete', async () => {
+      const mockPatient = { id: '550e8400-e29b-41d4-a716-446655440051', first_name: 'John' };
+      patientRepository.findById.mockResolvedValue(mockPatient);
+      patientRepository.softDelete.mockResolvedValue({ ...mockPatient, deleted_at: new Date() });
+
+      await patientService.deletePatient('PAT0000001', mockUserId, mockIpAddress);
+
+      expect(patientRepository.softDelete).toHaveBeenCalledWith(
+        '550e8400-e29b-41d4-a716-446655440051',
+        {}
+      );
+      expect(createAuditLog).toHaveBeenCalledWith(
+        expect.objectContaining({
+          entity_id: '550e8400-e29b-41d4-a716-446655440051'
+        })
+      );
     });
 
     it('should throw HttpError if patient not found', async () => {

@@ -489,7 +489,7 @@ const updatePatient = async (id, data, userId, ipAddress, scope = {}) => {
       throw new HttpError('errors.patient.not_found', 404);
     }
 
-    const patient = await patientRepository.update(id, data, patientScope);
+    const patient = await patientRepository.update(before.id, data, patientScope);
 
     // Create audit log (non-blocking)
     createAuditLog({
@@ -528,14 +528,14 @@ const deletePatient = async (id, userId, ipAddress, scope = {}) => {
       throw new HttpError('errors.patient.not_found', 404);
     }
 
-    await patientRepository.softDelete(id, patientScope);
+    await patientRepository.softDelete(before.id, patientScope);
 
     // Create audit log (non-blocking)
     createAuditLog({
       user_id: userId,
       action: 'DELETE',
       entity: 'patient',
-      entity_id: id,
+      entity_id: before.id,
       diff: { before },
       ip_address: ipAddress
     }).catch(() => {});
