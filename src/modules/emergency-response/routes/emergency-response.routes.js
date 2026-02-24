@@ -11,6 +11,8 @@ const express = require('express');
 const router = express.Router();
 const emergencyResponseController = require('@modules/emergency-response/controllers/emergency-response.controller');
 const { validate } = require('@middlewares/validate.middleware');
+const { authorize } = require('@middlewares/auth.middleware');
+const { PERMISSIONS } = require('@config/permissions');
 const {
   createEmergencyResponseSchema,
   updateEmergencyResponseSchema,
@@ -28,6 +30,7 @@ router.get(
   validate({
     query: listEmergencyResponsesQuerySchema
   }),
+  authorize(PERMISSIONS.EMERGENCY_READ, 'permission'),
   emergencyResponseController.listEmergencyResponses
 );
 
@@ -41,6 +44,7 @@ router.get(
   validate({
     params: emergencyResponseIdParamsSchema
   }),
+  authorize(PERMISSIONS.EMERGENCY_READ, 'permission'),
   emergencyResponseController.getEmergencyResponseById
 );
 
@@ -54,6 +58,7 @@ router.post(
   validate({
     body: createEmergencyResponseSchema
   }),
+  authorize(PERMISSIONS.EMERGENCY_WRITE, 'permission'),
   emergencyResponseController.createEmergencyResponse
 );
 
@@ -68,6 +73,7 @@ router.put(
     params: emergencyResponseIdParamsSchema,
     body: updateEmergencyResponseSchema
   }),
+  authorize(PERMISSIONS.EMERGENCY_WRITE, 'permission'),
   emergencyResponseController.updateEmergencyResponse
 );
 
@@ -81,6 +87,7 @@ router.delete(
   validate({
     params: emergencyResponseIdParamsSchema
   }),
+  authorize(PERMISSIONS.EMERGENCY_DELETE, 'permission'),
   emergencyResponseController.deleteEmergencyResponse
 );
 

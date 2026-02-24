@@ -11,7 +11,8 @@ const express = require('express');
 const router = express.Router();
 const ambulanceDispatchController = require('@controllers/ambulance-dispatch/ambulance-dispatch.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
-const { authenticate } = require('@middlewares/auth.middleware');
+const { authenticate, authorize } = require('@middlewares/auth.middleware');
+const { PERMISSIONS } = require('@config/permissions');
 const {
   createAmbulanceDispatchSchema,
   updateAmbulanceDispatchSchema,
@@ -41,6 +42,7 @@ router.get(
   '/',  validateRequest({ query: listAmbulanceDispatchesQuerySchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.EMERGENCY_READ, 'permission'),
   ambulanceDispatchController.listAmbulanceDispatches
 );
 
@@ -61,6 +63,7 @@ router.get(
   '/:id',  validateRequest({ params: ambulanceDispatchIdParamsSchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.EMERGENCY_READ, 'permission'),
   ambulanceDispatchController.getAmbulanceDispatchById
 );
 
@@ -85,6 +88,7 @@ router.post(
   '/',  validateRequest({ body: createAmbulanceDispatchSchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.EMERGENCY_WRITE, 'permission'),
   ambulanceDispatchController.createAmbulanceDispatch
 );
 
@@ -110,6 +114,7 @@ router.put(
   '/:id',  validateRequest({ params: ambulanceDispatchIdParamsSchema, body: updateAmbulanceDispatchSchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.EMERGENCY_WRITE, 'permission'),
   ambulanceDispatchController.updateAmbulanceDispatch
 );
 
@@ -130,7 +135,9 @@ router.delete(
   '/:id',  validateRequest({ params: ambulanceDispatchIdParamsSchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.EMERGENCY_DELETE, 'permission'),
   ambulanceDispatchController.deleteAmbulanceDispatch
 );
 
 module.exports = router;
+

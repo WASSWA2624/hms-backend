@@ -11,7 +11,8 @@ const express = require('express');
 const router = express.Router();
 const ambulanceTripController = require('@controllers/ambulance-trip/ambulance-trip.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
-const { authenticate } = require('@middlewares/auth.middleware');
+const { authenticate, authorize } = require('@middlewares/auth.middleware');
+const { PERMISSIONS } = require('@config/permissions');
 const {
   createAmbulanceTripSchema,
   updateAmbulanceTripSchema,
@@ -40,6 +41,7 @@ router.get(
   '/',  validateRequest({ query: listAmbulanceTripsQuerySchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.EMERGENCY_READ, 'permission'),
   ambulanceTripController.listAmbulanceTrips
 );
 
@@ -60,6 +62,7 @@ router.get(
   '/:id',  validateRequest({ params: ambulanceTripIdParamsSchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.EMERGENCY_READ, 'permission'),
   ambulanceTripController.getAmbulanceTripById
 );
 
@@ -84,6 +87,7 @@ router.post(
   '/',  validateRequest({ body: createAmbulanceTripSchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.EMERGENCY_WRITE, 'permission'),
   ambulanceTripController.createAmbulanceTrip
 );
 
@@ -109,6 +113,7 @@ router.put(
   '/:id',  validateRequest({ params: ambulanceTripIdParamsSchema, body: updateAmbulanceTripSchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.EMERGENCY_WRITE, 'permission'),
   ambulanceTripController.updateAmbulanceTrip
 );
 
@@ -129,7 +134,9 @@ router.delete(
   '/:id',  validateRequest({ params: ambulanceTripIdParamsSchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.EMERGENCY_DELETE, 'permission'),
   ambulanceTripController.deleteAmbulanceTrip
 );
 
 module.exports = router;
+

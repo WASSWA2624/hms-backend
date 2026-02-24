@@ -11,6 +11,8 @@ const express = require('express');
 const router = express.Router();
 const triageAssessmentController = require('@modules/triage-assessment/controllers/triage-assessment.controller');
 const { validate } = require('@middlewares/validate.middleware');
+const { authorize } = require('@middlewares/auth.middleware');
+const { PERMISSIONS } = require('@config/permissions');
 const {
   createTriageAssessmentSchema,
   updateTriageAssessmentSchema,
@@ -28,6 +30,7 @@ router.get(
   validate({
     query: listTriageAssessmentsQuerySchema
   }),
+  authorize(PERMISSIONS.EMERGENCY_READ, 'permission'),
   triageAssessmentController.listTriageAssessments
 );
 
@@ -41,6 +44,7 @@ router.get(
   validate({
     params: triageAssessmentIdParamsSchema
   }),
+  authorize(PERMISSIONS.EMERGENCY_READ, 'permission'),
   triageAssessmentController.getTriageAssessmentById
 );
 
@@ -54,6 +58,7 @@ router.post(
   validate({
     body: createTriageAssessmentSchema
   }),
+  authorize(PERMISSIONS.EMERGENCY_WRITE, 'permission'),
   triageAssessmentController.createTriageAssessment
 );
 
@@ -68,6 +73,7 @@ router.put(
     params: triageAssessmentIdParamsSchema,
     body: updateTriageAssessmentSchema
   }),
+  authorize(PERMISSIONS.EMERGENCY_WRITE, 'permission'),
   triageAssessmentController.updateTriageAssessment
 );
 
@@ -81,6 +87,7 @@ router.delete(
   validate({
     params: triageAssessmentIdParamsSchema
   }),
+  authorize(PERMISSIONS.EMERGENCY_DELETE, 'permission'),
   triageAssessmentController.deleteTriageAssessment
 );
 
