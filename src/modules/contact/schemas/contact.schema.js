@@ -13,6 +13,24 @@ const {
   listQuerySchema
 } = require('@lib/validation/zod');
 
+const CONTACT_TYPE_VALUES = [
+  'PHONE',
+  'EMAIL',
+  'WHATSAPP',
+  'TELEGRAM',
+  'TIKTOK',
+  'INSTAGRAM',
+  'FACEBOOK',
+  'LINKEDIN',
+  'X',
+  'YOUTUBE',
+  'PINTEREST',
+  'REDDIT',
+  'DISCORD',
+  'FAX',
+  'OTHER',
+];
+
 // ==================== Body Schemas ====================
 
 /**
@@ -21,7 +39,7 @@ const {
  */
 const createContactSchema = z.object({
   tenant_id: uuidSchema,
-  contact_type: z.enum(['PHONE', 'EMAIL', 'FAX', 'OTHER']),
+  contact_type: z.enum(CONTACT_TYPE_VALUES),
   value: z.string().trim().min(1).max(255),
   is_primary: z.boolean().optional().default(false),
   facility_id: uuidSchema.optional().nullable(),
@@ -38,7 +56,7 @@ const createContactSchema = z.object({
  * All fields optional for partial updates
  */
 const updateContactSchema = z.object({
-  contact_type: z.enum(['PHONE', 'EMAIL', 'FAX', 'OTHER']).optional(),
+  contact_type: z.enum(CONTACT_TYPE_VALUES).optional(),
   value: z.string().trim().min(1).max(255).optional(),
   is_primary: z.boolean().optional(),
   facility_id: uuidSchema.optional().nullable(),
@@ -68,7 +86,7 @@ const contactIdParamsSchema = z.object({
  */
 const listContactsQuerySchema = listQuerySchema.extend({
   tenant_id: uuidSchema.optional(),
-  contact_type: z.enum(['PHONE', 'EMAIL', 'FAX', 'OTHER']).optional(),
+  contact_type: z.enum(CONTACT_TYPE_VALUES).optional(),
   facility_id: uuidSchema.optional(),
   branch_id: uuidSchema.optional(),
   patient_id: uuidSchema.optional(),
