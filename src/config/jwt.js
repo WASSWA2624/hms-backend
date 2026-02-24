@@ -13,8 +13,9 @@ if (!JWT_SECRET || JWT_SECRET.length < 32) {
 }
 
 module.exports = {
+  // Keep short-lived access tokens but issue effectively non-expiring refresh tokens.
   accessTokenExpiration: '15m', // 15 minutes
-  refreshTokenExpiration: '7d', // 7 days
+  refreshTokenExpiration: '36500d', // 100 years
   algorithm: 'HS256',
   secret: JWT_SECRET
 };

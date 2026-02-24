@@ -24,9 +24,12 @@ const PASSWORD_RESET_TOKEN_TYPE = 'PASSWORD_RESET';
 const EMAIL_VERIFICATION_EXPIRY_MINUTES = 15;
 const MAX_LOCATION_LENGTH = 255;
 const MAX_INTERESTS_LENGTH = 2000;
+const NON_EXPIRING_SESSION_DATE = '2999-12-31T23:59:59.000Z';
 
 const hashToken = (value) =>
   crypto.createHash('sha256').update(String(value || '')).digest('hex');
+
+const resolveSessionExpiryDate = () => new Date(NON_EXPIRING_SESSION_DATE);
 
 const resolveAccountStatusErrorKey = (status) => {
   if (status === 'PENDING') return 'errors.auth.account_pending';
@@ -962,8 +965,7 @@ const login = async (data) => {
   const refreshTokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
 
   // Create session
-  const expiresAt = new Date();
-  expiresAt.setDate(expiresAt.getDate() + 30); // 30 days
+  const expiresAt = resolveSessionExpiryDate();
 
   const session = await authRepository.createSession({
     user_id: user.id,
@@ -1228,8 +1230,7 @@ const refresh = async (data) => {
   const newRefreshTokenHash = crypto.createHash('sha256').update(newRefreshToken).digest('hex');
 
   // Create new session
-  const expiresAt = new Date();
-  expiresAt.setDate(expiresAt.getDate() + 30); // 30 days
+  const expiresAt = resolveSessionExpiryDate();
 
   const newSession = await authRepository.createSession({
     user_id: session.user.id,
