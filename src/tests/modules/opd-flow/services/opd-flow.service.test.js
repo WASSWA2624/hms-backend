@@ -2,19 +2,53 @@ const { HttpError } = require('@lib/errors');
 
 jest.mock('@repositories/opd-flow/opd-flow.repository');
 jest.mock('@lib/audit');
+jest.mock('@lib/websocket', () => ({
+  emitToUser: jest.fn(),
+  emitToUsers: jest.fn(),
+  OPD_EVENTS: {
+    OPD_FLOW_UPDATED: 'opd.flow.updated'
+  },
+  NOTIFICATION_EVENTS: {
+    NOTIFICATION_CREATED: 'notification.created'
+  }
+}));
 jest.mock('@prisma/client', () => ({
-  $transaction: jest.fn()
+  $transaction: jest.fn(),
+  user_role: {
+    findMany: jest.fn()
+  },
+  notification: {
+    create: jest.fn()
+  },
+  notification_delivery: {
+    createMany: jest.fn()
+  }
 }));
 
 const opdFlowRepository = require('@repositories/opd-flow/opd-flow.repository');
 const prisma = require('@prisma/client');
 const { createAuditLog } = require('@lib/audit');
+const { emitToUser, emitToUsers } = require('@lib/websocket');
 const opdFlowService = require('@services/opd-flow/opd-flow.service');
 
 describe('opd-flow.service', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     createAuditLog.mockResolvedValue({});
+    prisma.user_role.findMany.mockResolvedValue([]);
+    prisma.notification.create.mockImplementation(async ({ data }) => ({
+      id: `notif-${data.user_id}`,
+      tenant_id: data.tenant_id,
+      user_id: data.user_id,
+      notification_type: data.notification_type,
+      priority: data.priority,
+      title: data.title,
+      message: data.message,
+      read_at: null,
+      created_at: new Date(),
+      updated_at: new Date()
+    }));
+    prisma.notification_delivery.createMany.mockResolvedValue({ count: 0 });
   });
 
   it('lists OPD flows with pagination', async () => {
@@ -585,5 +619,189 @@ describe('opd-flow.service', () => {
         { user_id: 'doc-1' }
       )
     ).rejects.toBeInstanceOf(HttpError);
+  });
+
+  it('emits OPD realtime updates, excluding actor and adding assigned provider', async () => {
+    prisma.user_role.findMany.mockResolvedValue([
+      { user_id: 'doctor-team-1' },
+      { user_id: 'actor-1' }
+    ]);
+    prisma.notification_delivery.createMany.mockResolvedValue({ count: 2 });
+
+    const tx = {
+      encounter: {
+        findFirst: jest
+          .fn()
+          .mockResolvedValueOnce({
+            id: 'enc-1',
+            tenant_id: 'tenant-1',
+            facility_id: 'facility-1',
+            patient_id: 'pat-1',
+            provider_user_id: null,
+            encounter_type: 'OPD',
+            extension_json: {
+              opd_flow: {
+                stage: 'WAITING_DOCTOR_ASSIGNMENT',
+                consultation: {
+                  invoice_id: null,
+                  payment_id: null
+                }
+              }
+            }
+          })
+          .mockResolvedValueOnce({
+            id: 'enc-1',
+            tenant_id: 'tenant-1',
+            facility_id: 'facility-1',
+            patient_id: 'pat-1',
+            provider_user_id: 'doc-assigned-1',
+            encounter_type: 'OPD',
+            extension_json: {
+              opd_flow: {
+                stage: 'WAITING_DOCTOR_REVIEW',
+                next_step: 'DOCTOR_REVIEW',
+                consultation: {
+                  invoice_id: null,
+                  payment_id: null
+                }
+              }
+            }
+          }),
+        update: jest
+          .fn()
+          .mockResolvedValueOnce({ id: 'enc-1' })
+          .mockResolvedValueOnce({ id: 'enc-1', tenant_id: 'tenant-1' })
+      },
+      visit_queue: {
+        update: jest.fn(),
+        findFirst: jest.fn().mockResolvedValue(null)
+      },
+      appointment: {
+        findFirst: jest.fn().mockResolvedValue(null)
+      },
+      invoice: {
+        findFirst: jest.fn().mockResolvedValue(null)
+      },
+      payment: {
+        findFirst: jest.fn().mockResolvedValue(null)
+      },
+      emergency_case: {
+        findFirst: jest.fn().mockResolvedValue(null)
+      },
+      triage_assessment: {
+        findFirst: jest.fn().mockResolvedValue(null)
+      }
+    };
+
+    prisma.$transaction.mockImplementation(async (callback) => callback(tx));
+
+    await opdFlowService.assignDoctor(
+      'enc-1',
+      { provider_user_id: 'doc-assigned-1' },
+      { user_id: 'actor-1', tenant_id: 'tenant-1', facility_id: 'facility-1' }
+    );
+
+    expect(emitToUsers).toHaveBeenCalledWith(
+      expect.arrayContaining(['doctor-team-1', 'doc-assigned-1']),
+      'opd.flow.updated',
+      expect.objectContaining({
+        encounter_id: 'enc-1',
+        stage_to: 'WAITING_DOCTOR_REVIEW',
+        actor_user_id: 'actor-1'
+      })
+    );
+    const sentRecipients = emitToUsers.mock.calls[0][0];
+    expect(sentRecipients).not.toContain('actor-1');
+    expect(prisma.notification.create).toHaveBeenCalledTimes(2);
+    expect(emitToUser).toHaveBeenCalledTimes(2);
+  });
+
+  it('sets HIGH notification priority for emergency-driven OPD transitions', async () => {
+    prisma.user_role.findMany.mockResolvedValue([{ user_id: 'nurse-1' }]);
+
+    const tx = {
+      encounter: {
+        findFirst: jest
+          .fn()
+          .mockResolvedValueOnce({
+            id: 'enc-1',
+            tenant_id: 'tenant-1',
+            facility_id: 'facility-1',
+            patient_id: 'pat-1',
+            provider_user_id: null,
+            encounter_type: 'EMERGENCY',
+            extension_json: {
+              opd_flow: {
+                stage: 'WAITING_VITALS',
+                consultation: {
+                  require_payment: false,
+                  is_paid: false,
+                  invoice_id: null,
+                  payment_id: null
+                }
+              }
+            }
+          })
+          .mockResolvedValueOnce({
+            id: 'enc-1',
+            tenant_id: 'tenant-1',
+            facility_id: 'facility-1',
+            patient_id: 'pat-1',
+            provider_user_id: null,
+            encounter_type: 'EMERGENCY',
+            extension_json: {
+              opd_flow: {
+                stage: 'WAITING_DOCTOR_ASSIGNMENT',
+                next_step: 'ASSIGN_DOCTOR',
+                consultation: {
+                  invoice_id: null,
+                  payment_id: null
+                }
+              }
+            }
+          }),
+        update: jest.fn().mockResolvedValue({ id: 'enc-1', tenant_id: 'tenant-1' })
+      },
+      vital_sign: {
+        createMany: jest.fn()
+      },
+      triage_assessment: {
+        update: jest.fn(),
+        create: jest.fn(),
+        findFirst: jest.fn().mockResolvedValue(null)
+      },
+      visit_queue: {
+        update: jest.fn(),
+        findFirst: jest.fn().mockResolvedValue(null)
+      },
+      appointment: {
+        findFirst: jest.fn().mockResolvedValue(null)
+      },
+      invoice: {
+        findFirst: jest.fn().mockResolvedValue(null)
+      },
+      payment: {
+        findFirst: jest.fn().mockResolvedValue(null)
+      },
+      emergency_case: {
+        findFirst: jest.fn().mockResolvedValue(null)
+      }
+    };
+
+    prisma.$transaction.mockImplementation(async (callback) => callback(tx));
+
+    await opdFlowService.recordVitals(
+      'enc-1',
+      { vitals: [{ vital_type: 'TEMPERATURE', value: '37.5' }] },
+      { user_id: 'actor-1', tenant_id: 'tenant-1', facility_id: 'facility-1' }
+    );
+
+    expect(prisma.notification.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          priority: 'HIGH'
+        })
+      })
+    );
   });
 });

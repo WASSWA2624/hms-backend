@@ -32,8 +32,7 @@ describe('opd-flow.routes contract', () => {
   it('applies validation/auth middleware before handlers', () => {
     const routes = subject.stack.filter((layer) => layer.route);
     routes.forEach((layer) => {
-      expect(layer.route.stack.length).toBeGreaterThanOrEqual(3);
+      expect(layer.route.stack.length).toBeGreaterThanOrEqual(4);
     });
   });
 });
-

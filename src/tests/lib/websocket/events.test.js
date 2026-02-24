@@ -3,6 +3,7 @@ const websocketEvents = require('@lib/websocket/events');
 
 const REQUIRED_GROUPS = [
   'APPOINTMENT_EVENTS',
+  'OPD_EVENTS',
   'VISIT_QUEUE_EVENTS',
   'ADMISSION_BED_EVENTS',
   'CRITICAL_ALERT_EVENTS',
@@ -31,4 +32,3 @@ describe('websocket event catalog', () => {
     expect(uniqueValues.size).toBe(values.length);
   });
 });
-

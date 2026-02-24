@@ -11,6 +11,8 @@ const opdFlowRepository = require('@repositories/opd-flow/opd-flow.repository');
 const prisma = require('@prisma/client');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
+const { emitToUser, emitToUsers, OPD_EVENTS, NOTIFICATION_EVENTS } = require('@lib/websocket');
+const { ROLES } = require('@config/roles');
 
 const STAGES = {
   WAITING_CONSULTATION_PAYMENT: 'WAITING_CONSULTATION_PAYMENT',
@@ -52,6 +54,217 @@ const NEXT_STEP_BY_STAGE = {
   [STAGES.PHARMACY_REQUESTED]: 'DISPOSITION',
   [STAGES.ADMITTED]: null,
   [STAGES.DISCHARGED]: null
+};
+
+const STAGE_ROLE_TEAM_MAP = {
+  [STAGES.WAITING_CONSULTATION_PAYMENT]: [ROLES.RECEPTIONIST, ROLES.BILLING],
+  [STAGES.WAITING_VITALS]: [ROLES.NURSE],
+  [STAGES.WAITING_DOCTOR_ASSIGNMENT]: [ROLES.RECEPTIONIST, ROLES.NURSE],
+  [STAGES.WAITING_DOCTOR_REVIEW]: [ROLES.DOCTOR],
+  [STAGES.LAB_REQUESTED]: [ROLES.LAB_TECH],
+  [STAGES.RADIOLOGY_REQUESTED]: [ROLES.LAB_TECH],
+  [STAGES.LAB_AND_RADIOLOGY_REQUESTED]: [ROLES.LAB_TECH],
+  [STAGES.PHARMACY_REQUESTED]: [ROLES.PHARMACIST],
+  [STAGES.WAITING_DISPOSITION]: [ROLES.DOCTOR],
+  [STAGES.ADMITTED]: [ROLES.RECEPTIONIST, ROLES.OPERATIONS],
+  [STAGES.DISCHARGED]: [ROLES.RECEPTIONIST, ROLES.OPERATIONS]
+};
+
+const formatStageLabel = (stage) =>
+  String(stage || 'UPDATED')
+    .trim()
+    .replace(/_/g, ' ')
+    .toLowerCase();
+
+const buildFlowSummary = (snapshot) => {
+  const flow = snapshot?.flow || {};
+  const timeline = Array.isArray(flow.timeline)
+    ? flow.timeline
+    : Array.isArray(snapshot?.timeline)
+      ? snapshot.timeline
+      : [];
+
+  return {
+    stage: flow.stage || null,
+    next_step: flow.next_step || null,
+    encounter_type: snapshot?.encounter?.encounter_type || null,
+    timeline_count: timeline.length
+  };
+};
+
+const buildRealtimePayload = ({ snapshot, transition, context }) => {
+  const encounterId = snapshot?.encounter?.id || null;
+  const stageTo = transition?.stage_to || snapshot?.flow?.stage || null;
+  const stageFrom = transition?.stage_from || null;
+  const occurredAt =
+    transition?.occurred_at ||
+    snapshot?.encounter?.updated_at?.toISOString?.() ||
+    new Date().toISOString();
+
+  return {
+    encounter_id: encounterId,
+    tenant_id: snapshot?.encounter?.tenant_id || context?.tenant_id || null,
+    facility_id: snapshot?.encounter?.facility_id || context?.facility_id || null,
+    patient_id: snapshot?.encounter?.patient_id || null,
+    provider_user_id: snapshot?.encounter?.provider_user_id || transition?.provider_user_id || null,
+    stage_from: stageFrom,
+    stage_to: stageTo,
+    next_step: snapshot?.flow?.next_step || null,
+    action: transition?.action || 'OPD_FLOW_UPDATED',
+    actor_user_id: context?.user_id || null,
+    occurred_at: occurredAt,
+    flow_summary: buildFlowSummary(snapshot),
+    target_path: encounterId ? `/scheduling/opd-flows/${encounterId}` : '/scheduling/opd-flows'
+  };
+};
+
+const buildOpdNotificationContent = (payload) => {
+  const stageLabel = formatStageLabel(payload?.stage_to || payload?.flow_summary?.stage);
+  const title = `OPD flow update: ${stageLabel}`;
+  const message = `Encounter ${payload.encounter_id || 'unknown'} is now ${stageLabel}.`;
+
+  return {
+    title,
+    message
+  };
+};
+
+const resolveRoleRecipients = async ({ tenantId, facilityId, roles = [] }) => {
+  if (!tenantId || !Array.isArray(roles) || roles.length === 0) {
+    return [];
+  }
+
+  if (!prisma?.user_role?.findMany) {
+    return [];
+  }
+
+  const where = {
+    tenant_id: tenantId,
+    deleted_at: null,
+    role: {
+      deleted_at: null,
+      name: { in: roles }
+    }
+  };
+
+  if (facilityId) {
+    where.OR = [{ facility_id: facilityId }, { facility_id: null }];
+  }
+
+  const rows = await prisma.user_role.findMany({
+    where,
+    select: { user_id: true }
+  });
+
+  return rows.map((row) => row.user_id).filter(Boolean);
+};
+
+const resolveOpdRecipientUserIds = async ({ payload }) => {
+  const roleTeams = STAGE_ROLE_TEAM_MAP[payload.stage_to] || [];
+  const roleRecipients = await resolveRoleRecipients({
+    tenantId: payload.tenant_id,
+    facilityId: payload.facility_id,
+    roles: roleTeams
+  });
+
+  const recipientSet = new Set(roleRecipients);
+  if (payload.provider_user_id) {
+    recipientSet.add(payload.provider_user_id);
+  }
+  if (payload.actor_user_id) {
+    recipientSet.delete(payload.actor_user_id);
+  }
+
+  return Array.from(recipientSet).filter(Boolean);
+};
+
+const toSafeNotificationPayload = (notification, targetPath) => ({
+  id: notification.id,
+  tenant_id: notification.tenant_id,
+  user_id: notification.user_id,
+  notification_type: notification.notification_type,
+  priority: notification.priority,
+  title: notification.title,
+  message: notification.message,
+  read_at: notification.read_at || null,
+  created_at: notification.created_at,
+  updated_at: notification.updated_at,
+  target_path: targetPath
+});
+
+const createAndEmitOpdNotifications = async ({ payload, recipientUserIds }) => {
+  if (!Array.isArray(recipientUserIds) || recipientUserIds.length === 0) {
+    return [];
+  }
+
+  if (!prisma?.notification?.create) {
+    return [];
+  }
+
+  const priority = payload?.flow_summary?.encounter_type === 'EMERGENCY' ? 'HIGH' : 'MEDIUM';
+  const { title, message } = buildOpdNotificationContent(payload);
+
+  const createdNotifications = [];
+
+  for (const userId of recipientUserIds) {
+    // Keep notification creation resilient and non-blocking per user.
+    try {
+      const notification = await prisma.notification.create({
+        data: {
+          tenant_id: payload.tenant_id,
+          user_id: userId,
+          notification_type: 'SYSTEM',
+          priority,
+          title,
+          message
+        }
+      });
+      createdNotifications.push(notification);
+    } catch (_err) {
+      // Notification creation should not block OPD flow progression.
+    }
+  }
+
+  if (createdNotifications.length > 0 && prisma?.notification_delivery?.createMany) {
+    try {
+      await prisma.notification_delivery.createMany({
+        data: createdNotifications.map((notification) => ({
+          notification_id: notification.id,
+          channel: 'IN_APP',
+          status: 'SENT',
+          sent_at: new Date()
+        }))
+      });
+    } catch (_err) {
+      // Delivery metadata failure should not block clinical flow.
+    }
+  }
+
+  createdNotifications.forEach((notification) => {
+    emitToUser(notification.user_id, NOTIFICATION_EVENTS.NOTIFICATION_CREATED, {
+      notification: toSafeNotificationPayload(notification, payload.target_path),
+      target_path: payload.target_path
+    });
+  });
+
+  return createdNotifications;
+};
+
+const publishOpdRealtimeUpdates = async ({ snapshot, transition, context }) => {
+  try {
+    const payload = buildRealtimePayload({
+      snapshot,
+      transition,
+      context
+    });
+    const recipientUserIds = await resolveOpdRecipientUserIds({ payload });
+    if (recipientUserIds.length > 0) {
+      emitToUsers(recipientUserIds, OPD_EVENTS.OPD_FLOW_UPDATED, payload);
+      await createAndEmitOpdNotifications({ payload, recipientUserIds });
+    }
+  } catch (_err) {
+    // Realtime updates must never fail the OPD transaction response path.
+  }
 };
 
 const toDecimalNumber = (value) => {
@@ -284,7 +497,7 @@ const listOpdFlows = async (filters = {}, page = 1, limit = 20, sortBy = 'starte
 const startOpdFlow = async (data, context = {}) => {
   const startedAt = new Date();
 
-  const createdEncounter = await prisma.$transaction(async (tx) => {
+  const startedResult = await prisma.$transaction(async (tx) => {
     const appointment = data.appointment_id
       ? await tx.appointment.findFirst({
           where: {
@@ -572,24 +785,39 @@ const startOpdFlow = async (data, context = {}) => {
       });
     }
 
-    return encounter;
+    return {
+      encounter,
+      transition: {
+        action: 'START_FLOW',
+        stage_from: null,
+        stage_to: initialStage,
+        provider_user_id: providerUserId,
+        occurred_at: startedAt.toISOString()
+      }
+    };
   });
 
   createAuditLog({
-    tenant_id: createdEncounter.tenant_id,
+    tenant_id: startedResult.encounter.tenant_id,
     user_id: context.user_id,
     action: 'CREATE',
     entity: 'opd_flow',
-    entity_id: createdEncounter.id,
-    diff: { after: createdEncounter },
+    entity_id: startedResult.encounter.id,
+    diff: { after: startedResult.encounter },
     ip_address: context.ip_address
   }).catch(() => {});
 
-  return getOpdFlowById(createdEncounter.id);
+  const snapshot = await getOpdFlowById(startedResult.encounter.id);
+  await publishOpdRealtimeUpdates({
+    snapshot,
+    transition: startedResult.transition,
+    context
+  });
+  return snapshot;
 };
 
 const payConsultation = async (id, data, context = {}) => {
-  const updatedEncounter = await prisma.$transaction(async (tx) => {
+  const updatedResult = await prisma.$transaction(async (tx) => {
     const encounter = await tx.encounter.findFirst({
       where: { id, deleted_at: null }
     });
@@ -600,6 +828,7 @@ const payConsultation = async (id, data, context = {}) => {
 
     const flow = getOpdFlowState(encounter);
     ensureNonTerminalStage(flow);
+    const stageBefore = flow.stage;
 
     const consultation = flow.consultation || {};
 
@@ -684,7 +913,7 @@ const payConsultation = async (id, data, context = {}) => {
       notes: data.notes || null
     });
 
-    return tx.encounter.update({
+    const updatedEncounter = await tx.encounter.update({
       where: { id: encounter.id },
       data: {
         extension_json: {
@@ -693,23 +922,40 @@ const payConsultation = async (id, data, context = {}) => {
         }
       }
     });
+
+    return {
+      encounter: updatedEncounter,
+      transition: {
+        action: 'PAY_CONSULTATION',
+        stage_from: stageBefore,
+        stage_to: flow.stage,
+        provider_user_id: encounter.provider_user_id || null,
+        occurred_at: new Date().toISOString()
+      }
+    };
   });
 
   createAuditLog({
-    tenant_id: updatedEncounter.tenant_id,
+    tenant_id: updatedResult.encounter.tenant_id,
     user_id: context.user_id,
     action: 'UPDATE',
     entity: 'opd_flow',
-    entity_id: updatedEncounter.id,
-    diff: { after: updatedEncounter },
+    entity_id: updatedResult.encounter.id,
+    diff: { after: updatedResult.encounter },
     ip_address: context.ip_address
   }).catch(() => {});
 
-  return getOpdFlowById(id);
+  const snapshot = await getOpdFlowById(id);
+  await publishOpdRealtimeUpdates({
+    snapshot,
+    transition: updatedResult.transition,
+    context
+  });
+  return snapshot;
 };
 
 const recordVitals = async (id, data, context = {}) => {
-  const updatedEncounter = await prisma.$transaction(async (tx) => {
+  const updatedResult = await prisma.$transaction(async (tx) => {
     const encounter = await tx.encounter.findFirst({
       where: { id, deleted_at: null }
     });
@@ -720,6 +966,7 @@ const recordVitals = async (id, data, context = {}) => {
 
     const flow = getOpdFlowState(encounter);
     ensureNonTerminalStage(flow);
+    const stageBefore = flow.stage;
 
     const isEmergency = encounter.encounter_type === 'EMERGENCY';
     if (!isEmergency && flow.consultation?.require_payment && !flow.consultation?.is_paid) {
@@ -779,7 +1026,7 @@ const recordVitals = async (id, data, context = {}) => {
       });
     }
 
-    return tx.encounter.update({
+    const updatedEncounter = await tx.encounter.update({
       where: { id: encounter.id },
       data: {
         extension_json: {
@@ -788,23 +1035,40 @@ const recordVitals = async (id, data, context = {}) => {
         }
       }
     });
+
+    return {
+      encounter: updatedEncounter,
+      transition: {
+        action: 'RECORD_VITALS',
+        stage_from: stageBefore,
+        stage_to: flow.stage,
+        provider_user_id: encounter.provider_user_id || null,
+        occurred_at: new Date().toISOString()
+      }
+    };
   });
 
   createAuditLog({
-    tenant_id: updatedEncounter.tenant_id,
+    tenant_id: updatedResult.encounter.tenant_id,
     user_id: context.user_id,
     action: 'UPDATE',
     entity: 'opd_flow',
-    entity_id: updatedEncounter.id,
-    diff: { after: updatedEncounter },
+    entity_id: updatedResult.encounter.id,
+    diff: { after: updatedResult.encounter },
     ip_address: context.ip_address
   }).catch(() => {});
 
-  return getOpdFlowById(id);
+  const snapshot = await getOpdFlowById(id);
+  await publishOpdRealtimeUpdates({
+    snapshot,
+    transition: updatedResult.transition,
+    context
+  });
+  return snapshot;
 };
 
 const assignDoctor = async (id, data, context = {}) => {
-  const updatedEncounter = await prisma.$transaction(async (tx) => {
+  const updatedResult = await prisma.$transaction(async (tx) => {
     const encounter = await tx.encounter.findFirst({
       where: { id, deleted_at: null }
     });
@@ -815,6 +1079,7 @@ const assignDoctor = async (id, data, context = {}) => {
 
     const flow = getOpdFlowState(encounter);
     ensureNonTerminalStage(flow);
+    const stageBefore = flow.stage;
 
     if (flow.stage !== STAGES.WAITING_DOCTOR_ASSIGNMENT && flow.stage !== STAGES.WAITING_DOCTOR_REVIEW) {
       throw new HttpError('errors.opd_flow.invalid_stage_transition', 400);
@@ -842,7 +1107,7 @@ const assignDoctor = async (id, data, context = {}) => {
       provider_user_id: data.provider_user_id
     });
 
-    return tx.encounter.update({
+    const updatedEncounter = await tx.encounter.update({
       where: { id: updated.id },
       data: {
         extension_json: {
@@ -851,23 +1116,40 @@ const assignDoctor = async (id, data, context = {}) => {
         }
       }
     });
+
+    return {
+      encounter: updatedEncounter,
+      transition: {
+        action: 'ASSIGN_DOCTOR',
+        stage_from: stageBefore,
+        stage_to: flow.stage,
+        provider_user_id: data.provider_user_id,
+        occurred_at: new Date().toISOString()
+      }
+    };
   });
 
   createAuditLog({
-    tenant_id: updatedEncounter.tenant_id,
+    tenant_id: updatedResult.encounter.tenant_id,
     user_id: context.user_id,
     action: 'UPDATE',
     entity: 'opd_flow',
-    entity_id: updatedEncounter.id,
-    diff: { after: updatedEncounter },
+    entity_id: updatedResult.encounter.id,
+    diff: { after: updatedResult.encounter },
     ip_address: context.ip_address
   }).catch(() => {});
 
-  return getOpdFlowById(id);
+  const snapshot = await getOpdFlowById(id);
+  await publishOpdRealtimeUpdates({
+    snapshot,
+    transition: updatedResult.transition,
+    context
+  });
+  return snapshot;
 };
 
 const doctorReview = async (id, data, context = {}) => {
-  const updatedEncounter = await prisma.$transaction(async (tx) => {
+  const updatedResult = await prisma.$transaction(async (tx) => {
     const encounter = await tx.encounter.findFirst({
       where: { id, deleted_at: null }
     });
@@ -878,6 +1160,7 @@ const doctorReview = async (id, data, context = {}) => {
 
     const flow = getOpdFlowState(encounter);
     ensureNonTerminalStage(flow);
+    const stageBefore = flow.stage;
 
     if (flow.stage !== STAGES.WAITING_DOCTOR_REVIEW) {
       throw new HttpError('errors.opd_flow.invalid_stage_transition', 400);
@@ -1016,7 +1299,7 @@ const doctorReview = async (id, data, context = {}) => {
       notes: data.notes || null
     });
 
-    return tx.encounter.update({
+    const updatedEncounter = await tx.encounter.update({
       where: { id: encounter.id },
       data: {
         extension_json: {
@@ -1025,25 +1308,42 @@ const doctorReview = async (id, data, context = {}) => {
         }
       }
     });
+
+    return {
+      encounter: updatedEncounter,
+      transition: {
+        action: 'DOCTOR_REVIEW',
+        stage_from: stageBefore,
+        stage_to: flow.stage,
+        provider_user_id: encounter.provider_user_id || authorUserId || null,
+        occurred_at: new Date().toISOString()
+      }
+    };
   });
 
   createAuditLog({
-    tenant_id: updatedEncounter.tenant_id,
+    tenant_id: updatedResult.encounter.tenant_id,
     user_id: context.user_id,
     action: 'UPDATE',
     entity: 'opd_flow',
-    entity_id: updatedEncounter.id,
-    diff: { after: updatedEncounter },
+    entity_id: updatedResult.encounter.id,
+    diff: { after: updatedResult.encounter },
     ip_address: context.ip_address
   }).catch(() => {});
 
-  return getOpdFlowById(id);
+  const snapshot = await getOpdFlowById(id);
+  await publishOpdRealtimeUpdates({
+    snapshot,
+    transition: updatedResult.transition,
+    context
+  });
+  return snapshot;
 };
 
 const disposition = async (id, data, context = {}) => {
   const dispositionAt = new Date();
 
-  const updatedEncounter = await prisma.$transaction(async (tx) => {
+  const updatedResult = await prisma.$transaction(async (tx) => {
     const encounter = await tx.encounter.findFirst({
       where: { id, deleted_at: null }
     });
@@ -1054,6 +1354,7 @@ const disposition = async (id, data, context = {}) => {
 
     const flow = getOpdFlowState(encounter);
     ensureNonTerminalStage(flow);
+    const stageBefore = flow.stage;
 
     if (!flow.review_completed) {
       throw new HttpError('errors.opd_flow.doctor_review_required', 400);
@@ -1130,20 +1431,35 @@ const disposition = async (id, data, context = {}) => {
       });
     }
 
-    return finalizedEncounter;
+    return {
+      encounter: finalizedEncounter,
+      transition: {
+        action: 'DISPOSITION',
+        stage_from: stageBefore,
+        stage_to: flow.stage,
+        provider_user_id: encounter.provider_user_id || null,
+        occurred_at: dispositionAt.toISOString()
+      }
+    };
   });
 
   createAuditLog({
-    tenant_id: updatedEncounter.tenant_id,
+    tenant_id: updatedResult.encounter.tenant_id,
     user_id: context.user_id,
     action: 'UPDATE',
     entity: 'opd_flow',
-    entity_id: updatedEncounter.id,
-    diff: { after: updatedEncounter },
+    entity_id: updatedResult.encounter.id,
+    diff: { after: updatedResult.encounter },
     ip_address: context.ip_address
   }).catch(() => {});
 
-  return getOpdFlowById(id);
+  const snapshot = await getOpdFlowById(id);
+  await publishOpdRealtimeUpdates({
+    snapshot,
+    transition: updatedResult.transition,
+    context
+  });
+  return snapshot;
 };
 
 module.exports = {

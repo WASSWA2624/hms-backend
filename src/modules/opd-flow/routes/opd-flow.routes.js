@@ -11,7 +11,9 @@ const express = require('express');
 const router = express.Router();
 const opdFlowController = require('@controllers/opd-flow/opd-flow.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
-const { authenticate } = require('@middlewares/auth.middleware');
+const { authenticate, authorize } = require('@middlewares/auth.middleware');
+const { PERMISSIONS } = require('@config/permissions');
+const { ROLES } = require('@config/roles');
 const {
   createOpdFlowSchema,
   encounterIdParamsSchema,
@@ -49,6 +51,15 @@ router.get(
   '/',
   validateRequest({ query: listOpdFlowsQuerySchema }),
   authenticate(),
+  authorize(
+    [
+      PERMISSIONS.PATIENT_READ,
+      PERMISSIONS.CLINICAL_READ,
+      PERMISSIONS.BILLING_READ,
+      PERMISSIONS.OPERATIONS_READ
+    ],
+    'permission'
+  ),
   opdFlowController.listOpdFlows
 );
 
@@ -69,6 +80,15 @@ router.get(
   '/:id',
   validateRequest({ params: encounterIdParamsSchema }),
   authenticate(),
+  authorize(
+    [
+      PERMISSIONS.PATIENT_READ,
+      PERMISSIONS.CLINICAL_READ,
+      PERMISSIONS.BILLING_READ,
+      PERMISSIONS.OPERATIONS_READ
+    ],
+    'permission'
+  ),
   opdFlowController.getOpdFlowById
 );
 
@@ -103,6 +123,18 @@ router.post(
   '/start',
   validateRequest({ body: createOpdFlowSchema }),
   authenticate(),
+  authorize(
+    [
+      ROLES.SUPER_ADMIN,
+      ROLES.TENANT_ADMIN,
+      ROLES.FACILITY_ADMIN,
+      ROLES.RECEPTIONIST,
+      ROLES.NURSE,
+      ROLES.DOCTOR,
+      ROLES.OPERATIONS
+    ],
+    'role'
+  ),
   opdFlowController.startOpdFlow
 );
 
@@ -130,6 +162,16 @@ router.post(
   '/:id/pay-consultation',
   validateRequest({ params: encounterIdParamsSchema, body: payConsultationSchema }),
   authenticate(),
+  authorize(
+    [
+      ROLES.SUPER_ADMIN,
+      ROLES.TENANT_ADMIN,
+      ROLES.FACILITY_ADMIN,
+      ROLES.RECEPTIONIST,
+      ROLES.BILLING
+    ],
+    'role'
+  ),
   opdFlowController.payConsultation
 );
 
@@ -152,6 +194,16 @@ router.post(
   '/:id/record-vitals',
   validateRequest({ params: encounterIdParamsSchema, body: recordVitalsSchema }),
   authenticate(),
+  authorize(
+    [
+      ROLES.SUPER_ADMIN,
+      ROLES.TENANT_ADMIN,
+      ROLES.FACILITY_ADMIN,
+      ROLES.DOCTOR,
+      ROLES.NURSE
+    ],
+    'role'
+  ),
   opdFlowController.recordVitals
 );
 
@@ -172,6 +224,16 @@ router.post(
   '/:id/assign-doctor',
   validateRequest({ params: encounterIdParamsSchema, body: assignDoctorSchema }),
   authenticate(),
+  authorize(
+    [
+      ROLES.SUPER_ADMIN,
+      ROLES.TENANT_ADMIN,
+      ROLES.FACILITY_ADMIN,
+      ROLES.RECEPTIONIST,
+      ROLES.NURSE
+    ],
+    'role'
+  ),
   opdFlowController.assignDoctor
 );
 
@@ -198,6 +260,10 @@ router.post(
   '/:id/doctor-review',
   validateRequest({ params: encounterIdParamsSchema, body: doctorReviewSchema }),
   authenticate(),
+  authorize(
+    [ROLES.SUPER_ADMIN, ROLES.TENANT_ADMIN, ROLES.FACILITY_ADMIN, ROLES.DOCTOR],
+    'role'
+  ),
   opdFlowController.doctorReview
 );
 
@@ -220,6 +286,10 @@ router.post(
   '/:id/disposition',
   validateRequest({ params: encounterIdParamsSchema, body: dispositionSchema }),
   authenticate(),
+  authorize(
+    [ROLES.SUPER_ADMIN, ROLES.TENANT_ADMIN, ROLES.FACILITY_ADMIN, ROLES.DOCTOR],
+    'role'
+  ),
   opdFlowController.disposition
 );
 
