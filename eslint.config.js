@@ -1,0 +1,61 @@
+module.exports = [
+  {
+    ignores: [
+      'node_modules/**',
+      'coverage/**',
+      'logs/**',
+      '.jest-cache*/**',
+      '.tmp/**',
+      'dev-plan/**',
+      'prisma/generated/**',
+    ],
+  },
+  {
+    files: ['**/*.js'],
+    languageOptions: {
+      ecmaVersion: 'latest',
+      sourceType: 'commonjs',
+      globals: {
+        __dirname: 'readonly',
+        __filename: 'readonly',
+        Buffer: 'readonly',
+        clearImmediate: 'readonly',
+        clearInterval: 'readonly',
+        clearTimeout: 'readonly',
+        console: 'readonly',
+        exports: 'readonly',
+        global: 'readonly',
+        module: 'readonly',
+        process: 'readonly',
+        require: 'readonly',
+        setImmediate: 'readonly',
+        setInterval: 'readonly',
+        setTimeout: 'readonly',
+        URL: 'readonly',
+      },
+    },
+    rules: {
+      'no-undef': 'error',
+      'no-redeclare': 'error',
+      'no-dupe-keys': 'error',
+      'no-unreachable': 'error',
+      'no-constant-condition': ['error', { checkLoops: false }],
+    },
+  },
+  {
+    files: ['src/tests/**/*.test.js', 'src/tests/setup.js', '**/*.test.js'],
+    languageOptions: {
+      globals: {
+        afterAll: 'readonly',
+        afterEach: 'readonly',
+        beforeAll: 'readonly',
+        beforeEach: 'readonly',
+        describe: 'readonly',
+        expect: 'readonly',
+        it: 'readonly',
+        jest: 'readonly',
+        test: 'readonly',
+      },
+    },
+  },
+];

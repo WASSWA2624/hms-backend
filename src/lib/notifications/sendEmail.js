@@ -106,8 +106,7 @@ const getNodemailer = () => {
   }
 
   try {
-    // Optional dependency in local setups.
-    // eslint-disable-next-line global-require
+    // Optional dependency in local setups. Keep graceful no-op behavior when unavailable.
     nodemailerRef = require('nodemailer');
   } catch {
     nodemailerRef = false;

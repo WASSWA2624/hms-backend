@@ -13,7 +13,6 @@ const getArgon2 = () => {
     // Lazy-load to avoid crashing app/test startup if native module is unavailable
     // (e.g., missing build for current platform/Node version).
     // Only API key hashing/verification should require argon2 at runtime.
-    // eslint-disable-next-line global-require
     return require('argon2');
   } catch (err) {
     throw new Error(

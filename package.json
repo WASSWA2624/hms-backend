@@ -9,6 +9,8 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
+    "lint": "eslint",
+    "lint:fix": "eslint --fix",
     "setup:accounts": "node scripts/setup-default-accounts.js",
     "db:backfill:ambulance-role": "node scripts/backfill-ambulance-operator-role.js",
     "db:clear:demo": "node scripts/clear-demo-data.js",

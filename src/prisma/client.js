@@ -58,6 +58,7 @@ const {
 const FRIENDLY_ID_PREFIX_LENGTH = 3;
 const DEFAULT_FRIENDLY_ID_PADDING = 7;
 const FRIENDLY_ID_COUNTER_RETRIES = 3;
+const UNKNOWN_MODEL_PREFIX = 'XXX';
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const FRIENDLY_ID_REGEX = /^[A-Z]{3}\d{7}$/;
@@ -131,7 +132,7 @@ const normalizePrefix = (value) =>
     .padEnd(FRIENDLY_ID_PREFIX_LENGTH, 'X'));
 
 const deriveModelPrefix = (model) => {
-  if (!model) return 'XXX';
+  if (!model) return UNKNOWN_MODEL_PREFIX;
   if (MODEL_PREFIX_OVERRIDES[model]) return normalizePrefix(MODEL_PREFIX_OVERRIDES[model]);
 
   const alphaNumericModelName = String(model).replace(/[^a-zA-Z0-9]/g, '');
