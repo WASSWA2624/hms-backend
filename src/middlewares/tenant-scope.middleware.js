@@ -1,11 +1,10 @@
 /**
  * Tenant and facility scope middleware
  *
- * Ensures authenticated request context has consistent scope values and prevents
+ * Ensures authenticated request context uses canonical scope values and prevents
  * cross-tenant/facility/branch access via crafted query/body values.
  */
 
-const { HttpError } = require('@lib/errors');
 const { normalizeUserContext } = require('@middlewares/auth.middleware');
 const { ELEVATED_ROLES, normalizeRoleName } = require('@config/roles');
 
@@ -31,6 +30,17 @@ const getFromObject = (obj, field) => {
   return String(value);
 };
 
+const setOnObject = (obj, field, value) => {
+  if (!obj || typeof obj !== 'object') return;
+
+  const camelField = toCamelCase(field);
+  obj[field] = value;
+
+  if (Object.prototype.hasOwnProperty.call(obj, camelField)) {
+    obj[camelField] = value;
+  }
+};
+
 const setOnObjectIfMissing = (obj, field, value) => {
   if (!obj || typeof obj !== 'object') return;
   if (obj[field] !== undefined && obj[field] !== null && obj[field] !== '') return;
@@ -38,19 +48,20 @@ const setOnObjectIfMissing = (obj, field, value) => {
   const camelField = toCamelCase(field);
   if (obj[camelField] !== undefined && obj[camelField] !== null && obj[camelField] !== '') return;
 
-  obj[field] = value;
+  setOnObject(obj, field, value);
 };
 
-const ensureFieldMatchesScope = (req, sourceObject, field) => {
+const normalizeFieldToScope = (req, sourceObject, field) => {
   const expected = getFromObject(req.user, field);
   if (!expected) return;
 
   const provided = getFromObject(sourceObject, field);
   if (provided && provided !== expected) {
-    throw new HttpError('errors.auth.scope_mismatch', 403, [
-      { field, expected, provided }
-    ]);
+    setOnObject(sourceObject, field, expected);
+    return;
   }
+
+  setOnObjectIfMissing(sourceObject, field, expected);
 };
 
 /**
@@ -85,17 +96,8 @@ const enforceTenantScope = () => (req, res, next) => {
     if (hasElevatedRole(req.user.roles)) return next();
 
     for (const field of SCOPE_FIELDS) {
-      ensureFieldMatchesScope(req, req.query, field);
-      ensureFieldMatchesScope(req, req.body, field);
-    }
-
-    // Inject canonical scope values when not provided.
-    for (const field of SCOPE_FIELDS) {
-      const expected = getFromObject(req.user, field);
-      if (!expected) continue;
-
-      setOnObjectIfMissing(req.query, field, expected);
-      setOnObjectIfMissing(req.body, field, expected);
+      normalizeFieldToScope(req, req.query, field);
+      normalizeFieldToScope(req, req.body, field);
     }
 
     return next();

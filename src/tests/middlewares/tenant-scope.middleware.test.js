@@ -55,24 +55,30 @@ describe('tenant scope middleware', () => {
     expect(req.body.branch_id).toBe('branch-2');
   });
 
-  test('enforceTenantScope rejects cross-tenant payload values for non-elevated roles', async () => {
+  test('enforceTenantScope normalizes cross-scope payload values for non-elevated roles', async () => {
     const req = {
       user: {
         id: 'user-3',
         tenant_id: 'tenant-3',
+        facility_id: 'facility-3',
         roles: ['NURSE']
       },
-      query: {},
-      body: {
+      query: {
         tenant_id: 'tenant-other'
+      },
+      body: {
+        tenant_id: 'tenant-other',
+        facilityId: 'facility-other'
       }
     };
 
     const error = await invokeMiddleware(enforceTenantScope(), req);
 
-    expect(error).toBeDefined();
-    expect(error.messageKey).toBe('errors.auth.scope_mismatch');
-    expect(error.statusCode).toBe(403);
+    expect(error).toBeUndefined();
+    expect(req.query.tenant_id).toBe('tenant-3');
+    expect(req.body.tenant_id).toBe('tenant-3');
+    expect(req.body.facility_id).toBe('facility-3');
+    expect(req.body.facilityId).toBe('facility-3');
   });
 
   test('enforceTenantScope bypasses checks for elevated roles', async () => {
