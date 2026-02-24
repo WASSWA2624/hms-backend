@@ -24,6 +24,7 @@ This script initializes the system with default accounts for:
 - **HR**: Human resources staff
 - **BIOMED**: Biomedical engineering staff
 - **HOUSE_KEEPER**: Housekeeping staff
+- **AMBULANCE_OPERATOR**: Ambulance operations staff
 - **PATIENT**: Patient user (example)
 
 #### What It Does
@@ -77,6 +78,7 @@ Demo@123!
 | `hr@demo.com` | HR | Human resources officer |
 | `biomed@demo.com` | BIOMED | Biomedical engineer |
 | `housekeeping@demo.com` | HOUSE_KEEPER | Housekeeping staff |
+| `ambulance@demo.com` | AMBULANCE_OPERATOR | Ambulance operator |
 | `patient@demo.com` | PATIENT | Patient user |
 
 #### Account Details
@@ -144,6 +146,38 @@ const DEFAULT_TENANT = {
 - [Prisma Guide](../prisma/guide.md)
 - [Authentication & Security Rules](../.cursor/rules/auth-security.mdc)
 - [Project Structure](../.cursor/rules/project-structure.mdc)
+
+---
+
+### `backfill-ambulance-operator-role.js`
+
+Backfills `AMBULANCE_OPERATOR` role records across active tenants and facilities.
+
+#### Purpose
+
+- Ensures each active facility has an `AMBULANCE_OPERATOR` role
+- Creates a tenant-level `AMBULANCE_OPERATOR` role when a tenant has no active facilities
+- Never auto-assigns users to this role
+- Safe to run repeatedly (idempotent)
+
+#### Usage
+
+```bash
+# Execute backfill for all active tenants
+node scripts/backfill-ambulance-operator-role.js
+
+# Preview only (no writes)
+node scripts/backfill-ambulance-operator-role.js --dry-run
+
+# Limit to one tenant
+node scripts/backfill-ambulance-operator-role.js --tenant-id=<tenant-id>
+```
+
+#### NPM Shortcut
+
+```bash
+npm run db:backfill:ambulance-role
+```
 
 ---
 

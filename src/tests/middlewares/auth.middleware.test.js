@@ -73,4 +73,38 @@ describe('auth middleware', () => {
     expect(error).toBeInstanceOf(HttpError);
     expect(error.statusCode).toBe(403);
   });
+
+  it('authorizes AMBULANCE_OPERATOR emergency write permission from role mapping', () => {
+    const middleware = authorize('emergency:write', 'permission');
+    const req = {
+      user: {
+        role: 'AMBULANCE_OPERATOR',
+        roles: ['AMBULANCE_OPERATOR']
+      }
+    };
+    const res = {};
+    const next = jest.fn();
+
+    middleware(req, res, next);
+
+    expect(next).toHaveBeenCalledWith();
+  });
+
+  it('rejects AMBULANCE_OPERATOR emergency delete permission', () => {
+    const middleware = authorize('emergency:delete', 'permission');
+    const req = {
+      user: {
+        role: 'AMBULANCE_OPERATOR',
+        roles: ['AMBULANCE_OPERATOR']
+      }
+    };
+    const res = {};
+    const next = jest.fn();
+
+    middleware(req, res, next);
+
+    const [error] = next.mock.calls[0];
+    expect(error).toBeInstanceOf(HttpError);
+    expect(error.statusCode).toBe(403);
+  });
 });
