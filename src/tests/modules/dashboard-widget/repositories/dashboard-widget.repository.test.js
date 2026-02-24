@@ -280,4 +280,101 @@ describe('Dashboard Widget Repository', () => {
       await expect(dashboardWidgetRepository.softDelete(mockDashboardWidget.id)).rejects.toThrow(HttpError);
     });
   });
+
+  describe('relation-scoped where builders', () => {
+    const scope = {
+      tenant_id: '660e8400-e29b-41d4-a716-446655440000',
+      facility_id: '770e8400-e29b-41d4-a716-446655440000'
+    };
+
+    it('builds lab order scope via patient relation chain', () => {
+      const where = dashboardWidgetRepository.__private__.buildLabOrderScopeWhere(scope);
+      expect(where).toEqual({
+        deleted_at: null,
+        patient: {
+          deleted_at: null,
+          tenant_id: scope.tenant_id,
+          facility_id: scope.facility_id
+        }
+      });
+    });
+
+    it('builds lab result scope via lab_order_item -> lab_order -> patient chain', () => {
+      const where = dashboardWidgetRepository.__private__.buildLabResultScopeWhere(scope);
+      expect(where).toEqual({
+        deleted_at: null,
+        lab_order_item: {
+          deleted_at: null,
+          lab_order: {
+            deleted_at: null,
+            patient: {
+              deleted_at: null,
+              tenant_id: scope.tenant_id,
+              facility_id: scope.facility_id
+            }
+          }
+        }
+      });
+    });
+
+    it('builds pharmacy order and dispense-log relation scopes via patient chain', () => {
+      const orderWhere = dashboardWidgetRepository.__private__.buildPharmacyOrderScopeWhere(scope);
+      expect(orderWhere).toEqual({
+        deleted_at: null,
+        patient: {
+          deleted_at: null,
+          tenant_id: scope.tenant_id,
+          facility_id: scope.facility_id
+        }
+      });
+
+      const dispenseWhere = dashboardWidgetRepository.__private__.buildDispenseLogScopeWhere(scope);
+      expect(dispenseWhere).toEqual({
+        deleted_at: null,
+        pharmacy_order_item: {
+          deleted_at: null,
+          pharmacy_order: {
+            deleted_at: null,
+            patient: {
+              deleted_at: null,
+              tenant_id: scope.tenant_id,
+              facility_id: scope.facility_id
+            }
+          }
+        }
+      });
+    });
+
+    it('builds inventory and ambulance relation scopes', () => {
+      const inventoryWhere = dashboardWidgetRepository.__private__.buildInventoryStockScopeWhere(scope);
+      expect(inventoryWhere).toEqual({
+        deleted_at: null,
+        inventory_item: {
+          deleted_at: null,
+          tenant_id: scope.tenant_id
+        },
+        facility_id: scope.facility_id
+      });
+
+      const dispatchWhere = dashboardWidgetRepository.__private__.buildAmbulanceDispatchScopeWhere(scope);
+      expect(dispatchWhere).toEqual({
+        deleted_at: null,
+        emergency_case: {
+          deleted_at: null,
+          tenant_id: scope.tenant_id,
+          facility_id: scope.facility_id
+        }
+      });
+
+      const tripWhere = dashboardWidgetRepository.__private__.buildAmbulanceTripScopeWhere(scope);
+      expect(tripWhere).toEqual({
+        deleted_at: null,
+        emergency_case: {
+          deleted_at: null,
+          tenant_id: scope.tenant_id,
+          facility_id: scope.facility_id
+        }
+      });
+    });
+  });
 });

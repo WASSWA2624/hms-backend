@@ -324,4 +324,145 @@ describe('Dashboard Widget Service', () => {
       expect(dashboardWidgetRepository.softDelete).toHaveBeenCalled();
     });
   });
+
+  describe('getDashboardSummary', () => {
+    beforeEach(() => {
+      dashboardWidgetRepository.getDashboardSummaryByPack = jest.fn();
+      dashboardWidgetRepository.resolveBranchFacilityScope = jest.fn();
+    });
+
+    it('resolves role-profile mapping using hierarchy for all canonical staff roles', async () => {
+      const roleCases = [
+        ['SUPER_ADMIN', 'super_admin'],
+        ['TENANT_ADMIN', 'tenant_admin'],
+        ['FACILITY_ADMIN', 'facility_admin'],
+        ['DOCTOR', 'doctor'],
+        ['NURSE', 'nurse'],
+        ['LAB_TECH', 'lab_tech'],
+        ['PHARMACIST', 'pharmacist'],
+        ['RECEPTIONIST', 'receptionist'],
+        ['BILLING', 'billing'],
+        ['OPERATIONS', 'operations'],
+        ['HR', 'hr'],
+        ['BIOMED', 'biomed'],
+        ['HOUSE_KEEPER', 'house_keeper'],
+        ['AMBULANCE_OPERATOR', 'ambulance_operator'],
+      ];
+
+      dashboardWidgetRepository.getDashboardSummaryByPack.mockResolvedValue({
+        metrics: {},
+        trendDates: [],
+        statusCounts: {},
+        activity: {},
+      });
+
+      for (const [role, profile] of roleCases) {
+        const result = await dashboardWidgetService.getDashboardSummary(
+          { days: 7, tenant_id: '660e8400-e29b-41d4-a716-446655440000' },
+          {
+            id: 'user-1',
+            roles: [role],
+            tenant_id: '660e8400-e29b-41d4-a716-446655440000',
+            facility_id: '770e8400-e29b-41d4-a716-446655440000',
+          }
+        );
+
+        expect(result.roleProfile.id).toBe(profile);
+      }
+    });
+
+    it('enforces SUPER_ADMIN tenant context and returns 422 when missing', async () => {
+      await expect(
+        dashboardWidgetService.getDashboardSummary(
+          { days: 7 },
+          { id: 'user-1', roles: ['SUPER_ADMIN'] }
+        )
+      ).rejects.toMatchObject({ statusCode: 422 });
+    });
+
+    it('uses user scope for non-super-admin roles', async () => {
+      dashboardWidgetRepository.getDashboardSummaryByPack.mockResolvedValue({
+        metrics: { activeAdmissions: 4, medAdminToday: 8, transferQueue: 2, criticalLabs: 1 },
+        trendDates: [],
+        statusCounts: {},
+        activity: { admissions: 2 },
+      });
+
+      await dashboardWidgetService.getDashboardSummary(
+        {
+          tenant_id: 'query-tenant-should-be-ignored',
+          facility_id: 'query-facility-should-be-ignored',
+          days: 7,
+        },
+        {
+          id: 'user-1',
+          roles: ['NURSE'],
+          tenant_id: '660e8400-e29b-41d4-a716-446655440000',
+          facility_id: '770e8400-e29b-41d4-a716-446655440000',
+          branch_id: '880e8400-e29b-41d4-a716-446655440000',
+        }
+      );
+
+      expect(dashboardWidgetRepository.getDashboardSummaryByPack).toHaveBeenCalledWith(
+        expect.objectContaining({
+          scope: {
+            tenant_id: '660e8400-e29b-41d4-a716-446655440000',
+            facility_id: '770e8400-e29b-41d4-a716-446655440000',
+            branch_id: '880e8400-e29b-41d4-a716-446655440000',
+          },
+        })
+      );
+    });
+
+    it('shapes payload with aggregate-only contract and strips raw-record fields', async () => {
+      dashboardWidgetRepository.getDashboardSummaryByPack.mockResolvedValue({
+        metrics: {
+          patientsToday: 3,
+          appointmentsToday: 5,
+          activeAdmissions: 2,
+          openInvoices: 4,
+          paymentsToday: 1000,
+        },
+        trendDates: [new Date().toISOString()],
+        statusCounts: { PAID: 1, OVERDUE: 2 },
+        activity: {
+          appointments: 7,
+          admissions: 2,
+          invoices: 1,
+        },
+      });
+
+      const result = await dashboardWidgetService.getDashboardSummary(
+        { days: 7 },
+        {
+          id: 'user-1',
+          roles: ['TENANT_ADMIN'],
+          tenant_id: '660e8400-e29b-41d4-a716-446655440000',
+          facility_id: '770e8400-e29b-41d4-a716-446655440000',
+        }
+      );
+
+      expect(result).toEqual(
+        expect.objectContaining({
+          roleProfile: expect.any(Object),
+          summaryCards: expect.any(Array),
+          trend: expect.any(Object),
+          distribution: expect.any(Object),
+          highlights: expect.any(Array),
+          queue: expect.any(Array),
+          alerts: expect.any(Array),
+          activity: expect.any(Array),
+          hasLiveData: expect.any(Boolean),
+          generatedAt: expect.any(String),
+          scope: expect.any(Object),
+        })
+      );
+
+      const leakageKeys = ['name', 'notes', 'description', 'patient_id', 'staff_id', 'first_name', 'last_name'];
+      const serialized = JSON.stringify(result);
+      leakageKeys.forEach((key) => {
+        expect(serialized.includes(`\"${key}\"`)).toBe(false);
+      });
+    });
+  });
 });

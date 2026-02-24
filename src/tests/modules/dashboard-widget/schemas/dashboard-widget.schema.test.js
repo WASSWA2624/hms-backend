@@ -10,7 +10,8 @@ const {
   createDashboardWidgetSchema,
   updateDashboardWidgetSchema,
   dashboardWidgetIdParamsSchema,
-  listDashboardWidgetsQuerySchema
+  listDashboardWidgetsQuerySchema,
+  dashboardSummaryQuerySchema
 } = require('../../../../modules/dashboard-widget/schemas/dashboard-widget.schema');
 
 describe('Dashboard Widget Schemas', () => {
@@ -255,6 +256,31 @@ describe('Dashboard Widget Schemas', () => {
       };
       const result = listDashboardWidgetsQuerySchema.safeParse(data);
       expect(result.success).toBe(true);
+    });
+  });
+
+  describe('dashboardSummaryQuerySchema', () => {
+    it('should allow empty query and default days to 7', () => {
+      const result = dashboardSummaryQuerySchema.safeParse({});
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.days).toBe(7);
+      }
+    });
+
+    it('should validate tenant/facility/branch UUID filters', () => {
+      const result = dashboardSummaryQuerySchema.safeParse({
+        tenant_id: '550e8400-e29b-41d4-a716-446655440000',
+        facility_id: '550e8400-e29b-41d4-a716-446655440001',
+        branch_id: '550e8400-e29b-41d4-a716-446655440002',
+        days: 30
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it('should reject days outside 1..30', () => {
+      expect(dashboardSummaryQuerySchema.safeParse({ days: 0 }).success).toBe(false);
+      expect(dashboardSummaryQuerySchema.safeParse({ days: 31 }).success).toBe(false);
     });
   });
 });

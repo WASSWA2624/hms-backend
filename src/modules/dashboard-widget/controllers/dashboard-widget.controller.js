@@ -119,10 +119,23 @@ const deleteDashboardWidget = asyncHandler(async (req, res) => {
   sendNoContent(res);
 });
 
+/**
+ * Get role-scoped dashboard summary
+ * GET /api/v1/dashboard-widgets/summary
+ *
+ * @param {Object} req - Express request
+ * @param {Object} res - Express response
+ */
+const getDashboardSummary = asyncHandler(async (req, res) => {
+  const summary = await dashboardWidgetService.getDashboardSummary(req.query, req.user);
+  sendSuccess(res, 200, 'messages.dashboard_widget.get.success', summary);
+});
+
 module.exports = {
   listDashboardWidgets,
   getDashboardWidgetById,
   createDashboardWidget,
   updateDashboardWidget,
-  deleteDashboardWidget
+  deleteDashboardWidget,
+  getDashboardSummary
 };

@@ -184,4 +184,42 @@ describe('Dashboard Widget Controller', () => {
       expect(sendNoContent).toHaveBeenCalledWith(mockRes);
     });
   });
+
+  describe('getDashboardSummary', () => {
+    it('should get dashboard summary and return success envelope', async () => {
+      mockReq.query = {
+        tenant_id: '660e8400-e29b-41d4-a716-446655440000',
+        days: 7
+      };
+      const summaryPayload = {
+        roleProfile: { id: 'tenant_admin', role: 'TENANT_ADMIN', pack: 'admin' },
+        summaryCards: [],
+        trend: { title: '', subtitle: '', points: [] },
+        distribution: { title: '', subtitle: '', total: 0, segments: [] },
+        highlights: [],
+        queue: [],
+        alerts: [],
+        activity: [],
+        hasLiveData: false,
+        generatedAt: new Date().toISOString(),
+        scope: {
+          tenant_id: '660e8400-e29b-41d4-a716-446655440000',
+          facility_id: null,
+          branch_id: null,
+          days: 7
+        }
+      };
+      dashboardWidgetService.getDashboardSummary.mockResolvedValue(summaryPayload);
+
+      await dashboardWidgetController.getDashboardSummary(mockReq, mockRes);
+
+      expect(dashboardWidgetService.getDashboardSummary).toHaveBeenCalledWith(mockReq.query, mockReq.user);
+      expect(sendSuccess).toHaveBeenCalledWith(
+        mockRes,
+        200,
+        'messages.dashboard_widget.get.success',
+        summaryPayload
+      );
+    });
+  });
 });

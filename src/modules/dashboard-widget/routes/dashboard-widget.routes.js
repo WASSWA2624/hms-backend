@@ -16,7 +16,8 @@ const {
   createDashboardWidgetSchema,
   updateDashboardWidgetSchema,
   dashboardWidgetIdParamsSchema,
-  listDashboardWidgetsQuerySchema
+  listDashboardWidgetsQuerySchema,
+  dashboardSummaryQuerySchema
 } = require('@validations/dashboard-widget/dashboard-widget.schema');
 
 /**
@@ -38,10 +39,33 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',  validateRequest({ query: listDashboardWidgetsQuerySchema }),
+  '/',
+  validateRequest({ query: listDashboardWidgetsQuerySchema }),
 
   authenticate(),
   dashboardWidgetController.listDashboardWidgets
+);
+
+/**
+ * @description Get role-scoped dashboard summary widgets
+ * @method GET
+ * @route /api/v1/dashboard-widgets/summary
+ * @authentication Required (JWT)
+ * @permissions Authenticated staff users
+ * @queryParams {string} [tenant_id] - Tenant context (required for SUPER_ADMIN without tenant token scope)
+ * @queryParams {string} [facility_id] - Facility context
+ * @queryParams {string} [branch_id] - Branch context
+ * @queryParams {number} [days=7] - Trend range in days (1..30)
+ * @returns {Object} Dashboard summary payload
+ * @throws 401 Unauthorized
+ * @throws 422 Missing tenant context for SUPER_ADMIN
+ */
+router.get(
+  '/summary',
+  validateRequest({ query: dashboardSummaryQuerySchema }),
+
+  authenticate(),
+  dashboardWidgetController.getDashboardSummary
 );
 
 /**
@@ -58,7 +82,8 @@ router.get(
  * @throws 404 Dashboard widget not found
  */
 router.get(
-  '/:id',  validateRequest({ params: dashboardWidgetIdParamsSchema }),
+  '/:id',
+  validateRequest({ params: dashboardWidgetIdParamsSchema }),
 
   authenticate(),
   dashboardWidgetController.getDashboardWidgetById
@@ -82,7 +107,8 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',  validateRequest({ body: createDashboardWidgetSchema }),
+  '/',
+  validateRequest({ body: createDashboardWidgetSchema }),
 
   authenticate(),
   dashboardWidgetController.createDashboardWidget
@@ -106,7 +132,8 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',  validateRequest({ params: dashboardWidgetIdParamsSchema, body: updateDashboardWidgetSchema }),
+  '/:id',
+  validateRequest({ params: dashboardWidgetIdParamsSchema, body: updateDashboardWidgetSchema }),
 
   authenticate(),
   dashboardWidgetController.updateDashboardWidget
@@ -126,7 +153,8 @@ router.put(
  * @throws 404 Dashboard widget not found
  */
 router.delete(
-  '/:id',  validateRequest({ params: dashboardWidgetIdParamsSchema }),
+  '/:id',
+  validateRequest({ params: dashboardWidgetIdParamsSchema }),
 
   authenticate(),
   dashboardWidgetController.deleteDashboardWidget

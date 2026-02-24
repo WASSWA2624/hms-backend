@@ -7,4 +7,12 @@ describe('dashboard-widget.routes contract', () => {
     expect(Array.isArray(subject.stack)).toBe(true);
     expect(subject.stack.length).toBeGreaterThan(0);
   });
+
+  it('registers GET /summary route', () => {
+    const summaryLayer = subject.stack.find((layer) =>
+      layer?.route?.path === '/summary' &&
+      layer?.route?.methods?.get
+    );
+    expect(summaryLayer).toBeDefined();
+  });
 });

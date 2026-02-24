@@ -58,9 +58,21 @@ const listDashboardWidgetsQuerySchema = listQuerySchema.extend({
   search: z.string().trim().optional()
 });
 
+/**
+ * Dashboard summary query parameter validation
+ * Used for GET /summary endpoint
+ */
+const dashboardSummaryQuerySchema = z.object({
+  tenant_id: uuidSchema.optional(),
+  facility_id: uuidSchema.optional(),
+  branch_id: uuidSchema.optional(),
+  days: z.coerce.number().int().min(1).max(30).default(7)
+});
+
 module.exports = {
   createDashboardWidgetSchema,
   updateDashboardWidgetSchema,
   dashboardWidgetIdParamsSchema,
-  listDashboardWidgetsQuerySchema
+  listDashboardWidgetsQuerySchema,
+  dashboardSummaryQuerySchema
 };
