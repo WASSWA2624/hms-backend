@@ -15,6 +15,7 @@
  * - HR: Human resources staff
  * - BIOMED: Biomedical engineering staff
  * - HOUSE_KEEPER: Housekeeping staff
+ * - AMBULANCE_OPERATOR: Ambulance operations staff
  * - PATIENT: Patient user (example)
  * 
  * This script:
@@ -326,6 +327,23 @@ const USER_ACCOUNTS = [
     staffProfile: {
       staff_number: 'HKS001',
       position: 'Housekeeping Staff',
+      hire_date: new Date()
+    }
+  },
+  {
+    // Ambulance operations staff
+    email: 'ambulance@demo.com',
+    phone: '+12345678915',
+    role: 'AMBULANCE_OPERATOR',
+    status: 'ACTIVE',
+    profile: {
+      first_name: 'Ambulance',
+      last_name: 'Operator',
+      gender: 'OTHER'
+    },
+    staffProfile: {
+      staff_number: 'AMB001',
+      position: 'Ambulance Operator',
       hire_date: new Date()
     }
   },
