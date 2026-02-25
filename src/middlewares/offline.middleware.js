@@ -25,6 +25,17 @@ const RESPONSE_HEADER_ALLOWLIST = [
 
 const idempotencyStore = new Map();
 
+const normalizeRequestPath = (req) => {
+  const rawPath = req?.originalUrl || req?.url || req?.path || '';
+  const withoutQuery = String(rawPath).split('?')[0];
+  return withoutQuery.toLowerCase();
+};
+
+const isAuthRequestPath = (req) => {
+  const normalizedPath = normalizeRequestPath(req);
+  return normalizedPath === '/api/v1/auth' || normalizedPath.startsWith('/api/v1/auth/');
+};
+
 /**
  * Safely clone a response payload for idempotency replay.
  *
@@ -368,9 +379,12 @@ const offlineSupportMiddleware = () => {
   return (req, res, next) => {
     pruneIdempotencyStore();
     appendVaryHeader(res, 'Accept-Language');
+    const isAuthPath = isAuthRequestPath(req);
 
     if (!res.getHeader('Cache-Control')) {
-      if (req.method === 'GET' || req.method === 'HEAD') {
+      if (isAuthPath) {
+        res.setHeader('Cache-Control', MUTATION_CACHE_CONTROL);
+      } else if (req.method === 'GET' || req.method === 'HEAD') {
         res.setHeader('Cache-Control', OFFLINE_CACHE_CONTROL);
       } else if (isMutationMethod(req.method)) {
         res.setHeader('Cache-Control', MUTATION_CACHE_CONTROL);
@@ -382,7 +396,9 @@ const offlineSupportMiddleware = () => {
       ? rawIdempotencyKey.trim()
       : '';
 
-    const replayKey = idempotencyKey ? buildIdempotencyReplayKey(req, idempotencyKey) : null;
+    const replayKey = !isAuthPath && idempotencyKey
+      ? buildIdempotencyReplayKey(req, idempotencyKey)
+      : null;
     if (replayKey) {
       const existing = idempotencyStore.get(replayKey);
       if (existing && existing.expires_at > Date.now()) {
@@ -406,6 +422,7 @@ const offlineSupportMiddleware = () => {
       }
 
       const shouldComputeValidators =
+        !isAuthPath &&
         (req.method === 'GET' || req.method === 'HEAD') &&
         res.statusCode >= 200 &&
         res.statusCode < 300 &&
@@ -477,4 +494,3 @@ module.exports = {
   offlineSupportMiddleware,
   clearIdempotencyStore
 };
-

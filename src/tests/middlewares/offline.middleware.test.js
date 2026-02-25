@@ -121,6 +121,36 @@ describe('offline support middleware', () => {
     expect(secondRes.body).toBeUndefined();
   });
 
+  test('does not return 304 for auth endpoints even when If-None-Match matches', () => {
+    const middleware = offlineSupportMiddleware();
+    const payload = {
+      status: 200,
+      message: 'ok',
+      data: { id: 'u1', email: 'tenantadmin@demo.com' },
+      meta: { locale: 'en', direction: 'ltr' }
+    };
+
+    const firstReq = createReq({ method: 'GET', path: '/api/v1/auth/me' });
+    const firstRes = createRes();
+    middleware(firstReq, firstRes, jest.fn());
+    firstRes.json(payload);
+    const etag = firstRes.headers.ETag;
+
+    const secondReq = createReq({
+      method: 'GET',
+      path: '/api/v1/auth/me',
+      headers: { 'if-none-match': etag }
+    });
+    const secondRes = createRes();
+    middleware(secondReq, secondRes, jest.fn());
+    secondRes.json(payload);
+
+    expect(secondRes.statusCode).toBe(200);
+    expect(secondRes.ended).toBe(false);
+    expect(secondRes.body).toEqual(payload);
+    expect(secondRes.headers['Cache-Control']).toBe('no-store');
+  });
+
   test('replays stored response for duplicate Idempotency-Key requests', () => {
     const middleware = offlineSupportMiddleware();
     const headers = {
@@ -165,4 +195,3 @@ describe('offline support middleware', () => {
     expect(res2.body).toEqual(res1.body);
   });
 });
-
