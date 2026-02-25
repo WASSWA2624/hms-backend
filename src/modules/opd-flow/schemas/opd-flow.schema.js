@@ -66,6 +66,8 @@ const WORKFLOW_STAGE_VALUES = [
   'ADMITTED',
   'DISCHARGED'
 ];
+const UUID_LIKE_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const PATIENT_FRIENDLY_ID_REGEX = /^(?=.*\d)[A-Za-z][A-Za-z0-9_-]*$/;
 const RESOURCE_FRIENDLY_ID_REGEX = /^(?=.*\d)[A-Za-z][A-Za-z0-9_-]*$/;
 
@@ -85,10 +87,20 @@ const resourceFriendlyIdSchema = z
   .max(64)
   .regex(RESOURCE_FRIENDLY_ID_REGEX, 'Invalid identifier format')
   .transform((value) => value.toUpperCase());
+const scopeIdentifierSchema = z
+  .string()
+  .trim()
+  .min(2)
+  .max(64)
+  .refine(
+    (value) => UUID_LIKE_REGEX.test(value) || RESOURCE_FRIENDLY_ID_REGEX.test(value),
+    'Invalid identifier format'
+  )
+  .transform((value) => (UUID_LIKE_REGEX.test(value) ? value.toLowerCase() : value.toUpperCase()));
 const providerIdentifierSchema = resourceFriendlyIdSchema;
 const appointmentIdentifierSchema = resourceFriendlyIdSchema;
 const encounterIdentifierSchema = resourceFriendlyIdSchema;
-const facilityIdentifierSchema = resourceFriendlyIdSchema;
+const facilityIdentifierSchema = scopeIdentifierSchema;
 const invoiceIdentifierSchema = resourceFriendlyIdSchema;
 
 const patientRegistrationSchema = z.object({
@@ -114,7 +126,7 @@ const payNowSchema = z.object({
 
 const createOpdFlowSchema = z
   .object({
-    tenant_id: resourceFriendlyIdSchema.optional(),
+    tenant_id: scopeIdentifierSchema.optional(),
     facility_id: facilityIdentifierSchema.optional().nullable(),
     patient_id: patientIdentifierSchema.optional(),
     patient_registration: patientRegistrationSchema.optional(),
@@ -283,7 +295,7 @@ const correctStageSchema = z.object({
 });
 
 const listOpdFlowsQuerySchema = listQuerySchema.extend({
-  tenant_id: resourceFriendlyIdSchema.optional(),
+  tenant_id: scopeIdentifierSchema.optional(),
   facility_id: facilityIdentifierSchema.optional(),
   patient_id: patientIdentifierSchema.optional(),
   provider_user_id: providerIdentifierSchema.optional(),

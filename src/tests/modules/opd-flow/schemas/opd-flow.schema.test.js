@@ -49,6 +49,18 @@ describe('opd-flow.schema', () => {
       expect(result.success).toBe(true);
       expect(result.data.patient_id).toBe('PAT0000003');
     });
+
+    it('accepts UUID scope identifiers for tenant and facility', () => {
+      const result = createOpdFlowSchema.safeParse({
+        tenant_id: '550e8400-e29b-41d4-a716-446655440000',
+        facility_id: '550e8400-e29b-41d4-a716-446655440001',
+        patient_id: 'PAT0000003'
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.data.tenant_id).toBe('550e8400-e29b-41d4-a716-446655440000');
+      expect(result.data.facility_id).toBe('550e8400-e29b-41d4-a716-446655440001');
+    });
   });
 
   describe('encounterIdParamsSchema', () => {
@@ -212,6 +224,17 @@ describe('opd-flow.schema', () => {
 
       expect(result.success).toBe(true);
       expect(result.data.patient_id).toBe('PAT0000003');
+    });
+
+    it('accepts UUID scope filters for tenant and facility', () => {
+      const result = listOpdFlowsQuerySchema.safeParse({
+        tenant_id: '550e8400-e29b-41d4-a716-446655440000',
+        facility_id: '550e8400-e29b-41d4-a716-446655440001'
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.data.tenant_id).toBe('550e8400-e29b-41d4-a716-446655440000');
+      expect(result.data.facility_id).toBe('550e8400-e29b-41d4-a716-446655440001');
     });
   });
 });
