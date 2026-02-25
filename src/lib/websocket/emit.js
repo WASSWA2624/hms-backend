@@ -12,6 +12,7 @@
  */
 
 const { logger } = require('@lib/logging');
+const { sanitizeFriendlyIds } = require('@lib/identifiers/sanitize-friendly-ids');
 
 // Import gateway functions (using require to avoid circular dependency)
 // These functions are exported from gateway.js
@@ -36,8 +37,9 @@ const emitToUser = (userId, event, payload = {}) => {
     // Per websockets.mdc: No raw database entities are sent directly
     // Services should sanitize and format data before emitting
     
+    const sanitizedPayload = sanitizeFriendlyIds(payload);
     const { sendToUser } = getGateway();
-    const sent = sendToUser(userId, event, payload);
+    const sent = sendToUser(userId, event, sanitizedPayload);
     
     if (sent) {
       logger.info('WebSocket event emitted to user', {
@@ -78,8 +80,9 @@ const emitBroadcast = (event, payload = {}, excludeUserIds = []) => {
     // Per websockets.mdc: No raw database entities are sent directly
     // Services should sanitize and format data before emitting
     
+    const sanitizedPayload = sanitizeFriendlyIds(payload);
     const { broadcast } = getGateway();
-    const sentCount = broadcast(event, payload, excludeUserIds);
+    const sentCount = broadcast(event, sanitizedPayload, excludeUserIds);
     
     logger.info('WebSocket event broadcasted', {
       event,
@@ -112,10 +115,11 @@ const emitToUsers = (userIds, event, payload = {}) => {
       return 0;
     }
     
+    const sanitizedPayload = sanitizeFriendlyIds(payload);
     let sentCount = 0;
     
     userIds.forEach((userId) => {
-      if (emitToUser(userId, event, payload)) {
+      if (emitToUser(userId, event, sanitizedPayload)) {
         sentCount++;
       }
     });

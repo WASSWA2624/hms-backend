@@ -12,6 +12,7 @@
  * @returns {Object} Express response
  */
 const { translate, isTranslationKey, applyLocaleHeader, getResponseMeta } = require('@lib/i18n');
+const { sanitizeFriendlyIds } = require('@lib/identifiers/sanitize-friendly-ids');
 
 const resolveMessage = (message, locale) => {
   if (isTranslationKey(message)) {
@@ -31,11 +32,12 @@ const resolveErrors = (errors, locale) => {
     const message = resolveMessage(error.message, locale);
     return { ...error, message };
   });
-  return resolved;
+  return sanitizeFriendlyIds(resolved);
 };
 
 const sendError = (res, status, message, errors = []) => {
   const meta = getResponseMeta(res);
+  const sanitizedMeta = sanitizeFriendlyIds(meta);
   const resolvedMessage = resolveMessage(message, meta.locale);
   const resolvedErrors = resolveErrors(errors, meta.locale);
   applyLocaleHeader(res, meta.locale);
@@ -44,7 +46,7 @@ const sendError = (res, status, message, errors = []) => {
     status,
     message: resolvedMessage,
     data: null,
-    meta,
+    meta: sanitizedMeta,
     errors: resolvedErrors
   });
 };

@@ -94,6 +94,11 @@ const disposition = asyncHandler(async (req, res) => {
   return sendSuccess(res, 200, 'messages.opd_flow.disposition.success', flow);
 });
 
+const correctStage = asyncHandler(async (req, res) => {
+  const flow = await opdFlowService.correctStage(req.params.id, req.body, buildAuditContext(req));
+  return sendSuccess(res, 200, 'messages.opd_flow.correct_stage.success', flow);
+});
+
 module.exports = {
   listOpdFlows,
   getOpdFlowById,
@@ -102,5 +107,6 @@ module.exports = {
   recordVitals,
   assignDoctor,
   doctorReview,
-  disposition
+  disposition,
+  correctStage
 };

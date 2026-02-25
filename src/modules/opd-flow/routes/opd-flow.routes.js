@@ -22,6 +22,7 @@ const {
   assignDoctorSchema,
   doctorReviewSchema,
   dispositionSchema,
+  correctStageSchema,
   listOpdFlowsQuerySchema
 } = require('@validations/opd-flow/opd-flow.schema');
 
@@ -291,6 +292,38 @@ router.post(
     'role'
   ),
   opdFlowController.disposition
+);
+
+/**
+ * @description Correct OPD stage progression with mandatory reason
+ * @method POST
+ * @route /api/v1/opd-flows/:id/correct-stage
+ * @authentication Required (JWT)
+ * @permissions Restricted clinical roles
+ * @urlParams {string} id - Encounter Friendly ID
+ * @queryParams None
+ * @bodyParams {string} stage_to - Target stage
+ * @bodyParams {string} reason - Non-empty correction reason
+ * @returns {Object} Updated OPD flow snapshot
+ * @throws 401 Unauthorized
+ * @throws 403 Forbidden
+ * @throws 400 Validation error
+ */
+router.post(
+  '/:id/correct-stage',
+  validateRequest({ params: encounterIdParamsSchema, body: correctStageSchema }),
+  authenticate(),
+  authorize(
+    [
+      ROLES.SUPER_ADMIN,
+      ROLES.TENANT_ADMIN,
+      ROLES.FACILITY_ADMIN,
+      ROLES.NURSE,
+      ROLES.DOCTOR,
+    ],
+    'role'
+  ),
+  opdFlowController.correctStage
 );
 
 module.exports = router;

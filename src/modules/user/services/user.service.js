@@ -16,8 +16,18 @@ const BCRYPT_PREFIX_REGEX = /^\$2[aby]\$\d{2}\$/;
 
 const normalizeUserPayload = async (data, isUpdate = false) => {
   const next = { ...(data || {}) };
+  const normalizedPositionTitle = typeof next.position_title === 'string' ? next.position_title.trim() : '';
   const rawPassword = typeof next.password === 'string' ? next.password.trim() : '';
   const providedHash = typeof next.password_hash === 'string' ? next.password_hash.trim() : '';
+
+  if (!isUpdate) {
+    if (!normalizedPositionTitle) {
+      throw new HttpError('errors.validation.field.required', 400, [{ field: 'position_title' }]);
+    }
+    next.position_title = normalizedPositionTitle;
+  } else if (next.position_title !== undefined) {
+    next.position_title = normalizedPositionTitle;
+  }
 
   if (rawPassword) {
     next.password_hash = await hashPassword(rawPassword);
@@ -55,6 +65,7 @@ const listUsers = async (filters, page, limit, sortBy, order, userId, ipAddress)
     
     if (filters.tenant_id) whereClause.tenant_id = filters.tenant_id;
     if (filters.facility_id) whereClause.facility_id = filters.facility_id;
+    if (filters.position_title) whereClause.position_title = { contains: filters.position_title };
     if (filters.status) whereClause.status = filters.status;
     if (filters.email) whereClause.email = { contains: filters.email };
     
@@ -62,7 +73,8 @@ const listUsers = async (filters, page, limit, sortBy, order, userId, ipAddress)
     if (filters.search) {
       whereClause.OR = [
         { email: { contains: filters.search } },
-        { phone: { contains: filters.search } }
+        { phone: { contains: filters.search } },
+        { position_title: { contains: filters.search } }
       ];
     }
 

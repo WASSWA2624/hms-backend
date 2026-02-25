@@ -152,8 +152,16 @@ const findUserById = async (id) => {
  */
 const createUser = async (data) => {
   try {
+    const normalizedPositionTitle =
+      typeof data?.position_title === 'string' && data.position_title.trim()
+        ? data.position_title.trim()
+        : 'UNSPECIFIED';
+
     return await prisma.user.create({
-      data,
+      data: {
+        ...data,
+        position_title: normalizedPositionTitle,
+      },
       include: {
         profile: true
       }
@@ -216,6 +224,7 @@ const registerFacilityOwner = async (data) => {
         data: {
           tenant_id: tenant.id,
           facility_id: facility.id,
+          position_title: 'OWNER',
           email,
           phone,
           password_hash,

@@ -11,8 +11,7 @@ const buildSearchFilter = (search) => {
   }
 
   return {
-    contains: search,
-    mode: 'insensitive'
+    contains: search
   };
 };
 
@@ -61,13 +60,22 @@ const listPublicProviders = async (search, skip, take, orderBy) => {
     };
 
     if (search) {
+      const searchUpper = String(search).trim().toUpperCase();
       where.OR = [
+        { human_friendly_id: buildSearchFilter(searchUpper) },
+        { staff_number: buildSearchFilter(search) },
+        { practitioner_type: buildSearchFilter(searchUpper) },
         { position: buildSearchFilter(search) },
         {
           user: {
             OR: [
-              { first_name: buildSearchFilter(search) },
-              { last_name: buildSearchFilter(search) }
+              { human_friendly_id: buildSearchFilter(searchUpper) },
+              { email: buildSearchFilter(search) },
+              { phone: buildSearchFilter(search) },
+              { position_title: buildSearchFilter(search) },
+              { profile: { first_name: buildSearchFilter(search) } },
+              { profile: { middle_name: buildSearchFilter(search) } },
+              { profile: { last_name: buildSearchFilter(search) } }
             ]
           }
         }
@@ -82,16 +90,27 @@ const listPublicProviders = async (search, skip, take, orderBy) => {
         orderBy,
         select: {
           id: true,
-          user_id: true,
-          tenant_id: true,
-          department_id: true,
+          human_friendly_id: true,
           staff_number: true,
           position: true,
+          practitioner_type: true,
+          consultation_fee: true,
+          consultation_currency: true,
+          is_fee_overridden: true,
           user: {
             select: {
-              first_name: true,
-              last_name: true,
-              email: true
+              id: true,
+              human_friendly_id: true,
+              email: true,
+              phone: true,
+              position_title: true,
+              profile: {
+                select: {
+                  first_name: true,
+                  middle_name: true,
+                  last_name: true,
+                }
+              }
             }
           }
         }

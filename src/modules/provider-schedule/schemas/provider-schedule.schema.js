@@ -25,6 +25,14 @@ const providerIdentifierSchema = z.union([
     .regex(PROVIDER_FRIENDLY_ID_REGEX, 'Invalid provider identifier format')
     .transform((value) => value.toUpperCase())
 ]);
+const scheduleTypeSchema = z.enum(['RECURRING', 'OVERRIDE']);
+
+const scheduleOverrideSchema = z.object({
+  override_date: z.string().trim().datetime(),
+  start_time: z.string().trim().datetime(),
+  end_time: z.string().trim().datetime(),
+  is_available: z.boolean().optional().default(true)
+});
 
 // ==================== Body Schemas ====================
 
@@ -36,9 +44,14 @@ const createProviderScheduleSchema = z.object({
   tenant_id: uuidSchema,
   facility_id: uuidSchema.optional().nullable(),
   provider_user_id: providerIdentifierSchema,
+  schedule_type: scheduleTypeSchema.optional().default('RECURRING'),
+  timezone: z.string().trim().min(1).max(64).optional().default('UTC'),
+  effective_from: z.string().trim().datetime().optional().nullable(),
+  effective_to: z.string().trim().datetime().optional().nullable(),
   day_of_week: z.number().int().min(0).max(6),
   start_time: z.string().trim().datetime(),
-  end_time: z.string().trim().datetime()
+  end_time: z.string().trim().datetime(),
+  schedule_overrides: z.array(scheduleOverrideSchema).optional().default([])
 });
 
 /**
@@ -49,9 +62,14 @@ const createProviderScheduleSchema = z.object({
 const updateProviderScheduleSchema = z.object({
   facility_id: uuidSchema.optional().nullable(),
   provider_user_id: providerIdentifierSchema.optional(),
+  schedule_type: scheduleTypeSchema.optional(),
+  timezone: z.string().trim().min(1).max(64).optional(),
+  effective_from: z.string().trim().datetime().optional().nullable(),
+  effective_to: z.string().trim().datetime().optional().nullable(),
   day_of_week: z.number().int().min(0).max(6).optional(),
   start_time: z.string().trim().datetime().optional(),
-  end_time: z.string().trim().datetime().optional()
+  end_time: z.string().trim().datetime().optional(),
+  schedule_overrides: z.array(scheduleOverrideSchema).optional()
 });
 
 // ==================== URL Params ====================
@@ -75,6 +93,7 @@ const listProviderSchedulesQuerySchema = listQuerySchema.extend({
   tenant_id: uuidSchema.optional(),
   facility_id: uuidSchema.optional(),
   provider_user_id: providerIdentifierSchema.optional(),
+  schedule_type: scheduleTypeSchema.optional(),
   day_of_week: z.coerce.number().int().min(0).max(6).optional()
 });
 

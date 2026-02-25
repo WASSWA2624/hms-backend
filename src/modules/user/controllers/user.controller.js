@@ -23,6 +23,7 @@ const listUsers = asyncHandler(async (req, res) => {
   const {
     tenant_id,
     facility_id,
+    position_title,
     email,
     status,
     search,
@@ -35,6 +36,7 @@ const listUsers = asyncHandler(async (req, res) => {
   const filters = {
     tenant_id,
     facility_id,
+    position_title,
     email,
     status,
     search

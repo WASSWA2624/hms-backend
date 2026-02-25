@@ -6,7 +6,7 @@
  */
 
 const { z } = require('zod');
-const { uuidSchema, listQuerySchema, decimalStringSchema } = require('@lib/validation/zod');
+const { listQuerySchema, decimalStringSchema } = require('@lib/validation/zod');
 
 const ARRIVAL_MODE_VALUES = ['WALK_IN', 'ONLINE_APPOINTMENT', 'EMERGENCY'];
 const EMERGENCY_SEVERITY_VALUES = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
@@ -77,7 +77,7 @@ const patientFriendlyIdSchema = z
   .regex(PATIENT_FRIENDLY_ID_REGEX, 'Invalid patient identifier format')
   .transform((value) => value.toUpperCase());
 
-const patientIdentifierSchema = z.union([uuidSchema, patientFriendlyIdSchema]);
+const patientIdentifierSchema = patientFriendlyIdSchema;
 const resourceFriendlyIdSchema = z
   .string()
   .trim()
@@ -85,9 +85,11 @@ const resourceFriendlyIdSchema = z
   .max(64)
   .regex(RESOURCE_FRIENDLY_ID_REGEX, 'Invalid identifier format')
   .transform((value) => value.toUpperCase());
-const providerIdentifierSchema = z.union([uuidSchema, resourceFriendlyIdSchema]);
-const appointmentIdentifierSchema = z.union([uuidSchema, resourceFriendlyIdSchema]);
-const encounterIdentifierSchema = z.union([uuidSchema, resourceFriendlyIdSchema]);
+const providerIdentifierSchema = resourceFriendlyIdSchema;
+const appointmentIdentifierSchema = resourceFriendlyIdSchema;
+const encounterIdentifierSchema = resourceFriendlyIdSchema;
+const facilityIdentifierSchema = resourceFriendlyIdSchema;
+const invoiceIdentifierSchema = resourceFriendlyIdSchema;
 
 const patientRegistrationSchema = z.object({
   first_name: z.string().trim().min(1).max(120),
@@ -112,8 +114,8 @@ const payNowSchema = z.object({
 
 const createOpdFlowSchema = z
   .object({
-    tenant_id: uuidSchema.optional(),
-    facility_id: uuidSchema.optional().nullable(),
+    tenant_id: resourceFriendlyIdSchema.optional(),
+    facility_id: facilityIdentifierSchema.optional().nullable(),
     patient_id: patientIdentifierSchema.optional(),
     patient_registration: patientRegistrationSchema.optional(),
     arrival_mode: z.enum(ARRIVAL_MODE_VALUES).default('WALK_IN'),
@@ -151,7 +153,7 @@ const encounterIdParamsSchema = z.object({
 });
 
 const payConsultationSchema = z.object({
-  invoice_id: uuidSchema.optional(),
+  invoice_id: invoiceIdentifierSchema.optional(),
   amount: decimalStringSchema.optional(),
   currency: z.string().trim().min(1).max(10).optional(),
   method: z.enum(PAYMENT_METHOD_VALUES),
@@ -241,7 +243,7 @@ const doctorReviewSchema = z.object({
   lab_requests: z
     .array(
       z.object({
-        lab_test_id: uuidSchema,
+        lab_test_id: resourceFriendlyIdSchema,
         status: z.enum(LAB_ORDER_STATUS_VALUES).optional()
       })
     )
@@ -249,7 +251,7 @@ const doctorReviewSchema = z.object({
   radiology_requests: z
     .array(
       z.object({
-        radiology_test_id: uuidSchema.optional().nullable(),
+        radiology_test_id: resourceFriendlyIdSchema.optional().nullable(),
         status: z.enum(RADIOLOGY_ORDER_STATUS_VALUES).optional()
       })
     )
@@ -257,7 +259,7 @@ const doctorReviewSchema = z.object({
   medications: z
     .array(
       z.object({
-        drug_id: uuidSchema,
+        drug_id: resourceFriendlyIdSchema,
         quantity: z.coerce.number().int().positive(),
         dosage: z.string().trim().max(80).optional().nullable(),
         frequency: z.enum(MEDICATION_FREQUENCY_VALUES).optional().nullable(),
@@ -271,13 +273,18 @@ const doctorReviewSchema = z.object({
 
 const dispositionSchema = z.object({
   decision: z.enum(DISPOSITION_VALUES),
-  admission_facility_id: uuidSchema.optional().nullable(),
+  admission_facility_id: facilityIdentifierSchema.optional().nullable(),
   notes: z.string().trim().max(65535).optional().nullable()
 });
 
+const correctStageSchema = z.object({
+  stage_to: z.enum(WORKFLOW_STAGE_VALUES),
+  reason: z.string().trim().min(1).max(2000),
+});
+
 const listOpdFlowsQuerySchema = listQuerySchema.extend({
-  tenant_id: uuidSchema.optional(),
-  facility_id: uuidSchema.optional(),
+  tenant_id: resourceFriendlyIdSchema.optional(),
+  facility_id: facilityIdentifierSchema.optional(),
   patient_id: patientIdentifierSchema.optional(),
   provider_user_id: providerIdentifierSchema.optional(),
   encounter_type: z.enum(['OPD', 'EMERGENCY']).optional(),
@@ -293,5 +300,6 @@ module.exports = {
   assignDoctorSchema,
   doctorReviewSchema,
   dispositionSchema,
+  correctStageSchema,
   listOpdFlowsQuerySchema
 };

@@ -17,6 +17,7 @@
  * @returns {Object} Express response
  */
 const { translate, isTranslationKey, applyLocaleHeader, getResponseMeta } = require('@lib/i18n');
+const { sanitizeFriendlyIds } = require('@lib/identifiers/sanitize-friendly-ids');
 
 const resolveMessage = (message, locale) => {
   if (isTranslationKey(message)) {
@@ -27,14 +28,15 @@ const resolveMessage = (message, locale) => {
 
 const sendPaginated = (res, message, data, pagination) => {
   const meta = getResponseMeta(res);
+  const sanitizedMeta = sanitizeFriendlyIds(meta);
   const resolvedMessage = resolveMessage(message, meta.locale);
   applyLocaleHeader(res, meta.locale);
 
   return res.status(200).json({
     status: 200,
     message: resolvedMessage,
-    data: data || [],
-    meta,
+    data: sanitizeFriendlyIds(data || []),
+    meta: sanitizedMeta,
     pagination: {
       page: pagination.page,
       limit: pagination.limit,

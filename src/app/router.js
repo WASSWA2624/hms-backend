@@ -123,6 +123,7 @@ apiV1Router.use('/appointment-participants', require('../modules/appointment-par
 apiV1Router.use('/appointment-reminders', require('../modules/appointment-reminder/routes/appointment-reminder.routes'));
 apiV1Router.use('/provider-schedules', require('../modules/provider-schedule/routes/provider-schedule.routes'));
 apiV1Router.use('/availability-slots', require('../modules/availability-slot/routes/availability-slot.routes'));
+apiV1Router.use('/doctors', require('../modules/doctor/routes/doctor.routes'));
 apiV1Router.use('/admissions', require('../modules/admission/routes/admission.routes'));
 apiV1Router.use('/bed-assignments', require('../modules/bed-assignment/routes/bed-assignment.routes'));
 apiV1Router.use('/ward-rounds', require('../modules/ward-round/routes/ward-round.routes'));

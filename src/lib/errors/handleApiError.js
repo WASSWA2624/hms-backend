@@ -14,6 +14,7 @@
 const AppError = require('@lib/errors/AppError');
 const HttpError = require('@lib/errors/HttpError');
 const { translate, isTranslationKey, applyLocaleHeader, getResponseMeta } = require('@lib/i18n');
+const { sanitizeFriendlyIds } = require('@lib/identifiers/sanitize-friendly-ids');
 
 // Prisma may not be available during initial setup
 let Prisma = null;
@@ -206,7 +207,7 @@ const resolveErrors = (errors, locale) => {
       : error.message;
     return { ...error, message: resolvedMessage };
   });
-  return resolved;
+  return sanitizeFriendlyIds(resolved);
 };
 
 const handleApiError = (err, req, res, next) => {
@@ -259,6 +260,7 @@ const handleApiError = (err, req, res, next) => {
   // Stack traces should not be logged if they contain sensitive information
   
   const meta = getResponseMeta(res);
+  const sanitizedMeta = sanitizeFriendlyIds(meta);
   const resolvedMessage = resolveMessage(message, meta.locale, statusCode);
   const resolvedErrors = resolveErrors(errors, meta.locale);
   applyLocaleHeader(res, meta.locale);
@@ -269,7 +271,7 @@ const handleApiError = (err, req, res, next) => {
     code: toErrorCode(message, statusCode),
     message: resolvedMessage,
     data: null,
-    meta,
+    meta: sanitizedMeta,
     errors: resolvedErrors
   });
 };

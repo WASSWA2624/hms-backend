@@ -141,6 +141,11 @@ enum AppointmentStatus {
   NO_SHOW
 }
 
+enum ProviderScheduleType {
+  RECURRING
+  OVERRIDE
+}
+
 enum EncounterType {
   OPD
   IPD
@@ -1043,6 +1048,7 @@ model user {
   human_friendly_id String?    @db.VarChar(32)
   tenant_id         String     @db.VarChar(36)
   facility_id       String?    @db.VarChar(36)
+  position_title    String     @default("UNSPECIFIED") @db.VarChar(120)
   email             String     @db.VarChar(255)
   phone             String?    @db.VarChar(40)
   password_hash     String     @db.VarChar(255)
@@ -1086,9 +1092,11 @@ model user {
   configuration_snapshots    configuration_snapshot[] @relation("configuration_snapshot_created_by")
 
   @@unique([tenant_id, email])
+  @@unique([tenant_id, human_friendly_id])
   @@index([tenant_id])
   @@index([facility_id])
   @@index([email])
+  @@index([position_title])
   @@index([status])
   @@index([deleted_at])
   @@index([human_friendly_id])
@@ -1433,6 +1441,7 @@ model patient {
   adverse_events             adverse_event[]
 
   @@unique([facility_id, human_friendly_id])
+  @@unique([tenant_id, human_friendly_id])
   @@index([tenant_id])
   @@index([facility_id])
   @@index([is_active])
@@ -1656,6 +1665,7 @@ model appointment {
   reminders     appointment_reminder[]
   queue_entries visit_queue[]
 
+  @@unique([tenant_id, human_friendly_id])
   @@index([tenant_id])
   @@index([facility_id])
   @@index([patient_id])
@@ -1716,6 +1726,10 @@ model provider_schedule {
   tenant_id         String    @db.VarChar(36)
   facility_id       String?   @db.VarChar(36)
   provider_user_id  String    @db.VarChar(36)
+  schedule_type     ProviderScheduleType @default(RECURRING)
+  timezone          String    @default("UTC") @db.VarChar(64)
+  effective_from    DateTime?
+  effective_to      DateTime?
   day_of_week       Int
   start_time        DateTime
   end_time          DateTime
@@ -1729,9 +1743,14 @@ model provider_schedule {
   provider user                @relation(fields: [provider_user_id], references: [id])
   slots    availability_slot[]
 
+  @@unique([tenant_id, human_friendly_id])
   @@index([tenant_id])
   @@index([facility_id])
   @@index([provider_user_id])
+  @@index([schedule_type])
+  @@index([timezone])
+  @@index([effective_from])
+  @@index([effective_to])
   @@index([day_of_week])
   @@index([deleted_at])
   @@index([human_friendly_id])
@@ -1741,6 +1760,7 @@ model availability_slot {
   id                String    @id @default(uuid()) @db.VarChar(36)
   human_friendly_id String?   @db.VarChar(32)
   schedule_id       String    @db.VarChar(36)
+  override_date     DateTime?
   start_time        DateTime
   end_time          DateTime
   is_available      Boolean   @default(true)
@@ -1751,7 +1771,9 @@ model availability_slot {
 
   schedule provider_schedule @relation(fields: [schedule_id], references: [id])
 
+  @@unique([schedule_id, human_friendly_id])
   @@index([schedule_id])
+  @@index([override_date])
   @@index([is_available])
   @@index([deleted_at])
   @@index([human_friendly_id])
@@ -1778,6 +1800,7 @@ model visit_queue {
   appointment appointment? @relation(fields: [appointment_id], references: [id])
   provider    user?        @relation(fields: [provider_user_id], references: [id])
 
+  @@unique([tenant_id, human_friendly_id])
   @@index([tenant_id])
   @@index([facility_id])
   @@index([patient_id])
@@ -1824,6 +1847,7 @@ model encounter {
   pharmacy_orders  pharmacy_order[]
   theatre_cases    theatre_case[]
 
+  @@unique([tenant_id, human_friendly_id])
   @@index([tenant_id])
   @@index([facility_id])
   @@index([patient_id])
@@ -3301,6 +3325,7 @@ model staff_position {
   facility   facility?   @relation(fields: [facility_id], references: [id])
   department department? @relation(fields: [department_id], references: [id])
 
+  @@unique([tenant_id, human_friendly_id])
   @@index([tenant_id])
   @@index([facility_id])
   @@index([department_id])
@@ -3344,6 +3369,7 @@ model staff_profile {
   contacts                   contact[]            @relation("staff_profile_contact")
 
   @@unique([tenant_id, staff_number])
+  @@unique([tenant_id, human_friendly_id])
   @@index([tenant_id])
   @@index([user_id])
   @@index([department_id])

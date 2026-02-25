@@ -24,6 +24,7 @@ const userStatusSchema = z.enum(['ACTIVE', 'INACTIVE', 'SUSPENDED', 'PENDING']);
 const createUserSchema = z.object({
   tenant_id: uuidSchema,
   facility_id: uuidSchema.optional().nullable(),
+  position_title: z.string().trim().min(1).max(120),
   email: z.string().trim().email().max(255),
   phone: z.string().trim().min(1).max(40).optional().nullable(),
   password: z.string().trim().min(8).max(255).optional(),
@@ -41,6 +42,7 @@ const createUserSchema = z.object({
  */
 const updateUserSchema = z.object({
   facility_id: uuidSchema.optional().nullable(),
+  position_title: z.string().trim().min(1).max(120).optional(),
   email: z.string().trim().email().max(255).optional(),
   phone: z.string().trim().min(1).max(40).optional().nullable(),
   password: z.string().trim().min(8).max(255).optional(),
@@ -68,6 +70,7 @@ const userIdParamsSchema = z.object({
 const listUsersQuerySchema = listQuerySchema.extend({
   tenant_id: uuidSchema.optional(),
   facility_id: uuidSchema.optional(),
+  position_title: z.string().trim().optional(),
   email: z.string().trim().optional(),
   status: userStatusSchema.optional(),
   search: z.string().trim().optional()

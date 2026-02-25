@@ -24,6 +24,7 @@ const listProviderSchedules = asyncHandler(async (req, res) => {
     tenant_id,
     facility_id,
     provider_user_id,
+    schedule_type,
     day_of_week,
     page = DEFAULT_PAGE,
     limit = DEFAULT_PAGE_LIMIT,
@@ -35,6 +36,7 @@ const listProviderSchedules = asyncHandler(async (req, res) => {
     tenant_id,
     facility_id,
     provider_user_id,
+    schedule_type,
     day_of_week
   };
 
