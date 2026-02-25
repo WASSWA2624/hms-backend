@@ -392,14 +392,27 @@ describe('Dashboard Widget Repository', () => {
 
       expect(result).toBe(5);
       expect(prisma.notification.count).toHaveBeenCalledWith({
-        where: {
+        where: expect.objectContaining({
           deleted_at: null,
           read_at: null,
-          title: { contains: 'OPD flow update' },
           tenant_id: 'tenant-1',
-          user_id: 'user-1'
-        }
+          user_id: 'user-1',
+          AND: expect.any(Array),
+        }),
       });
+
+      const whereArg = prisma.notification.count.mock.calls[0]?.[0]?.where;
+      expect(whereArg.AND).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            OR: expect.arrayContaining([
+              expect.objectContaining({ notification_type: 'OPD' }),
+              expect.objectContaining({ title: { contains: 'OPD flow update' } }),
+              expect.objectContaining({ message: { contains: 'triage' } }),
+            ]),
+          }),
+        ])
+      );
     });
 
     it('throws HttpError on notification count failure', async () => {

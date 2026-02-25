@@ -58,10 +58,35 @@ describe('Vital Sign Schemas', () => {
     it('should accept valid vital_type values', () => {
       const types = ['TEMPERATURE', 'BLOOD_PRESSURE', 'HEART_RATE', 'RESPIRATORY_RATE', 'OXYGEN_SATURATION', 'WEIGHT', 'HEIGHT', 'BMI'];
       types.forEach(vital_type => {
-        const data = { ...validData, vital_type };
+        const data = vital_type === 'BLOOD_PRESSURE'
+          ? { ...validData, vital_type, value: '120/80' }
+          : { ...validData, vital_type };
         const result = createVitalSignSchema.safeParse(data);
         expect(result.success).toBe(true);
       });
+    });
+
+    it('should accept blood pressure with structured components', () => {
+      const data = {
+        ...validData,
+        vital_type: 'BLOOD_PRESSURE',
+        value: undefined,
+        systolic_value: '122',
+        diastolic_value: '78',
+        map_value: '93',
+      };
+      const result = createVitalSignSchema.safeParse(data);
+      expect(result.success).toBe(true);
+    });
+
+    it('should reject blood pressure without legacy value or structured components', () => {
+      const data = {
+        ...validData,
+        vital_type: 'BLOOD_PRESSURE',
+        value: 'invalid',
+      };
+      const result = createVitalSignSchema.safeParse(data);
+      expect(result.success).toBe(false);
     });
 
     it('should allow optional unit', () => {
@@ -120,7 +145,13 @@ describe('Vital Sign Schemas', () => {
 
   describe('updateVitalSignSchema', () => {
     it('should validate with all optional fields', () => {
-      const data = { vital_type: 'HEART_RATE' };
+      const data = { vital_type: 'HEART_RATE', value: '72' };
+      const result = updateVitalSignSchema.safeParse(data);
+      expect(result.success).toBe(true);
+    });
+
+    it('should validate blood pressure update with structured components', () => {
+      const data = { vital_type: 'BLOOD_PRESSURE', systolic_value: '118', diastolic_value: '76' };
       const result = updateVitalSignSchema.safeParse(data);
       expect(result.success).toBe(true);
     });

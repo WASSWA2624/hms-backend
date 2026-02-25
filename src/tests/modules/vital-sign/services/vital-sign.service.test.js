@@ -62,7 +62,35 @@ describe('Vital Sign Service', () => {
       const result = await vitalSignService.createVitalSign(newVitalSign, mockUserId, mockIpAddress);
 
       expect(result).toEqual(createdVitalSign);
-      expect(vitalSignRepository.create).toHaveBeenCalledWith(newVitalSign);
+      expect(vitalSignRepository.create).toHaveBeenCalledWith({
+        ...newVitalSign,
+        systolic_value: null,
+        diastolic_value: null,
+        map_value: null,
+      });
+    });
+
+    it('normalizes blood pressure payload and computes MAP when missing', async () => {
+      const newVitalSign = { vital_type: 'BLOOD_PRESSURE', value: '120/80' };
+      const createdVitalSign = {
+        id: '2',
+        ...newVitalSign,
+        systolic_value: 120,
+        diastolic_value: 80,
+        map_value: 93.33,
+      };
+      vitalSignRepository.create.mockResolvedValue(createdVitalSign);
+      createAuditLog.mockResolvedValue({});
+
+      await vitalSignService.createVitalSign(newVitalSign, mockUserId, mockIpAddress);
+
+      expect(vitalSignRepository.create).toHaveBeenCalledWith({
+        vital_type: 'BLOOD_PRESSURE',
+        value: '120/80',
+        systolic_value: 120,
+        diastolic_value: 80,
+        map_value: 93.33,
+      });
     });
   });
 

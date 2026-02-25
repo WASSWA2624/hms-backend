@@ -340,10 +340,23 @@ const softDelete = async (id) => {
 
 const countUnreadOpdNotifications = async ({ scope = {}, userId = null } = {}) => {
   try {
+    const opdContextWhere = {
+      OR: [
+        { notification_type: 'OPD' },
+        { title: { contains: 'OPD flow update' } },
+        { title: { contains: 'OPD' } },
+        { message: { contains: 'OPD flow update' } },
+        { message: { contains: 'triage' } },
+        { message: { contains: 'vitals' } },
+        { message: { contains: 'doctor review' } },
+        { message: { contains: 'disposition' } },
+      ],
+    };
+
     const where = {
       deleted_at: null,
       read_at: null,
-      title: { contains: 'OPD flow update' },
+      AND: [opdContextWhere],
       ...(scope?.tenant_id ? { tenant_id: scope.tenant_id } : {}),
       ...(userId ? { user_id: userId } : {})
     };

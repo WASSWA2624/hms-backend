@@ -31,6 +31,7 @@ const STAGES = {
 const TERMINAL_STAGES = new Set([STAGES.ADMITTED, STAGES.DISCHARGED]);
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const BLOOD_PRESSURE_VALUE_REGEX = /^(\d{2,3}(?:\.\d{1,2})?)\s*\/\s*(\d{2,3}(?:\.\d{1,2})?)$/;
 
 const TRIAGE_ALIAS_MAP = {
   IMMEDIATE: 'LEVEL_1',
@@ -323,6 +324,103 @@ const normalizeDecimalString = (value, fallback = '0.00') => {
     return value.toString();
   }
   return String(value);
+};
+
+const toFiniteNumber = (value) => {
+  if (value === null || value === undefined) return null;
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : null;
+  }
+  if (typeof value === 'string') {
+    const parsed = Number(value.trim());
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  if (typeof value?.toNumber === 'function') {
+    const parsed = value.toNumber();
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  if (typeof value?.toString === 'function') {
+    const parsed = Number(value.toString());
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+};
+
+const roundToTwo = (value) => {
+  if (!Number.isFinite(value)) return null;
+  return Math.round(value * 100) / 100;
+};
+
+const formatBloodPressureValueComponent = (value) => {
+  const rounded = roundToTwo(value);
+  if (!Number.isFinite(rounded)) return '';
+  return Number.isInteger(rounded) ? String(rounded) : String(rounded);
+};
+
+const parseLegacyBloodPressureValue = (value) => {
+  const match = String(value || '').trim().match(BLOOD_PRESSURE_VALUE_REGEX);
+  if (!match) return null;
+
+  const systolic = roundToTwo(toFiniteNumber(match[1]));
+  const diastolic = roundToTwo(toFiniteNumber(match[2]));
+
+  if (!Number.isFinite(systolic) || !Number.isFinite(diastolic)) {
+    return null;
+  }
+
+  return { systolic, diastolic };
+};
+
+const computeMeanArterialPressure = (systolic, diastolic) => {
+  if (!Number.isFinite(systolic) || !Number.isFinite(diastolic)) return null;
+  return roundToTwo((systolic + 2 * diastolic) / 3);
+};
+
+const normalizeBloodPressureVital = (vital) => {
+  const parsedLegacy = parseLegacyBloodPressureValue(vital.value);
+  const systolic = roundToTwo(toFiniteNumber(vital.systolic_value)) ?? parsedLegacy?.systolic ?? null;
+  const diastolic = roundToTwo(toFiniteNumber(vital.diastolic_value)) ?? parsedLegacy?.diastolic ?? null;
+
+  if (!Number.isFinite(systolic) || !Number.isFinite(diastolic)) {
+    throw new HttpError('errors.validation.required', 400, [
+      { field: 'systolic_value' },
+      { field: 'diastolic_value' }
+    ]);
+  }
+
+  const mapValue = roundToTwo(toFiniteNumber(vital.map_value)) ?? computeMeanArterialPressure(systolic, diastolic);
+  const canonicalValue = `${formatBloodPressureValueComponent(systolic)}/${formatBloodPressureValueComponent(
+    diastolic
+  )}`;
+
+  return {
+    value: canonicalValue,
+    systolic_value: systolic,
+    diastolic_value: diastolic,
+    map_value: mapValue
+  };
+};
+
+const normalizeVitalForPersistence = (vital) => {
+  const vitalType = String(vital?.vital_type || '').trim().toUpperCase();
+  if (vitalType === 'BLOOD_PRESSURE') {
+    const normalizedBp = normalizeBloodPressureVital(vital);
+    return {
+      vital_type: vitalType,
+      value: normalizedBp.value,
+      systolic_value: normalizedBp.systolic_value,
+      diastolic_value: normalizedBp.diastolic_value,
+      map_value: normalizedBp.map_value
+    };
+  }
+
+  return {
+    vital_type: vitalType,
+    value: String(vital?.value || '').trim(),
+    systolic_value: null,
+    diastolic_value: null,
+    map_value: null
+  };
 };
 
 const deriveArrivalMode = (data, appointment) => {
@@ -1050,13 +1148,19 @@ const recordVitals = async (id, data, context = {}) => {
     }
 
     await tx.vital_sign.createMany({
-      data: data.vitals.map((vital) => ({
-        encounter_id: encounter.id,
-        vital_type: vital.vital_type,
-        value: vital.value,
-        unit: vital.unit || null,
-        recorded_at: vital.recorded_at ? new Date(vital.recorded_at) : new Date()
-      }))
+      data: data.vitals.map((vital) => {
+        const normalizedVital = normalizeVitalForPersistence(vital);
+        return {
+          encounter_id: encounter.id,
+          vital_type: normalizedVital.vital_type,
+          value: normalizedVital.value,
+          systolic_value: normalizedVital.systolic_value,
+          diastolic_value: normalizedVital.diastolic_value,
+          map_value: normalizedVital.map_value,
+          unit: vital.unit || null,
+          recorded_at: vital.recorded_at ? new Date(vital.recorded_at) : new Date()
+        };
+      })
     });
 
     if (flow.emergency_case_id && (data.triage_level || data.triage_notes)) {

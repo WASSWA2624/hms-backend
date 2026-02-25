@@ -45,6 +45,7 @@ const VITAL_TYPE_VALUES = [
   'HEIGHT',
   'BMI'
 ];
+const BLOOD_PRESSURE_VALUE_REGEX = /^(\d{2,3}(?:\.\d{1,2})?)\s*\/\s*(\d{2,3}(?:\.\d{1,2})?)$/;
 const DIAGNOSIS_TYPE_VALUES = ['PRIMARY', 'SECONDARY', 'DIFFERENTIAL'];
 const LAB_ORDER_STATUS_VALUES = ['ORDERED', 'COLLECTED', 'IN_PROCESS', 'COMPLETED', 'CANCELLED'];
 const RADIOLOGY_ORDER_STATUS_VALUES = ['ORDERED', 'IN_PROCESS', 'COMPLETED', 'CANCELLED'];
@@ -149,16 +150,54 @@ const payConsultationSchema = z.object({
   notes: z.string().trim().max(10000).optional().nullable()
 });
 
+const decimalInputSchema = z.union([
+  z.coerce.number().positive(),
+  decimalStringSchema
+]);
+
+const recordVitalItemSchema = z
+  .object({
+    vital_type: z.enum(VITAL_TYPE_VALUES),
+    value: z.string().trim().min(1).max(80).optional(),
+    unit: z.string().trim().max(20).optional().nullable(),
+    systolic_value: decimalInputSchema.optional(),
+    diastolic_value: decimalInputSchema.optional(),
+    map_value: decimalInputSchema.optional(),
+    recorded_at: z.string().datetime().optional()
+  })
+  .superRefine((vital, ctx) => {
+    if (vital.vital_type === 'BLOOD_PRESSURE') {
+      const hasStructuredComponents = vital.systolic_value != null && vital.diastolic_value != null;
+      const hasLegacyValue =
+        typeof vital.value === 'string' && BLOOD_PRESSURE_VALUE_REGEX.test(vital.value.trim());
+
+      if (!hasStructuredComponents && !hasLegacyValue) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['systolic_value'],
+          message: 'errors.validation.required'
+        });
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['diastolic_value'],
+          message: 'errors.validation.required'
+        });
+      }
+      return;
+    }
+
+    if (!vital.value) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['value'],
+        message: 'errors.validation.required'
+      });
+    }
+  });
+
 const recordVitalsSchema = z.object({
   vitals: z
-    .array(
-      z.object({
-        vital_type: z.enum(VITAL_TYPE_VALUES),
-        value: z.string().trim().min(1).max(80),
-        unit: z.string().trim().max(20).optional().nullable(),
-        recorded_at: z.string().datetime().optional()
-      })
-    )
+    .array(recordVitalItemSchema)
     .min(1),
   triage_level: z.enum(TRIAGE_LEVEL_VALUES).optional(),
   triage_notes: z.string().trim().max(65535).optional().nullable()

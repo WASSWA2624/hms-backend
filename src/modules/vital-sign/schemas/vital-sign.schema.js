@@ -10,8 +10,37 @@
 const { z } = require('zod');
 const { 
   uuidSchema, 
-  listQuerySchema
+  listQuerySchema,
+  decimalStringSchema
 } = require('@lib/validation/zod');
+
+const VITAL_TYPE_VALUES = [
+  'TEMPERATURE',
+  'BLOOD_PRESSURE',
+  'HEART_RATE',
+  'RESPIRATORY_RATE',
+  'OXYGEN_SATURATION',
+  'WEIGHT',
+  'HEIGHT',
+  'BMI'
+];
+
+const BLOOD_PRESSURE_VALUE_REGEX = /^(\d{2,3}(?:\.\d{1,2})?)\s*\/\s*(\d{2,3}(?:\.\d{1,2})?)$/;
+const decimalInputSchema = z.union([
+  z.coerce.number().positive(),
+  decimalStringSchema
+]);
+
+const createOrUpdateVitalSchemaBase = z.object({
+  encounter_id: uuidSchema.optional(),
+  vital_type: z.enum(VITAL_TYPE_VALUES).optional(),
+  value: z.string().trim().min(1).max(80).optional(),
+  unit: z.string().trim().max(20).optional().nullable(),
+  systolic_value: decimalInputSchema.optional(),
+  diastolic_value: decimalInputSchema.optional(),
+  map_value: decimalInputSchema.optional(),
+  recorded_at: z.string().datetime().optional()
+});
 
 // ==================== Body Schemas ====================
 
@@ -21,19 +50,42 @@ const {
  */
 const createVitalSignSchema = z.object({
   encounter_id: uuidSchema,
-  vital_type: z.enum([
-    'TEMPERATURE',
-    'BLOOD_PRESSURE',
-    'HEART_RATE',
-    'RESPIRATORY_RATE',
-    'OXYGEN_SATURATION',
-    'WEIGHT',
-    'HEIGHT',
-    'BMI'
-  ]),
-  value: z.string().trim().min(1).max(80),
+  vital_type: z.enum(VITAL_TYPE_VALUES),
+  value: z.string().trim().min(1).max(80).optional(),
   unit: z.string().trim().max(20).optional().nullable(),
+  systolic_value: decimalInputSchema.optional(),
+  diastolic_value: decimalInputSchema.optional(),
+  map_value: decimalInputSchema.optional(),
   recorded_at: z.string().datetime().optional()
+}).superRefine((value, ctx) => {
+  if (value.vital_type === 'BLOOD_PRESSURE') {
+    const hasStructuredComponents =
+      value.systolic_value != null && value.diastolic_value != null;
+    const hasLegacyValue =
+      typeof value.value === 'string' && BLOOD_PRESSURE_VALUE_REGEX.test(value.value.trim());
+
+    if (!hasStructuredComponents && !hasLegacyValue) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['systolic_value'],
+        message: 'errors.validation.required'
+      });
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['diastolic_value'],
+        message: 'errors.validation.required'
+      });
+    }
+    return;
+  }
+
+  if (!value.value) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['value'],
+      message: 'errors.validation.required'
+    });
+  }
 });
 
 /**
@@ -42,20 +94,36 @@ const createVitalSignSchema = z.object({
  * All fields optional for partial updates
  */
 const updateVitalSignSchema = z.object({
-  encounter_id: uuidSchema.optional(),
-  vital_type: z.enum([
-    'TEMPERATURE',
-    'BLOOD_PRESSURE',
-    'HEART_RATE',
-    'RESPIRATORY_RATE',
-    'OXYGEN_SATURATION',
-    'WEIGHT',
-    'HEIGHT',
-    'BMI'
-  ]).optional(),
-  value: z.string().trim().min(1).max(80).optional(),
-  unit: z.string().trim().max(20).optional().nullable(),
-  recorded_at: z.string().datetime().optional()
+  ...createOrUpdateVitalSchemaBase.shape
+}).superRefine((value, ctx) => {
+  if (value.vital_type && value.vital_type !== 'BLOOD_PRESSURE' && !value.value) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['value'],
+      message: 'errors.validation.required'
+    });
+    return;
+  }
+
+  if (value.vital_type !== 'BLOOD_PRESSURE') return;
+
+  const hasStructuredComponents =
+    value.systolic_value != null && value.diastolic_value != null;
+  const hasLegacyValue =
+    typeof value.value === 'string' && BLOOD_PRESSURE_VALUE_REGEX.test(value.value.trim());
+
+  if (!hasStructuredComponents && !hasLegacyValue) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['systolic_value'],
+      message: 'errors.validation.required'
+    });
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['diastolic_value'],
+      message: 'errors.validation.required'
+    });
+  }
 });
 
 // ==================== URL Params ====================
@@ -77,16 +145,7 @@ const vitalSignIdParamsSchema = z.object({
  */
 const listVitalSignsQuerySchema = listQuerySchema.extend({
   encounter_id: uuidSchema.optional(),
-  vital_type: z.enum([
-    'TEMPERATURE',
-    'BLOOD_PRESSURE',
-    'HEART_RATE',
-    'RESPIRATORY_RATE',
-    'OXYGEN_SATURATION',
-    'WEIGHT',
-    'HEIGHT',
-    'BMI'
-  ]).optional()
+  vital_type: z.enum(VITAL_TYPE_VALUES).optional()
 });
 
 module.exports = {

@@ -1903,6 +1903,9 @@ model vital_sign {
   encounter_id      String        @db.VarChar(36)
   vital_type        VitalSignType
   value             String        @db.VarChar(80)
+  systolic_value    Decimal?      @db.Decimal(6, 2)
+  diastolic_value   Decimal?      @db.Decimal(6, 2)
+  map_value         Decimal?      @db.Decimal(6, 2)
   unit              String?       @db.VarChar(20)
   recorded_at       DateTime      @default(now())
   created_at        DateTime      @default(now())

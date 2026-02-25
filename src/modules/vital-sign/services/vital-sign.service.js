@@ -11,6 +11,106 @@ const vitalSignRepository = require('@repositories/vital-sign/vital-sign.reposit
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 
+const BLOOD_PRESSURE_VALUE_REGEX = /^(\d{2,3}(?:\.\d{1,2})?)\s*\/\s*(\d{2,3}(?:\.\d{1,2})?)$/;
+
+const toFiniteNumber = (value) => {
+  if (value === null || value === undefined) return null;
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+  if (typeof value === 'string') {
+    const parsed = Number(value.trim());
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  if (typeof value?.toNumber === 'function') {
+    const parsed = value.toNumber();
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  if (typeof value?.toString === 'function') {
+    const parsed = Number(value.toString());
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+};
+
+const roundToTwo = (value) => {
+  if (!Number.isFinite(value)) return null;
+  return Math.round(value * 100) / 100;
+};
+
+const formatBpComponent = (value) => {
+  const rounded = roundToTwo(value);
+  if (!Number.isFinite(rounded)) return '';
+  return Number.isInteger(rounded) ? String(rounded) : String(rounded);
+};
+
+const parseLegacyBpValue = (value) => {
+  const match = String(value || '').trim().match(BLOOD_PRESSURE_VALUE_REGEX);
+  if (!match) return null;
+
+  const systolic = roundToTwo(toFiniteNumber(match[1]));
+  const diastolic = roundToTwo(toFiniteNumber(match[2]));
+
+  if (!Number.isFinite(systolic) || !Number.isFinite(diastolic)) {
+    return null;
+  }
+
+  return { systolic, diastolic };
+};
+
+const computeMap = (systolic, diastolic) => {
+  if (!Number.isFinite(systolic) || !Number.isFinite(diastolic)) return null;
+  return roundToTwo((systolic + 2 * diastolic) / 3);
+};
+
+const normalizeBloodPressurePayload = (input = {}) => {
+  const parsedLegacy = parseLegacyBpValue(input.value);
+  const systolic =
+    roundToTwo(toFiniteNumber(input.systolic_value)) ?? parsedLegacy?.systolic ?? null;
+  const diastolic =
+    roundToTwo(toFiniteNumber(input.diastolic_value)) ?? parsedLegacy?.diastolic ?? null;
+
+  if (!Number.isFinite(systolic) || !Number.isFinite(diastolic)) {
+    throw new HttpError('errors.validation.required', 400, [
+      { field: 'systolic_value' },
+      { field: 'diastolic_value' },
+    ]);
+  }
+
+  const mapValue = roundToTwo(toFiniteNumber(input.map_value)) ?? computeMap(systolic, diastolic);
+  return {
+    value: `${formatBpComponent(systolic)}/${formatBpComponent(diastolic)}`,
+    systolic_value: systolic,
+    diastolic_value: diastolic,
+    map_value: mapValue,
+  };
+};
+
+const normalizeVitalSignPayload = (input = {}, existing = null) => {
+  const source = { ...(existing || {}), ...(input || {}) };
+  const vitalType = String(source.vital_type || '').trim().toUpperCase();
+  const normalized = { ...input };
+
+  if (vitalType === 'BLOOD_PRESSURE') {
+    const normalizedBp = normalizeBloodPressurePayload(source);
+    normalized.value = normalizedBp.value;
+    normalized.systolic_value = normalizedBp.systolic_value;
+    normalized.diastolic_value = normalizedBp.diastolic_value;
+    normalized.map_value = normalizedBp.map_value;
+    return normalized;
+  }
+
+  if (normalized.value !== undefined) {
+    normalized.value = String(normalized.value || '').trim();
+  }
+
+  if (normalized.vital_type && String(normalized.vital_type).trim().toUpperCase() !== 'BLOOD_PRESSURE') {
+    normalized.systolic_value = null;
+    normalized.diastolic_value = null;
+    normalized.map_value = null;
+  }
+
+  return normalized;
+};
+
 /**
  * List vital signs with pagination and filtering
  *
@@ -90,7 +190,7 @@ const getVitalSignById = async (id, userId, ipAddress) => {
  */
 const createVitalSign = async (data, userId, ipAddress) => {
   try {
-    const vitalSign = await vitalSignRepository.create(data);
+    const vitalSign = await vitalSignRepository.create(normalizeVitalSignPayload(data));
 
     // Create audit log (non-blocking)
     createAuditLog({
@@ -128,7 +228,7 @@ const updateVitalSign = async (id, data, userId, ipAddress) => {
       throw new HttpError('errors.vital_sign.not_found', 404);
     }
 
-    const vitalSign = await vitalSignRepository.update(id, data);
+    const vitalSign = await vitalSignRepository.update(id, normalizeVitalSignPayload(data, before));
 
     // Create audit log (non-blocking)
     createAuditLog({
