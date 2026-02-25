@@ -123,8 +123,31 @@ const startServer = () => {
     // Create Express app
     const app = createApp();
     
-    // Start HTTP server
-    const server = app.listen(PORT, HOST, () => {
+    // Start HTTP server.
+    const server = app.listen(PORT, HOST);
+
+    // Handle bind/runtime errors explicitly so startup failures are actionable.
+    server.once('error', (err) => {
+      if (err && err.code === 'EADDRINUSE') {
+        console.error(`[startup] Port ${PORT} is already in use on ${HOST}.`);
+        console.error('[startup] Stop the existing backend process or change PORT in .env.');
+      } else {
+        console.error(`[startup] HTTP server error: ${err?.message || 'Unknown error'}`);
+      }
+
+      logger.error('HTTP server failed to start', {
+        error: err?.message,
+        code: err?.code,
+        errno: err?.errno,
+        syscall: err?.syscall,
+        address: err?.address,
+        port: err?.port
+      });
+
+      process.exit(1);
+    });
+
+    server.once('listening', () => {
       const startupUrls = getStartupUrls(HOST, PORT);
       console.log(`[startup] backend listening on ${startupUrls[0]}`);
       if (startupUrls.length > 1) {
@@ -137,23 +160,22 @@ const startServer = () => {
         environment: NODE_ENV,
         nodeVersion: process.version
       });
-    });
 
-    // Initialize WebSocket runtime on the same HTTP server.
-    try {
-      const { initializeWebSocketServer } = require('@websockets/server');
-      const { initializeGateway } = require('@websockets/gateway');
-      initializeWebSocketServer(server);
-      initializeGateway();
-      logger.info('WebSocket runtime initialized');
-    } catch (wsErr) {
-      logger.error('Failed to initialize WebSocket runtime', {
-        error: wsErr.message,
-        stack: wsErr.stack
-      });
-      server.close(() => process.exit(1));
-      return server;
-    }
+      // Initialize WebSocket runtime on the same HTTP server after bind succeeds.
+      try {
+        const { initializeWebSocketServer } = require('@websockets/server');
+        const { initializeGateway } = require('@websockets/gateway');
+        initializeWebSocketServer(server);
+        initializeGateway();
+        logger.info('WebSocket runtime initialized');
+      } catch (wsErr) {
+        logger.error('Failed to initialize WebSocket runtime', {
+          error: wsErr.message,
+          stack: wsErr.stack
+        });
+        server.close(() => process.exit(1));
+      }
+    });
     
     // Graceful shutdown handling
     let isShuttingDown = false;

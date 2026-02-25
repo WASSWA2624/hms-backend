@@ -21,12 +21,16 @@ describe('server bootstrap', () => {
         callback();
       }
     });
-    const listenSpy = jest.fn((port, host, callback) => {
-      if (typeof callback === 'function') {
-        callback();
-      }
-      return { close: closeSpy };
-    });
+    const mockServer = {
+      close: closeSpy,
+      once: jest.fn((event, handler) => {
+        if (event === 'listening' && typeof handler === 'function') {
+          handler();
+        }
+        return mockServer;
+      })
+    };
+    const listenSpy = jest.fn(() => mockServer);
 
     const logger = {
       info: jest.fn(),
