@@ -13,6 +13,19 @@ const {
   listQuerySchema
 } = require('@lib/validation/zod');
 
+const PROVIDER_FRIENDLY_ID_REGEX = /^(?=.*\d)[A-Za-z][A-Za-z0-9_-]*$/;
+
+const providerIdentifierSchema = z.union([
+  uuidSchema,
+  z
+    .string()
+    .trim()
+    .min(2)
+    .max(64)
+    .regex(PROVIDER_FRIENDLY_ID_REGEX, 'Invalid provider identifier format')
+    .transform((value) => value.toUpperCase())
+]);
+
 // ==================== Body Schemas ====================
 
 /**
@@ -22,7 +35,7 @@ const {
 const createProviderScheduleSchema = z.object({
   tenant_id: uuidSchema,
   facility_id: uuidSchema.optional().nullable(),
-  provider_user_id: uuidSchema,
+  provider_user_id: providerIdentifierSchema,
   day_of_week: z.number().int().min(0).max(6),
   start_time: z.string().trim().datetime(),
   end_time: z.string().trim().datetime()
@@ -35,7 +48,7 @@ const createProviderScheduleSchema = z.object({
  */
 const updateProviderScheduleSchema = z.object({
   facility_id: uuidSchema.optional().nullable(),
-  provider_user_id: uuidSchema.optional(),
+  provider_user_id: providerIdentifierSchema.optional(),
   day_of_week: z.number().int().min(0).max(6).optional(),
   start_time: z.string().trim().datetime().optional(),
   end_time: z.string().trim().datetime().optional()
@@ -48,7 +61,7 @@ const updateProviderScheduleSchema = z.object({
  * Used for GET /:id, PUT /:id, and DELETE /:id endpoints
  */
 const providerScheduleIdParamsSchema = z.object({
-  id: uuidSchema
+  id: providerIdentifierSchema
 });
 
 // ==================== Query Params ====================
@@ -61,7 +74,7 @@ const providerScheduleIdParamsSchema = z.object({
 const listProviderSchedulesQuerySchema = listQuerySchema.extend({
   tenant_id: uuidSchema.optional(),
   facility_id: uuidSchema.optional(),
-  provider_user_id: uuidSchema.optional(),
+  provider_user_id: providerIdentifierSchema.optional(),
   day_of_week: z.coerce.number().int().min(0).max(6).optional()
 });
 

@@ -11,7 +11,8 @@ const express = require('express');
 const router = express.Router();
 const staffProfileController = require('@controllers/staff-profile/staff-profile.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
-const { authenticate } = require('@middlewares/auth.middleware');
+const { authenticate, authorize } = require('@middlewares/auth.middleware');
+const { ROLES } = require('@config/roles');
 const {
   createStaffProfileSchema,
   updateStaffProfileSchema,
@@ -91,6 +92,10 @@ router.post(
   '/',  validateRequest({ body: createStaffProfileSchema }),
 
   authenticate(),
+  authorize(
+    [ROLES.SUPER_ADMIN, ROLES.TENANT_ADMIN, ROLES.FACILITY_ADMIN, ROLES.HR],
+    'role'
+  ),
   staffProfileController.createStaffProfile
 );
 
@@ -117,6 +122,10 @@ router.put(
   '/:id',  validateRequest({ params: staffProfileIdParamsSchema, body: updateStaffProfileSchema }),
 
   authenticate(),
+  authorize(
+    [ROLES.SUPER_ADMIN, ROLES.TENANT_ADMIN, ROLES.FACILITY_ADMIN, ROLES.HR],
+    'role'
+  ),
   staffProfileController.updateStaffProfile
 );
 
@@ -137,7 +146,12 @@ router.delete(
   '/:id',  validateRequest({ params: staffProfileIdParamsSchema }),
 
   authenticate(),
+  authorize(
+    [ROLES.SUPER_ADMIN, ROLES.TENANT_ADMIN, ROLES.FACILITY_ADMIN, ROLES.HR],
+    'role'
+  ),
   staffProfileController.deleteStaffProfile
 );
 
 module.exports = router;
+

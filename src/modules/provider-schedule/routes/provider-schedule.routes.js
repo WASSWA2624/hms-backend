@@ -11,7 +11,8 @@ const express = require('express');
 const router = express.Router();
 const providerScheduleController = require('@controllers/provider-schedule/provider-schedule.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
-const { authenticate } = require('@middlewares/auth.middleware');
+const { authenticate, authorize } = require('@middlewares/auth.middleware');
+const { ROLES } = require('@config/roles');
 const {
   createProviderScheduleSchema,
   updateProviderScheduleSchema,
@@ -89,6 +90,10 @@ router.post(
   '/',  validateRequest({ body: createProviderScheduleSchema }),
 
   authenticate(),
+  authorize(
+    [ROLES.SUPER_ADMIN, ROLES.TENANT_ADMIN, ROLES.FACILITY_ADMIN, ROLES.HR],
+    'role'
+  ),
   providerScheduleController.createProviderSchedule
 );
 
@@ -116,6 +121,10 @@ router.put(
   '/:id',  validateRequest({ params: providerScheduleIdParamsSchema, body: updateProviderScheduleSchema }),
 
   authenticate(),
+  authorize(
+    [ROLES.SUPER_ADMIN, ROLES.TENANT_ADMIN, ROLES.FACILITY_ADMIN, ROLES.HR],
+    'role'
+  ),
   providerScheduleController.updateProviderSchedule
 );
 
@@ -136,7 +145,12 @@ router.delete(
   '/:id',  validateRequest({ params: providerScheduleIdParamsSchema }),
 
   authenticate(),
+  authorize(
+    [ROLES.SUPER_ADMIN, ROLES.TENANT_ADMIN, ROLES.FACILITY_ADMIN, ROLES.HR],
+    'role'
+  ),
   providerScheduleController.deleteProviderSchedule
 );
 
 module.exports = router;
+

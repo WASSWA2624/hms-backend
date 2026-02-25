@@ -3318,6 +3318,10 @@ model staff_profile {
   department_id     String?   @db.VarChar(36)
   staff_number      String?   @db.VarChar(80)
   position          String?   @db.VarChar(120)
+  practitioner_type String?   @db.VarChar(32)
+  consultation_fee  Decimal?  @db.Decimal(12, 2)
+  consultation_currency String? @db.VarChar(10)
+  is_fee_overridden Boolean   @default(false)
   hire_date         DateTime?
   created_at        DateTime  @default(now())
   updated_at        DateTime  @updatedAt
@@ -3344,6 +3348,7 @@ model staff_profile {
   @@index([user_id])
   @@index([department_id])
   @@index([staff_number])
+  @@index([practitioner_type])
   @@index([deleted_at])
   @@index([human_friendly_id])
 }

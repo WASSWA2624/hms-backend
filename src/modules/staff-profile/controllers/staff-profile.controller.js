@@ -26,6 +26,7 @@ const listStaffProfiles = asyncHandler(async (req, res) => {
     department_id,
     staff_number,
     position,
+    practitioner_type,
     search,
     page = DEFAULT_PAGE,
     limit = DEFAULT_PAGE_LIMIT,
@@ -39,6 +40,7 @@ const listStaffProfiles = asyncHandler(async (req, res) => {
     department_id,
     staff_number,
     position,
+    practitioner_type,
     search
   };
 

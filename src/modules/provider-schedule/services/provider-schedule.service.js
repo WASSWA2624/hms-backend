@@ -8,8 +8,70 @@
  */
 
 const providerScheduleRepository = require('@repositories/provider-schedule/provider-schedule.repository');
+const prisma = require('@prisma/client');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
+
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+const PROVIDER_SCHEDULE_INCLUDE = {
+  provider: {
+    include: {
+      profile: true
+    }
+  },
+  facility: true
+};
+
+const normalizeIdentifier = (value) => (typeof value === 'string' ? value.trim() : '');
+const isUuid = (value) => UUID_REGEX.test(normalizeIdentifier(value));
+
+const resolveUserByIdentifier = async (identifier, tenantId = null) => {
+  const normalized = normalizeIdentifier(identifier);
+  if (!normalized) return null;
+  if (!prisma?.user?.findFirst) {
+    return { id: normalized };
+  }
+
+  const where = {
+    deleted_at: null,
+    ...(tenantId ? { tenant_id: tenantId } : {})
+  };
+
+  const userWhere = isUuid(normalized)
+    ? { ...where, id: normalized }
+    : {
+        ...where,
+        OR: [
+          { human_friendly_id: normalized.toUpperCase() },
+          { email: normalized },
+          { phone: normalized }
+        ]
+      };
+
+  return prisma.user.findFirst({ where: userWhere });
+};
+
+const resolveProviderScheduleByIdentifier = async (identifier) => {
+  const normalized = normalizeIdentifier(identifier);
+  if (!normalized) return null;
+  if (isUuid(normalized)) {
+    return providerScheduleRepository.findById(normalized);
+  }
+
+  if (!prisma?.provider_schedule?.findFirst) {
+    return providerScheduleRepository.findById(normalized);
+  }
+
+  return prisma.provider_schedule.findFirst({
+    where: {
+      human_friendly_id: normalized.toUpperCase(),
+      deleted_at: null
+    },
+    include: PROVIDER_SCHEDULE_INCLUDE
+  });
+};
 
 /**
  * List provider schedules with pagination and filtering
@@ -19,22 +81,36 @@ const { HttpError } = require('@lib/errors');
  * @param {number} limit - Items per page
  * @param {string} sortBy - Sort field
  * @param {string} order - Sort order
- * @param {string} userId - User ID for audit
- * @param {string} ipAddress - User IP for audit
  * @returns {Promise<Object>} Provider schedules and pagination data
  */
-const listProviderSchedules = async (filters, page, limit, sortBy, order, userId, ipAddress) => {
+const listProviderSchedules = async (filters, page, limit, sortBy, order) => {
   try {
     const skip = (page - 1) * limit;
     const orderBy = sortBy ? { [sortBy]: order } : { created_at: 'desc' };
 
-    // Build filter object
     const whereClause = {};
-    
+
     if (filters.tenant_id) whereClause.tenant_id = filters.tenant_id;
     if (filters.facility_id) whereClause.facility_id = filters.facility_id;
-    if (filters.provider_user_id) whereClause.provider_user_id = filters.provider_user_id;
     if (filters.day_of_week !== undefined) whereClause.day_of_week = filters.day_of_week;
+
+    if (filters.provider_user_id) {
+      const resolvedProvider = await resolveUserByIdentifier(filters.provider_user_id, filters.tenant_id || null);
+      if (!resolvedProvider) {
+        return {
+          schedules: [],
+          pagination: {
+            page,
+            limit,
+            total: 0,
+            totalPages: 0,
+            hasNextPage: false,
+            hasPreviousPage: page > 1
+          }
+        };
+      }
+      whereClause.provider_user_id = resolvedProvider.id;
+    }
 
     const [schedules, total] = await Promise.all([
       providerScheduleRepository.findMany(whereClause, skip, limit, orderBy),
@@ -59,16 +135,14 @@ const listProviderSchedules = async (filters, page, limit, sortBy, order, userId
 };
 
 /**
- * Get provider schedule by ID
+ * Get provider schedule by ID or human friendly ID
  *
- * @param {string} id - Provider schedule ID
- * @param {string} userId - User ID for audit
- * @param {string} ipAddress - User IP for audit
+ * @param {string} id - Provider schedule identifier
  * @returns {Promise<Object>} Provider schedule data
  */
-const getProviderScheduleById = async (id, userId, ipAddress) => {
+const getProviderScheduleById = async (id) => {
   try {
-    const schedule = await providerScheduleRepository.findById(id);
+    const schedule = await resolveProviderScheduleByIdentifier(id);
 
     if (!schedule) {
       throw new HttpError('errors.provider_schedule.not_found', 404);
@@ -92,19 +166,29 @@ const getProviderScheduleById = async (id, userId, ipAddress) => {
  */
 const createProviderSchedule = async (data, userId, ipAddress) => {
   try {
-    const schedule = await providerScheduleRepository.create(data);
+    const provider = await resolveUserByIdentifier(data.provider_user_id, data.tenant_id || null);
+    if (!provider) {
+      throw new HttpError('errors.user.not_found', 404, [{ field: 'provider_user_id' }]);
+    }
+
+    const payload = {
+      ...data,
+      provider_user_id: provider.id
+    };
+
+    const createdSchedule = await providerScheduleRepository.create(payload);
 
     // Create audit log (non-blocking)
     createAuditLog({
       user_id: userId,
       action: 'CREATE',
       entity: 'provider_schedule',
-      entity_id: schedule.id,
-      diff: { after: schedule },
+      entity_id: createdSchedule.id,
+      diff: { after: createdSchedule },
       ip_address: ipAddress
     }).catch(() => {});
 
-    return schedule;
+    return createdSchedule;
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
@@ -115,7 +199,7 @@ const createProviderSchedule = async (data, userId, ipAddress) => {
  * Update provider schedule
  * Per prisma.mdc: Mutations must create audit logs
  *
- * @param {string} id - Provider schedule ID
+ * @param {string} id - Provider schedule identifier
  * @param {Object} data - Update data
  * @param {string} userId - User ID for audit
  * @param {string} ipAddress - User IP for audit
@@ -123,26 +207,34 @@ const createProviderSchedule = async (data, userId, ipAddress) => {
  */
 const updateProviderSchedule = async (id, data, userId, ipAddress) => {
   try {
-    // Get current state for audit
-    const before = await providerScheduleRepository.findById(id);
+    const before = await resolveProviderScheduleByIdentifier(id);
 
     if (!before) {
       throw new HttpError('errors.provider_schedule.not_found', 404);
     }
 
-    const schedule = await providerScheduleRepository.update(id, data);
+    const payload = { ...data };
+    if (payload.provider_user_id !== undefined) {
+      const provider = await resolveUserByIdentifier(payload.provider_user_id, before.tenant_id || null);
+      if (!provider) {
+        throw new HttpError('errors.user.not_found', 404, [{ field: 'provider_user_id' }]);
+      }
+      payload.provider_user_id = provider.id;
+    }
+
+    const updatedSchedule = await providerScheduleRepository.update(before.id, payload);
 
     // Create audit log (non-blocking)
     createAuditLog({
       user_id: userId,
       action: 'UPDATE',
       entity: 'provider_schedule',
-      entity_id: schedule.id,
-      diff: { before, after: schedule },
+      entity_id: updatedSchedule.id,
+      diff: { before, after: updatedSchedule },
       ip_address: ipAddress
     }).catch(() => {});
 
-    return schedule;
+    return updatedSchedule;
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
@@ -153,28 +245,27 @@ const updateProviderSchedule = async (id, data, userId, ipAddress) => {
  * Delete provider schedule (soft delete)
  * Per prisma.mdc: Mutations must create audit logs
  *
- * @param {string} id - Provider schedule ID
+ * @param {string} id - Provider schedule identifier
  * @param {string} userId - User ID for audit
  * @param {string} ipAddress - User IP for audit
  * @returns {Promise<void>}
  */
 const deleteProviderSchedule = async (id, userId, ipAddress) => {
   try {
-    // Get current state for audit
-    const before = await providerScheduleRepository.findById(id);
+    const before = await resolveProviderScheduleByIdentifier(id);
 
     if (!before) {
       throw new HttpError('errors.provider_schedule.not_found', 404);
     }
 
-    await providerScheduleRepository.softDelete(id);
+    await providerScheduleRepository.softDelete(before.id);
 
     // Create audit log (non-blocking)
     createAuditLog({
       user_id: userId,
       action: 'DELETE',
       entity: 'provider_schedule',
-      entity_id: id,
+      entity_id: before.id,
       diff: { before },
       ip_address: ipAddress
     }).catch(() => {});

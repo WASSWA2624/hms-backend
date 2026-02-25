@@ -67,6 +67,7 @@ const WORKFLOW_STAGE_VALUES = [
   'DISCHARGED'
 ];
 const PATIENT_FRIENDLY_ID_REGEX = /^(?=.*\d)[A-Za-z][A-Za-z0-9_-]*$/;
+const RESOURCE_FRIENDLY_ID_REGEX = /^(?=.*\d)[A-Za-z][A-Za-z0-9_-]*$/;
 
 const patientFriendlyIdSchema = z
   .string()
@@ -77,6 +78,16 @@ const patientFriendlyIdSchema = z
   .transform((value) => value.toUpperCase());
 
 const patientIdentifierSchema = z.union([uuidSchema, patientFriendlyIdSchema]);
+const resourceFriendlyIdSchema = z
+  .string()
+  .trim()
+  .min(2)
+  .max(64)
+  .regex(RESOURCE_FRIENDLY_ID_REGEX, 'Invalid identifier format')
+  .transform((value) => value.toUpperCase());
+const providerIdentifierSchema = z.union([uuidSchema, resourceFriendlyIdSchema]);
+const appointmentIdentifierSchema = z.union([uuidSchema, resourceFriendlyIdSchema]);
+const encounterIdentifierSchema = z.union([uuidSchema, resourceFriendlyIdSchema]);
 
 const patientRegistrationSchema = z.object({
   first_name: z.string().trim().min(1).max(120),
@@ -106,8 +117,8 @@ const createOpdFlowSchema = z
     patient_id: patientIdentifierSchema.optional(),
     patient_registration: patientRegistrationSchema.optional(),
     arrival_mode: z.enum(ARRIVAL_MODE_VALUES).default('WALK_IN'),
-    appointment_id: uuidSchema.optional(),
-    provider_user_id: uuidSchema.optional().nullable(),
+    appointment_id: appointmentIdentifierSchema.optional(),
+    provider_user_id: providerIdentifierSchema.optional().nullable(),
     consultation_fee: decimalStringSchema.optional(),
     currency: z.string().trim().min(1).max(10).optional(),
     create_consultation_invoice: z.boolean().optional(),
@@ -136,7 +147,7 @@ const createOpdFlowSchema = z
   });
 
 const encounterIdParamsSchema = z.object({
-  id: uuidSchema
+  id: encounterIdentifierSchema
 });
 
 const payConsultationSchema = z.object({
@@ -204,7 +215,7 @@ const recordVitalsSchema = z.object({
 });
 
 const assignDoctorSchema = z.object({
-  provider_user_id: uuidSchema
+  provider_user_id: providerIdentifierSchema
 });
 
 const doctorReviewSchema = z.object({
@@ -268,7 +279,7 @@ const listOpdFlowsQuerySchema = listQuerySchema.extend({
   tenant_id: uuidSchema.optional(),
   facility_id: uuidSchema.optional(),
   patient_id: patientIdentifierSchema.optional(),
-  provider_user_id: uuidSchema.optional(),
+  provider_user_id: providerIdentifierSchema.optional(),
   encounter_type: z.enum(['OPD', 'EMERGENCY']).optional(),
   stage: z.enum(WORKFLOW_STAGE_VALUES).optional(),
   search: z.string().trim().optional()
