@@ -42,4 +42,21 @@ describe('sanitize-friendly-ids', () => {
     expect(sanitized.provider_user_id).toBeNull();
     expect(sanitized.nested.reference_id).toBeNull();
   });
+
+  it('preserves Date values so JSON serialization remains stable', () => {
+    const createdAt = new Date('2026-02-25T17:37:22.000Z');
+    const payload = {
+      id: uuidValue,
+      human_friendly_id: 'USR0000002',
+      created_at: createdAt,
+      nested: {
+        updated_at: createdAt,
+      },
+    };
+
+    const sanitized = sanitizeFriendlyIds(payload);
+    expect(sanitized.id).toBe('USR0000002');
+    expect(sanitized.created_at).toBeInstanceOf(Date);
+    expect(sanitized.nested.updated_at).toBeInstanceOf(Date);
+  });
 });

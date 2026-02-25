@@ -10,8 +10,14 @@
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-const isPlainObject = (value) =>
-  value !== null && typeof value === 'object' && !Array.isArray(value);
+const isPlainObject = (value) => {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) {
+    return false;
+  }
+
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+};
 
 const isUuidLike = (value) => {
   if (typeof value !== 'string') return false;
@@ -111,4 +117,3 @@ module.exports = {
   sanitizeFriendlyIds,
   isUuidLike,
 };
-
