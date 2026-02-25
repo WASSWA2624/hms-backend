@@ -10,6 +10,12 @@
 const prisma = require('@prisma/client');
 const { HttpError } = require('@lib/errors');
 
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+const normalizeIdentifier = (value) => (typeof value === 'string' ? value.trim() : '');
+const isUuid = (value) => UUID_REGEX.test(normalizeIdentifier(value));
+
 /**
  * Find notification by ID
  *
@@ -25,6 +31,106 @@ const findById = async (id, include = {}) => {
         deleted_at: null
       },
       include
+    });
+  } catch (error) {
+    throw new HttpError('errors.database.unexpected', 500, [{ originalError: error.message }]);
+  }
+};
+
+/**
+ * Find notification by UUID or friendly identifier.
+ *
+ * @param {string} identifier - Notification identifier (UUID or human-friendly ID)
+ * @param {Object} include - Relations to include
+ * @returns {Promise<Object|null>} Notification object or null
+ */
+const findByIdentifier = async (identifier, include = {}) => {
+  try {
+    const normalized = normalizeIdentifier(identifier);
+    if (!normalized) return null;
+
+    if (isUuid(normalized)) {
+      return findById(normalized, include);
+    }
+
+    return await prisma.notification.findFirst({
+      where: {
+        human_friendly_id: normalized.toUpperCase(),
+        deleted_at: null,
+      },
+      include,
+    });
+  } catch (error) {
+    throw new HttpError('errors.database.unexpected', 500, [{ originalError: error.message }]);
+  }
+};
+
+/**
+ * Find tenant by UUID, friendly identifier, or slug.
+ *
+ * @param {string} identifier - Tenant identifier
+ * @returns {Promise<Object|null>} Tenant or null
+ */
+const findTenantByIdentifier = async (identifier) => {
+  try {
+    const normalized = normalizeIdentifier(identifier);
+    if (!normalized) return null;
+
+    const where = isUuid(normalized)
+      ? { id: normalized, deleted_at: null }
+      : {
+          deleted_at: null,
+          OR: [
+            { human_friendly_id: normalized.toUpperCase() },
+            { slug: normalized.toLowerCase() },
+          ],
+        };
+
+    return await prisma.tenant.findFirst({
+      where,
+      select: {
+        id: true,
+      },
+    });
+  } catch (error) {
+    throw new HttpError('errors.database.unexpected', 500, [{ originalError: error.message }]);
+  }
+};
+
+/**
+ * Find user by UUID or friendly identifier.
+ *
+ * @param {string} identifier - User identifier
+ * @param {string|null} tenantId - Optional tenant scope
+ * @returns {Promise<Object|null>} User or null
+ */
+const findUserByIdentifier = async (identifier, tenantId = null) => {
+  try {
+    const normalized = normalizeIdentifier(identifier);
+    if (!normalized) return null;
+
+    const baseWhere = {
+      deleted_at: null,
+      ...(tenantId ? { tenant_id: tenantId } : {}),
+    };
+
+    const where = isUuid(normalized)
+      ? { ...baseWhere, id: normalized }
+      : {
+          ...baseWhere,
+          OR: [
+            { human_friendly_id: normalized.toUpperCase() },
+            { email: normalized.toLowerCase() },
+            { phone: normalized },
+          ],
+        };
+
+    return await prisma.user.findFirst({
+      where,
+      select: {
+        id: true,
+        tenant_id: true,
+      },
     });
   } catch (error) {
     throw new HttpError('errors.database.unexpected', 500, [{ originalError: error.message }]);
@@ -162,6 +268,9 @@ const softDelete = async (id) => {
 
 module.exports = {
   findById,
+  findByIdentifier,
+  findTenantByIdentifier,
+  findUserByIdentifier,
   findMany,
   count,
   create,

@@ -13,6 +13,18 @@ const {
   listQuerySchema
 } = require('@lib/validation/zod');
 
+const RESOURCE_FRIENDLY_ID_REGEX = /^(?=.*\d)[A-Za-z][A-Za-z0-9_-]*$/;
+
+const resourceFriendlyIdSchema = z
+  .string()
+  .trim()
+  .min(2)
+  .max(64)
+  .regex(RESOURCE_FRIENDLY_ID_REGEX, 'Invalid identifier format')
+  .transform((value) => value.toUpperCase());
+
+const resourceIdentifierSchema = z.union([uuidSchema, resourceFriendlyIdSchema]);
+
 // ==================== Body Schemas ====================
 
 /**
@@ -20,8 +32,8 @@ const {
  * Used for POST /notifications endpoint
  */
 const createNotificationSchema = z.object({
-  tenant_id: uuidSchema,
-  user_id: uuidSchema.optional().nullable(),
+  tenant_id: resourceIdentifierSchema,
+  user_id: resourceIdentifierSchema.optional().nullable(),
   notification_type: z.enum(['SYSTEM', 'APPOINTMENT', 'BILLING', 'LAB', 'PHARMACY']),
   priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT']),
   title: z.string().trim().min(1).max(255),
@@ -35,7 +47,7 @@ const createNotificationSchema = z.object({
  * All fields optional for partial updates
  */
 const updateNotificationSchema = z.object({
-  user_id: uuidSchema.optional().nullable(),
+  user_id: resourceIdentifierSchema.optional().nullable(),
   notification_type: z.enum(['SYSTEM', 'APPOINTMENT', 'BILLING', 'LAB', 'PHARMACY']).optional(),
   priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT']).optional(),
   title: z.string().trim().min(1).max(255).optional(),
@@ -50,7 +62,7 @@ const updateNotificationSchema = z.object({
  * Used for GET /:id, PUT /:id, and DELETE /:id endpoints
  */
 const notificationIdParamsSchema = z.object({
-  id: uuidSchema
+  id: resourceIdentifierSchema
 });
 
 // ==================== Query Params ====================
@@ -61,8 +73,8 @@ const notificationIdParamsSchema = z.object({
  * Extends base listQuerySchema with notification-specific filters
  */
 const listNotificationsQuerySchema = listQuerySchema.extend({
-  tenant_id: uuidSchema.optional(),
-  user_id: uuidSchema.optional(),
+  tenant_id: resourceIdentifierSchema.optional(),
+  user_id: resourceIdentifierSchema.optional(),
   notification_type: z.enum(['SYSTEM', 'APPOINTMENT', 'BILLING', 'LAB', 'PHARMACY']).optional(),
   priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT']).optional(),
   is_read: z.string().transform(val => val === 'true').optional()

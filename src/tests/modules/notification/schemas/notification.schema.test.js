@@ -186,6 +186,15 @@ describe('Notification Schemas', () => {
       const result = notificationIdParamsSchema.safeParse({});
       expect(result.success).toBe(false);
     });
+
+    it('should validate friendly id params', () => {
+      const validData = {
+        id: 'NOT0000001'
+      };
+
+      const result = notificationIdParamsSchema.safeParse(validData);
+      expect(result.success).toBe(true);
+    });
   });
 
   describe('listNotificationsQuerySchema', () => {
@@ -222,6 +231,16 @@ describe('Notification Schemas', () => {
 
       const result = listNotificationsQuerySchema.safeParse(invalidData);
       expect(result.success).toBe(false);
+    });
+
+    it('should accept friendly identifiers in query filters', () => {
+      const validData = {
+        tenant_id: 'TEN0000001',
+        user_id: 'USR0000003',
+      };
+
+      const result = listNotificationsQuerySchema.safeParse(validData);
+      expect(result.success).toBe(true);
     });
   });
 });

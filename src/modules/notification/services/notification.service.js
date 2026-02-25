@@ -11,6 +11,90 @@ const notificationRepository = require('@repositories/notification/notification.
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+const normalizeIdentifier = (value) => (typeof value === 'string' ? value.trim() : '');
+const isUuid = (value) => UUID_REGEX.test(normalizeIdentifier(value));
+
+const buildPagination = (page, limit, total) => {
+  const totalPages = Math.ceil(total / limit);
+  return {
+    page,
+    limit,
+    total,
+    totalPages,
+    hasNextPage: page < totalPages,
+    hasPreviousPage: page > 1,
+  };
+};
+
+const buildEmptyListResult = (page, limit) => ({
+  notifications: [],
+  pagination: buildPagination(page, limit, 0),
+});
+
+const resolveTenantIdentifierForFilter = async (identifier) => {
+  const normalized = normalizeIdentifier(identifier);
+  if (!normalized) return { matched: true, id: null };
+  if (isUuid(normalized)) return { matched: true, id: normalized };
+
+  const tenant = await notificationRepository.findTenantByIdentifier(normalized);
+  if (!tenant) return { matched: false, id: null };
+  return { matched: true, id: tenant.id };
+};
+
+const resolveUserIdentifierForFilter = async (identifier, tenantId = null) => {
+  const normalized = normalizeIdentifier(identifier);
+  if (!normalized) return { matched: true, id: null };
+  if (isUuid(normalized)) return { matched: true, id: normalized };
+
+  const user = await notificationRepository.findUserByIdentifier(normalized, tenantId);
+  if (!user) return { matched: false, id: null };
+  return { matched: true, id: user.id };
+};
+
+const resolveTenantIdentifierOrThrow = async (identifier) => {
+  const normalized = normalizeIdentifier(identifier);
+  if (!normalized) {
+    throw new HttpError('errors.validation.field.required', 400, [{ field: 'tenant_id' }]);
+  }
+
+  if (isUuid(normalized)) return normalized;
+
+  const tenant = await notificationRepository.findTenantByIdentifier(normalized);
+  if (!tenant) {
+    throw new HttpError('errors.tenant.not_found', 404, [{ field: 'tenant_id' }]);
+  }
+  return tenant.id;
+};
+
+const resolveUserIdentifierOrThrow = async (identifier, tenantId = null) => {
+  const normalized = normalizeIdentifier(identifier);
+  if (!normalized) {
+    throw new HttpError('errors.validation.field.required', 400, [{ field: 'user_id' }]);
+  }
+
+  if (isUuid(normalized)) return normalized;
+
+  const user = await notificationRepository.findUserByIdentifier(normalized, tenantId);
+  if (!user) {
+    throw new HttpError('errors.user.not_found', 404, [{ field: 'user_id' }]);
+  }
+  return user.id;
+};
+
+const findNotificationByIdentifier = async (identifier) => {
+  const normalized = normalizeIdentifier(identifier);
+  if (!normalized) return null;
+
+  if (isUuid(normalized)) {
+    return notificationRepository.findById(normalized);
+  }
+
+  return notificationRepository.findByIdentifier(normalized);
+};
+
 /**
  * List notifications with pagination and filtering
  *
@@ -30,9 +114,15 @@ const listNotifications = async (filters, page, limit, sortBy, order, userId, ip
 
     // Build filter object
     const whereClause = {};
-    
-    if (filters.tenant_id) whereClause.tenant_id = filters.tenant_id;
-    if (filters.user_id) whereClause.user_id = filters.user_id;
+
+    const tenantFilter = await resolveTenantIdentifierForFilter(filters.tenant_id);
+    if (!tenantFilter.matched) return buildEmptyListResult(page, limit);
+    if (tenantFilter.id) whereClause.tenant_id = tenantFilter.id;
+
+    const userFilter = await resolveUserIdentifierForFilter(filters.user_id, tenantFilter.id);
+    if (!userFilter.matched) return buildEmptyListResult(page, limit);
+    if (userFilter.id) whereClause.user_id = userFilter.id;
+
     if (filters.notification_type) whereClause.notification_type = filters.notification_type;
     if (filters.priority) whereClause.priority = filters.priority;
     
@@ -52,14 +142,7 @@ const listNotifications = async (filters, page, limit, sortBy, order, userId, ip
 
     return {
       notifications,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasNextPage: page < Math.ceil(total / limit),
-        hasPreviousPage: page > 1
-      }
+      pagination: buildPagination(page, limit, total)
     };
   } catch (error) {
     if (error instanceof HttpError) throw error;
@@ -77,7 +160,7 @@ const listNotifications = async (filters, page, limit, sortBy, order, userId, ip
  */
 const getNotificationById = async (id, userId, ipAddress) => {
   try {
-    const notification = await notificationRepository.findById(id);
+    const notification = await findNotificationByIdentifier(id);
 
     if (!notification) {
       throw new HttpError('errors.notification.not_found', 404);
@@ -101,7 +184,19 @@ const getNotificationById = async (id, userId, ipAddress) => {
  */
 const createNotification = async (data, userId, ipAddress) => {
   try {
-    const notification = await notificationRepository.create(data);
+    const payload = { ...data };
+
+    payload.tenant_id = await resolveTenantIdentifierOrThrow(payload.tenant_id);
+
+    if (Object.prototype.hasOwnProperty.call(payload, 'user_id')) {
+      if (payload.user_id === null) {
+        payload.user_id = null;
+      } else if (payload.user_id !== undefined) {
+        payload.user_id = await resolveUserIdentifierOrThrow(payload.user_id, payload.tenant_id);
+      }
+    }
+
+    const notification = await notificationRepository.create(payload);
 
     // Create audit log (non-blocking)
     createAuditLog({
@@ -133,13 +228,23 @@ const createNotification = async (data, userId, ipAddress) => {
 const updateNotification = async (id, data, userId, ipAddress) => {
   try {
     // Get current state for audit
-    const before = await notificationRepository.findById(id);
+    const before = await findNotificationByIdentifier(id);
 
     if (!before) {
       throw new HttpError('errors.notification.not_found', 404);
     }
 
-    const notification = await notificationRepository.update(id, data);
+    const payload = { ...data };
+
+    if (Object.prototype.hasOwnProperty.call(payload, 'user_id')) {
+      if (payload.user_id === null) {
+        payload.user_id = null;
+      } else if (payload.user_id !== undefined) {
+        payload.user_id = await resolveUserIdentifierOrThrow(payload.user_id, before.tenant_id || null);
+      }
+    }
+
+    const notification = await notificationRepository.update(before.id, payload);
 
     // Create audit log (non-blocking)
     createAuditLog({
@@ -170,20 +275,20 @@ const updateNotification = async (id, data, userId, ipAddress) => {
 const deleteNotification = async (id, userId, ipAddress) => {
   try {
     // Get current state for audit
-    const before = await notificationRepository.findById(id);
+    const before = await findNotificationByIdentifier(id);
 
     if (!before) {
       throw new HttpError('errors.notification.not_found', 404);
     }
 
-    await notificationRepository.softDelete(id);
+    await notificationRepository.softDelete(before.id);
 
     // Create audit log (non-blocking)
     createAuditLog({
       user_id: userId,
       action: 'DELETE',
       entity: 'notification',
-      entity_id: id,
+      entity_id: before.id,
       diff: { before },
       ip_address: ipAddress
     }).catch(() => {});
