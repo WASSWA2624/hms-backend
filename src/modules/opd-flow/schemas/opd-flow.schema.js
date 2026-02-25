@@ -65,6 +65,17 @@ const WORKFLOW_STAGE_VALUES = [
   'ADMITTED',
   'DISCHARGED'
 ];
+const PATIENT_FRIENDLY_ID_REGEX = /^(?=.*\d)[A-Za-z][A-Za-z0-9_-]*$/;
+
+const patientFriendlyIdSchema = z
+  .string()
+  .trim()
+  .min(2)
+  .max(64)
+  .regex(PATIENT_FRIENDLY_ID_REGEX, 'Invalid patient identifier format')
+  .transform((value) => value.toUpperCase());
+
+const patientIdentifierSchema = z.union([uuidSchema, patientFriendlyIdSchema]);
 
 const patientRegistrationSchema = z.object({
   first_name: z.string().trim().min(1).max(120),
@@ -91,7 +102,7 @@ const createOpdFlowSchema = z
   .object({
     tenant_id: uuidSchema.optional(),
     facility_id: uuidSchema.optional().nullable(),
-    patient_id: uuidSchema.optional(),
+    patient_id: patientIdentifierSchema.optional(),
     patient_registration: patientRegistrationSchema.optional(),
     arrival_mode: z.enum(ARRIVAL_MODE_VALUES).default('WALK_IN'),
     appointment_id: uuidSchema.optional(),
@@ -217,7 +228,7 @@ const dispositionSchema = z.object({
 const listOpdFlowsQuerySchema = listQuerySchema.extend({
   tenant_id: uuidSchema.optional(),
   facility_id: uuidSchema.optional(),
-  patient_id: uuidSchema.optional(),
+  patient_id: patientIdentifierSchema.optional(),
   provider_user_id: uuidSchema.optional(),
   encounter_type: z.enum(['OPD', 'EMERGENCY']).optional(),
   stage: z.enum(WORKFLOW_STAGE_VALUES).optional(),

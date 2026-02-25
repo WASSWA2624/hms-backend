@@ -29,6 +29,8 @@ const STAGES = {
 };
 
 const TERMINAL_STAGES = new Set([STAGES.ADMITTED, STAGES.DISCHARGED]);
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const TRIAGE_ALIAS_MAP = {
   IMMEDIATE: 'LEVEL_1',
@@ -40,6 +42,40 @@ const TRIAGE_ALIAS_MAP = {
   LEVEL_3: 'LEVEL_3',
   LEVEL_4: 'LEVEL_4',
   LEVEL_5: 'LEVEL_5'
+};
+
+const normalizePatientIdentifier = (value) =>
+  typeof value === 'string' ? value.trim() : '';
+
+const isUuid = (value) => UUID_REGEX.test(normalizePatientIdentifier(value));
+
+const resolvePatientLookupWhere = (identifier, tenantId = null) => {
+  const normalized = normalizePatientIdentifier(identifier);
+  if (!normalized) return null;
+
+  const where = {
+    deleted_at: null,
+    ...(tenantId ? { tenant_id: tenantId } : {})
+  };
+
+  if (isUuid(normalized)) {
+    return {
+      ...where,
+      id: normalized
+    };
+  }
+
+  return {
+    ...where,
+    human_friendly_id: normalized.toUpperCase()
+  };
+};
+
+const resolvePatientByIdentifier = async (tx, identifier, tenantId = null) => {
+  const where = resolvePatientLookupWhere(identifier, tenantId);
+  if (!where) return null;
+
+  return tx.patient.findFirst({ where });
 };
 
 const NEXT_STEP_BY_STAGE = {
@@ -342,7 +378,18 @@ const buildEncounterWhereClause = (filters = {}) => {
 
   if (filters.tenant_id) where.tenant_id = filters.tenant_id;
   if (filters.facility_id) where.facility_id = filters.facility_id;
-  if (filters.patient_id) where.patient_id = filters.patient_id;
+  if (filters.patient_id) {
+    const patientIdentifier = normalizePatientIdentifier(filters.patient_id);
+    if (patientIdentifier) {
+      if (isUuid(patientIdentifier)) {
+        where.patient_id = patientIdentifier;
+      } else {
+        where.patient = {
+          human_friendly_id: patientIdentifier.toUpperCase()
+        };
+      }
+    }
+  }
   if (filters.provider_user_id) where.provider_user_id = filters.provider_user_id;
   if (filters.encounter_type) where.encounter_type = filters.encounter_type;
   if (filters.stage) {
@@ -531,23 +578,27 @@ const startOpdFlow = async (data, context = {}) => {
         ? data.facility_id
         : context.facility_id || appointment?.facility_id || null;
 
-    let patientId = data.patient_id || appointment?.patient_id || null;
+    const requestedPatientIdentifier = normalizePatientIdentifier(data.patient_id);
+    let patientId = appointment?.patient_id || null;
 
-    if (data.patient_id && appointment && appointment.patient_id !== data.patient_id) {
-      throw new HttpError('errors.opd_flow.appointment_patient_mismatch', 400);
-    }
-
-    if (patientId) {
-      const existingPatient = await tx.patient.findFirst({
-        where: {
-          id: patientId,
-          deleted_at: null
-        }
-      });
-
+    if (requestedPatientIdentifier) {
+      const existingPatient = await resolvePatientByIdentifier(tx, requestedPatientIdentifier, tenantId);
       if (!existingPatient) {
         throw new HttpError('errors.opd_flow.patient_not_found', 404);
       }
+
+      if (appointment && appointment.patient_id !== existingPatient.id) {
+        throw new HttpError('errors.opd_flow.appointment_patient_mismatch', 400);
+      }
+
+      patientId = existingPatient.id;
+    } else if (patientId) {
+      const existingPatient = await resolvePatientByIdentifier(tx, patientId, tenantId);
+      if (!existingPatient) {
+        throw new HttpError('errors.opd_flow.patient_not_found', 404);
+      }
+
+      patientId = existingPatient.id;
     } else if (data.patient_registration) {
       const createdPatient = await tx.patient.create({
         data: {

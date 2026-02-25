@@ -72,6 +72,34 @@ describe('opd-flow.service', () => {
     expect(result.pagination.total).toBe(1);
   });
 
+  it('maps human-friendly patient filters when listing OPD flows', async () => {
+    opdFlowRepository.findMany.mockResolvedValue([]);
+    opdFlowRepository.count.mockResolvedValue(0);
+
+    await opdFlowService.listOpdFlows(
+      {
+        tenant_id: 'tenant-1',
+        patient_id: 'pat0000003'
+      },
+      1,
+      20,
+      'started_at',
+      'desc'
+    );
+
+    expect(opdFlowRepository.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tenant_id: 'tenant-1',
+        patient: {
+          human_friendly_id: 'PAT0000003'
+        }
+      }),
+      0,
+      20,
+      { started_at: 'desc' }
+    );
+  });
+
   it('starts a walk-in flow and creates patient when patient_id is missing', async () => {
     const tx = {
       appointment: {
@@ -205,7 +233,7 @@ describe('opd-flow.service', () => {
     const result = await opdFlowService.startOpdFlow(
       {
         tenant_id: 'tenant-1',
-        patient_id: 'pat-1',
+        patient_id: 'pat0000003',
         arrival_mode: 'EMERGENCY',
         emergency: {
           severity: 'HIGH',
@@ -215,6 +243,13 @@ describe('opd-flow.service', () => {
       { user_id: 'usr-1', tenant_id: 'tenant-1' }
     );
 
+    expect(tx.patient.findFirst).toHaveBeenCalledWith({
+      where: {
+        deleted_at: null,
+        tenant_id: 'tenant-1',
+        human_friendly_id: 'PAT0000003'
+      }
+    });
     expect(tx.emergency_case.create).toHaveBeenCalled();
     expect(result.flow.stage).toBe('WAITING_VITALS');
   });

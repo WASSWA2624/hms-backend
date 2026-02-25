@@ -39,6 +39,16 @@ describe('opd-flow.schema', () => {
       });
       expect(result.success).toBe(false);
     });
+
+    it('accepts human-friendly patient identifier', () => {
+      const result = createOpdFlowSchema.safeParse({
+        tenant_id: '550e8400-e29b-41d4-a716-446655440000',
+        patient_id: 'pat0000003'
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.data.patient_id).toBe('PAT0000003');
+    });
   });
 
   describe('encounterIdParamsSchema', () => {
@@ -186,6 +196,15 @@ describe('opd-flow.schema', () => {
         stage: 'INVALID_STAGE'
       });
       expect(result.success).toBe(false);
+    });
+
+    it('accepts human-friendly patient filter', () => {
+      const result = listOpdFlowsQuerySchema.safeParse({
+        patient_id: 'pat0000003'
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.data.patient_id).toBe('PAT0000003');
     });
   });
 });
