@@ -13,8 +13,8 @@ describe('opd-flow.schema', () => {
   describe('createOpdFlowSchema', () => {
     it('validates walk-in with patient registration', () => {
       const result = createOpdFlowSchema.safeParse({
-        tenant_id: '550e8400-e29b-41d4-a716-446655440000',
-        facility_id: '550e8400-e29b-41d4-a716-446655440001',
+        tenant_id: 'TEN0000001',
+        facility_id: 'FAC0000001',
         patient_registration: {
           first_name: 'Jane',
           last_name: 'Doe'
@@ -26,23 +26,23 @@ describe('opd-flow.schema', () => {
 
     it('requires patient source', () => {
       const result = createOpdFlowSchema.safeParse({
-        tenant_id: '550e8400-e29b-41d4-a716-446655440000'
+        tenant_id: 'TEN0000001'
       });
       expect(result.success).toBe(false);
     });
 
     it('requires appointment when arrival_mode is ONLINE_APPOINTMENT', () => {
       const result = createOpdFlowSchema.safeParse({
-        tenant_id: '550e8400-e29b-41d4-a716-446655440000',
+        tenant_id: 'TEN0000001',
         arrival_mode: 'ONLINE_APPOINTMENT',
-        patient_id: '550e8400-e29b-41d4-a716-446655440002'
+        patient_id: 'PAT0000002'
       });
       expect(result.success).toBe(false);
     });
 
     it('accepts human-friendly patient identifier', () => {
       const result = createOpdFlowSchema.safeParse({
-        tenant_id: '550e8400-e29b-41d4-a716-446655440000',
+        tenant_id: 'TEN0000001',
         patient_id: 'pat0000003'
       });
 
@@ -54,9 +54,16 @@ describe('opd-flow.schema', () => {
   describe('encounterIdParamsSchema', () => {
     it('validates encounter id params', () => {
       const result = encounterIdParamsSchema.safeParse({
-        id: '550e8400-e29b-41d4-a716-446655440010'
+        id: 'ENC0000010'
       });
       expect(result.success).toBe(true);
+    });
+
+    it('rejects UUID-like encounter route params', () => {
+      const result = encounterIdParamsSchema.safeParse({
+        id: '550e8400-e29b-41d4-a716-446655440010'
+      });
+      expect(result.success).toBe(false);
     });
   });
 
@@ -113,7 +120,7 @@ describe('opd-flow.schema', () => {
   describe('assignDoctorSchema', () => {
     it('validates provider id', () => {
       const result = assignDoctorSchema.safeParse({
-        provider_user_id: '550e8400-e29b-41d4-a716-446655440011'
+        provider_user_id: 'DOC0000011'
       });
       expect(result.success).toBe(true);
     });
@@ -136,17 +143,17 @@ describe('opd-flow.schema', () => {
         ],
         lab_requests: [
           {
-            lab_test_id: '550e8400-e29b-41d4-a716-446655440012'
+            lab_test_id: 'LAB0000012'
           }
         ],
         radiology_requests: [
           {
-            radiology_test_id: '550e8400-e29b-41d4-a716-446655440013'
+            radiology_test_id: 'RAD0000013'
           }
         ],
         medications: [
           {
-            drug_id: '550e8400-e29b-41d4-a716-446655440014',
+            drug_id: 'DRG0000014',
             quantity: 2
           }
         ]
@@ -160,7 +167,7 @@ describe('opd-flow.schema', () => {
         note: 'Review completed.',
         radiology_requests: [
           {
-            radiology_test_id: '550e8400-e29b-41d4-a716-446655440013',
+            radiology_test_id: 'RAD0000013',
             status: 'PENDING_APPROVAL'
           }
         ]

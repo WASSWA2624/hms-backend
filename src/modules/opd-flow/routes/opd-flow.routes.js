@@ -70,7 +70,7 @@ router.get(
  * @route /api/v1/opd-flows/:id
  * @authentication Required (JWT)
  * @permissions Authenticated users
- * @urlParams {string} id - Encounter ID (UUID)
+ * @urlParams {string} id - Encounter human-friendly ID
  * @queryParams None
  * @bodyParams None
  * @returns {Object} OPD flow snapshot with related records
@@ -145,7 +145,7 @@ router.post(
  * @route /api/v1/opd-flows/:id/pay-consultation
  * @authentication Required (JWT)
  * @permissions Authenticated users
- * @urlParams {string} id - Encounter ID (UUID)
+ * @urlParams {string} id - Encounter human-friendly ID
  * @queryParams None
  * @bodyParams {string} [invoice_id] - Existing invoice ID
  * @bodyParams {string} [amount] - Payment amount
@@ -182,7 +182,7 @@ router.post(
  * @route /api/v1/opd-flows/:id/record-vitals
  * @authentication Required (JWT)
  * @permissions Authenticated users
- * @urlParams {string} id - Encounter ID (UUID)
+ * @urlParams {string} id - Encounter human-friendly ID
  * @queryParams None
  * @bodyParams {Array} vitals - Vital sign entries
  * @bodyParams {string} [triage_level] - Triage level or accepted alias
@@ -214,7 +214,7 @@ router.post(
  * @route /api/v1/opd-flows/:id/assign-doctor
  * @authentication Required (JWT)
  * @permissions Authenticated users
- * @urlParams {string} id - Encounter ID (UUID)
+ * @urlParams {string} id - Encounter human-friendly ID
  * @queryParams None
  * @bodyParams {string} provider_user_id - Provider user ID
  * @returns {Object} Updated OPD flow snapshot
@@ -244,7 +244,7 @@ router.post(
  * @route /api/v1/opd-flows/:id/doctor-review
  * @authentication Required (JWT)
  * @permissions Authenticated users
- * @urlParams {string} id - Encounter ID (UUID)
+ * @urlParams {string} id - Encounter human-friendly ID
  * @queryParams None
  * @bodyParams {string} note - Clinical note
  * @bodyParams {Array} [diagnoses] - Diagnosis entries
@@ -274,7 +274,7 @@ router.post(
  * @route /api/v1/opd-flows/:id/disposition
  * @authentication Required (JWT)
  * @permissions Authenticated users
- * @urlParams {string} id - Encounter ID (UUID)
+ * @urlParams {string} id - Encounter human-friendly ID
  * @queryParams None
  * @bodyParams {string} decision - ADMIT, SEND_TO_PHARMACY, or DISCHARGE
  * @bodyParams {string} [admission_facility_id] - Admission facility ID for ADMIT

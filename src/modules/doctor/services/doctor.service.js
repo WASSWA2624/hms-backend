@@ -9,8 +9,6 @@ const { HttpError } = require('@lib/errors');
 const { hashPassword } = require('@lib/crypto');
 const { createAuditLog } = require('@lib/audit');
 
-const UUID_REGEX =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const BCRYPT_PREFIX_REGEX = /^\$2[aby]\$\d{2}\$/;
 const PRACTITIONER_TYPES = new Set(['MO', 'SPECIALIST']);
 const ROLE_DOCTOR = 'DOCTOR';
@@ -38,7 +36,6 @@ const DOCTOR_INCLUDE = {
 };
 
 const normalizeIdentifier = (value) => (typeof value === 'string' ? value.trim() : '');
-const isUuid = (value) => UUID_REGEX.test(normalizeIdentifier(value));
 const buildEmptyPagination = (page, limit) => ({
   page,
   limit,
@@ -55,9 +52,7 @@ const resolveTenantByIdentifier = async (tx, identifier) => {
   return tx.tenant.findFirst({
     where: {
       deleted_at: null,
-      OR: isUuid(normalized)
-        ? [{ id: normalized }]
-        : [{ human_friendly_id: normalized.toUpperCase() }],
+      human_friendly_id: normalized.toUpperCase(),
     },
   });
 };
@@ -70,9 +65,7 @@ const resolveFacilityByIdentifier = async (tx, identifier, tenantId = null) => {
     where: {
       deleted_at: null,
       ...(tenantId ? { tenant_id: tenantId } : {}),
-      OR: isUuid(normalized)
-        ? [{ id: normalized }]
-        : [{ human_friendly_id: normalized.toUpperCase() }],
+      human_friendly_id: normalized.toUpperCase(),
     },
   });
 };
@@ -197,9 +190,7 @@ const resolveRoleByIdentifier = async (tx, identifier, tenantId) => {
     where: {
       deleted_at: null,
       tenant_id: tenantId,
-      OR: isUuid(normalized)
-        ? [{ id: normalized }]
-        : [{ human_friendly_id: normalized.toUpperCase() }, { name: normalized.toUpperCase() }],
+      human_friendly_id: normalized.toUpperCase(),
     },
   });
 };
@@ -217,9 +208,7 @@ const resolvePositionByIdentifier = async (tx, identifier, tenantId, facilityId 
           OR: [{ facility_id: facilityId }, { facility_id: null }],
         },
         {
-          OR: isUuid(normalized)
-            ? [{ id: normalized }]
-            : [{ human_friendly_id: normalized.toUpperCase() }, { name: normalized }],
+          human_friendly_id: normalized.toUpperCase(),
         },
       ],
     },
@@ -287,9 +276,7 @@ const resolveDoctorByIdentifier = async (identifier, tenantId = null) => {
     where: {
       deleted_at: null,
       ...(tenantId ? { tenant_id: tenantId } : {}),
-      OR: isUuid(normalized)
-        ? [{ id: normalized }]
-        : [{ human_friendly_id: normalized.toUpperCase() }, { email: normalized }, { phone: normalized }],
+      human_friendly_id: normalized.toUpperCase(),
       staff_profile: {
         isNot: null,
       },
@@ -462,7 +449,7 @@ const validateRecurringConflictTx = async ({
     if (!intervalsOverlap(startTime, endTime, schedule.start_time, schedule.end_time)) continue;
     throw new HttpError('errors.provider_schedule.overlap_detected', 409, [
       { field: 'recurring_schedules' },
-      { field: 'conflicting_schedule_id', value: schedule.human_friendly_id || schedule.id },
+      { field: 'conflicting_schedule_id', value: schedule.human_friendly_id || null },
     ]);
   }
 };

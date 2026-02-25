@@ -153,9 +153,10 @@ const findUserById = async (id) => {
 const createUser = async (data) => {
   try {
     const normalizedPositionTitle =
-      typeof data?.position_title === 'string' && data.position_title.trim()
-        ? data.position_title.trim()
-        : 'UNSPECIFIED';
+      typeof data?.position_title === 'string' ? data.position_title.trim() : '';
+    if (!normalizedPositionTitle) {
+      throw new HttpError('errors.validation.field.required', 400, [{ field: 'position_title' }]);
+    }
 
     return await prisma.user.create({
       data: {
