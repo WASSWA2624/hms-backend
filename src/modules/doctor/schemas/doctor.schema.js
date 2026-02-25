@@ -5,7 +5,7 @@
  */
 
 const { z } = require('zod');
-const { uuidSchema, listQuerySchema, decimalStringSchema } = require('@lib/validation/zod');
+const { listQuerySchema, decimalStringSchema } = require('@lib/validation/zod');
 
 const FRIENDLY_ID_REGEX = /^(?=.*\d)[A-Za-z][A-Za-z0-9_-]*$/;
 
@@ -17,7 +17,7 @@ const resourceFriendlyIdSchema = z
   .regex(FRIENDLY_ID_REGEX, 'Invalid identifier format')
   .transform((value) => value.toUpperCase());
 
-const resourceIdentifierSchema = z.union([uuidSchema, resourceFriendlyIdSchema]);
+const resourceIdentifierSchema = resourceFriendlyIdSchema;
 
 const practitionerTypeSchema = z.enum(['MO', 'SPECIALIST']);
 const userStatusSchema = z.enum(['ACTIVE', 'INACTIVE', 'SUSPENDED', 'PENDING']);
@@ -42,8 +42,8 @@ const scheduleOverrideSchema = z.object({
 });
 
 const createDoctorSchema = z.object({
-  tenant_id: uuidSchema,
-  facility_id: uuidSchema.optional().nullable(),
+  tenant_id: resourceFriendlyIdSchema,
+  facility_id: resourceFriendlyIdSchema.optional().nullable(),
   email: z.string().trim().email().max(255),
   phone: z.string().trim().min(1).max(40).optional().nullable(),
   password: z.string().trim().min(8).max(255).optional(),
@@ -62,7 +62,7 @@ const createDoctorSchema = z.object({
 });
 
 const updateDoctorSchema = z.object({
-  facility_id: uuidSchema.optional().nullable(),
+  facility_id: resourceFriendlyIdSchema.optional().nullable(),
   email: z.string().trim().email().max(255).optional(),
   phone: z.string().trim().min(1).max(40).optional().nullable(),
   password: z.string().trim().min(8).max(255).optional(),
@@ -85,8 +85,8 @@ const doctorIdParamsSchema = z.object({
 });
 
 const listDoctorsQuerySchema = listQuerySchema.extend({
-  tenant_id: resourceIdentifierSchema.optional(),
-  facility_id: resourceIdentifierSchema.optional(),
+  tenant_id: resourceFriendlyIdSchema.optional(),
+  facility_id: resourceFriendlyIdSchema.optional(),
   practitioner_type: practitionerTypeSchema.optional(),
   position_title: z.string().trim().optional(),
   search: z.string().trim().optional(),
