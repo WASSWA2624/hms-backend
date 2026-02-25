@@ -10,14 +10,19 @@ const appointmentService = require('@services/appointment/appointment.service');
 const appointmentRepository = require('@repositories/appointment/appointment.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
+const opdFlowService = require('@services/opd-flow/opd-flow.service');
 
 // Mock dependencies
 jest.mock('@repositories/appointment/appointment.repository');
 jest.mock('@lib/audit');
+jest.mock('@services/opd-flow/opd-flow.service', () => ({
+  startOpdFlow: jest.fn(),
+}));
 
 describe('Appointment Service', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    opdFlowService.startOpdFlow.mockResolvedValue({ encounter: { id: 'enc-1' } });
   });
 
   describe('listAppointments', () => {
@@ -276,6 +281,100 @@ describe('Appointment Service', () => {
         diff: { before: mockBefore, after: mockAfter },
         ip_address: '127.0.0.1'
       });
+      expect(opdFlowService.startOpdFlow).not.toHaveBeenCalled();
+    });
+
+    it('should auto-start OPD flow when status transitions to IN_PROGRESS', async () => {
+      const inProgressBefore = {
+        id: appointmentId,
+        status: 'CONFIRMED',
+        tenant_id: 'tenant-1',
+        facility_id: 'facility-1',
+      };
+      const inProgressAfter = {
+        ...inProgressBefore,
+        status: 'IN_PROGRESS',
+      };
+
+      appointmentRepository.findById.mockResolvedValue(inProgressBefore);
+      appointmentRepository.update.mockResolvedValue(inProgressAfter);
+      createAuditLog.mockResolvedValue({});
+
+      const result = await appointmentService.updateAppointment(
+        appointmentId,
+        { status: 'IN_PROGRESS' },
+        'user-id',
+        '127.0.0.1'
+      );
+
+      expect(result).toEqual(inProgressAfter);
+      expect(opdFlowService.startOpdFlow).toHaveBeenCalledWith(
+        expect.objectContaining({
+          appointment_id: appointmentId,
+          arrival_mode: 'ONLINE_APPOINTMENT',
+          tenant_id: 'tenant-1',
+          facility_id: 'facility-1',
+        }),
+        expect.objectContaining({
+          user_id: 'user-id',
+          tenant_id: 'tenant-1',
+          facility_id: 'facility-1',
+          ip_address: '127.0.0.1',
+        })
+      );
+    });
+
+    it('should not auto-start OPD flow when appointment was already IN_PROGRESS', async () => {
+      const inProgressBefore = {
+        id: appointmentId,
+        status: 'IN_PROGRESS',
+        tenant_id: 'tenant-1',
+        facility_id: 'facility-1',
+      };
+      const inProgressAfter = {
+        ...inProgressBefore,
+        reason: 'Updated note',
+      };
+
+      appointmentRepository.findById.mockResolvedValue(inProgressBefore);
+      appointmentRepository.update.mockResolvedValue(inProgressAfter);
+      createAuditLog.mockResolvedValue({});
+
+      await appointmentService.updateAppointment(
+        appointmentId,
+        { reason: 'Updated note' },
+        'user-id',
+        '127.0.0.1'
+      );
+
+      expect(opdFlowService.startOpdFlow).not.toHaveBeenCalled();
+    });
+
+    it('should keep appointment update successful when auto-start OPD fails', async () => {
+      const inProgressBefore = {
+        id: appointmentId,
+        status: 'CONFIRMED',
+        tenant_id: 'tenant-1',
+        facility_id: 'facility-1',
+      };
+      const inProgressAfter = {
+        ...inProgressBefore,
+        status: 'IN_PROGRESS',
+      };
+
+      appointmentRepository.findById.mockResolvedValue(inProgressBefore);
+      appointmentRepository.update.mockResolvedValue(inProgressAfter);
+      createAuditLog.mockResolvedValue({});
+      opdFlowService.startOpdFlow.mockRejectedValue(new Error('Auto-start failed'));
+
+      await expect(
+        appointmentService.updateAppointment(
+          appointmentId,
+          { status: 'IN_PROGRESS' },
+          'user-id',
+          '127.0.0.1'
+        )
+      ).resolves.toEqual(inProgressAfter);
     });
 
     it('should throw error if appointment not found', async () => {

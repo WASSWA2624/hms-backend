@@ -573,33 +573,72 @@ const getDashboardSummary = async (query = {}, user = {}) => {
     const roleProfileId = resolveProfileId(effectiveRole);
     const packId = resolvePackId(roleProfileId);
     const scope = await resolveScope(query, user, effectiveRole);
+    const resolvedUserId = user.id || user.user_id || user.userId || null;
 
-    const packData = await dashboardWidgetRepository.getDashboardSummaryByPack({
-      packId,
-      scope,
-      days,
-      userId: user.id || user.user_id || user.userId || null
-    });
+    const [packData, unreadOpdNotifications] = await Promise.all([
+      dashboardWidgetRepository.getDashboardSummaryByPack({
+        packId,
+        scope,
+        days,
+        userId: resolvedUserId
+      }),
+      dashboardWidgetRepository
+        .countUnreadOpdNotifications({
+          scope,
+          userId: resolvedUserId
+        })
+        .catch(() => 0)
+    ]);
 
     const trendPoints = buildTrendPoints(packData?.trendDates || [], days);
     const distribution = buildDistribution(packData?.statusCounts || {});
     const summaryCards = metricsToRoleSummary(packId, packData?.metrics || {});
+    const opdNotificationsPendingAttention = Number(unreadOpdNotifications || 0);
+    summaryCards.push({
+      id: 'opd_notifications_attention',
+      label: 'OPD notifications pending attention',
+      value: opdNotificationsPendingAttention
+    });
 
     const hasLiveData = summaryCards.some((item) => Number(item.value || 0) > 0)
       || trendPoints.some((item) => Number(item.value || 0) > 0)
-      || Number(distribution.total || 0) > 0;
+      || Number(distribution.total || 0) > 0
+      || opdNotificationsPendingAttention > 0;
 
     const queue = [
       queueItem('queue_primary', 'Primary queue', summaryCards[0]?.value || 0, 'Current', 'primary', 'items'),
-      queueItem('queue_secondary', 'Secondary queue', summaryCards[1]?.value || 0, 'Monitor', 'warning', 'items')
+      queueItem('queue_secondary', 'Secondary queue', summaryCards[1]?.value || 0, 'Monitor', 'warning', 'items'),
+      queueItem(
+        'queue_opd_attention',
+        'OPD notifications',
+        opdNotificationsPendingAttention,
+        opdNotificationsPendingAttention > 0 ? 'Pending attention' : 'No pending items',
+        opdNotificationsPendingAttention > 0 ? 'error' : 'success',
+        'notifications'
+      )
     ];
     const alerts = [
       alertItem('alert_primary', 'Primary alert pressure', summaryCards[2]?.value || 0, 'Monitor', 'warning', 'signals'),
-      alertItem('alert_secondary', 'Secondary alert pressure', summaryCards[3]?.value || 0, 'Watch', 'primary', 'signals')
+      alertItem('alert_secondary', 'Secondary alert pressure', summaryCards[3]?.value || 0, 'Watch', 'primary', 'signals'),
+      alertItem(
+        'alert_opd_attention',
+        'OPD notifications needing attention',
+        opdNotificationsPendingAttention,
+        opdNotificationsPendingAttention > 0 ? 'Action required' : 'Stable',
+        opdNotificationsPendingAttention > 0 ? 'error' : 'success',
+        'notifications'
+      )
     ];
-    const activity = Object.entries(packData?.activity || {}).map(([key, value]) =>
-      activityItem(`activity_${key}`, `${key.replace(/_/g, ' ')} updated`, value)
-    );
+    const activity = [
+      ...Object.entries(packData?.activity || {}).map(([key, value]) =>
+        activityItem(`activity_${key}`, `${key.replace(/_/g, ' ')} updated`, value)
+      ),
+      activityItem(
+        'activity_opd_attention',
+        'opd notifications pending attention',
+        opdNotificationsPendingAttention
+      )
+    ];
     const highlights = [
       {
         id: 'live_signal',
@@ -618,6 +657,12 @@ const getDashboardSummary = async (query = {}, user = {}) => {
         label: 'Distribution total',
         value: `${distribution.total || 0}`,
         context: 'Status-distributed records'
+      },
+      {
+        id: 'opd_notification_attention',
+        label: 'OPD notification attention',
+        value: `${opdNotificationsPendingAttention}`,
+        context: 'Unread OPD flow updates requiring attendance'
       }
     ];
 

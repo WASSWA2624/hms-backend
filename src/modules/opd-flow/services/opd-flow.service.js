@@ -267,7 +267,7 @@ const createAndEmitOpdNotifications = async ({ payload, recipientUserIds }) => {
         data: createdNotifications.map((notification) => ({
           notification_id: notification.id,
           channel: 'IN_APP',
-          status: 'SENT',
+          status: 'PENDING_ATTENTION',
           sent_at: new Date()
         }))
       });
@@ -560,6 +560,27 @@ const startOpdFlow = async (data, context = {}) => {
 
     if (appointment && (appointment.status === 'CANCELLED' || appointment.status === 'NO_SHOW')) {
       throw new HttpError('errors.opd_flow.appointment_terminal_status', 400);
+    }
+
+    if (appointment) {
+      const existingFlow = await tx.encounter.findFirst({
+        where: {
+          deleted_at: null,
+          status: 'OPEN',
+          encounter_type: { in: ['OPD', 'EMERGENCY'] },
+          extension_json: {
+            path: ['opd_flow', 'appointment_id'],
+            equals: appointment.id
+          }
+        },
+        select: { id: true }
+      });
+
+      if (existingFlow) {
+        throw new HttpError('errors.opd_flow.appointment_already_linked', 409, [
+          { field: 'appointment_id' }
+        ]);
+      }
     }
 
     const arrivalMode = deriveArrivalMode(data, appointment);

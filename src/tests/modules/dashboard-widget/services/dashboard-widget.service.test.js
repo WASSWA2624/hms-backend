@@ -329,6 +329,7 @@ describe('Dashboard Widget Service', () => {
     beforeEach(() => {
       dashboardWidgetRepository.getDashboardSummaryByPack = jest.fn();
       dashboardWidgetRepository.resolveBranchFacilityScope = jest.fn();
+      dashboardWidgetRepository.countUnreadOpdNotifications = jest.fn().mockResolvedValue(0);
     });
 
     it('resolves role-profile mapping using hierarchy for all canonical staff roles', async () => {
@@ -412,6 +413,14 @@ describe('Dashboard Widget Service', () => {
           },
         })
       );
+      expect(dashboardWidgetRepository.countUnreadOpdNotifications).toHaveBeenCalledWith({
+        scope: {
+          tenant_id: '660e8400-e29b-41d4-a716-446655440000',
+          facility_id: '770e8400-e29b-41d4-a716-446655440000',
+          branch_id: '880e8400-e29b-41d4-a716-446655440000',
+        },
+        userId: 'user-1',
+      });
     });
 
     it('shapes payload with aggregate-only contract and strips raw-record fields', async () => {
@@ -463,6 +472,56 @@ describe('Dashboard Widget Service', () => {
       leakageKeys.forEach((key) => {
         expect(serialized.includes(`\"${key}\"`)).toBe(false);
       });
+    });
+
+    it('includes OPD unread notifications as pending-attention dashboard signals', async () => {
+      dashboardWidgetRepository.getDashboardSummaryByPack.mockResolvedValue({
+        metrics: {
+          patientsToday: 1,
+          appointmentsToday: 2,
+          activeAdmissions: 0,
+          openInvoices: 0,
+          paymentsToday: 0,
+        },
+        trendDates: [],
+        statusCounts: {},
+        activity: {},
+      });
+      dashboardWidgetRepository.countUnreadOpdNotifications.mockResolvedValue(3);
+
+      const result = await dashboardWidgetService.getDashboardSummary(
+        { days: 7 },
+        {
+          id: 'user-1',
+          roles: ['TENANT_ADMIN'],
+          tenant_id: '660e8400-e29b-41d4-a716-446655440000',
+        }
+      );
+
+      expect(result.summaryCards).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: 'opd_notifications_attention',
+            value: 3,
+          }),
+        ])
+      );
+      expect(result.activity).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: 'activity_opd_attention',
+            meta: '3 updates',
+          }),
+        ])
+      );
+      expect(result.queue).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: 'queue_opd_attention',
+            statusVariant: 'error',
+          }),
+        ])
+      );
     });
   });
 });

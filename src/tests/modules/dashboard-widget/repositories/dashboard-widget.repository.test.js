@@ -18,6 +18,9 @@ jest.mock('@prisma/client', () => ({
     count: jest.fn(),
     create: jest.fn(),
     update: jest.fn()
+  },
+  notification: {
+    count: jest.fn()
   }
 }));
 
@@ -375,6 +378,36 @@ describe('Dashboard Widget Repository', () => {
           facility_id: scope.facility_id
         }
       });
+    });
+  });
+
+  describe('countUnreadOpdNotifications', () => {
+    it('counts unread OPD notifications scoped to user and tenant', async () => {
+      prisma.notification.count.mockResolvedValue(5);
+
+      const result = await dashboardWidgetRepository.countUnreadOpdNotifications({
+        scope: { tenant_id: 'tenant-1' },
+        userId: 'user-1',
+      });
+
+      expect(result).toBe(5);
+      expect(prisma.notification.count).toHaveBeenCalledWith({
+        where: {
+          deleted_at: null,
+          read_at: null,
+          title: { contains: 'OPD flow update' },
+          tenant_id: 'tenant-1',
+          user_id: 'user-1'
+        }
+      });
+    });
+
+    it('throws HttpError on notification count failure', async () => {
+      prisma.notification.count.mockRejectedValue(new Error('DB Error'));
+
+      await expect(
+        dashboardWidgetRepository.countUnreadOpdNotifications({ scope: { tenant_id: 'tenant-1' } })
+      ).rejects.toThrow(HttpError);
     });
   });
 });

@@ -304,21 +304,24 @@ describe('opd-flow.service', () => {
       },
       encounter: {
         create: jest.fn().mockResolvedValue({ id: 'enc-1', tenant_id: 'tenant-1' }),
-        findFirst: jest.fn().mockResolvedValue({
-          id: 'enc-1',
-          encounter_type: 'OPD',
-          extension_json: {
-            opd_flow: {
-              stage: 'WAITING_CONSULTATION_PAYMENT',
-              visit_queue_id: 'vq-1',
-              appointment_id: 'apt-1',
-              consultation: {
-                invoice_id: 'inv-1',
-                payment_id: null
+        findFirst: jest
+          .fn()
+          .mockResolvedValueOnce(null)
+          .mockResolvedValueOnce({
+            id: 'enc-1',
+            encounter_type: 'OPD',
+            extension_json: {
+              opd_flow: {
+                stage: 'WAITING_CONSULTATION_PAYMENT',
+                visit_queue_id: 'vq-1',
+                appointment_id: 'apt-1',
+                consultation: {
+                  invoice_id: 'inv-1',
+                  payment_id: null
+                }
               }
             }
-          }
-        }),
+          }),
         update: jest.fn()
       }
     };
@@ -340,6 +343,36 @@ describe('opd-flow.service', () => {
       data: { status: 'IN_PROGRESS' }
     });
     expect(result.flow.appointment_id).toBe('apt-1');
+  });
+
+  it('rejects online appointment start when an open OPD flow already exists for the appointment', async () => {
+    const tx = {
+      appointment: {
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'apt-1',
+          patient_id: 'pat-1',
+          provider_user_id: 'doc-1',
+          status: 'CONFIRMED',
+          tenant_id: 'tenant-1',
+          facility_id: 'facility-1'
+        })
+      },
+      encounter: {
+        findFirst: jest.fn().mockResolvedValue({ id: 'enc-existing-1' })
+      }
+    };
+
+    prisma.$transaction.mockImplementation(async (callback) => callback(tx));
+
+    await expect(
+      opdFlowService.startOpdFlow(
+        { appointment_id: 'apt-1' },
+        { tenant_id: 'tenant-1', user_id: 'usr-1' }
+      )
+    ).rejects.toMatchObject({
+      messageKey: 'errors.opd_flow.appointment_already_linked',
+      statusCode: 409
+    });
   });
 
   it('rejects OPD flow start for cancelled appointment', async () => {

@@ -10,6 +10,42 @@
 const appointmentRepository = require('@repositories/appointment/appointment.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
+const opdFlowService = require('@services/opd-flow/opd-flow.service');
+
+const normalizeStatus = (value) => String(value || '').trim().toUpperCase();
+
+const shouldAutoStartOpdFlow = (before, appointment, updateData = {}) => {
+  const nextStatus = normalizeStatus(appointment?.status || updateData?.status);
+  if (nextStatus !== 'IN_PROGRESS') return false;
+
+  const previousStatus = normalizeStatus(before?.status);
+  return previousStatus !== 'IN_PROGRESS';
+};
+
+const maybeAutoStartOpdFlow = async ({ before, appointment, updateData, userId, ipAddress }) => {
+  if (!appointment?.id) return;
+  if (!shouldAutoStartOpdFlow(before, appointment, updateData)) return;
+
+  try {
+    await opdFlowService.startOpdFlow(
+      {
+        appointment_id: appointment.id,
+        arrival_mode: 'ONLINE_APPOINTMENT',
+        tenant_id: appointment.tenant_id || undefined,
+        facility_id: appointment.facility_id || undefined,
+        notes: 'Auto-started from appointment status transition to IN_PROGRESS.',
+      },
+      {
+        user_id: userId,
+        tenant_id: appointment.tenant_id || undefined,
+        facility_id: appointment.facility_id || undefined,
+        ip_address: ipAddress,
+      }
+    );
+  } catch (_error) {
+    // Keep appointment lifecycle updates non-blocking even if OPD orchestration fails.
+  }
+};
 
 /**
  * List appointments with pagination and filtering
@@ -147,6 +183,14 @@ const updateAppointment = async (id, data, userId, ipAddress) => {
       diff: { before, after: appointment },
       ip_address: ipAddress
     }).catch(() => {});
+
+    await maybeAutoStartOpdFlow({
+      before,
+      appointment,
+      updateData: data,
+      userId,
+      ipAddress,
+    });
 
     return appointment;
   } catch (error) {

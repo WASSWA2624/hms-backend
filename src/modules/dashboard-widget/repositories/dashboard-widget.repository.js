@@ -338,6 +338,22 @@ const softDelete = async (id) => {
   }
 };
 
+const countUnreadOpdNotifications = async ({ scope = {}, userId = null } = {}) => {
+  try {
+    const where = {
+      deleted_at: null,
+      read_at: null,
+      title: { contains: 'OPD flow update' },
+      ...(scope?.tenant_id ? { tenant_id: scope.tenant_id } : {}),
+      ...(userId ? { user_id: userId } : {})
+    };
+
+    return await prisma.notification.count({ where });
+  } catch (error) {
+    throw new HttpError('errors.database.unexpected', 500, [{ originalError: error.message }]);
+  }
+};
+
 const getDashboardSummaryByPack = async ({ packId, scope, days = 7, userId = null }) => {
   try {
     const now = new Date();
@@ -634,6 +650,7 @@ module.exports = {
   update,
   softDelete,
   getDashboardSummaryByPack,
+  countUnreadOpdNotifications,
   resolveBranchFacilityScope,
   __private__: {
     ROLE_PACKS,
