@@ -33,6 +33,7 @@ const WORKFLOW_STAGE_SET = new Set(Object.values(STAGES));
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const BLOOD_PRESSURE_VALUE_REGEX = /^(\d{2,3}(?:\.\d{1,2})?)\s*\/\s*(\d{2,3}(?:\.\d{1,2})?)$/;
+const MAX_OPD_SEARCH_TOKENS = 6;
 
 const TRIAGE_ALIAS_MAP = {
   IMMEDIATE: 'LEVEL_1',
@@ -47,6 +48,14 @@ const TRIAGE_ALIAS_MAP = {
 };
 
 const normalizeIdentifier = (value) => (typeof value === 'string' ? value.trim() : '');
+
+const normalizeSearchTokens = (search) =>
+  String(search || '')
+    .trim()
+    .split(/\s+/)
+    .map((token) => token.trim())
+    .filter(Boolean)
+    .slice(0, MAX_OPD_SEARCH_TOKENS);
 
 const isUuid = (value) => UUID_REGEX.test(normalizeIdentifier(value));
 
@@ -715,6 +724,73 @@ const ensureNonTerminalStage = (flow) => {
   }
 };
 
+const buildEncounterSearchTokenClause = (token) => {
+  const term = String(token || '').trim();
+  const upper = term.toUpperCase();
+
+  return {
+    OR: [
+      { human_friendly_id: { contains: upper } },
+      { patient: { first_name: { contains: term } } },
+      { patient: { last_name: { contains: term } } },
+      { patient: { human_friendly_id: { contains: upper } } },
+      {
+        patient: {
+          identifiers: {
+            some: {
+              deleted_at: null,
+              OR: [
+                { human_friendly_id: { contains: upper } },
+                { identifier_type: { contains: term } },
+                { identifier_value: { contains: term } },
+              ],
+            },
+          },
+        },
+      },
+      {
+        patient: {
+          contacts: {
+            some: {
+              deleted_at: null,
+              OR: [
+                { human_friendly_id: { contains: upper } },
+                { value: { contains: term } },
+              ],
+            },
+          },
+        },
+      },
+      {
+        patient: {
+          guardians: {
+            some: {
+              deleted_at: null,
+              OR: [
+                { human_friendly_id: { contains: upper } },
+                { name: { contains: term } },
+                { relationship: { contains: term } },
+                { phone: { contains: term } },
+                { email: { contains: term } },
+              ],
+            },
+          },
+        },
+      },
+      { provider: { email: { contains: term } } },
+      { provider: { phone: { contains: term } } },
+      { provider: { human_friendly_id: { contains: upper } } },
+      { provider: { position_title: { contains: term } } },
+      { provider: { profile: { first_name: { contains: term } } } },
+      { provider: { profile: { last_name: { contains: term } } } },
+      { provider: { profile: { middle_name: { contains: term } } } },
+      { provider: { staff_profile: { staff_number: { contains: term } } } },
+      { provider: { staff_profile: { practitioner_type: { contains: upper } } } },
+      { provider: { staff_profile: { position: { contains: term } } } },
+    ],
+  };
+};
+
 const buildEncounterWhereClause = (filters = {}) => {
   const where = {
     encounter_type: { in: ['OPD', 'EMERGENCY'] }
@@ -731,28 +807,9 @@ const buildEncounterWhereClause = (filters = {}) => {
       equals: filters.stage
     };
   }
-  if (filters.search) {
-    const term = String(filters.search).trim();
-    const upper = term.toUpperCase();
-    where.OR = [
-      { human_friendly_id: { contains: upper } },
-      { patient: { first_name: { contains: term } } },
-      { patient: { last_name: { contains: term } } },
-      { patient: { middle_name: { contains: term } } },
-      { patient: { phone: { contains: term } } },
-      { patient: { email: { contains: term } } },
-      { patient: { human_friendly_id: { contains: upper } } },
-      { provider: { email: { contains: term } } },
-      { provider: { phone: { contains: term } } },
-      { provider: { human_friendly_id: { contains: upper } } },
-      { provider: { position_title: { contains: term } } },
-      { provider: { profile: { first_name: { contains: term } } } },
-      { provider: { profile: { last_name: { contains: term } } } },
-      { provider: { profile: { middle_name: { contains: term } } } },
-      { provider: { staff_profile: { staff_number: { contains: term } } } },
-      { provider: { staff_profile: { practitioner_type: { contains: upper } } } },
-      { provider: { staff_profile: { position: { contains: term } } } },
-    ];
+  const searchTokens = normalizeSearchTokens(filters.search);
+  if (searchTokens.length > 0) {
+    where.AND = searchTokens.map(buildEncounterSearchTokenClause);
   }
 
   return where;
