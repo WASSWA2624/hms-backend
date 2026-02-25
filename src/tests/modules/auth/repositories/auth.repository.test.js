@@ -8,6 +8,8 @@ const { HttpError } = require('@lib/errors');
 
 // Mock Prisma instance before requiring the repository
 jest.mock('@prisma/client', () => ({
+  $connect: jest.fn(),
+  $disconnect: jest.fn(),
   user: {
     findFirst: jest.fn(),
     findMany: jest.fn(),
@@ -166,7 +168,8 @@ describe('Auth Repository', () => {
       const userData = {
         email: 'newuser@example.com',
         password_hash: 'hashedpassword',
-        tenant_id: 'tenant-123'
+        tenant_id: 'tenant-123',
+        position_title: 'TENANT_ADMIN'
       };
       const mockCreatedUser = { id: 'user-123', ...userData };
       prisma.user.create.mockResolvedValue(mockCreatedUser);
@@ -184,7 +187,8 @@ describe('Auth Repository', () => {
       const userData = {
         email: 'duplicate@example.com',
         password_hash: 'hashedpassword',
-        tenant_id: 'tenant-123'
+        tenant_id: 'tenant-123',
+        position_title: 'TENANT_ADMIN'
       };
       const duplicateError = new Error('Unique constraint failed');
       duplicateError.code = 'P2002';
@@ -285,6 +289,32 @@ describe('Auth Repository', () => {
       const result = await findSessionByRefreshToken('tokenhash');
 
       expect(result).toBeNull();
+    });
+
+    it('should retry once on transient connection timeout', async () => {
+      const transientPoolTimeout = new Error('pool timeout');
+      transientPoolTimeout.code = 'P2010';
+      transientPoolTimeout.meta = {
+        driverAdapterError: {
+          message: 'failed to retrieve a connection from pool after 5001ms'
+        }
+      };
+      const mockSession = {
+        id: 'session-123',
+        refresh_token_hash: 'tokenhash',
+        user: { id: 'user-123' }
+      };
+
+      prisma.user_session.findFirst
+        .mockRejectedValueOnce(transientPoolTimeout)
+        .mockResolvedValueOnce(mockSession);
+
+      const result = await findSessionByRefreshToken('tokenhash');
+
+      expect(result).toEqual(mockSession);
+      expect(prisma.user_session.findFirst).toHaveBeenCalledTimes(2);
+      expect(prisma.$disconnect).toHaveBeenCalledTimes(1);
+      expect(prisma.$connect).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -597,6 +627,35 @@ describe('Auth Repository', () => {
           },
         },
       });
+    });
+
+    it('should retry once on transient connection timeout', async () => {
+      const transientPoolTimeout = new Error('pool timeout');
+      transientPoolTimeout.code = 'P2010';
+      transientPoolTimeout.meta = {
+        driverAdapterError: {
+          message: 'pool timeout: failed to retrieve a connection from pool'
+        }
+      };
+      const mockUsers = [
+        {
+          id: 'user-1',
+          email: 'test@example.com',
+          tenant_id: 'tenant-1',
+          tenant: { id: 'tenant-1', name: 'Tenant 1', slug: 'tenant-1' },
+        },
+      ];
+
+      prisma.user.findMany
+        .mockRejectedValueOnce(transientPoolTimeout)
+        .mockResolvedValueOnce(mockUsers);
+
+      const result = await findUsersByIdentifier('test@example.com');
+
+      expect(result).toEqual(mockUsers);
+      expect(prisma.user.findMany).toHaveBeenCalledTimes(2);
+      expect(prisma.$disconnect).toHaveBeenCalledTimes(1);
+      expect(prisma.$connect).toHaveBeenCalledTimes(1);
     });
   });
 

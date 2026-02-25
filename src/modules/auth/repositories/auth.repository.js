@@ -74,6 +74,71 @@ const sortUsersByCreatedAtDesc = (users = []) => {
   });
 };
 
+const RETRYABLE_CONNECTION_ERROR_CODES = new Set(['P1001', 'P1002', 'P2010']);
+const RETRYABLE_CONNECTION_ERROR_PATTERN =
+  /pool timeout|failed to retrieve a connection from pool|can'?t reach database server|econnrefused|timed out|protocol_connection_lost/i;
+const CONNECTION_RETRY_ATTEMPTS = 2;
+
+const getErrorFingerprint = (error) => {
+  return [
+    error?.message,
+    error?.meta?.cause,
+    error?.meta?.driverAdapterError?.message,
+    error?.meta?.driverAdapterError?.cause?.message,
+  ]
+    .filter(Boolean)
+    .join(' | ');
+};
+
+const isRetryableConnectionError = (error) => {
+  const code = error?.code ? String(error.code).toUpperCase() : null;
+  if (!code || !RETRYABLE_CONNECTION_ERROR_CODES.has(code)) {
+    return false;
+  }
+
+  const fingerprint = getErrorFingerprint(error);
+  return RETRYABLE_CONNECTION_ERROR_PATTERN.test(fingerprint);
+};
+
+const waitFor = (ms) =>
+  new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+
+const withPrismaConnectionRetry = async (queryOperation) => {
+  let latestError = null;
+
+  for (let attempt = 1; attempt <= CONNECTION_RETRY_ATTEMPTS; attempt += 1) {
+    try {
+      return await queryOperation();
+    } catch (error) {
+      latestError = error;
+
+      const shouldRetry =
+        attempt < CONNECTION_RETRY_ATTEMPTS && isRetryableConnectionError(error);
+      if (!shouldRetry) {
+        throw error;
+      }
+
+      // Reset the pooled connection state before retrying a transient adapter timeout.
+      try {
+        await prisma.$disconnect();
+      } catch {
+        // Best-effort reset only.
+      }
+      try {
+        await prisma.$connect();
+      } catch {
+        // The next operation attempt will surface the concrete error if it still fails.
+      }
+
+      await waitFor(200 * attempt);
+    }
+  }
+
+  throw latestError;
+};
+
 /**
  * Find user by email and tenant
  *
@@ -83,14 +148,16 @@ const sortUsersByCreatedAtDesc = (users = []) => {
  */
 const findUserByEmailAndTenant = async (email, tenantId) => {
   try {
-    return await prisma.user.findFirst({
-      where: {
-        email,
-        tenant_id: tenantId,
-        deleted_at: null
-      },
-      include: userInclude
-    });
+    return await withPrismaConnectionRetry(() =>
+      prisma.user.findFirst({
+        where: {
+          email,
+          tenant_id: tenantId,
+          deleted_at: null
+        },
+        include: userInclude
+      })
+    );
   } catch (error) {
     throw new HttpError('errors.database.unexpected', 500, [{ originalError: error.message }]);
   }
@@ -105,14 +172,16 @@ const findUserByEmailAndTenant = async (email, tenantId) => {
  */
 const findUserByPhoneAndTenant = async (phone, tenantId) => {
   try {
-    return await prisma.user.findFirst({
-      where: {
-        phone,
-        tenant_id: tenantId,
-        deleted_at: null
-      },
-      include: userInclude
-    });
+    return await withPrismaConnectionRetry(() =>
+      prisma.user.findFirst({
+        where: {
+          phone,
+          tenant_id: tenantId,
+          deleted_at: null
+        },
+        include: userInclude
+      })
+    );
   } catch (error) {
     throw new HttpError('errors.database.unexpected', 500, [{ originalError: error.message }]);
   }
@@ -312,9 +381,11 @@ const updateUserPassword = async (userId, passwordHash) => {
  */
 const createSession = async (data) => {
   try {
-    return await prisma.user_session.create({
-      data
-    });
+    return await withPrismaConnectionRetry(() =>
+      prisma.user_session.create({
+        data
+      })
+    );
   } catch (error) {
     throw new HttpError('errors.database.unexpected', 500, [{ originalError: error.message }]);
   }
@@ -328,28 +399,30 @@ const createSession = async (data) => {
  */
 const findSessionByRefreshToken = async (refreshTokenHash) => {
   try {
-    return await prisma.user_session.findFirst({
-      where: {
-        refresh_token_hash: refreshTokenHash,
-        revoked_at: null,
-        deleted_at: null,
-        expires_at: {
-          gt: new Date()
-        }
-      },
-      include: {
-        user: {
-          include: {
-            profile: true,
-            roles: {
-              where: { deleted_at: null },
-              include: {
-                role: {
-                  include: {
-                    permissions: {
-                      where: { deleted_at: null },
-                      include: {
-                        permission: true
+    return await withPrismaConnectionRetry(() =>
+      prisma.user_session.findFirst({
+        where: {
+          refresh_token_hash: refreshTokenHash,
+          revoked_at: null,
+          deleted_at: null,
+          expires_at: {
+            gt: new Date()
+          }
+        },
+        include: {
+          user: {
+            include: {
+              profile: true,
+              roles: {
+                where: { deleted_at: null },
+                include: {
+                  role: {
+                    include: {
+                      permissions: {
+                        where: { deleted_at: null },
+                        include: {
+                          permission: true
+                        }
                       }
                     }
                   }
@@ -358,8 +431,8 @@ const findSessionByRefreshToken = async (refreshTokenHash) => {
             }
           }
         }
-      }
-    });
+      })
+    );
   } catch (error) {
     throw new HttpError('errors.database.unexpected', 500, [{ originalError: error.message }]);
   }
@@ -636,19 +709,21 @@ const updateUserStatus = async (userId, status) => {
  */
 const findUserByEmail = async (email) => {
   try {
-    return await prisma.user.findFirst({
-      where: {
-        email,
-        deleted_at: null
-      },
-      include: {
-        profile: true,
-        tenant: true,
-        facility: {
-          select: facilitySelect
+    return await withPrismaConnectionRetry(() =>
+      prisma.user.findFirst({
+        where: {
+          email,
+          deleted_at: null
+        },
+        include: {
+          profile: true,
+          tenant: true,
+          facility: {
+            select: facilitySelect
+          }
         }
-      }
-    });
+      })
+    );
   } catch (error) {
     throw new HttpError('errors.database.unexpected', 500, [{
       originalError: error.message,
@@ -668,19 +743,21 @@ const findUserByEmail = async (email) => {
  */
 const findUserByPhone = async (phone) => {
   try {
-    return await prisma.user.findFirst({
-      where: {
-        phone,
-        deleted_at: null
-      },
-      include: {
-        profile: true,
-        tenant: true,
-        facility: {
-          select: facilitySelect
+    return await withPrismaConnectionRetry(() =>
+      prisma.user.findFirst({
+        where: {
+          phone,
+          deleted_at: null
+        },
+        include: {
+          profile: true,
+          tenant: true,
+          facility: {
+            select: facilitySelect
+          }
         }
-      }
-    });
+      })
+    );
   } catch (error) {
     throw new HttpError('errors.database.unexpected', 500, [{ originalError: error.message }]);
   }
@@ -698,9 +775,11 @@ const findUsersByIdentifier = async (identifier) => {
   const baseWhere = isEmail
     ? { email: normalizedIdentifier.toLowerCase() }
     : { phone: normalizedIdentifier };
+  const findManyWithRetry = (args) =>
+    withPrismaConnectionRetry(() => prisma.user.findMany(args));
 
   try {
-    const users = await prisma.user.findMany({
+    const users = await findManyWithRetry({
       where: {
         ...baseWhere,
         deleted_at: null
@@ -723,7 +802,7 @@ const findUsersByIdentifier = async (identifier) => {
   } catch (error) {
     if (isMissingSchemaArtifactError(error)) {
       try {
-        const legacyUsers = await prisma.user.findMany({
+        const legacyUsers = await findManyWithRetry({
           where: baseWhere,
           include: {
             tenant: {
@@ -743,7 +822,7 @@ const findUsersByIdentifier = async (identifier) => {
       } catch (legacyError) {
         if (isMissingSchemaArtifactError(legacyError)) {
           try {
-            const minimalUsers = await prisma.user.findMany({
+            const minimalUsers = await findManyWithRetry({
               where: baseWhere,
             });
 
