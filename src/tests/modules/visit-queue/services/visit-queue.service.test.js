@@ -138,6 +138,27 @@ describe('Visit Queue Service', () => {
       );
     });
 
+    it('should apply search across queue-linked identities', async () => {
+      const mockEntries = [{ id: 'queue-1', status: 'SCHEDULED' }];
+      visitQueueRepository.findMany.mockResolvedValue(mockEntries);
+      visitQueueRepository.count.mockResolvedValue(1);
+
+      await listVisitQueues({ search: 'pat-001' }, 1, 20);
+
+      expect(visitQueueRepository.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          OR: expect.arrayContaining([
+            expect.objectContaining({
+              human_friendly_id: { contains: 'PAT-001' }
+            })
+          ])
+        }),
+        0,
+        20,
+        { queued_at: 'desc' }
+      );
+    });
+
     it('should apply multiple filters', async () => {
       const mockEntries = [{ id: 'queue-1' }];
       visitQueueRepository.findMany.mockResolvedValue(mockEntries);

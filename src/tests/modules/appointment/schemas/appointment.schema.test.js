@@ -219,6 +219,12 @@ describe('Appointment Schemas', () => {
       const result = appointmentIdParamsSchema.safeParse({});
       expect(result.success).toBe(false);
     });
+
+    it('should validate friendly id param', () => {
+      const data = { id: 'APT0000123' };
+      const result = appointmentIdParamsSchema.safeParse(data);
+      expect(result.success).toBe(true);
+    });
   });
 
   describe('listAppointmentsQuerySchema', () => {

@@ -9,7 +9,8 @@
 
 const { z } = require('zod');
 const { 
-  uuidSchema, 
+  uuidSchema,
+  uuidOrFriendlyIdentifierSchema,
   listQuerySchema
 } = require('@lib/validation/zod');
 
@@ -41,8 +42,8 @@ const scheduleOverrideSchema = z.object({
  * Used for POST /provider-schedules endpoint
  */
 const createProviderScheduleSchema = z.object({
-  tenant_id: uuidSchema,
-  facility_id: uuidSchema.optional().nullable(),
+  tenant_id: uuidOrFriendlyIdentifierSchema,
+  facility_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
   provider_user_id: providerIdentifierSchema,
   schedule_type: scheduleTypeSchema.optional().default('RECURRING'),
   timezone: z.string().trim().min(1).max(64).optional().default('UTC'),
@@ -60,7 +61,7 @@ const createProviderScheduleSchema = z.object({
  * All fields optional for partial updates
  */
 const updateProviderScheduleSchema = z.object({
-  facility_id: uuidSchema.optional().nullable(),
+  facility_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
   provider_user_id: providerIdentifierSchema.optional(),
   schedule_type: scheduleTypeSchema.optional(),
   timezone: z.string().trim().min(1).max(64).optional(),
@@ -90,8 +91,8 @@ const providerScheduleIdParamsSchema = z.object({
  * Extends base listQuerySchema with provider schedule-specific filters
  */
 const listProviderSchedulesQuerySchema = listQuerySchema.extend({
-  tenant_id: uuidSchema.optional(),
-  facility_id: uuidSchema.optional(),
+  tenant_id: uuidOrFriendlyIdentifierSchema.optional(),
+  facility_id: uuidOrFriendlyIdentifierSchema.optional(),
   provider_user_id: providerIdentifierSchema.optional(),
   schedule_type: scheduleTypeSchema.optional(),
   day_of_week: z.coerce.number().int().min(0).max(6).optional()

@@ -11,6 +11,8 @@
 const { z } = require('zod');
 const { SUPPORTED_LOCALES, DEFAULT_PAGE, DEFAULT_PAGE_LIMIT, MAX_PAGE_LIMIT } = require('@config/constants');
 
+const FRIENDLY_IDENTIFIER_REGEX = /^(?=.*\d)[A-Za-z][A-Za-z0-9_-]*$/;
+
 /**
  * Email validation
  * Validates email format
@@ -26,6 +28,15 @@ const emailSchema = z.string()
  */
 const uuidSchema = z.string()
   .uuid('Invalid UUID format');
+
+const friendlyIdentifierSchema = z.string()
+  .trim()
+  .min(2, 'Identifier must be at least 2 characters')
+  .max(64, 'Identifier must be at most 64 characters')
+  .regex(FRIENDLY_IDENTIFIER_REGEX, 'Invalid identifier format')
+  .transform((value) => value.toUpperCase());
+
+const uuidOrFriendlyIdentifierSchema = z.union([uuidSchema, friendlyIdentifierSchema]);
 
 /**
  * Phone number validation
@@ -236,6 +247,8 @@ module.exports = {
   // Basic validators
   emailSchema,
   uuidSchema,
+  friendlyIdentifierSchema,
+  uuidOrFriendlyIdentifierSchema,
   phoneSchema,
   urlSchema,
   passwordSchema,

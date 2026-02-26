@@ -10,6 +10,149 @@
 const visitQueueRepository = require('@repositories/visit-queue/visit-queue.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
+const { isUuidLike } = require('@lib/identifiers/sanitize-friendly-ids');
+const { resolveModelIdByIdentifier } = require('@lib/identifiers/resolve-entity-id');
+
+const USER_IDENTIFIER_MATCHERS = [({ rawValue }) => ({ email: rawValue }), ({ rawValue }) => ({ phone: rawValue })];
+
+const buildEmptyListResult = (page, limit) => ({
+  entries: [],
+  pagination: {
+    page,
+    limit,
+    total: 0,
+    totalPages: 0,
+    hasNextPage: false,
+    hasPreviousPage: page > 1,
+  },
+});
+
+const resolveFilterIdentifier = async ({
+  value,
+  model,
+  where = {},
+  additionalFriendlyMatchers = [],
+}) => {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+
+  const normalized = typeof value === 'string' ? value.trim() : '';
+  if (!normalized) return undefined;
+
+  const matchers = (additionalFriendlyMatchers || []).map((matcher) => (rawValue, upperValue) =>
+    matcher({ rawValue, upperValue })
+  );
+
+  const resolvedId = await resolveModelIdByIdentifier({
+    model,
+    identifier: normalized,
+    where,
+    additionalFriendlyMatchers: matchers,
+  });
+
+  if (resolvedId) return resolvedId;
+  if (isUuidLike(normalized)) return normalized;
+  return null;
+};
+
+const resolvePayloadIdentifier = async ({
+  value,
+  field,
+  model,
+  where = {},
+  nullable = false,
+  additionalFriendlyMatchers = [],
+}) => {
+  if (value === undefined) return undefined;
+  if (value === null) {
+    if (nullable) return null;
+    throw new HttpError('errors.validation.field.required', 400, [{ field }]);
+  }
+
+  const normalized = typeof value === 'string' ? value.trim() : '';
+  if (!normalized) {
+    throw new HttpError('errors.validation.invalid', 400, [{ field }]);
+  }
+
+  const matchers = (additionalFriendlyMatchers || []).map((matcher) => (rawValue, upperValue) =>
+    matcher({ rawValue, upperValue })
+  );
+
+  const resolvedId = await resolveModelIdByIdentifier({
+    model,
+    identifier: normalized,
+    where,
+    additionalFriendlyMatchers: matchers,
+  });
+
+  if (resolvedId) return resolvedId;
+  if (isUuidLike(normalized)) return normalized;
+
+  throw new HttpError('errors.validation.invalid', 400, [{ field }]);
+};
+
+const resolveVisitQueuePayloadIdentifiers = async (data = {}, existing = null) => {
+  const payload = { ...data };
+
+  const tenantId =
+    payload.tenant_id !== undefined
+      ? await resolvePayloadIdentifier({
+          value: payload.tenant_id,
+          field: 'tenant_id',
+          model: 'tenant',
+        })
+      : existing?.tenant_id;
+
+  if (payload.tenant_id !== undefined) {
+    payload.tenant_id = tenantId;
+  }
+
+  if (payload.facility_id !== undefined) {
+    payload.facility_id = await resolvePayloadIdentifier({
+      value: payload.facility_id,
+      field: 'facility_id',
+      model: 'facility',
+      where: tenantId ? { tenant_id: tenantId } : {},
+      nullable: true,
+    });
+  }
+
+  if (payload.patient_id !== undefined) {
+    payload.patient_id = await resolvePayloadIdentifier({
+      value: payload.patient_id,
+      field: 'patient_id',
+      model: 'patient',
+      where: tenantId ? { tenant_id: tenantId } : {},
+    });
+  }
+
+  if (payload.appointment_id !== undefined) {
+    payload.appointment_id = await resolvePayloadIdentifier({
+      value: payload.appointment_id,
+      field: 'appointment_id',
+      model: 'appointment',
+      where: tenantId ? { tenant_id: tenantId } : {},
+      nullable: true,
+    });
+  }
+
+  if (payload.provider_user_id !== undefined) {
+    payload.provider_user_id = await resolvePayloadIdentifier({
+      value: payload.provider_user_id,
+      field: 'provider_user_id',
+      model: 'user',
+      where: tenantId ? { tenant_id: tenantId } : {},
+      nullable: true,
+      additionalFriendlyMatchers: USER_IDENTIFIER_MATCHERS,
+    });
+  }
+
+  if (payload.queued_at !== undefined) {
+    payload.queued_at = payload.queued_at instanceof Date ? payload.queued_at : new Date(payload.queued_at);
+  }
+
+  return payload;
+};
 
 /**
  * List visit queue entries with pagination
@@ -25,28 +168,116 @@ const listVisitQueues = async (filters = {}, page = 1, limit = 20, sortBy = 'que
   // Build repository filters
   const repoFilters = {};
 
-  if (filters.tenant_id) {
-    repoFilters.tenant_id = filters.tenant_id;
+  const resolvedTenantId = await resolveFilterIdentifier({
+    value: filters.tenant_id,
+    model: 'tenant',
+  });
+  if (filters.tenant_id !== undefined && resolvedTenantId === null) {
+    return buildEmptyListResult(page, limit);
+  }
+  if (resolvedTenantId) {
+    repoFilters.tenant_id = resolvedTenantId;
   }
 
-  if (filters.facility_id) {
-    repoFilters.facility_id = filters.facility_id;
+  const resolvedFacilityId = await resolveFilterIdentifier({
+    value: filters.facility_id,
+    model: 'facility',
+    where: resolvedTenantId ? { tenant_id: resolvedTenantId } : {},
+  });
+  if (filters.facility_id !== undefined && resolvedFacilityId === null) {
+    return buildEmptyListResult(page, limit);
+  }
+  if (resolvedFacilityId !== undefined) {
+    repoFilters.facility_id = resolvedFacilityId;
   }
 
-  if (filters.patient_id) {
-    repoFilters.patient_id = filters.patient_id;
+  const resolvedPatientId = await resolveFilterIdentifier({
+    value: filters.patient_id,
+    model: 'patient',
+    where: resolvedTenantId ? { tenant_id: resolvedTenantId } : {},
+  });
+  if (filters.patient_id !== undefined && resolvedPatientId === null) {
+    return buildEmptyListResult(page, limit);
+  }
+  if (resolvedPatientId) {
+    repoFilters.patient_id = resolvedPatientId;
   }
 
-  if (filters.appointment_id) {
-    repoFilters.appointment_id = filters.appointment_id;
+  const resolvedAppointmentId = await resolveFilterIdentifier({
+    value: filters.appointment_id,
+    model: 'appointment',
+    where: resolvedTenantId ? { tenant_id: resolvedTenantId } : {},
+  });
+  if (filters.appointment_id !== undefined && resolvedAppointmentId === null) {
+    return buildEmptyListResult(page, limit);
+  }
+  if (resolvedAppointmentId !== undefined) {
+    repoFilters.appointment_id = resolvedAppointmentId;
   }
 
-  if (filters.provider_user_id) {
-    repoFilters.provider_user_id = filters.provider_user_id;
+  const resolvedProviderUserId = await resolveFilterIdentifier({
+    value: filters.provider_user_id,
+    model: 'user',
+    where: resolvedTenantId ? { tenant_id: resolvedTenantId } : {},
+    additionalFriendlyMatchers: USER_IDENTIFIER_MATCHERS,
+  });
+  if (filters.provider_user_id !== undefined && resolvedProviderUserId === null) {
+    return buildEmptyListResult(page, limit);
+  }
+  if (resolvedProviderUserId !== undefined) {
+    repoFilters.provider_user_id = resolvedProviderUserId;
   }
 
   if (filters.status) {
     repoFilters.status = filters.status;
+  }
+
+  if (filters.search) {
+    const searchTerm = String(filters.search).trim();
+    const upperSearchTerm = searchTerm.toUpperCase();
+
+    repoFilters.OR = [
+      { human_friendly_id: { contains: upperSearchTerm } },
+      {
+        patient: {
+          OR: [
+            { human_friendly_id: { contains: upperSearchTerm } },
+            { first_name: { contains: searchTerm } },
+            { last_name: { contains: searchTerm } },
+          ],
+        },
+      },
+      {
+        provider: {
+          OR: [
+            { human_friendly_id: { contains: upperSearchTerm } },
+            { email: { contains: searchTerm } },
+            { phone: { contains: searchTerm } },
+            {
+              profile: {
+                is: {
+                  OR: [
+                    { first_name: { contains: searchTerm } },
+                    { middle_name: { contains: searchTerm } },
+                    { last_name: { contains: searchTerm } },
+                  ],
+                },
+              },
+            },
+          ],
+        },
+      },
+      {
+        appointment: {
+          is: {
+            OR: [
+              { human_friendly_id: { contains: upperSearchTerm } },
+              { reason: { contains: searchTerm } },
+            ],
+          },
+        },
+      },
+    ];
   }
 
   // Calculate pagination
@@ -105,12 +336,14 @@ const getVisitQueueById = async (id) => {
  * @returns {Promise<Object>} Created visit queue entry
  */
 const createVisitQueue = async (data, context = {}) => {
+  const payload = await resolveVisitQueuePayloadIdentifiers(data);
+
   // Set queued_at to current time if not provided
-  if (!data.queued_at) {
-    data.queued_at = new Date();
+  if (!payload.queued_at) {
+    payload.queued_at = new Date();
   }
 
-  const entry = await visitQueueRepository.create(data);
+  const entry = await visitQueueRepository.create(payload);
 
   // Create audit log
   await createAuditLog({
@@ -152,13 +385,14 @@ const updateVisitQueue = async (id, data, context = {}) => {
     throw new HttpError('errors.visit_queue.not_found', 404);
   }
 
-  const updatedEntry = await visitQueueRepository.update(id, data);
+  const payload = await resolveVisitQueuePayloadIdentifiers(data, beforeEntry);
+  const updatedEntry = await visitQueueRepository.update(beforeEntry.id, payload);
 
   // Create audit log
   await createAuditLog({
     action: 'VISIT_QUEUE_UPDATED',
     entity: 'visit_queue',
-    entity_id: id,
+    entity_id: beforeEntry.id,
     user_id: context.user_id,
     tenant_id: context.tenant_id,
     facility_id: context.facility_id,
@@ -201,13 +435,13 @@ const deleteVisitQueue = async (id, context = {}) => {
   }
 
   // Soft delete entry
-  await visitQueueRepository.softDelete(id);
+  await visitQueueRepository.softDelete(entry.id);
 
   // Create audit log
   await createAuditLog({
     action: 'VISIT_QUEUE_DELETED',
     entity: 'visit_queue',
-    entity_id: id,
+    entity_id: entry.id,
     user_id: context.user_id,
     tenant_id: context.tenant_id,
     facility_id: context.facility_id,
@@ -254,12 +488,12 @@ const prioritizeVisitQueue = async (id, data = {}, context = {}) => {
     status: data.status || 'CONFIRMED'
   };
 
-  const updatedEntry = await visitQueueRepository.update(id, updateData);
+  const updatedEntry = await visitQueueRepository.update(beforeEntry.id, updateData);
 
   await createAuditLog({
     action: 'VISIT_QUEUE_PRIORITIZED',
     entity: 'visit_queue',
-    entity_id: id,
+    entity_id: beforeEntry.id,
     user_id: context.user_id,
     tenant_id: context.tenant_id,
     facility_id: context.facility_id,

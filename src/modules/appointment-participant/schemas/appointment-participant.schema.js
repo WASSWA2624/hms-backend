@@ -9,7 +9,7 @@
 
 const { z } = require('zod');
 const { 
-  uuidSchema, 
+  uuidOrFriendlyIdentifierSchema, 
   listQuerySchema
 } = require('@lib/validation/zod');
 
@@ -20,9 +20,9 @@ const {
  * Used for POST /appointment-participants endpoint
  */
 const createAppointmentParticipantSchema = z.object({
-  appointment_id: uuidSchema,
-  participant_user_id: uuidSchema.optional().nullable(),
-  participant_patient_id: uuidSchema.optional().nullable(),
+  appointment_id: uuidOrFriendlyIdentifierSchema,
+  participant_user_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
+  participant_patient_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
   role: z.string().trim().max(80).optional().nullable()
 });
 
@@ -32,8 +32,8 @@ const createAppointmentParticipantSchema = z.object({
  * All fields optional for partial updates
  */
 const updateAppointmentParticipantSchema = z.object({
-  participant_user_id: uuidSchema.optional().nullable(),
-  participant_patient_id: uuidSchema.optional().nullable(),
+  participant_user_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
+  participant_patient_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
   role: z.string().trim().max(80).optional().nullable()
 });
 
@@ -44,7 +44,7 @@ const updateAppointmentParticipantSchema = z.object({
  * Used for GET /:id, PUT /:id, and DELETE /:id endpoints
  */
 const appointmentParticipantIdParamsSchema = z.object({
-  id: uuidSchema
+  id: uuidOrFriendlyIdentifierSchema
 });
 
 // ==================== Query Params ====================
@@ -55,9 +55,9 @@ const appointmentParticipantIdParamsSchema = z.object({
  * Extends base listQuerySchema with appointment-participant-specific filters
  */
 const listAppointmentParticipantsQuerySchema = listQuerySchema.extend({
-  appointment_id: uuidSchema.optional(),
-  participant_user_id: uuidSchema.optional(),
-  participant_patient_id: uuidSchema.optional(),
+  appointment_id: uuidOrFriendlyIdentifierSchema.optional(),
+  participant_user_id: uuidOrFriendlyIdentifierSchema.optional(),
+  participant_patient_id: uuidOrFriendlyIdentifierSchema.optional(),
   role: z.string().trim().optional()
 });
 

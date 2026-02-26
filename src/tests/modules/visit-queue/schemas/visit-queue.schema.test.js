@@ -218,6 +218,12 @@ describe('Visit Queue Schemas', () => {
       const result = visitQueueIdParamsSchema.safeParse(data);
       expect(result.success).toBe(false);
     });
+
+    it('should validate friendly id', () => {
+      const data = { id: 'VQU0000123' };
+      const result = visitQueueIdParamsSchema.safeParse(data);
+      expect(result.success).toBe(true);
+    });
   });
 
   describe('listVisitQueuesQuerySchema', () => {

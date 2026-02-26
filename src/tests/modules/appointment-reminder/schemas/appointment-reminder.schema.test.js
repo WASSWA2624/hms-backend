@@ -9,6 +9,7 @@
 const {
   createAppointmentReminderSchema,
   updateAppointmentReminderSchema,
+  markAppointmentReminderSentSchema,
   appointmentReminderIdParamsSchema,
   listAppointmentRemindersQuerySchema
 } = require('@validations/appointment-reminder/appointment-reminder.schema');
@@ -155,6 +156,11 @@ describe('Appointment Reminder Schemas', () => {
       const result = appointmentReminderIdParamsSchema.safeParse({});
       expect(result.success).toBe(false);
     });
+
+    it('should validate friendly id', () => {
+      const result = appointmentReminderIdParamsSchema.safeParse({ id: 'APR0000123' });
+      expect(result.success).toBe(true);
+    });
   });
 
   describe('listAppointmentRemindersQuerySchema', () => {
@@ -163,7 +169,9 @@ describe('Appointment Reminder Schemas', () => {
         page: 1,
         limit: 20,
         appointment_id: '550e8400-e29b-41d4-a716-446655440000',
-        channel: 'EMAIL'
+        channel: 'EMAIL',
+        is_sent: 'true',
+        due_state: 'DUE',
       };
       const result = listAppointmentRemindersQuerySchema.safeParse(data);
       expect(result.success).toBe(true);
@@ -193,6 +201,44 @@ describe('Appointment Reminder Schemas', () => {
         const result = listAppointmentRemindersQuerySchema.safeParse(data);
         expect(result.success).toBe(true);
       });
+    });
+
+    it('should accept valid due state values', () => {
+      ['DUE', 'OVERDUE'].forEach((due_state) => {
+        const result = listAppointmentRemindersQuerySchema.safeParse({ due_state });
+        expect(result.success).toBe(true);
+      });
+    });
+
+    it('should reject invalid due state value', () => {
+      const result = listAppointmentRemindersQuerySchema.safeParse({ due_state: 'SENT' });
+      expect(result.success).toBe(false);
+    });
+
+    it('should parse is_sent boolean values', () => {
+      const positive = listAppointmentRemindersQuerySchema.safeParse({ is_sent: 'true' });
+      const negative = listAppointmentRemindersQuerySchema.safeParse({ is_sent: 'false' });
+      expect(positive.success).toBe(true);
+      expect(negative.success).toBe(true);
+      expect(positive.success && positive.data.is_sent).toBe(true);
+      expect(negative.success && negative.data.is_sent).toBe(false);
+    });
+  });
+
+  describe('markAppointmentReminderSentSchema', () => {
+    it('should accept empty body', () => {
+      const result = markAppointmentReminderSentSchema.safeParse({});
+      expect(result.success).toBe(true);
+    });
+
+    it('should accept valid sent_at datetime', () => {
+      const result = markAppointmentReminderSentSchema.safeParse({ sent_at: '2026-01-20T08:05:00.000Z' });
+      expect(result.success).toBe(true);
+    });
+
+    it('should reject invalid sent_at datetime', () => {
+      const result = markAppointmentReminderSentSchema.safeParse({ sent_at: 'invalid-date' });
+      expect(result.success).toBe(false);
     });
   });
 });

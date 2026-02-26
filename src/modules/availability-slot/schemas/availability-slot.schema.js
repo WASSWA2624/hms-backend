@@ -9,7 +9,7 @@
 
 const { z } = require('zod');
 const { 
-  uuidSchema, 
+  uuidOrFriendlyIdentifierSchema, 
   listQuerySchema
 } = require('@lib/validation/zod');
 
@@ -20,7 +20,8 @@ const {
  * Used for POST /availability-slots endpoint
  */
 const createAvailabilitySlotSchema = z.object({
-  schedule_id: uuidSchema,
+  schedule_id: uuidOrFriendlyIdentifierSchema,
+  override_date: z.string().trim().datetime().optional().nullable(),
   start_time: z.string().trim().datetime(),
   end_time: z.string().trim().datetime(),
   is_available: z.boolean().optional()
@@ -32,7 +33,8 @@ const createAvailabilitySlotSchema = z.object({
  * All fields optional for partial updates
  */
 const updateAvailabilitySlotSchema = z.object({
-  schedule_id: uuidSchema.optional(),
+  schedule_id: uuidOrFriendlyIdentifierSchema.optional(),
+  override_date: z.string().trim().datetime().optional().nullable(),
   start_time: z.string().trim().datetime().optional(),
   end_time: z.string().trim().datetime().optional(),
   is_available: z.boolean().optional()
@@ -45,7 +47,7 @@ const updateAvailabilitySlotSchema = z.object({
  * Used for GET /:id, PUT /:id, and DELETE /:id endpoints
  */
 const availabilitySlotIdParamsSchema = z.object({
-  id: uuidSchema
+  id: uuidOrFriendlyIdentifierSchema
 });
 
 // ==================== Query Params ====================
@@ -56,7 +58,8 @@ const availabilitySlotIdParamsSchema = z.object({
  * Extends base listQuerySchema with availability slot-specific filters
  */
 const listAvailabilitySlotsQuerySchema = listQuerySchema.extend({
-  schedule_id: uuidSchema.optional(),
+  schedule_id: uuidOrFriendlyIdentifierSchema.optional(),
+  override_date: z.string().trim().datetime().optional(),
   is_available: z.enum(['true', 'false']).optional().transform(val => val === 'true')
 });
 

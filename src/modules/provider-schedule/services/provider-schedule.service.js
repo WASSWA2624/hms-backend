@@ -11,6 +11,7 @@ const providerScheduleRepository = require('@repositories/provider-schedule/prov
 const prisma = require('@prisma/client');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
+const { resolveModelIdByIdentifier } = require('@lib/identifiers/resolve-entity-id');
 
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -31,6 +32,29 @@ const PROVIDER_SCHEDULE_INCLUDE = {
 
 const normalizeIdentifier = (value) => (typeof value === 'string' ? value.trim() : '');
 const isUuid = (value) => UUID_REGEX.test(normalizeIdentifier(value));
+const resolveEntityIdentifier = async ({ value, field, model, where = {}, nullable = false }) => {
+  if (value === undefined) return undefined;
+  if (value === null) {
+    if (nullable) return null;
+    throw new HttpError('errors.validation.field.required', 400, [{ field }]);
+  }
+
+  const normalized = normalizeIdentifier(value);
+  if (!normalized) {
+    throw new HttpError('errors.validation.invalid', 400, [{ field }]);
+  }
+
+  const resolvedId = await resolveModelIdByIdentifier({
+    model,
+    identifier: normalized,
+    where,
+  });
+
+  if (resolvedId) return resolvedId;
+  if (isUuid(normalized)) return normalized;
+
+  throw new HttpError('errors.validation.invalid', 400, [{ field }]);
+};
 const toNullable = (value) => {
   if (value === undefined) return undefined;
   if (value === null) return null;
@@ -340,13 +364,64 @@ const listProviderSchedules = async (filters, page, limit, sortBy, order) => {
 
     const whereClause = {};
 
-    if (filters.tenant_id) whereClause.tenant_id = filters.tenant_id;
-    if (filters.facility_id) whereClause.facility_id = filters.facility_id;
+    let tenantId = null;
+    if (filters.tenant_id !== undefined) {
+      const normalized = normalizeIdentifier(filters.tenant_id);
+      if (normalized) {
+        const resolvedTenantId = await resolveModelIdByIdentifier({
+          model: 'tenant',
+          identifier: normalized,
+        });
+        if (!resolvedTenantId && !isUuid(normalized)) {
+          return {
+            schedules: [],
+            pagination: {
+              page,
+              limit,
+              total: 0,
+              totalPages: 0,
+              hasNextPage: false,
+              hasPreviousPage: page > 1,
+            },
+          };
+        }
+        tenantId = resolvedTenantId || normalized;
+        whereClause.tenant_id = tenantId;
+      }
+    }
+
+    if (filters.facility_id !== undefined) {
+      const normalized = normalizeIdentifier(filters.facility_id);
+      if (normalized) {
+        const resolvedFacilityId = await resolveModelIdByIdentifier({
+          model: 'facility',
+          identifier: normalized,
+          where: tenantId ? { tenant_id: tenantId } : {},
+        });
+        if (!resolvedFacilityId && !isUuid(normalized)) {
+          return {
+            schedules: [],
+            pagination: {
+              page,
+              limit,
+              total: 0,
+              totalPages: 0,
+              hasNextPage: false,
+              hasPreviousPage: page > 1,
+            },
+          };
+        }
+        whereClause.facility_id = resolvedFacilityId || normalized;
+      } else {
+        whereClause.facility_id = null;
+      }
+    }
+
     if (filters.day_of_week !== undefined) whereClause.day_of_week = filters.day_of_week;
     if (filters.schedule_type) whereClause.schedule_type = normalizeScheduleType(filters.schedule_type);
 
     if (filters.provider_user_id) {
-      const resolvedProvider = await resolveUserByIdentifier(filters.provider_user_id, filters.tenant_id || null);
+      const resolvedProvider = await resolveUserByIdentifier(filters.provider_user_id, tenantId || null);
       if (!resolvedProvider) {
         return {
           schedules: [],
@@ -417,7 +492,20 @@ const getProviderScheduleById = async (id) => {
  */
 const createProviderSchedule = async (data, userId, ipAddress) => {
   try {
-    const provider = await resolveUserByIdentifier(data.provider_user_id, data.tenant_id || null);
+    const tenantId = await resolveEntityIdentifier({
+      value: data.tenant_id,
+      field: 'tenant_id',
+      model: 'tenant',
+    });
+    const facilityId = await resolveEntityIdentifier({
+      value: data.facility_id,
+      field: 'facility_id',
+      model: 'facility',
+      where: tenantId ? { tenant_id: tenantId } : {},
+      nullable: true,
+    });
+
+    const provider = await resolveUserByIdentifier(data.provider_user_id, tenantId || null);
     if (!provider) {
       throw new HttpError('errors.user.not_found', 404, [{ field: 'provider_user_id' }]);
     }
@@ -425,6 +513,8 @@ const createProviderSchedule = async (data, userId, ipAddress) => {
     const schedulePayload = extractSchedulePayload(
       {
         ...data,
+        tenant_id: tenantId,
+        facility_id: facilityId,
         provider_user_id: provider.id,
       },
       {}
@@ -433,7 +523,7 @@ const createProviderSchedule = async (data, userId, ipAddress) => {
 
     if (schedulePayload.schedule_type === 'RECURRING') {
       await validateRecurringConflicts({
-        tenantId: data.tenant_id,
+        tenantId,
         facilityId: schedulePayload.facility_id,
         providerUserId: schedulePayload.provider_user_id,
         dayOfWeek: schedulePayload.day_of_week,
@@ -446,7 +536,7 @@ const createProviderSchedule = async (data, userId, ipAddress) => {
     }
 
     await validateOverrideConflicts({
-      tenantId: data.tenant_id,
+      tenantId,
       facilityId: schedulePayload.facility_id,
       providerUserId: schedulePayload.provider_user_id,
       timezone: schedulePayload.timezone,
@@ -456,7 +546,7 @@ const createProviderSchedule = async (data, userId, ipAddress) => {
     const createdSchedule = await prisma.$transaction(async (tx) => {
       const created = await tx.provider_schedule.create({
         data: {
-          tenant_id: data.tenant_id,
+          tenant_id: tenantId,
           facility_id: schedulePayload.facility_id ?? null,
           provider_user_id: schedulePayload.provider_user_id,
           schedule_type: schedulePayload.schedule_type,
@@ -523,6 +613,16 @@ const updateProviderSchedule = async (id, data, userId, ipAddress) => {
     }
 
     const payload = { ...data };
+    if (payload.facility_id !== undefined) {
+      payload.facility_id = await resolveEntityIdentifier({
+        value: payload.facility_id,
+        field: 'facility_id',
+        model: 'facility',
+        where: before.tenant_id ? { tenant_id: before.tenant_id } : {},
+        nullable: true,
+      });
+    }
+
     if (payload.provider_user_id !== undefined) {
       const provider = await resolveUserByIdentifier(payload.provider_user_id, before.tenant_id || null);
       if (!provider) {

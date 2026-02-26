@@ -155,6 +155,11 @@ describe('Appointment Participant Schemas', () => {
       const result = appointmentParticipantIdParamsSchema.safeParse({});
       expect(result.success).toBe(false);
     });
+
+    it('should validate friendly id', () => {
+      const result = appointmentParticipantIdParamsSchema.safeParse({ id: 'APP0000123' });
+      expect(result.success).toBe(true);
+    });
   });
 
   describe('listAppointmentParticipantsQuerySchema', () => {

@@ -9,7 +9,7 @@
 
 const { z } = require('zod');
 const { 
-  uuidSchema, 
+  uuidOrFriendlyIdentifierSchema, 
   listQuerySchema 
 } = require('@lib/validation/zod');
 
@@ -20,11 +20,11 @@ const {
  * Used for POST /visit-queues endpoint
  */
 const createVisitQueueSchema = z.object({
-  tenant_id: uuidSchema,
-  facility_id: uuidSchema.optional().nullable(),
-  patient_id: uuidSchema,
-  appointment_id: uuidSchema.optional().nullable(),
-  provider_user_id: uuidSchema.optional().nullable(),
+  tenant_id: uuidOrFriendlyIdentifierSchema,
+  facility_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
+  patient_id: uuidOrFriendlyIdentifierSchema,
+  appointment_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
+  provider_user_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
   status: z.enum(['SCHEDULED', 'CONFIRMED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'NO_SHOW']),
   queued_at: z.string().datetime().optional()
 });
@@ -35,9 +35,9 @@ const createVisitQueueSchema = z.object({
  * All fields optional for partial updates
  */
 const updateVisitQueueSchema = z.object({
-  facility_id: uuidSchema.optional().nullable(),
-  appointment_id: uuidSchema.optional().nullable(),
-  provider_user_id: uuidSchema.optional().nullable(),
+  facility_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
+  appointment_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
+  provider_user_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
   status: z.enum(['SCHEDULED', 'CONFIRMED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'NO_SHOW']).optional(),
   queued_at: z.string().datetime().optional()
 });
@@ -58,7 +58,7 @@ const prioritizeVisitQueueSchema = z.object({
  * Used for GET /:id, PUT /:id, and DELETE /:id endpoints
  */
 const visitQueueIdParamsSchema = z.object({
-  id: uuidSchema
+  id: uuidOrFriendlyIdentifierSchema
 });
 
 // ==================== Query Params ====================
@@ -69,11 +69,11 @@ const visitQueueIdParamsSchema = z.object({
  * Extends base listQuerySchema with visit-queue-specific filters
  */
 const listVisitQueuesQuerySchema = listQuerySchema.extend({
-  tenant_id: uuidSchema.optional(),
-  facility_id: uuidSchema.optional(),
-  patient_id: uuidSchema.optional(),
-  appointment_id: uuidSchema.optional(),
-  provider_user_id: uuidSchema.optional(),
+  tenant_id: uuidOrFriendlyIdentifierSchema.optional(),
+  facility_id: uuidOrFriendlyIdentifierSchema.optional(),
+  patient_id: uuidOrFriendlyIdentifierSchema.optional(),
+  appointment_id: uuidOrFriendlyIdentifierSchema.optional(),
+  provider_user_id: uuidOrFriendlyIdentifierSchema.optional(),
   status: z.enum(['SCHEDULED', 'CONFIRMED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'NO_SHOW']).optional(),
   search: z.string().trim().optional()
 });

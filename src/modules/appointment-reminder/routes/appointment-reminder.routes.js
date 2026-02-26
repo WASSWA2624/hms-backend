@@ -10,6 +10,7 @@ const { authenticate } = require('@middlewares/auth.middleware');
 const {
   createAppointmentReminderSchema,
   updateAppointmentReminderSchema,
+  markAppointmentReminderSentSchema,
   appointmentReminderIdParamsSchema,
   listAppointmentRemindersQuerySchema
 } = require('@validations/appointment-reminder/appointment-reminder.schema');
@@ -47,6 +48,13 @@ router.delete(
 
   authenticate(),
   appointmentReminderController.deleteAppointmentReminder
+);
+
+router.post(
+  '/:id/mark-sent',  validateRequest({ params: appointmentReminderIdParamsSchema, body: markAppointmentReminderSentSchema }),
+
+  authenticate(),
+  appointmentReminderController.markAppointmentReminderSent
 );
 
 module.exports = router;

@@ -22,6 +22,7 @@ const { DEFAULT_PAGE, DEFAULT_PAGE_LIMIT } = require('@config/constants');
 const listAvailabilitySlots = asyncHandler(async (req, res) => {
   const {
     schedule_id,
+    override_date,
     is_available,
     page = DEFAULT_PAGE,
     limit = DEFAULT_PAGE_LIMIT,
@@ -31,6 +32,7 @@ const listAvailabilitySlots = asyncHandler(async (req, res) => {
 
   const filters = {
     schedule_id,
+    override_date,
     is_available
   };
 

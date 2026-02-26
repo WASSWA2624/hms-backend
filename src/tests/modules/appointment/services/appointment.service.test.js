@@ -93,7 +93,11 @@ describe('Appointment Service', () => {
 
       expect(appointmentRepository.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          reason: { contains: 'checkup' }
+          OR: expect.arrayContaining([
+            expect.objectContaining({
+              reason: { contains: 'checkup' }
+            })
+          ])
         }),
         expect.any(Number),
         expect.any(Number),

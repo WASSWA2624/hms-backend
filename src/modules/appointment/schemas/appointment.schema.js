@@ -9,7 +9,7 @@
 
 const { z } = require('zod');
 const { 
-  uuidSchema, 
+  uuidOrFriendlyIdentifierSchema,
   listQuerySchema
 } = require('@lib/validation/zod');
 
@@ -20,10 +20,10 @@ const {
  * Used for POST /appointments endpoint
  */
 const createAppointmentSchema = z.object({
-  tenant_id: uuidSchema,
-  facility_id: uuidSchema.optional().nullable(),
-  patient_id: uuidSchema,
-  provider_user_id: uuidSchema.optional().nullable(),
+  tenant_id: uuidOrFriendlyIdentifierSchema,
+  facility_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
+  patient_id: uuidOrFriendlyIdentifierSchema,
+  provider_user_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
   status: z.enum(['SCHEDULED', 'CONFIRMED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'NO_SHOW']),
   scheduled_start: z.string().datetime(),
   scheduled_end: z.string().datetime(),
@@ -36,9 +36,9 @@ const createAppointmentSchema = z.object({
  * All fields optional for partial updates
  */
 const updateAppointmentSchema = z.object({
-  facility_id: uuidSchema.optional().nullable(),
-  patient_id: uuidSchema.optional(),
-  provider_user_id: uuidSchema.optional().nullable(),
+  facility_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
+  patient_id: uuidOrFriendlyIdentifierSchema.optional(),
+  provider_user_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
   status: z.enum(['SCHEDULED', 'CONFIRMED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'NO_SHOW']).optional(),
   scheduled_start: z.string().datetime().optional(),
   scheduled_end: z.string().datetime().optional(),
@@ -60,7 +60,7 @@ const cancelAppointmentSchema = z.object({
  * Used for GET /:id, PUT /:id, DELETE /:id, and POST /:id/cancel endpoints
  */
 const appointmentIdParamsSchema = z.object({
-  id: uuidSchema
+  id: uuidOrFriendlyIdentifierSchema
 });
 
 // ==================== Query Params ====================
@@ -71,10 +71,10 @@ const appointmentIdParamsSchema = z.object({
  * Extends base listQuerySchema with appointment-specific filters
  */
 const listAppointmentsQuerySchema = listQuerySchema.extend({
-  tenant_id: uuidSchema.optional(),
-  facility_id: uuidSchema.optional(),
-  patient_id: uuidSchema.optional(),
-  provider_user_id: uuidSchema.optional(),
+  tenant_id: uuidOrFriendlyIdentifierSchema.optional(),
+  facility_id: uuidOrFriendlyIdentifierSchema.optional(),
+  patient_id: uuidOrFriendlyIdentifierSchema.optional(),
+  provider_user_id: uuidOrFriendlyIdentifierSchema.optional(),
   status: z.enum(['SCHEDULED', 'CONFIRMED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'NO_SHOW']).optional(),
   search: z.string().trim().optional()
 });

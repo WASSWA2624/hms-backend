@@ -8,6 +8,77 @@
 const appointmentReminderRepository = require('@repositories/appointment-reminder/appointment-reminder.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
+const { isUuidLike } = require('@lib/identifiers/sanitize-friendly-ids');
+const { resolveModelIdByIdentifier } = require('@lib/identifiers/resolve-entity-id');
+
+const DUE_WINDOW_MS = 24 * 60 * 60 * 1000;
+
+const buildEmptyListResult = (page, limit) => ({
+  reminders: [],
+  pagination: {
+    page,
+    limit,
+    total: 0,
+    totalPages: 0,
+    hasNextPage: false,
+    hasPreviousPage: page > 1,
+  },
+});
+
+const resolveFilterIdentifier = async ({ value, model, where = {} }) => {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+
+  const normalized = typeof value === 'string' ? value.trim() : '';
+  if (!normalized) return undefined;
+
+  const resolvedId = await resolveModelIdByIdentifier({
+    model,
+    identifier: normalized,
+    where,
+  });
+
+  if (resolvedId) return resolvedId;
+  if (isUuidLike(normalized)) return normalized;
+  return null;
+};
+
+const resolvePayloadIdentifier = async ({ value, field, model, where = {} }) => {
+  if (value === undefined) return undefined;
+  if (value === null) {
+    throw new HttpError('errors.validation.field.required', 400, [{ field }]);
+  }
+
+  const normalized = typeof value === 'string' ? value.trim() : '';
+  if (!normalized) {
+    throw new HttpError('errors.validation.invalid', 400, [{ field }]);
+  }
+
+  const resolvedId = await resolveModelIdByIdentifier({
+    model,
+    identifier: normalized,
+    where,
+  });
+
+  if (resolvedId) return resolvedId;
+  if (isUuidLike(normalized)) return normalized;
+
+  throw new HttpError('errors.validation.invalid', 400, [{ field }]);
+};
+
+const resolveReminderPayloadIdentifiers = async (data = {}) => {
+  const payload = { ...data };
+
+  if (payload.appointment_id !== undefined) {
+    payload.appointment_id = await resolvePayloadIdentifier({
+      value: payload.appointment_id,
+      field: 'appointment_id',
+      model: 'appointment',
+    });
+  }
+
+  return payload;
+};
 
 const listAppointmentReminders = async (filters, page, limit, sortBy, order, userId, ipAddress) => {
   try {
@@ -16,8 +87,43 @@ const listAppointmentReminders = async (filters, page, limit, sortBy, order, use
 
     const whereClause = {};
     
-    if (filters.appointment_id) whereClause.appointment_id = filters.appointment_id;
+    const appointmentId = await resolveFilterIdentifier({
+      value: filters.appointment_id,
+      model: 'appointment',
+    });
+    if (filters.appointment_id !== undefined && appointmentId === null) {
+      return buildEmptyListResult(page, limit);
+    }
+    if (appointmentId) whereClause.appointment_id = appointmentId;
+
     if (filters.channel) whereClause.channel = filters.channel;
+
+    const andClauses = [];
+    if (filters.is_sent !== undefined) {
+      andClauses.push(filters.is_sent ? { sent_at: { not: null } } : { sent_at: null });
+    }
+
+    if (filters.due_state) {
+      const now = new Date();
+      if (filters.due_state === 'OVERDUE') {
+        andClauses.push({ sent_at: null });
+        andClauses.push({ scheduled_at: { lt: now } });
+      }
+
+      if (filters.due_state === 'DUE') {
+        andClauses.push({ sent_at: null });
+        andClauses.push({
+          scheduled_at: {
+            gte: now,
+            lt: new Date(now.getTime() + DUE_WINDOW_MS),
+          },
+        });
+      }
+    }
+
+    if (andClauses.length > 0) {
+      whereClause.AND = andClauses;
+    }
 
     const [reminders, total] = await Promise.all([
       appointmentReminderRepository.findMany(whereClause, skip, limit, orderBy),
@@ -58,7 +164,8 @@ const getAppointmentReminderById = async (id, userId, ipAddress) => {
 
 const createAppointmentReminder = async (data, userId, ipAddress) => {
   try {
-    const reminder = await appointmentReminderRepository.create(data);
+    const payload = await resolveReminderPayloadIdentifiers(data);
+    const reminder = await appointmentReminderRepository.create(payload);
 
     createAuditLog({
       user_id: userId,
@@ -84,7 +191,8 @@ const updateAppointmentReminder = async (id, data, userId, ipAddress) => {
       throw new HttpError('errors.appointment_reminder.not_found', 404);
     }
 
-    const reminder = await appointmentReminderRepository.update(id, data);
+    const payload = await resolveReminderPayloadIdentifiers(data);
+    const reminder = await appointmentReminderRepository.update(before.id, payload);
 
     createAuditLog({
       user_id: userId,
@@ -110,16 +218,47 @@ const deleteAppointmentReminder = async (id, userId, ipAddress) => {
       throw new HttpError('errors.appointment_reminder.not_found', 404);
     }
 
-    await appointmentReminderRepository.softDelete(id);
+    await appointmentReminderRepository.softDelete(before.id);
 
     createAuditLog({
       user_id: userId,
       action: 'DELETE',
       entity: 'appointment_reminder',
-      entity_id: id,
+      entity_id: before.id,
       diff: { before },
       ip_address: ipAddress
     }).catch(() => {});
+  } catch (error) {
+    if (error instanceof HttpError) throw error;
+    throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
+  }
+};
+
+const markAppointmentReminderSent = async (id, payload = {}, userId, ipAddress) => {
+  try {
+    const before = await appointmentReminderRepository.findById(id);
+
+    if (!before) {
+      throw new HttpError('errors.appointment_reminder.not_found', 404);
+    }
+
+    if (before.sent_at) {
+      return before;
+    }
+
+    const sentAt = payload?.sent_at ? new Date(payload.sent_at) : new Date();
+    const reminder = await appointmentReminderRepository.update(before.id, { sent_at: sentAt });
+
+    createAuditLog({
+      user_id: userId,
+      action: 'MARK_SENT',
+      entity: 'appointment_reminder',
+      entity_id: reminder.id,
+      diff: { before, after: reminder },
+      ip_address: ipAddress,
+    }).catch(() => {});
+
+    return reminder;
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
@@ -131,5 +270,6 @@ module.exports = {
   getAppointmentReminderById,
   createAppointmentReminder,
   updateAppointmentReminder,
-  deleteAppointmentReminder
+  deleteAppointmentReminder,
+  markAppointmentReminderSent,
 };

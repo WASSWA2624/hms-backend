@@ -77,6 +77,8 @@ describe('Appointment Reminder Controller', () => {
       req.query = {
         appointment_id: '550e8400-e29b-41d4-a716-446655440000',
         channel: 'EMAIL',
+        is_sent: 'false',
+        due_state: 'DUE',
         page: '2',
         limit: '10'
       };
@@ -87,7 +89,9 @@ describe('Appointment Reminder Controller', () => {
       expect(appointmentReminderService.listAppointmentReminders).toHaveBeenCalledWith(
         {
           appointment_id: '550e8400-e29b-41d4-a716-446655440000',
-          channel: 'EMAIL'
+          channel: 'EMAIL',
+          is_sent: 'false',
+          due_state: 'DUE',
         },
         2,
         10,
@@ -204,6 +208,32 @@ describe('Appointment Reminder Controller', () => {
         '127.0.0.1'
       );
       expect(sendNoContent).toHaveBeenCalledWith(res);
+    });
+  });
+
+  describe('markAppointmentReminderSent', () => {
+    const reminderId = '550e8400-e29b-41d4-a716-446655440000';
+
+    it('should mark reminder as sent', async () => {
+      req.params = { id: reminderId };
+      req.body = { sent_at: '2026-01-20T08:05:00.000Z' };
+      const mockReminder = { id: reminderId, sent_at: new Date('2026-01-20T08:05:00.000Z') };
+      appointmentReminderService.markAppointmentReminderSent.mockResolvedValue(mockReminder);
+
+      await appointmentReminderController.markAppointmentReminderSent(req, res);
+
+      expect(appointmentReminderService.markAppointmentReminderSent).toHaveBeenCalledWith(
+        reminderId,
+        req.body,
+        'requester-id',
+        '127.0.0.1'
+      );
+      expect(sendSuccess).toHaveBeenCalledWith(
+        res,
+        200,
+        'messages.appointment_reminder.mark_sent.success',
+        mockReminder
+      );
     });
   });
 });

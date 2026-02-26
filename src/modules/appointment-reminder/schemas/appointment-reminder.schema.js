@@ -9,7 +9,7 @@
 
 const { z } = require('zod');
 const { 
-  uuidSchema, 
+  uuidOrFriendlyIdentifierSchema, 
   listQuerySchema
 } = require('@lib/validation/zod');
 
@@ -20,7 +20,7 @@ const {
  * Used for POST /appointment-reminders endpoint
  */
 const createAppointmentReminderSchema = z.object({
-  appointment_id: uuidSchema,
+  appointment_id: uuidOrFriendlyIdentifierSchema,
   channel: z.enum(['EMAIL', 'SMS', 'PUSH', 'WHATSAPP', 'IN_APP']),
   scheduled_at: z.string().datetime(),
   sent_at: z.string().datetime().optional().nullable()
@@ -44,7 +44,11 @@ const updateAppointmentReminderSchema = z.object({
  * Used for GET /:id, PUT /:id, and DELETE /:id endpoints
  */
 const appointmentReminderIdParamsSchema = z.object({
-  id: uuidSchema
+  id: uuidOrFriendlyIdentifierSchema
+});
+
+const markAppointmentReminderSentSchema = z.object({
+  sent_at: z.string().datetime().optional()
 });
 
 // ==================== Query Params ====================
@@ -55,13 +59,16 @@ const appointmentReminderIdParamsSchema = z.object({
  * Extends base listQuerySchema with appointment-reminder-specific filters
  */
 const listAppointmentRemindersQuerySchema = listQuerySchema.extend({
-  appointment_id: uuidSchema.optional(),
-  channel: z.enum(['EMAIL', 'SMS', 'PUSH', 'WHATSAPP', 'IN_APP']).optional()
+  appointment_id: uuidOrFriendlyIdentifierSchema.optional(),
+  channel: z.enum(['EMAIL', 'SMS', 'PUSH', 'WHATSAPP', 'IN_APP']).optional(),
+  is_sent: z.enum(['true', 'false']).optional().transform((value) => (value === undefined ? undefined : value === 'true')),
+  due_state: z.enum(['DUE', 'OVERDUE']).optional()
 });
 
 module.exports = {
   createAppointmentReminderSchema,
   updateAppointmentReminderSchema,
+  markAppointmentReminderSentSchema,
   appointmentReminderIdParamsSchema,
   listAppointmentRemindersQuerySchema
 };

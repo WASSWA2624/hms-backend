@@ -55,6 +55,12 @@ describe('Availability Slot Schemas', () => {
       expect(result.success).toBe(true);
     });
 
+    it('should allow optional override_date', () => {
+      const data = { ...validData, override_date: '2026-01-20T00:00:00.000Z' };
+      const result = createAvailabilitySlotSchema.safeParse(data);
+      expect(result.success).toBe(true);
+    });
+
     it('should reject invalid UUID format for schedule_id', () => {
       const data = { ...validData, schedule_id: 'invalid-uuid' };
       const result = createAvailabilitySlotSchema.safeParse(data);
@@ -155,6 +161,12 @@ describe('Availability Slot Schemas', () => {
       const result = availabilitySlotIdParamsSchema.safeParse(data);
       expect(result.success).toBe(false);
     });
+
+    it('should accept friendly id', () => {
+      const data = { id: 'AVL0000123' };
+      const result = availabilitySlotIdParamsSchema.safeParse(data);
+      expect(result.success).toBe(true);
+    });
   });
 
   describe('listAvailabilitySlotsQuerySchema', () => {
@@ -172,6 +184,7 @@ describe('Availability Slot Schemas', () => {
     it('should accept valid filter params', () => {
       const data = {
         schedule_id: '550e8400-e29b-41d4-a716-446655440000',
+        override_date: '2026-01-20T00:00:00.000Z',
         is_available: 'true'
       };
       const result = listAvailabilitySlotsQuerySchema.safeParse(data);

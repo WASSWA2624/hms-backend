@@ -11,6 +11,135 @@ const appointmentRepository = require('@repositories/appointment/appointment.rep
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 const opdFlowService = require('@services/opd-flow/opd-flow.service');
+const { isUuidLike } = require('@lib/identifiers/sanitize-friendly-ids');
+const { resolveModelIdByIdentifier } = require('@lib/identifiers/resolve-entity-id');
+
+const USER_IDENTIFIER_MATCHERS = [({ rawValue }) => ({ email: rawValue }), ({ rawValue }) => ({ phone: rawValue })];
+
+const buildEmptyListResult = (page, limit) => ({
+  appointments: [],
+  pagination: {
+    page,
+    limit,
+    total: 0,
+    totalPages: 0,
+    hasNextPage: false,
+    hasPreviousPage: page > 1,
+  },
+});
+
+const resolveFilterIdentifier = async ({
+  value,
+  model,
+  where = {},
+  additionalFriendlyMatchers = [],
+}) => {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+
+  const normalized = typeof value === 'string' ? value.trim() : '';
+  if (!normalized) return undefined;
+
+  const matchers = (additionalFriendlyMatchers || []).map((matcher) => (rawValue, upperValue) =>
+    matcher({ rawValue, upperValue })
+  );
+
+  const resolvedId = await resolveModelIdByIdentifier({
+    model,
+    identifier: normalized,
+    where,
+    additionalFriendlyMatchers: matchers,
+  });
+
+  if (resolvedId) return resolvedId;
+  if (isUuidLike(normalized)) return normalized;
+  return null;
+};
+
+const resolvePayloadIdentifier = async ({
+  value,
+  field,
+  model,
+  where = {},
+  nullable = false,
+  additionalFriendlyMatchers = [],
+}) => {
+  if (value === undefined) return undefined;
+  if (value === null) {
+    if (nullable) return null;
+    throw new HttpError('errors.validation.field.required', 400, [{ field }]);
+  }
+
+  const normalized = typeof value === 'string' ? value.trim() : '';
+  if (!normalized) {
+    throw new HttpError('errors.validation.invalid', 400, [{ field }]);
+  }
+
+  const matchers = (additionalFriendlyMatchers || []).map((matcher) => (rawValue, upperValue) =>
+    matcher({ rawValue, upperValue })
+  );
+
+  const resolvedId = await resolveModelIdByIdentifier({
+    model,
+    identifier: normalized,
+    where,
+    additionalFriendlyMatchers: matchers,
+  });
+
+  if (resolvedId) return resolvedId;
+  if (isUuidLike(normalized)) return normalized;
+
+  throw new HttpError('errors.validation.invalid', 400, [{ field }]);
+};
+
+const resolveAppointmentPayloadIdentifiers = async (data = {}, existing = null) => {
+  const payload = { ...data };
+
+  const tenantId =
+    payload.tenant_id !== undefined
+      ? await resolvePayloadIdentifier({
+          value: payload.tenant_id,
+          field: 'tenant_id',
+          model: 'tenant',
+        })
+      : existing?.tenant_id;
+
+  if (payload.tenant_id !== undefined) {
+    payload.tenant_id = tenantId;
+  }
+
+  if (payload.facility_id !== undefined) {
+    payload.facility_id = await resolvePayloadIdentifier({
+      value: payload.facility_id,
+      field: 'facility_id',
+      model: 'facility',
+      where: tenantId ? { tenant_id: tenantId } : {},
+      nullable: true,
+    });
+  }
+
+  if (payload.patient_id !== undefined) {
+    payload.patient_id = await resolvePayloadIdentifier({
+      value: payload.patient_id,
+      field: 'patient_id',
+      model: 'patient',
+      where: tenantId ? { tenant_id: tenantId } : {},
+    });
+  }
+
+  if (payload.provider_user_id !== undefined) {
+    payload.provider_user_id = await resolvePayloadIdentifier({
+      value: payload.provider_user_id,
+      field: 'provider_user_id',
+      model: 'user',
+      where: tenantId ? { tenant_id: tenantId } : {},
+      nullable: true,
+      additionalFriendlyMatchers: USER_IDENTIFIER_MATCHERS,
+    });
+  }
+
+  return payload;
+};
 
 const normalizeStatus = (value) => String(value || '').trim().toUpperCase();
 
@@ -66,16 +195,85 @@ const listAppointments = async (filters, page, limit, sortBy, order, userId, ipA
 
     // Build filter object
     const whereClause = {};
-    
-    if (filters.tenant_id) whereClause.tenant_id = filters.tenant_id;
-    if (filters.facility_id) whereClause.facility_id = filters.facility_id;
-    if (filters.patient_id) whereClause.patient_id = filters.patient_id;
-    if (filters.provider_user_id) whereClause.provider_user_id = filters.provider_user_id;
+
+    const tenantId = await resolveFilterIdentifier({
+      value: filters.tenant_id,
+      model: 'tenant',
+    });
+    if (filters.tenant_id !== undefined && tenantId === null) {
+      return buildEmptyListResult(page, limit);
+    }
+    if (tenantId) whereClause.tenant_id = tenantId;
+
+    const facilityId = await resolveFilterIdentifier({
+      value: filters.facility_id,
+      model: 'facility',
+      where: tenantId ? { tenant_id: tenantId } : {},
+    });
+    if (filters.facility_id !== undefined && facilityId === null) {
+      return buildEmptyListResult(page, limit);
+    }
+    if (facilityId !== undefined) whereClause.facility_id = facilityId;
+
+    const patientId = await resolveFilterIdentifier({
+      value: filters.patient_id,
+      model: 'patient',
+      where: tenantId ? { tenant_id: tenantId } : {},
+    });
+    if (filters.patient_id !== undefined && patientId === null) {
+      return buildEmptyListResult(page, limit);
+    }
+    if (patientId) whereClause.patient_id = patientId;
+
+    const providerUserId = await resolveFilterIdentifier({
+      value: filters.provider_user_id,
+      model: 'user',
+      where: tenantId ? { tenant_id: tenantId } : {},
+      additionalFriendlyMatchers: USER_IDENTIFIER_MATCHERS,
+    });
+    if (filters.provider_user_id !== undefined && providerUserId === null) {
+      return buildEmptyListResult(page, limit);
+    }
+    if (providerUserId !== undefined) whereClause.provider_user_id = providerUserId;
+
     if (filters.status) whereClause.status = filters.status;
-    
-    // Search filter (searches in reason)
+
     if (filters.search) {
-      whereClause.reason = { contains: filters.search };
+      const searchTerm = String(filters.search).trim();
+      const upperSearchTerm = searchTerm.toUpperCase();
+      whereClause.OR = [
+        { reason: { contains: searchTerm } },
+        { human_friendly_id: { contains: upperSearchTerm } },
+        {
+          patient: {
+            OR: [
+              { human_friendly_id: { contains: upperSearchTerm } },
+              { first_name: { contains: searchTerm } },
+              { last_name: { contains: searchTerm } },
+            ],
+          },
+        },
+        {
+          provider: {
+            OR: [
+              { human_friendly_id: { contains: upperSearchTerm } },
+              { email: { contains: searchTerm } },
+              { phone: { contains: searchTerm } },
+              {
+                profile: {
+                  is: {
+                    OR: [
+                      { first_name: { contains: searchTerm } },
+                      { middle_name: { contains: searchTerm } },
+                      { last_name: { contains: searchTerm } },
+                    ],
+                  },
+                },
+              },
+            ],
+          },
+        },
+      ];
     }
 
     const [appointments, total] = await Promise.all([
@@ -134,7 +332,8 @@ const getAppointmentById = async (id, userId, ipAddress) => {
  */
 const createAppointment = async (data, userId, ipAddress) => {
   try {
-    const appointment = await appointmentRepository.create(data);
+    const payload = await resolveAppointmentPayloadIdentifiers(data);
+    const appointment = await appointmentRepository.create(payload);
 
     // Create audit log (non-blocking)
     createAuditLog({
@@ -172,7 +371,8 @@ const updateAppointment = async (id, data, userId, ipAddress) => {
       throw new HttpError('errors.appointment.not_found', 404);
     }
 
-    const appointment = await appointmentRepository.update(id, data);
+    const payload = await resolveAppointmentPayloadIdentifiers(data, before);
+    const appointment = await appointmentRepository.update(before.id, payload);
 
     // Create audit log (non-blocking)
     createAuditLog({
@@ -187,7 +387,7 @@ const updateAppointment = async (id, data, userId, ipAddress) => {
     await maybeAutoStartOpdFlow({
       before,
       appointment,
-      updateData: data,
+      updateData: payload,
       userId,
       ipAddress,
     });
@@ -217,14 +417,14 @@ const deleteAppointment = async (id, userId, ipAddress) => {
       throw new HttpError('errors.appointment.not_found', 404);
     }
 
-    await appointmentRepository.softDelete(id);
+    await appointmentRepository.softDelete(before.id);
 
     // Create audit log (non-blocking)
     createAuditLog({
       user_id: userId,
       action: 'DELETE',
       entity: 'appointment',
-      entity_id: id,
+      entity_id: before.id,
       diff: { before },
       ip_address: ipAddress
     }).catch(() => {});
@@ -270,7 +470,7 @@ const cancelAppointment = async (id, reason, userId, ipAddress) => {
         : `Cancellation reason: ${reason}`;
     }
 
-    const appointment = await appointmentRepository.update(id, updateData);
+    const appointment = await appointmentRepository.update(before.id, updateData);
 
     // Create audit log (non-blocking)
     createAuditLog({

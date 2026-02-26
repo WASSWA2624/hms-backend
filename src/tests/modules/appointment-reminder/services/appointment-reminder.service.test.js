@@ -98,6 +98,57 @@ describe('Appointment Reminder Service', () => {
         appointmentReminderService.listAppointmentReminders({}, 1, 20, null, 'asc', 'user-id', '127.0.0.1')
       ).rejects.toThrow(HttpError);
     });
+
+    it('should apply is_sent filter', async () => {
+      appointmentReminderRepository.findMany.mockResolvedValue(mockReminders);
+      appointmentReminderRepository.count.mockResolvedValue(2);
+
+      await appointmentReminderService.listAppointmentReminders(
+        { is_sent: true },
+        1,
+        20,
+        null,
+        'asc',
+        'user-id',
+        '127.0.0.1'
+      );
+
+      expect(appointmentReminderRepository.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          AND: expect.arrayContaining([{ sent_at: { not: null } }]),
+        }),
+        expect.any(Number),
+        expect.any(Number),
+        expect.any(Object)
+      );
+    });
+
+    it('should apply due_state overdue filter', async () => {
+      appointmentReminderRepository.findMany.mockResolvedValue(mockReminders);
+      appointmentReminderRepository.count.mockResolvedValue(2);
+
+      await appointmentReminderService.listAppointmentReminders(
+        { due_state: 'OVERDUE' },
+        1,
+        20,
+        null,
+        'asc',
+        'user-id',
+        '127.0.0.1'
+      );
+
+      expect(appointmentReminderRepository.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          AND: expect.arrayContaining([
+            { sent_at: null },
+            expect.objectContaining({ scheduled_at: expect.any(Object) }),
+          ]),
+        }),
+        expect.any(Number),
+        expect.any(Number),
+        expect.any(Object)
+      );
+    });
   });
 
   describe('getAppointmentReminderById', () => {
@@ -245,6 +296,57 @@ describe('Appointment Reminder Service', () => {
       await expect(
         appointmentReminderService.deleteAppointmentReminder(reminderId, 'user-id', '127.0.0.1')
       ).rejects.toThrow(HttpError);
+    });
+  });
+
+  describe('markAppointmentReminderSent', () => {
+    const reminderId = '550e8400-e29b-41d4-a716-446655440000';
+
+    it('should mark reminder as sent when currently unsent', async () => {
+      const before = {
+        id: reminderId,
+        sent_at: null,
+      };
+      const after = {
+        ...before,
+        sent_at: new Date('2026-01-20T08:05:00.000Z'),
+      };
+
+      appointmentReminderRepository.findById.mockResolvedValue(before);
+      appointmentReminderRepository.update.mockResolvedValue(after);
+      createAuditLog.mockResolvedValue({});
+
+      const result = await appointmentReminderService.markAppointmentReminderSent(
+        reminderId,
+        { sent_at: '2026-01-20T08:05:00.000Z' },
+        'user-id',
+        '127.0.0.1'
+      );
+
+      expect(result).toEqual(after);
+      expect(appointmentReminderRepository.update).toHaveBeenCalledWith(
+        reminderId,
+        expect.objectContaining({ sent_at: expect.any(Date) })
+      );
+    });
+
+    it('should be idempotent when reminder is already sent', async () => {
+      const alreadySent = {
+        id: reminderId,
+        sent_at: new Date('2026-01-20T08:00:00.000Z'),
+      };
+
+      appointmentReminderRepository.findById.mockResolvedValue(alreadySent);
+
+      const result = await appointmentReminderService.markAppointmentReminderSent(
+        reminderId,
+        {},
+        'user-id',
+        '127.0.0.1'
+      );
+
+      expect(result).toEqual(alreadySent);
+      expect(appointmentReminderRepository.update).not.toHaveBeenCalled();
     });
   });
 });

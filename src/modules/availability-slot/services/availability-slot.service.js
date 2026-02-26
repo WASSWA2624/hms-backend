@@ -10,6 +10,124 @@
 const availabilitySlotRepository = require('@repositories/availability-slot/availability-slot.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
+const { isUuidLike } = require('@lib/identifiers/sanitize-friendly-ids');
+const { resolveModelIdByIdentifier } = require('@lib/identifiers/resolve-entity-id');
+
+const buildEmptyListResult = (page, limit) => ({
+  slots: [],
+  pagination: {
+    page,
+    limit,
+    total: 0,
+    totalPages: 0,
+    hasNextPage: false,
+    hasPreviousPage: page > 1,
+  },
+});
+
+const resolveFilterIdentifier = async ({ value, model, where = {} }) => {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+
+  const normalized = typeof value === 'string' ? value.trim() : '';
+  if (!normalized) return undefined;
+
+  const resolvedId = await resolveModelIdByIdentifier({
+    model,
+    identifier: normalized,
+    where,
+  });
+
+  if (resolvedId) return resolvedId;
+  if (isUuidLike(normalized)) return normalized;
+  return null;
+};
+
+const resolvePayloadIdentifier = async ({ value, field, model, where = {}, nullable = false }) => {
+  if (value === undefined) return undefined;
+  if (value === null) {
+    if (nullable) return null;
+    throw new HttpError('errors.validation.field.required', 400, [{ field }]);
+  }
+
+  const normalized = typeof value === 'string' ? value.trim() : '';
+  if (!normalized) {
+    throw new HttpError('errors.validation.invalid', 400, [{ field }]);
+  }
+
+  const resolvedId = await resolveModelIdByIdentifier({
+    model,
+    identifier: normalized,
+    where,
+  });
+
+  if (resolvedId) return resolvedId;
+  if (isUuidLike(normalized)) return normalized;
+
+  throw new HttpError('errors.validation.invalid', 400, [{ field }]);
+};
+
+const toDateValue = ({ value, field, nullable = false }) => {
+  if (value === undefined) return undefined;
+  if (value === null) {
+    if (nullable) return null;
+    throw new HttpError('errors.validation.field.required', 400, [{ field }]);
+  }
+
+  const parsed = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    throw new HttpError('errors.validation.invalid', 400, [{ field }]);
+  }
+
+  return parsed;
+};
+
+const assertTimeWindow = (startTime, endTime) => {
+  if (!startTime || !endTime) return;
+  if (startTime.getTime() >= endTime.getTime()) {
+    throw new HttpError('errors.validation.invalid', 400, [{ field: 'start_time' }, { field: 'end_time' }]);
+  }
+};
+
+const resolveAvailabilityPayload = async (data = {}, existing = null) => {
+  const payload = { ...data };
+
+  if (payload.schedule_id !== undefined) {
+    payload.schedule_id = await resolvePayloadIdentifier({
+      value: payload.schedule_id,
+      field: 'schedule_id',
+      model: 'provider_schedule',
+    });
+  }
+
+  if (payload.override_date !== undefined) {
+    payload.override_date = toDateValue({
+      value: payload.override_date,
+      field: 'override_date',
+      nullable: true,
+    });
+  }
+
+  const startTime =
+    payload.start_time !== undefined
+      ? toDateValue({ value: payload.start_time, field: 'start_time' })
+      : existing?.start_time;
+  const endTime =
+    payload.end_time !== undefined
+      ? toDateValue({ value: payload.end_time, field: 'end_time' })
+      : existing?.end_time;
+
+  assertTimeWindow(startTime, endTime);
+
+  if (payload.start_time !== undefined) {
+    payload.start_time = startTime;
+  }
+  if (payload.end_time !== undefined) {
+    payload.end_time = endTime;
+  }
+
+  return payload;
+};
 
 /**
  * List availability slots with pagination and filtering
@@ -31,7 +149,27 @@ const listAvailabilitySlots = async (filters, page, limit, sortBy, order, userId
     // Build filter object
     const whereClause = {};
     
-    if (filters.schedule_id) whereClause.schedule_id = filters.schedule_id;
+    const scheduleId = await resolveFilterIdentifier({
+      value: filters.schedule_id,
+      model: 'provider_schedule',
+    });
+    if (filters.schedule_id !== undefined && scheduleId === null) {
+      return buildEmptyListResult(page, limit);
+    }
+    if (scheduleId) whereClause.schedule_id = scheduleId;
+
+    if (filters.override_date) {
+      const overrideDate = new Date(filters.override_date);
+      const dayStart = new Date(overrideDate);
+      dayStart.setUTCHours(0, 0, 0, 0);
+      const dayEnd = new Date(overrideDate);
+      dayEnd.setUTCHours(23, 59, 59, 999);
+      whereClause.override_date = {
+        gte: dayStart,
+        lte: dayEnd,
+      };
+    }
+
     if (filters.is_available !== undefined) whereClause.is_available = filters.is_available;
 
     const [slots, total] = await Promise.all([
@@ -90,7 +228,8 @@ const getAvailabilitySlotById = async (id, userId, ipAddress) => {
  */
 const createAvailabilitySlot = async (data, userId, ipAddress) => {
   try {
-    const slot = await availabilitySlotRepository.create(data);
+    const payload = await resolveAvailabilityPayload(data);
+    const slot = await availabilitySlotRepository.create(payload);
 
     // Create audit log (non-blocking)
     createAuditLog({
@@ -128,7 +267,8 @@ const updateAvailabilitySlot = async (id, data, userId, ipAddress) => {
       throw new HttpError('errors.availability_slot.not_found', 404);
     }
 
-    const slot = await availabilitySlotRepository.update(id, data);
+    const payload = await resolveAvailabilityPayload(data, before);
+    const slot = await availabilitySlotRepository.update(before.id, payload);
 
     // Create audit log (non-blocking)
     createAuditLog({
@@ -165,14 +305,14 @@ const deleteAvailabilitySlot = async (id, userId, ipAddress) => {
       throw new HttpError('errors.availability_slot.not_found', 404);
     }
 
-    await availabilitySlotRepository.softDelete(id);
+    await availabilitySlotRepository.softDelete(before.id);
 
     // Create audit log (non-blocking)
     createAuditLog({
       user_id: userId,
       action: 'DELETE',
       entity: 'availability_slot',
-      entity_id: id,
+      entity_id: before.id,
       diff: { before },
       ip_address: ipAddress
     }).catch(() => {});
