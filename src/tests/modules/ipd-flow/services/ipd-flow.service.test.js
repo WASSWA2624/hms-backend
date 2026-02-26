@@ -74,6 +74,20 @@ jest.mock('@prisma/client', () => ({
     create: jest.fn(),
     update: jest.fn(),
   },
+  icu_stay: {
+    findFirst: jest.fn(),
+    create: jest.fn(),
+    update: jest.fn(),
+  },
+  icu_observation: {
+    findFirst: jest.fn(),
+    create: jest.fn(),
+  },
+  critical_alert: {
+    findFirst: jest.fn(),
+    create: jest.fn(),
+    update: jest.fn(),
+  },
   user_role: {
     findMany: jest.fn(),
   },
@@ -150,6 +164,7 @@ const buildAdmission = (overrides = {}) => ({
   bed_assignments: [],
   transfer_requests: [],
   discharge_summaries: [],
+  icu_stays: [],
   ward_rounds: [],
   nursing_notes: [],
   medication_administrations: [],

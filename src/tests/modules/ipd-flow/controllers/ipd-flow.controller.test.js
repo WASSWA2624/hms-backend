@@ -65,10 +65,13 @@ describe('ipd-flow.controller', () => {
   it('gets IPD flow by id and sends success response', async () => {
     ipdFlowService.getIpdFlowById.mockResolvedValue({ admission: { id: 'adm-1' } });
     req.params.id = 'ADM0000001';
+    req.query = { include_icu: true };
 
     await ipdFlowController.getIpdFlowById(req, res);
 
-    expect(ipdFlowService.getIpdFlowById).toHaveBeenCalledWith('ADM0000001');
+    expect(ipdFlowService.getIpdFlowById).toHaveBeenCalledWith('ADM0000001', {
+      include_icu: true,
+    });
     expect(sendSuccess).toHaveBeenCalledWith(res, 200, 'messages.ipd_flow.get.success', expect.any(Object));
   });
 
@@ -123,6 +126,42 @@ describe('ipd-flow.controller', () => {
       res,
       200,
       'messages.ipd_flow.resolve_legacy.success',
+      expect.any(Object)
+    );
+  });
+
+  it('starts ICU stay and returns updated snapshot', async () => {
+    ipdFlowService.startIcuStay.mockResolvedValue({ id: 'ADM0000001', icu_status: 'ACTIVE' });
+    req.params.id = 'ADM0000001';
+    req.body = { started_at: '2026-02-01T00:00:00.000Z' };
+
+    await ipdFlowController.startIcuStay(req, res);
+
+    expect(ipdFlowService.startIcuStay).toHaveBeenCalledWith('ADM0000001', req.body, expect.any(Object));
+    expect(sendSuccess).toHaveBeenCalledWith(
+      res,
+      200,
+      'messages.ipd_flow.start_icu_stay.success',
+      expect.any(Object)
+    );
+  });
+
+  it('resolves critical alert and returns updated snapshot', async () => {
+    ipdFlowService.resolveCriticalAlert.mockResolvedValue({ id: 'ADM0000001', has_critical_alert: false });
+    req.params.id = 'ADM0000001';
+    req.body = { critical_alert_id: 'CAL0000001' };
+
+    await ipdFlowController.resolveCriticalAlert(req, res);
+
+    expect(ipdFlowService.resolveCriticalAlert).toHaveBeenCalledWith(
+      'ADM0000001',
+      req.body,
+      expect.any(Object)
+    );
+    expect(sendSuccess).toHaveBeenCalledWith(
+      res,
+      200,
+      'messages.ipd_flow.resolve_critical_alert.success',
       expect.any(Object)
     );
   });
