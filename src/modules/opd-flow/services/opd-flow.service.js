@@ -938,7 +938,7 @@ const getOpdFlowById = async (id) => {
         diagnoses: { where: { deleted_at: null }, orderBy: { created_at: 'asc' } },
         procedures: { where: { deleted_at: null }, orderBy: { created_at: 'asc' } },
         care_plans: { where: { deleted_at: null }, orderBy: { created_at: 'asc' } },
-        clinical_alerts: { where: { deleted_at: null }, orderBy: { created_at: 'desc' } },
+        alerts: { where: { deleted_at: null }, orderBy: { created_at: 'desc' } },
         referrals: { where: { deleted_at: null }, orderBy: { created_at: 'desc' } },
         follow_ups: { where: { deleted_at: null }, orderBy: { scheduled_at: 'asc' } },
         admissions: { where: { deleted_at: null }, orderBy: { created_at: 'desc' } },
@@ -1047,7 +1047,7 @@ const getOpdFlowById = async (id) => {
       emergency_case: emergencyCase,
       triage_assessment: triageAssessment,
       care_plans: encounter.care_plans || [],
-      clinical_alerts: encounter.clinical_alerts || [],
+      clinical_alerts: encounter.alerts || [],
       referrals: encounter.referrals || [],
       follow_ups: encounter.follow_ups || [],
     };
