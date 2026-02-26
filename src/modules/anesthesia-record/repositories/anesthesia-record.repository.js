@@ -10,6 +10,48 @@
 const prisma = require('@prisma/client');
 const { HttpError } = require('@lib/errors');
 
+const BASE_INCLUDE = {
+  theatre_case: {
+    select: {
+      id: true,
+      human_friendly_id: true,
+      encounter: {
+        select: {
+          id: true,
+          human_friendly_id: true,
+          tenant_id: true,
+          patient: {
+            select: {
+              id: true,
+              human_friendly_id: true,
+              first_name: true,
+              last_name: true,
+            },
+          },
+        },
+      },
+    },
+  },
+  anesthetist: {
+    select: {
+      id: true,
+      human_friendly_id: true,
+      profile: {
+        select: {
+          first_name: true,
+          middle_name: true,
+          last_name: true,
+        },
+      },
+      staff_profile: {
+        select: {
+          human_friendly_id: true,
+        },
+      },
+    },
+  },
+};
+
 /**
  * Find anesthesia record by ID
  *
@@ -24,7 +66,10 @@ const findById = async (id, include = {}) => {
         id,
         deleted_at: null
       },
-      include
+      include: {
+        ...BASE_INCLUDE,
+        ...include,
+      }
     });
   } catch (error) {
     throw new HttpError('errors.database.unexpected', 500, [{ originalError: error.message }]);
@@ -54,7 +99,10 @@ const findMany = async (filters = {}, skip = 0, take = 20, orderBy = { created_a
       skip,
       take,
       orderBy,
-      include
+      include: {
+        ...BASE_INCLUDE,
+        ...include,
+      }
     });
   } catch (error) {
     throw new HttpError('errors.database.unexpected', 500, [{ originalError: error.message }]);
@@ -161,6 +209,7 @@ const softDelete = async (id) => {
 };
 
 module.exports = {
+  BASE_INCLUDE,
   findById,
   findMany,
   count,

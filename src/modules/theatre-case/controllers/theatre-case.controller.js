@@ -22,9 +22,14 @@ const { DEFAULT_PAGE, DEFAULT_PAGE_LIMIT } = require('@config/constants');
 const listTheatreCases = asyncHandler(async (req, res) => {
   const {
     encounter_id,
+    patient_id,
+    room_id,
+    surgeon_user_id,
+    anesthetist_user_id,
     status,
     scheduled_from,
     scheduled_to,
+    search,
     page = DEFAULT_PAGE,
     limit = DEFAULT_PAGE_LIMIT,
     sort_by,
@@ -33,22 +38,22 @@ const listTheatreCases = asyncHandler(async (req, res) => {
 
   const filters = {
     encounter_id,
+    patient_id,
+    room_id,
+    surgeon_user_id,
+    anesthetist_user_id,
     status,
     scheduled_from,
-    scheduled_to
+    scheduled_to,
+    search
   };
-
-  const userId = req.user?.id;
-  const ipAddress = req.ip;
 
   const result = await theatreCaseService.listTheatreCases(
     filters,
     parseInt(page),
     parseInt(limit),
     sort_by,
-    order,
-    userId,
-    ipAddress
+    order
   );
 
   sendPaginated(res, 'messages.theatre_case.list.success', result.theatre_cases, result.pagination);
@@ -63,10 +68,8 @@ const listTheatreCases = asyncHandler(async (req, res) => {
  */
 const getTheatreCaseById = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const userId = req.user?.id;
-  const ipAddress = req.ip;
 
-  const theatreCase = await theatreCaseService.getTheatreCaseById(id, userId, ipAddress);
+  const theatreCase = await theatreCaseService.getTheatreCaseById(id);
 
   sendSuccess(res, 200, 'messages.theatre_case.get.success', theatreCase);
 });

@@ -182,6 +182,32 @@ enum TransferStatus {
   CANCELLED
 }
 
+enum TheatreCaseStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum ClinicalRecordStatus {
+  DRAFT
+  FINAL
+}
+
+enum TheatreChecklistPhase {
+  PRE_OP
+  SIGN_IN
+  TIME_OUT
+  SIGN_OUT
+  PACU_HANDOFF
+}
+
+enum TheatreResourceType {
+  ROOM
+  STAFF
+  EQUIPMENT
+}
+
 enum ClinicalAlertStatus {
   NEW
   ACKNOWLEDGED
@@ -2380,19 +2406,35 @@ model theatre_case {
   human_friendly_id String?         @db.VarChar(32)
   encounter_id      String          @db.VarChar(36)
   scheduled_at      DateTime
-  status            EncounterStatus
+  status            TheatreCaseStatus
+  room_id           String?         @db.VarChar(36)
+  surgeon_user_id   String?         @db.VarChar(36)
+  anesthetist_user_id String?       @db.VarChar(36)
+  started_at        DateTime?
+  completed_at      DateTime?
+  cancelled_at      DateTime?
+  workflow_stage    String?         @db.VarChar(80)
+  stage_notes       String?         @db.Text
   created_at        DateTime        @default(now())
   updated_at        DateTime        @updatedAt
   deleted_at        DateTime?
   version           Int             @default(1)
 
-  encounter          encounter           @relation(fields: [encounter_id], references: [id])
-  anesthesia_records anesthesia_record[]
-  post_op_notes      post_op_note[]
+  encounter                encounter                         @relation(fields: [encounter_id], references: [id])
+  anesthesia_records       anesthesia_record[]
+  post_op_notes            post_op_note[]
+  resource_allocations     theatre_case_resource_allocation[]
+  checklist_items          theatre_case_checklist_item[]
+  anesthesia_observations  anesthesia_observation[]
 
   @@index([encounter_id])
   @@index([scheduled_at])
   @@index([status])
+  @@index([room_id])
+  @@index([surgeon_user_id])
+  @@index([anesthetist_user_id])
+  @@index([started_at])
+  @@index([completed_at])
   @@index([deleted_at])
   @@index([human_friendly_id])
 }
@@ -2403,6 +2445,12 @@ model anesthesia_record {
   theatre_case_id     String    @db.VarChar(36)
   anesthetist_user_id String?   @db.VarChar(36)
   notes               String?   @db.Text
+  record_status       ClinicalRecordStatus @default(DRAFT)
+  finalized_at        DateTime?
+  finalized_by_user_id String?  @db.VarChar(36)
+  reopened_at         DateTime?
+  reopened_by_user_id String?   @db.VarChar(36)
+  reopen_reason       String?   @db.Text
   created_at          DateTime  @default(now())
   updated_at          DateTime  @updatedAt
   deleted_at          DateTime?
@@ -2413,6 +2461,8 @@ model anesthesia_record {
 
   @@index([theatre_case_id])
   @@index([anesthetist_user_id])
+  @@index([record_status])
+  @@index([finalized_at])
   @@index([deleted_at])
   @@index([human_friendly_id])
 }
@@ -2422,6 +2472,12 @@ model post_op_note {
   human_friendly_id String?   @db.VarChar(32)
   theatre_case_id   String    @db.VarChar(36)
   note              String    @db.Text
+  record_status       ClinicalRecordStatus @default(DRAFT)
+  finalized_at        DateTime?
+  finalized_by_user_id String?  @db.VarChar(36)
+  reopened_at         DateTime?
+  reopened_by_user_id String?   @db.VarChar(36)
+  reopen_reason       String?   @db.Text
   created_at        DateTime  @default(now())
   updated_at        DateTime  @updatedAt
   deleted_at        DateTime?
@@ -2430,6 +2486,88 @@ model post_op_note {
   theatre_case theatre_case @relation(fields: [theatre_case_id], references: [id])
 
   @@index([theatre_case_id])
+  @@index([record_status])
+  @@index([finalized_at])
+  @@index([deleted_at])
+  @@index([human_friendly_id])
+}
+
+model theatre_case_resource_allocation {
+  id                  String              @id @default(uuid()) @db.VarChar(36)
+  human_friendly_id   String?             @db.VarChar(32)
+  theatre_case_id     String              @db.VarChar(36)
+  resource_type       TheatreResourceType
+  resource_id         String              @db.VarChar(36)
+  assigned_at         DateTime            @default(now())
+  released_at         DateTime?
+  assigned_by_user_id String?             @db.VarChar(36)
+  released_by_user_id String?             @db.VarChar(36)
+  notes               String?             @db.Text
+  created_at          DateTime            @default(now())
+  updated_at          DateTime            @updatedAt
+  deleted_at          DateTime?
+  version             Int                 @default(1)
+
+  theatre_case theatre_case @relation(fields: [theatre_case_id], references: [id])
+
+  @@index([theatre_case_id])
+  @@index([resource_type])
+  @@index([resource_id])
+  @@index([assigned_at])
+  @@index([released_at])
+  @@index([deleted_at])
+  @@index([human_friendly_id])
+}
+
+model theatre_case_checklist_item {
+  id                String                @id @default(uuid()) @db.VarChar(36)
+  human_friendly_id String?               @db.VarChar(32)
+  theatre_case_id   String                @db.VarChar(36)
+  phase             TheatreChecklistPhase
+  item_code         String                @db.VarChar(120)
+  item_label        String                @db.VarChar(255)
+  is_checked        Boolean               @default(false)
+  checked_at        DateTime?
+  checked_by_user_id String?              @db.VarChar(36)
+  notes             String?               @db.Text
+  created_at        DateTime              @default(now())
+  updated_at        DateTime              @updatedAt
+  deleted_at        DateTime?
+  version           Int                   @default(1)
+
+  theatre_case theatre_case @relation(fields: [theatre_case_id], references: [id])
+
+  @@unique([theatre_case_id, phase, item_code])
+  @@index([theatre_case_id])
+  @@index([phase])
+  @@index([is_checked])
+  @@index([checked_at])
+  @@index([deleted_at])
+  @@index([human_friendly_id])
+}
+
+model anesthesia_observation {
+  id                 String    @id @default(uuid()) @db.VarChar(36)
+  human_friendly_id  String?   @db.VarChar(32)
+  theatre_case_id    String    @db.VarChar(36)
+  observed_at        DateTime  @default(now())
+  observation_type   String?   @db.VarChar(80)
+  metric_key         String?   @db.VarChar(80)
+  metric_value       String?   @db.VarChar(120)
+  unit               String?   @db.VarChar(40)
+  notes              String?   @db.Text
+  observed_by_user_id String?  @db.VarChar(36)
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @updatedAt
+  deleted_at         DateTime?
+  version            Int       @default(1)
+
+  theatre_case theatre_case @relation(fields: [theatre_case_id], references: [id])
+
+  @@index([theatre_case_id])
+  @@index([observed_at])
+  @@index([observation_type])
+  @@index([metric_key])
   @@index([deleted_at])
   @@index([human_friendly_id])
 }

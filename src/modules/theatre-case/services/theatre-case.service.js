@@ -3,187 +3,445 @@
  *
  * @module modules/theatre-case/services
  * @description Business logic layer for theatre case operations.
- * Per module-creation.mdc: Services only import/use their own repository.
- * Per prisma.mdc: All mutations call createAuditLog.
  */
 
 const theatreCaseRepository = require('@repositories/theatre-case/theatre-case.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
+const { isUuidLike } = require('@lib/identifiers/sanitize-friendly-ids');
+const {
+  resolveModelIdByIdentifier,
+  resolveModelRecordByIdentifier,
+} = require('@lib/identifiers/resolve-entity-id');
 
-/**
- * List theatre cases with pagination and filtering
- *
- * @param {Object} filters - Query filters
- * @param {number} page - Page number
- * @param {number} limit - Items per page
- * @param {string} sortBy - Sort field
- * @param {string} order - Sort order
- * @param {string} userId - User ID for audit
- * @param {string} ipAddress - User IP for audit
- * @returns {Promise<Object>} Theatre cases and pagination data
- */
-const listTheatreCases = async (filters, page, limit, sortBy, order, userId, ipAddress) => {
+const sanitize = (value) => String(value || '').trim();
+
+const resolveDisplayIdentifier = (record) => {
+  if (!record) return null;
+  const friendly = sanitize(record.human_friendly_id || record.display_id);
+  if (friendly && !isUuidLike(friendly)) return friendly;
+  const scalar = sanitize(record.id);
+  if (scalar && !isUuidLike(scalar)) return scalar;
+  return null;
+};
+
+const resolvePatientDisplayName = (patient) => {
+  const first = sanitize(patient?.first_name);
+  const last = sanitize(patient?.last_name);
+  const full = [first, last].filter(Boolean).join(' ').trim();
+  return full || null;
+};
+
+const buildEmptyListResult = (page, limit) => ({
+  theatre_cases: [],
+  pagination: {
+    page,
+    limit,
+    total: 0,
+    totalPages: 0,
+    hasNextPage: false,
+    hasPreviousPage: page > 1,
+  },
+});
+
+const resolveFilterIdentifier = async ({ value, model, where = {} }) => {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+
+  const normalized = sanitize(value);
+  if (!normalized) return undefined;
+
+  const resolvedId = await resolveModelIdByIdentifier({
+    model,
+    identifier: normalized,
+    where,
+  });
+
+  if (resolvedId) return resolvedId;
+  if (isUuidLike(normalized)) return normalized;
+  return null;
+};
+
+const resolvePayloadIdentifier = async ({
+  value,
+  field,
+  model,
+  where = {},
+  nullable = false,
+}) => {
+  if (value === undefined) return undefined;
+  if (value === null) {
+    if (nullable) return null;
+    throw new HttpError('errors.validation.field.required', 400, [{ field }]);
+  }
+
+  const normalized = sanitize(value);
+  if (!normalized) {
+    if (nullable) return null;
+    throw new HttpError('errors.validation.invalid', 400, [{ field }]);
+  }
+
+  const resolvedId = await resolveModelIdByIdentifier({
+    model,
+    identifier: normalized,
+    where,
+  });
+
+  if (resolvedId) return resolvedId;
+  if (isUuidLike(normalized)) return normalized;
+
+  throw new HttpError('errors.validation.invalid', 400, [{ field }]);
+};
+
+const resolveTheatreCaseRecordByIdentifier = async (identifier) => {
+  const resolved = await resolveModelRecordByIdentifier({
+    model: 'theatre_case',
+    identifier,
+    select: { id: true },
+  });
+  if (!resolved?.id) return null;
+  return theatreCaseRepository.findById(resolved.id);
+};
+
+const resolveTheatreCasePayloadIdentifiers = async (data = {}) => {
+  const payload = { ...data };
+
+  if (payload.encounter_id !== undefined) {
+    payload.encounter_id = await resolvePayloadIdentifier({
+      value: payload.encounter_id,
+      field: 'encounter_id',
+      model: 'encounter',
+    });
+  }
+
+  if (payload.room_id !== undefined) {
+    payload.room_id = await resolvePayloadIdentifier({
+      value: payload.room_id,
+      field: 'room_id',
+      model: 'room',
+      nullable: true,
+    });
+  }
+
+  if (payload.surgeon_user_id !== undefined) {
+    payload.surgeon_user_id = await resolvePayloadIdentifier({
+      value: payload.surgeon_user_id,
+      field: 'surgeon_user_id',
+      model: 'user',
+      nullable: true,
+    });
+  }
+
+  if (payload.anesthetist_user_id !== undefined) {
+    payload.anesthetist_user_id = await resolvePayloadIdentifier({
+      value: payload.anesthetist_user_id,
+      field: 'anesthetist_user_id',
+      model: 'user',
+      nullable: true,
+    });
+  }
+
+  return payload;
+};
+
+const createDisplayResolver = () => {
+  const cache = new Map();
+
+  return async (model, identifier, where = {}) => {
+    const normalized = sanitize(identifier);
+    if (!normalized) return null;
+
+    const key = `${model}:${normalized}`;
+    if (cache.has(key)) return cache.get(key);
+
+    const record = await resolveModelRecordByIdentifier({
+      model,
+      identifier: normalized,
+      where,
+      select: {
+        id: true,
+        human_friendly_id: true,
+      },
+    });
+
+    const value =
+      resolveDisplayIdentifier(record) || (isUuidLike(normalized) ? null : normalized);
+    cache.set(key, value);
+    return value;
+  };
+};
+
+const mapTheatreCaseForDisplay = async (record, resolveDisplayId) => {
+  const encounter = record?.encounter || null;
+  const patient = encounter?.patient || null;
+
+  const mapped = {
+    ...record,
+    display_id: resolveDisplayIdentifier(record),
+    encounter_display_id: resolveDisplayIdentifier(encounter),
+    patient_display_id: resolveDisplayIdentifier(patient),
+    patient_display_name: resolvePatientDisplayName(patient),
+    room_display_id: null,
+    surgeon_user_display_id: null,
+    anesthetist_user_display_id: null,
+  };
+
+  const encounterScope = {
+    tenant_id: encounter?.tenant_id || undefined,
+  };
+
+  if (record?.room_id) {
+    mapped.room_display_id = await resolveDisplayId('room', record.room_id, encounterScope);
+  }
+
+  if (record?.surgeon_user_id) {
+    mapped.surgeon_user_display_id = await resolveDisplayId(
+      'user',
+      record.surgeon_user_id,
+      encounterScope
+    );
+  }
+
+  if (record?.anesthetist_user_id) {
+    mapped.anesthetist_user_display_id = await resolveDisplayId(
+      'user',
+      record.anesthetist_user_id,
+      encounterScope
+    );
+  }
+
+  return mapped;
+};
+
+const listTheatreCases = async (filters, page, limit, sortBy, order) => {
   try {
     const skip = (page - 1) * limit;
-    const orderBy = sortBy ? { [sortBy]: order } : { created_at: 'desc' };
-
-    // Build filter object
+    const orderBy = sortBy ? { [sortBy]: order } : { scheduled_at: 'desc' };
     const whereClause = {};
-    
-    if (filters.encounter_id) whereClause.encounter_id = filters.encounter_id;
+
+    const encounterId = await resolveFilterIdentifier({
+      value: filters.encounter_id,
+      model: 'encounter',
+    });
+    if (filters.encounter_id !== undefined && encounterId === null) {
+      return buildEmptyListResult(page, limit);
+    }
+    if (encounterId !== undefined) whereClause.encounter_id = encounterId;
+
+    const patientId = await resolveFilterIdentifier({
+      value: filters.patient_id,
+      model: 'patient',
+    });
+    if (filters.patient_id !== undefined && patientId === null) {
+      return buildEmptyListResult(page, limit);
+    }
+    if (patientId) {
+      whereClause.encounter = {
+        ...(whereClause.encounter || {}),
+        patient_id: patientId,
+      };
+    }
+
+    const roomId = await resolveFilterIdentifier({
+      value: filters.room_id,
+      model: 'room',
+    });
+    if (filters.room_id !== undefined && roomId === null) {
+      return buildEmptyListResult(page, limit);
+    }
+    if (roomId !== undefined) whereClause.room_id = roomId;
+
+    const surgeonUserId = await resolveFilterIdentifier({
+      value: filters.surgeon_user_id,
+      model: 'user',
+    });
+    if (filters.surgeon_user_id !== undefined && surgeonUserId === null) {
+      return buildEmptyListResult(page, limit);
+    }
+    if (surgeonUserId !== undefined) whereClause.surgeon_user_id = surgeonUserId;
+
+    const anesthetistUserId = await resolveFilterIdentifier({
+      value: filters.anesthetist_user_id,
+      model: 'user',
+    });
+    if (filters.anesthetist_user_id !== undefined && anesthetistUserId === null) {
+      return buildEmptyListResult(page, limit);
+    }
+    if (anesthetistUserId !== undefined) {
+      whereClause.anesthetist_user_id = anesthetistUserId;
+    }
+
     if (filters.status) whereClause.status = filters.status;
-    
-    // Date range filters
+
     if (filters.scheduled_from || filters.scheduled_to) {
       whereClause.scheduled_at = {};
-      if (filters.scheduled_from) whereClause.scheduled_at.gte = new Date(filters.scheduled_from);
-      if (filters.scheduled_to) whereClause.scheduled_at.lte = new Date(filters.scheduled_to);
+      if (filters.scheduled_from) {
+        whereClause.scheduled_at.gte = new Date(filters.scheduled_from);
+      }
+      if (filters.scheduled_to) {
+        whereClause.scheduled_at.lte = new Date(filters.scheduled_to);
+      }
+    }
+
+    if (filters.search) {
+      const searchTerm = sanitize(filters.search);
+      const upperSearchTerm = searchTerm.toUpperCase();
+      whereClause.OR = [
+        { human_friendly_id: { contains: upperSearchTerm } },
+        { workflow_stage: { contains: searchTerm } },
+        { stage_notes: { contains: searchTerm } },
+        {
+          encounter: {
+            OR: [
+              { human_friendly_id: { contains: upperSearchTerm } },
+              {
+                patient: {
+                  OR: [
+                    { human_friendly_id: { contains: upperSearchTerm } },
+                    { first_name: { contains: searchTerm } },
+                    { last_name: { contains: searchTerm } },
+                  ],
+                },
+              },
+            ],
+          },
+        },
+      ];
     }
 
     const [theatreCases, total] = await Promise.all([
       theatreCaseRepository.findMany(whereClause, skip, limit, orderBy),
-      theatreCaseRepository.count(whereClause)
+      theatreCaseRepository.count(whereClause),
     ]);
 
+    const resolveDisplayId = createDisplayResolver();
+    const mappedCases = await Promise.all(
+      theatreCases.map((item) => mapTheatreCaseForDisplay(item, resolveDisplayId))
+    );
+
     return {
-      theatre_cases: theatreCases,
+      theatre_cases: mappedCases,
       pagination: {
         page,
         limit,
         total,
         totalPages: Math.ceil(total / limit),
         hasNextPage: page < Math.ceil(total / limit),
-        hasPreviousPage: page > 1
-      }
+        hasPreviousPage: page > 1,
+      },
     };
   } catch (error) {
     if (error instanceof HttpError) throw error;
-    throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
+    throw new HttpError('errors.server.unexpected', 500, [
+      { originalError: error.message },
+    ]);
   }
 };
 
-/**
- * Get theatre case by ID
- *
- * @param {string} id - Theatre case ID
- * @param {string} userId - User ID for audit
- * @param {string} ipAddress - User IP for audit
- * @returns {Promise<Object>} Theatre case data
- */
-const getTheatreCaseById = async (id, userId, ipAddress) => {
+const getTheatreCaseById = async (id) => {
   try {
-    const theatreCase = await theatreCaseRepository.findById(id);
+    const theatreCase = await resolveTheatreCaseRecordByIdentifier(id);
 
     if (!theatreCase) {
       throw new HttpError('errors.theatre_case.not_found', 404);
     }
 
-    return theatreCase;
+    const resolveDisplayId = createDisplayResolver();
+    return mapTheatreCaseForDisplay(theatreCase, resolveDisplayId);
   } catch (error) {
     if (error instanceof HttpError) throw error;
-    throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
+    throw new HttpError('errors.server.unexpected', 500, [
+      { originalError: error.message },
+    ]);
   }
 };
 
-/**
- * Create new theatre case
- *
- * @param {Object} data - Theatre case data
- * @param {string} userId - User ID for audit
- * @param {string} ipAddress - User IP for audit
- * @returns {Promise<Object>} Created theatre case
- */
 const createTheatreCase = async (data, userId, ipAddress) => {
   try {
-    const theatreCase = await theatreCaseRepository.create(data);
+    const payload = await resolveTheatreCasePayloadIdentifiers(data);
+    if (!payload.status) payload.status = 'SCHEDULED';
 
-    // Audit log
+    const theatreCase = await theatreCaseRepository.create(payload);
+    const createdRecord = await theatreCaseRepository.findById(theatreCase.id);
+
     await createAuditLog({
       action: 'CREATE',
       resource: 'theatre_case',
       resource_id: theatreCase.id,
       user_id: userId,
       ip_address: ipAddress,
-      details: { theatre_case: theatreCase }
+      details: { theatre_case: createdRecord || theatreCase },
     });
 
-    return theatreCase;
+    const resolveDisplayId = createDisplayResolver();
+    return mapTheatreCaseForDisplay(createdRecord || theatreCase, resolveDisplayId);
   } catch (error) {
     if (error instanceof HttpError) throw error;
-    throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
+    throw new HttpError('errors.server.unexpected', 500, [
+      { originalError: error.message },
+    ]);
   }
 };
 
-/**
- * Update theatre case
- *
- * @param {string} id - Theatre case ID
- * @param {Object} data - Update data
- * @param {string} userId - User ID for audit
- * @param {string} ipAddress - User IP for audit
- * @returns {Promise<Object>} Updated theatre case
- */
 const updateTheatreCase = async (id, data, userId, ipAddress) => {
   try {
-    // Verify theatre case exists
-    const existingTheatreCase = await theatreCaseRepository.findById(id);
+    const existingTheatreCase = await resolveTheatreCaseRecordByIdentifier(id);
     if (!existingTheatreCase) {
       throw new HttpError('errors.theatre_case.not_found', 404);
     }
 
-    const updatedTheatreCase = await theatreCaseRepository.update(id, data);
+    const payload = await resolveTheatreCasePayloadIdentifiers(data);
+    const updatedTheatreCase = await theatreCaseRepository.update(
+      existingTheatreCase.id,
+      payload
+    );
+    const updatedRecord =
+      (await theatreCaseRepository.findById(updatedTheatreCase.id)) || updatedTheatreCase;
 
-    // Audit log
     await createAuditLog({
       action: 'UPDATE',
       resource: 'theatre_case',
-      resource_id: id,
+      resource_id: existingTheatreCase.id,
       user_id: userId,
       ip_address: ipAddress,
       details: {
         old: existingTheatreCase,
-        new: updatedTheatreCase
-      }
+        new: updatedRecord,
+      },
     });
 
-    return updatedTheatreCase;
+    const resolveDisplayId = createDisplayResolver();
+    return mapTheatreCaseForDisplay(updatedRecord, resolveDisplayId);
   } catch (error) {
     if (error instanceof HttpError) throw error;
-    throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
+    throw new HttpError('errors.server.unexpected', 500, [
+      { originalError: error.message },
+    ]);
   }
 };
 
-/**
- * Delete theatre case (soft delete)
- *
- * @param {string} id - Theatre case ID
- * @param {string} userId - User ID for audit
- * @param {string} ipAddress - User IP for audit
- * @returns {Promise<void>}
- */
 const deleteTheatreCase = async (id, userId, ipAddress) => {
   try {
-    // Verify theatre case exists
-    const existingTheatreCase = await theatreCaseRepository.findById(id);
+    const existingTheatreCase = await resolveTheatreCaseRecordByIdentifier(id);
     if (!existingTheatreCase) {
       throw new HttpError('errors.theatre_case.not_found', 404);
     }
 
-    await theatreCaseRepository.softDelete(id);
+    await theatreCaseRepository.softDelete(existingTheatreCase.id);
 
-    // Audit log
     await createAuditLog({
       action: 'DELETE',
       resource: 'theatre_case',
-      resource_id: id,
+      resource_id: existingTheatreCase.id,
       user_id: userId,
       ip_address: ipAddress,
-      details: { theatre_case: existingTheatreCase }
+      details: { theatre_case: existingTheatreCase },
     });
   } catch (error) {
     if (error instanceof HttpError) throw error;
-    throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
+    throw new HttpError('errors.server.unexpected', 500, [
+      { originalError: error.message },
+    ]);
   }
 };
 
@@ -192,5 +450,6 @@ module.exports = {
   getTheatreCaseById,
   createTheatreCase,
   updateTheatreCase,
-  deleteTheatreCase
+  deleteTheatreCase,
 };
+

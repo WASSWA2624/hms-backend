@@ -13,10 +13,10 @@ const postOpNoteController = require('@controllers/post-op-note/post-op-note.con
 const { validateRequest } = require('@middlewares/validate.middleware');
 const { authenticate } = require('@middlewares/auth.middleware');
 const {
-  createpostOpNoteSchema,
-  updatepostOpNoteSchema,
+  createPostOpNoteSchema,
+  updatePostOpNoteSchema,
   postOpNoteIdParamsSchema,
-  listpostOpNotesQuerySchema
+  listPostOpNotesQuerySchema
 } = require('@validations/post-op-note/post-op-note.schema');
 
 /**
@@ -37,7 +37,7 @@ const {
  * @throws 401 Unauthorized
  */
 router.get(
-  '/',  validateRequest({ query: listpostOpNotesQuerySchema }),
+  '/',  validateRequest({ query: listPostOpNotesQuerySchema }),
 
   authenticate(),
   postOpNoteController.listpostOpNotes
@@ -81,7 +81,7 @@ router.get(
  * @throws 409 Unique constraint violation
  */
 router.post(
-  '/',  validateRequest({ body: createpostOpNoteSchema }),
+  '/',  validateRequest({ body: createPostOpNoteSchema }),
 
   authenticate(),
   postOpNoteController.createpostOpNote
@@ -106,7 +106,7 @@ router.post(
  * @throws 409 Unique constraint violation
  */
 router.put(
-  '/:id',  validateRequest({ params: postOpNoteIdParamsSchema, body: updatepostOpNoteSchema }),
+  '/:id',  validateRequest({ params: postOpNoteIdParamsSchema, body: updatePostOpNoteSchema }),
 
   authenticate(),
   postOpNoteController.updatepostOpNote
@@ -133,3 +133,4 @@ router.delete(
 );
 
 module.exports = router;
+

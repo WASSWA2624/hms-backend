@@ -9,7 +9,7 @@
 
 const { z } = require('zod');
 const { 
-  uuidSchema, 
+  uuidOrFriendlyIdentifierSchema,
   listQuerySchema
 } = require('@lib/validation/zod');
 
@@ -20,9 +20,17 @@ const {
  * Used for POST /theatre-cases endpoint
  */
 const createTheatreCaseSchema = z.object({
-  encounter_id: uuidSchema,
+  encounter_id: uuidOrFriendlyIdentifierSchema,
   scheduled_at: z.string().datetime(),
-  status: z.enum(['SCHEDULED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'])
+  status: z.enum(['SCHEDULED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']).optional(),
+  room_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
+  surgeon_user_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
+  anesthetist_user_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
+  started_at: z.string().datetime().optional().nullable(),
+  completed_at: z.string().datetime().optional().nullable(),
+  cancelled_at: z.string().datetime().optional().nullable(),
+  workflow_stage: z.string().trim().max(80).optional().nullable(),
+  stage_notes: z.string().trim().optional().nullable(),
 });
 
 /**
@@ -31,9 +39,18 @@ const createTheatreCaseSchema = z.object({
  * All fields optional for partial updates
  */
 const updateTheatreCaseSchema = z.object({
-  encounter_id: uuidSchema.optional(),
+  encounter_id: uuidOrFriendlyIdentifierSchema.optional(),
   scheduled_at: z.string().datetime().optional(),
   status: z.enum(['SCHEDULED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']).optional()
+    .nullable(),
+  room_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
+  surgeon_user_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
+  anesthetist_user_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
+  started_at: z.string().datetime().optional().nullable(),
+  completed_at: z.string().datetime().optional().nullable(),
+  cancelled_at: z.string().datetime().optional().nullable(),
+  workflow_stage: z.string().trim().max(80).optional().nullable(),
+  stage_notes: z.string().trim().optional().nullable(),
 });
 
 // ==================== URL Params ====================
@@ -43,7 +60,7 @@ const updateTheatreCaseSchema = z.object({
  * Used for GET /:id, PUT /:id, and DELETE /:id endpoints
  */
 const theatreCaseIdParamsSchema = z.object({
-  id: uuidSchema
+  id: uuidOrFriendlyIdentifierSchema
 });
 
 // ==================== Query Params ====================
@@ -54,10 +71,15 @@ const theatreCaseIdParamsSchema = z.object({
  * Extends base listQuerySchema with theatre case-specific filters
  */
 const listTheatreCasesQuerySchema = listQuerySchema.extend({
-  encounter_id: uuidSchema.optional(),
+  encounter_id: uuidOrFriendlyIdentifierSchema.optional(),
+  patient_id: uuidOrFriendlyIdentifierSchema.optional(),
+  room_id: uuidOrFriendlyIdentifierSchema.optional(),
+  surgeon_user_id: uuidOrFriendlyIdentifierSchema.optional(),
+  anesthetist_user_id: uuidOrFriendlyIdentifierSchema.optional(),
   status: z.enum(['SCHEDULED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']).optional(),
   scheduled_from: z.string().datetime().optional(),
-  scheduled_to: z.string().datetime().optional()
+  scheduled_to: z.string().datetime().optional(),
+  search: z.string().trim().optional(),
 });
 
 module.exports = {

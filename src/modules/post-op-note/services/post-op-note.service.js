@@ -2,191 +2,362 @@
  * Post-op note service
  *
  * @module modules/post-op-note/services
- * @description Business logic layer for Post-op note operations.
- * Per module-creation.mdc: Services only import/use their own repository.
- * Per prisma.mdc: All mutations call createAuditLog.
+ * @description Business logic layer for post-op note operations.
  */
 
 const postOpNoteRepository = require('@repositories/post-op-note/post-op-note.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
+const { isUuidLike } = require('@lib/identifiers/sanitize-friendly-ids');
+const {
+  resolveModelIdByIdentifier,
+  resolveModelRecordByIdentifier,
+} = require('@lib/identifiers/resolve-entity-id');
 
-/**
- * List Post-op notes with pagination and filtering
- *
- * @param {Object} filters - Query filters
- * @param {number} page - Page number
- * @param {number} limit - Items per page
- * @param {string} sortBy - Sort field
- * @param {string} order - Sort order
- * @param {string} userId - User ID for audit
- * @param {string} ipAddress - User IP for audit
- * @returns {Promise<Object>} Post-op notes and pagination data
- */
-const listpostOpNotes = async (filters, page, limit, sortBy, order, userId, ipAddress) => {
+const sanitize = (value) => String(value || '').trim();
+
+const resolveDisplayIdentifier = (record) => {
+  if (!record) return null;
+  const friendly = sanitize(record.human_friendly_id || record.display_id);
+  if (friendly && !isUuidLike(friendly)) return friendly;
+  const scalar = sanitize(record.id);
+  if (scalar && !isUuidLike(scalar)) return scalar;
+  return null;
+};
+
+const resolvePatientDisplayName = (patient) => {
+  const first = sanitize(patient?.first_name);
+  const last = sanitize(patient?.last_name);
+  const full = [first, last].filter(Boolean).join(' ').trim();
+  return full || null;
+};
+
+const buildEmptyListResult = (page, limit) => ({
+  post_op_notes: [],
+  pagination: {
+    page,
+    limit,
+    total: 0,
+    totalPages: 0,
+    hasNextPage: false,
+    hasPreviousPage: page > 1,
+  },
+});
+
+const resolveFilterIdentifier = async ({ value, model, where = {} }) => {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+
+  const normalized = sanitize(value);
+  if (!normalized) return undefined;
+
+  const resolvedId = await resolveModelIdByIdentifier({
+    model,
+    identifier: normalized,
+    where,
+  });
+
+  if (resolvedId) return resolvedId;
+  if (isUuidLike(normalized)) return normalized;
+  return null;
+};
+
+const resolvePayloadIdentifier = async ({
+  value,
+  field,
+  model,
+  where = {},
+  nullable = false,
+}) => {
+  if (value === undefined) return undefined;
+  if (value === null) {
+    if (nullable) return null;
+    throw new HttpError('errors.validation.field.required', 400, [{ field }]);
+  }
+
+  const normalized = sanitize(value);
+  if (!normalized) {
+    if (nullable) return null;
+    throw new HttpError('errors.validation.invalid', 400, [{ field }]);
+  }
+
+  const resolvedId = await resolveModelIdByIdentifier({
+    model,
+    identifier: normalized,
+    where,
+  });
+
+  if (resolvedId) return resolvedId;
+  if (isUuidLike(normalized)) return normalized;
+
+  throw new HttpError('errors.validation.invalid', 400, [{ field }]);
+};
+
+const resolvePostOpNoteByIdentifier = async (identifier) => {
+  const resolved = await resolveModelRecordByIdentifier({
+    model: 'post_op_note',
+    identifier,
+    select: { id: true },
+  });
+  if (!resolved?.id) return null;
+  return postOpNoteRepository.findById(resolved.id);
+};
+
+const resolvePostOpPayloadIdentifiers = async (data = {}) => {
+  const payload = { ...data };
+
+  if (payload.theatre_case_id !== undefined) {
+    payload.theatre_case_id = await resolvePayloadIdentifier({
+      value: payload.theatre_case_id,
+      field: 'theatre_case_id',
+      model: 'theatre_case',
+    });
+  }
+
+  if (payload.finalized_by_user_id !== undefined) {
+    payload.finalized_by_user_id = await resolvePayloadIdentifier({
+      value: payload.finalized_by_user_id,
+      field: 'finalized_by_user_id',
+      model: 'user',
+      nullable: true,
+    });
+  }
+
+  if (payload.reopened_by_user_id !== undefined) {
+    payload.reopened_by_user_id = await resolvePayloadIdentifier({
+      value: payload.reopened_by_user_id,
+      field: 'reopened_by_user_id',
+      model: 'user',
+      nullable: true,
+    });
+  }
+
+  return payload;
+};
+
+const mapPostOpNoteForDisplay = (record) => {
+  const theatreCase = record?.theatre_case || null;
+  const encounter = theatreCase?.encounter || null;
+  const patient = encounter?.patient || null;
+
+  return {
+    ...record,
+    display_id: resolveDisplayIdentifier(record),
+    theatre_case_display_id: resolveDisplayIdentifier(theatreCase),
+    encounter_display_id: resolveDisplayIdentifier(encounter),
+    patient_display_id: resolveDisplayIdentifier(patient),
+    patient_display_name: resolvePatientDisplayName(patient),
+  };
+};
+
+const listpostOpNotes = async (filters, page, limit, sortBy, order) => {
   try {
     const skip = (page - 1) * limit;
     const orderBy = sortBy ? { [sortBy]: order } : { created_at: 'desc' };
-
-    // Build filter object
     const whereClause = {};
-    
-    if (filters.theatre_case_id) whereClause.theatre_case_id = filters.theatre_case_id;
-    if (filters.encounter_id) whereClause.encounter_id = filters.encounter_id;
-    if (filters.note) whereClause.note = filters.note;
-    if (filters.notes) whereClause.notes = filters.notes;
-    if (filters.status) whereClause.status = filters.status;
-    
-    // Date range filters
-    if (filters.scheduled_from || filters.scheduled_to) {
-      whereClause.scheduled_at = {};
-      if (filters.scheduled_from) whereClause.scheduled_at.gte = new Date(filters.scheduled_from);
-      if (filters.scheduled_to) whereClause.scheduled_at.lte = new Date(filters.scheduled_to);
+
+    const theatreCaseId = await resolveFilterIdentifier({
+      value: filters.theatre_case_id,
+      model: 'theatre_case',
+    });
+    if (filters.theatre_case_id !== undefined && theatreCaseId === null) {
+      return buildEmptyListResult(page, limit);
+    }
+    if (theatreCaseId !== undefined) whereClause.theatre_case_id = theatreCaseId;
+
+    const encounterId = await resolveFilterIdentifier({
+      value: filters.encounter_id,
+      model: 'encounter',
+    });
+    if (filters.encounter_id !== undefined && encounterId === null) {
+      return buildEmptyListResult(page, limit);
+    }
+    if (encounterId) {
+      whereClause.theatre_case = {
+        ...(whereClause.theatre_case || {}),
+        encounter_id: encounterId,
+      };
+    }
+
+    const patientId = await resolveFilterIdentifier({
+      value: filters.patient_id,
+      model: 'patient',
+    });
+    if (filters.patient_id !== undefined && patientId === null) {
+      return buildEmptyListResult(page, limit);
+    }
+    if (patientId) {
+      whereClause.theatre_case = {
+        ...(whereClause.theatre_case || {}),
+        encounter: {
+          ...(whereClause.theatre_case?.encounter || {}),
+          patient_id: patientId,
+        },
+      };
+    }
+
+    if (filters.record_status) {
+      whereClause.record_status = filters.record_status;
+    }
+
+    if (filters.search) {
+      const searchTerm = sanitize(filters.search);
+      const upperSearchTerm = searchTerm.toUpperCase();
+      whereClause.OR = [
+        { human_friendly_id: { contains: upperSearchTerm } },
+        { note: { contains: searchTerm } },
+        {
+          theatre_case: {
+            OR: [
+              { human_friendly_id: { contains: upperSearchTerm } },
+              {
+                encounter: {
+                  OR: [
+                    { human_friendly_id: { contains: upperSearchTerm } },
+                    {
+                      patient: {
+                        OR: [
+                          { human_friendly_id: { contains: upperSearchTerm } },
+                          { first_name: { contains: searchTerm } },
+                          { last_name: { contains: searchTerm } },
+                        ],
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        },
+      ];
     }
 
     const [postOpNotes, total] = await Promise.all([
       postOpNoteRepository.findMany(whereClause, skip, limit, orderBy),
-      postOpNoteRepository.count(whereClause)
+      postOpNoteRepository.count(whereClause),
     ]);
 
     return {
-      post_op_notes: postOpNotes,
+      post_op_notes: postOpNotes.map(mapPostOpNoteForDisplay),
       pagination: {
         page,
         limit,
         total,
         totalPages: Math.ceil(total / limit),
         hasNextPage: page < Math.ceil(total / limit),
-        hasPreviousPage: page > 1
-      }
+        hasPreviousPage: page > 1,
+      },
     };
   } catch (error) {
     if (error instanceof HttpError) throw error;
-    throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
+    throw new HttpError('errors.server.unexpected', 500, [
+      { originalError: error.message },
+    ]);
   }
 };
 
-/**
- * Get Post-op note by ID
- *
- * @param {string} id - Post-op note ID
- * @param {string} userId - User ID for audit
- * @param {string} ipAddress - User IP for audit
- * @returns {Promise<Object>} Post-op note data
- */
-const getpostOpNoteById = async (id, userId, ipAddress) => {
+const getpostOpNoteById = async (id) => {
   try {
-    const postOpNote = await postOpNoteRepository.findById(id);
+    const postOpNote = await resolvePostOpNoteByIdentifier(id);
 
     if (!postOpNote) {
       throw new HttpError('errors.post_op_note.not_found', 404);
     }
 
-    return postOpNote;
+    return mapPostOpNoteForDisplay(postOpNote);
   } catch (error) {
     if (error instanceof HttpError) throw error;
-    throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
+    throw new HttpError('errors.server.unexpected', 500, [
+      { originalError: error.message },
+    ]);
   }
 };
 
-/**
- * Create new Post-op note
- *
- * @param {Object} data - Post-op note data
- * @param {string} userId - User ID for audit
- * @param {string} ipAddress - User IP for audit
- * @returns {Promise<Object>} Created Post-op note
- */
 const createpostOpNote = async (data, userId, ipAddress) => {
   try {
-    const postOpNote = await postOpNoteRepository.create(data);
+    const payload = await resolvePostOpPayloadIdentifiers(data);
+    if (!payload.record_status) payload.record_status = 'DRAFT';
 
-    // Audit log
+    const postOpNote = await postOpNoteRepository.create(payload);
+    const createdRecord =
+      (await postOpNoteRepository.findById(postOpNote.id)) || postOpNote;
+
     await createAuditLog({
       action: 'CREATE',
       resource: 'post_op_note',
       resource_id: postOpNote.id,
       user_id: userId,
       ip_address: ipAddress,
-      details: { post_op_note: postOpNote }
+      details: { post_op_note: createdRecord },
     });
 
-    return postOpNote;
+    return mapPostOpNoteForDisplay(createdRecord);
   } catch (error) {
     if (error instanceof HttpError) throw error;
-    throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
+    throw new HttpError('errors.server.unexpected', 500, [
+      { originalError: error.message },
+    ]);
   }
 };
 
-/**
- * Update Post-op note
- *
- * @param {string} id - Post-op note ID
- * @param {Object} data - Update data
- * @param {string} userId - User ID for audit
- * @param {string} ipAddress - User IP for audit
- * @returns {Promise<Object>} Updated Post-op note
- */
 const updatepostOpNote = async (id, data, userId, ipAddress) => {
   try {
-    // Verify Post-op note exists
-    const existingpostOpNote = await postOpNoteRepository.findById(id);
+    const existingpostOpNote = await resolvePostOpNoteByIdentifier(id);
     if (!existingpostOpNote) {
       throw new HttpError('errors.post_op_note.not_found', 404);
     }
 
-    const updatedpostOpNote = await postOpNoteRepository.update(id, data);
+    const payload = await resolvePostOpPayloadIdentifiers(data);
+    const updatedpostOpNote = await postOpNoteRepository.update(
+      existingpostOpNote.id,
+      payload
+    );
+    const updatedRecord =
+      (await postOpNoteRepository.findById(updatedpostOpNote.id)) || updatedpostOpNote;
 
-    // Audit log
     await createAuditLog({
       action: 'UPDATE',
       resource: 'post_op_note',
-      resource_id: id,
+      resource_id: existingpostOpNote.id,
       user_id: userId,
       ip_address: ipAddress,
       details: {
         old: existingpostOpNote,
-        new: updatedpostOpNote
-      }
+        new: updatedRecord,
+      },
     });
 
-    return updatedpostOpNote;
+    return mapPostOpNoteForDisplay(updatedRecord);
   } catch (error) {
     if (error instanceof HttpError) throw error;
-    throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
+    throw new HttpError('errors.server.unexpected', 500, [
+      { originalError: error.message },
+    ]);
   }
 };
 
-/**
- * Delete Post-op note (soft delete)
- *
- * @param {string} id - Post-op note ID
- * @param {string} userId - User ID for audit
- * @param {string} ipAddress - User IP for audit
- * @returns {Promise<void>}
- */
 const deletepostOpNote = async (id, userId, ipAddress) => {
   try {
-    // Verify Post-op note exists
-    const existingpostOpNote = await postOpNoteRepository.findById(id);
+    const existingpostOpNote = await resolvePostOpNoteByIdentifier(id);
     if (!existingpostOpNote) {
       throw new HttpError('errors.post_op_note.not_found', 404);
     }
 
-    await postOpNoteRepository.softDelete(id);
+    await postOpNoteRepository.softDelete(existingpostOpNote.id);
 
-    // Audit log
     await createAuditLog({
       action: 'DELETE',
       resource: 'post_op_note',
-      resource_id: id,
+      resource_id: existingpostOpNote.id,
       user_id: userId,
       ip_address: ipAddress,
-      details: { post_op_note: existingpostOpNote }
+      details: { post_op_note: existingpostOpNote },
     });
   } catch (error) {
     if (error instanceof HttpError) throw error;
-    throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
+    throw new HttpError('errors.server.unexpected', 500, [
+      { originalError: error.message },
+    ]);
   }
 };
 
@@ -195,5 +366,6 @@ module.exports = {
   getpostOpNoteById,
   createpostOpNote,
   updatepostOpNote,
-  deletepostOpNote
+  deletepostOpNote,
 };
+

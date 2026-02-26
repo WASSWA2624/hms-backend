@@ -3,191 +3,400 @@
  *
  * @module modules/anesthesia-record/services
  * @description Business logic layer for anesthesia record operations.
- * Per module-creation.mdc: Services only import/use their own repository.
- * Per prisma.mdc: All mutations call createAuditLog.
  */
 
 const anesthesiaRecordRepository = require('@repositories/anesthesia-record/anesthesia-record.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
+const { isUuidLike } = require('@lib/identifiers/sanitize-friendly-ids');
+const {
+  resolveModelIdByIdentifier,
+  resolveModelRecordByIdentifier,
+} = require('@lib/identifiers/resolve-entity-id');
 
-/**
- * List anesthesia records with pagination and filtering
- *
- * @param {Object} filters - Query filters
- * @param {number} page - Page number
- * @param {number} limit - Items per page
- * @param {string} sortBy - Sort field
- * @param {string} order - Sort order
- * @param {string} userId - User ID for audit
- * @param {string} ipAddress - User IP for audit
- * @returns {Promise<Object>} Anesthesia records and pagination data
- */
-const listAnesthesiaRecords = async (filters, page, limit, sortBy, order, userId, ipAddress) => {
+const sanitize = (value) => String(value || '').trim();
+
+const resolveDisplayIdentifier = (record) => {
+  if (!record) return null;
+  const friendly = sanitize(record.human_friendly_id || record.display_id);
+  if (friendly && !isUuidLike(friendly)) return friendly;
+  const scalar = sanitize(record.id);
+  if (scalar && !isUuidLike(scalar)) return scalar;
+  return null;
+};
+
+const resolvePatientDisplayName = (patient) => {
+  const first = sanitize(patient?.first_name);
+  const last = sanitize(patient?.last_name);
+  const full = [first, last].filter(Boolean).join(' ').trim();
+  return full || null;
+};
+
+const resolveUserDisplayName = (user) => {
+  const profile = user?.profile || null;
+  const full = [
+    sanitize(profile?.first_name),
+    sanitize(profile?.middle_name),
+    sanitize(profile?.last_name),
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .trim();
+  return full || null;
+};
+
+const buildEmptyListResult = (page, limit) => ({
+  anesthesia_records: [],
+  pagination: {
+    page,
+    limit,
+    total: 0,
+    totalPages: 0,
+    hasNextPage: false,
+    hasPreviousPage: page > 1,
+  },
+});
+
+const resolveFilterIdentifier = async ({ value, model, where = {} }) => {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+
+  const normalized = sanitize(value);
+  if (!normalized) return undefined;
+
+  const resolvedId = await resolveModelIdByIdentifier({
+    model,
+    identifier: normalized,
+    where,
+  });
+
+  if (resolvedId) return resolvedId;
+  if (isUuidLike(normalized)) return normalized;
+  return null;
+};
+
+const resolvePayloadIdentifier = async ({
+  value,
+  field,
+  model,
+  where = {},
+  nullable = false,
+}) => {
+  if (value === undefined) return undefined;
+  if (value === null) {
+    if (nullable) return null;
+    throw new HttpError('errors.validation.field.required', 400, [{ field }]);
+  }
+
+  const normalized = sanitize(value);
+  if (!normalized) {
+    if (nullable) return null;
+    throw new HttpError('errors.validation.invalid', 400, [{ field }]);
+  }
+
+  const resolvedId = await resolveModelIdByIdentifier({
+    model,
+    identifier: normalized,
+    where,
+  });
+
+  if (resolvedId) return resolvedId;
+  if (isUuidLike(normalized)) return normalized;
+
+  throw new HttpError('errors.validation.invalid', 400, [{ field }]);
+};
+
+const resolveAnesthesiaRecordByIdentifier = async (identifier) => {
+  const resolved = await resolveModelRecordByIdentifier({
+    model: 'anesthesia_record',
+    identifier,
+    select: { id: true },
+  });
+  if (!resolved?.id) return null;
+  return anesthesiaRecordRepository.findById(resolved.id);
+};
+
+const resolveAnesthesiaPayloadIdentifiers = async (data = {}) => {
+  const payload = { ...data };
+
+  if (payload.theatre_case_id !== undefined) {
+    payload.theatre_case_id = await resolvePayloadIdentifier({
+      value: payload.theatre_case_id,
+      field: 'theatre_case_id',
+      model: 'theatre_case',
+    });
+  }
+
+  if (payload.anesthetist_user_id !== undefined) {
+    payload.anesthetist_user_id = await resolvePayloadIdentifier({
+      value: payload.anesthetist_user_id,
+      field: 'anesthetist_user_id',
+      model: 'user',
+      nullable: true,
+    });
+  }
+
+  if (payload.finalized_by_user_id !== undefined) {
+    payload.finalized_by_user_id = await resolvePayloadIdentifier({
+      value: payload.finalized_by_user_id,
+      field: 'finalized_by_user_id',
+      model: 'user',
+      nullable: true,
+    });
+  }
+
+  if (payload.reopened_by_user_id !== undefined) {
+    payload.reopened_by_user_id = await resolvePayloadIdentifier({
+      value: payload.reopened_by_user_id,
+      field: 'reopened_by_user_id',
+      model: 'user',
+      nullable: true,
+    });
+  }
+
+  return payload;
+};
+
+const mapAnesthesiaRecordForDisplay = (record) => {
+  const theatreCase = record?.theatre_case || null;
+  const encounter = theatreCase?.encounter || null;
+  const patient = encounter?.patient || null;
+  const anesthetist = record?.anesthetist || null;
+
+  return {
+    ...record,
+    display_id: resolveDisplayIdentifier(record),
+    theatre_case_display_id: resolveDisplayIdentifier(theatreCase),
+    encounter_display_id: resolveDisplayIdentifier(encounter),
+    patient_display_id: resolveDisplayIdentifier(patient),
+    patient_display_name: resolvePatientDisplayName(patient),
+    anesthetist_user_display_id: resolveDisplayIdentifier(anesthetist),
+    staff_profile_display_id:
+      resolveDisplayIdentifier(anesthetist?.staff_profile) || null,
+    anesthetist_display_name: resolveUserDisplayName(anesthetist),
+  };
+};
+
+const listAnesthesiaRecords = async (filters, page, limit, sortBy, order) => {
   try {
     const skip = (page - 1) * limit;
     const orderBy = sortBy ? { [sortBy]: order } : { created_at: 'desc' };
-
-    // Build filter object
     const whereClause = {};
-    
-    if (filters.theatre_case_id) whereClause.theatre_case_id = filters.theatre_case_id;
-    if (filters.anesthetist_user_id) whereClause.anesthetist_user_id = filters.anesthetist_user_id;
-    if (filters.encounter_id) whereClause.encounter_id = filters.encounter_id;
-    if (filters.status) whereClause.status = filters.status;
-    if (filters.scheduled_from || filters.scheduled_to) {
-      whereClause.scheduled_at = {};
-      if (filters.scheduled_from) {
-        whereClause.scheduled_at.gte = new Date(filters.scheduled_from);
-      }
-      if (filters.scheduled_to) {
-        whereClause.scheduled_at.lte = new Date(filters.scheduled_to);
-      }
+
+    const theatreCaseId = await resolveFilterIdentifier({
+      value: filters.theatre_case_id,
+      model: 'theatre_case',
+    });
+    if (filters.theatre_case_id !== undefined && theatreCaseId === null) {
+      return buildEmptyListResult(page, limit);
+    }
+    if (theatreCaseId !== undefined) whereClause.theatre_case_id = theatreCaseId;
+
+    const anesthetistUserId = await resolveFilterIdentifier({
+      value: filters.anesthetist_user_id,
+      model: 'user',
+    });
+    if (filters.anesthetist_user_id !== undefined && anesthetistUserId === null) {
+      return buildEmptyListResult(page, limit);
+    }
+    if (anesthetistUserId !== undefined) {
+      whereClause.anesthetist_user_id = anesthetistUserId;
     }
 
-    const [anesthesiaRecords, total] = await Promise.all([
+    const encounterId = await resolveFilterIdentifier({
+      value: filters.encounter_id,
+      model: 'encounter',
+    });
+    if (filters.encounter_id !== undefined && encounterId === null) {
+      return buildEmptyListResult(page, limit);
+    }
+    if (encounterId) {
+      whereClause.theatre_case = {
+        ...(whereClause.theatre_case || {}),
+        encounter_id: encounterId,
+      };
+    }
+
+    const patientId = await resolveFilterIdentifier({
+      value: filters.patient_id,
+      model: 'patient',
+    });
+    if (filters.patient_id !== undefined && patientId === null) {
+      return buildEmptyListResult(page, limit);
+    }
+    if (patientId) {
+      whereClause.theatre_case = {
+        ...(whereClause.theatre_case || {}),
+        encounter: {
+          ...(whereClause.theatre_case?.encounter || {}),
+          patient_id: patientId,
+        },
+      };
+    }
+
+    if (filters.record_status) {
+      whereClause.record_status = filters.record_status;
+    }
+
+    if (filters.search) {
+      const searchTerm = sanitize(filters.search);
+      const upperSearchTerm = searchTerm.toUpperCase();
+      whereClause.OR = [
+        { human_friendly_id: { contains: upperSearchTerm } },
+        { notes: { contains: searchTerm } },
+        {
+          theatre_case: {
+            OR: [
+              { human_friendly_id: { contains: upperSearchTerm } },
+              {
+                encounter: {
+                  OR: [
+                    { human_friendly_id: { contains: upperSearchTerm } },
+                    {
+                      patient: {
+                        OR: [
+                          { human_friendly_id: { contains: upperSearchTerm } },
+                          { first_name: { contains: searchTerm } },
+                          { last_name: { contains: searchTerm } },
+                        ],
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        },
+      ];
+    }
+
+    const [records, total] = await Promise.all([
       anesthesiaRecordRepository.findMany(whereClause, skip, limit, orderBy),
-      anesthesiaRecordRepository.count(whereClause)
+      anesthesiaRecordRepository.count(whereClause),
     ]);
 
     return {
-      anesthesia_records: anesthesiaRecords,
+      anesthesia_records: records.map(mapAnesthesiaRecordForDisplay),
       pagination: {
         page,
         limit,
         total,
         totalPages: Math.ceil(total / limit),
         hasNextPage: page < Math.ceil(total / limit),
-        hasPreviousPage: page > 1
-      }
+        hasPreviousPage: page > 1,
+      },
     };
   } catch (error) {
     if (error instanceof HttpError) throw error;
-    throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
+    throw new HttpError('errors.server.unexpected', 500, [
+      { originalError: error.message },
+    ]);
   }
 };
 
-/**
- * Get anesthesia record by ID
- *
- * @param {string} id - Anesthesia record ID
- * @param {string} userId - User ID for audit
- * @param {string} ipAddress - User IP for audit
- * @returns {Promise<Object>} Anesthesia record data
- */
-const getAnesthesiaRecordById = async (id, userId, ipAddress) => {
+const getAnesthesiaRecordById = async (id) => {
   try {
-    const anesthesiaRecord = await anesthesiaRecordRepository.findById(id);
+    const anesthesiaRecord = await resolveAnesthesiaRecordByIdentifier(id);
 
     if (!anesthesiaRecord) {
       throw new HttpError('errors.anesthesia_record.not_found', 404);
     }
 
-    return anesthesiaRecord;
+    return mapAnesthesiaRecordForDisplay(anesthesiaRecord);
   } catch (error) {
     if (error instanceof HttpError) throw error;
-    throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
+    throw new HttpError('errors.server.unexpected', 500, [
+      { originalError: error.message },
+    ]);
   }
 };
 
-/**
- * Create new anesthesia record
- *
- * @param {Object} data - Anesthesia record data
- * @param {string} userId - User ID for audit
- * @param {string} ipAddress - User IP for audit
- * @returns {Promise<Object>} Created anesthesia record
- */
 const createAnesthesiaRecord = async (data, userId, ipAddress) => {
   try {
-    const anesthesiaRecord = await anesthesiaRecordRepository.create(data);
+    const payload = await resolveAnesthesiaPayloadIdentifiers(data);
+    if (!payload.record_status) payload.record_status = 'DRAFT';
 
-    // Audit log
+    const anesthesiaRecord = await anesthesiaRecordRepository.create(payload);
+    const createdRecord =
+      (await anesthesiaRecordRepository.findById(anesthesiaRecord.id)) || anesthesiaRecord;
+
     await createAuditLog({
       action: 'CREATE',
       resource: 'anesthesia_record',
       resource_id: anesthesiaRecord.id,
       user_id: userId,
       ip_address: ipAddress,
-      details: { anesthesia_record: anesthesiaRecord }
+      details: { anesthesia_record: createdRecord },
     });
 
-    return anesthesiaRecord;
+    return mapAnesthesiaRecordForDisplay(createdRecord);
   } catch (error) {
     if (error instanceof HttpError) throw error;
-    throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
+    throw new HttpError('errors.server.unexpected', 500, [
+      { originalError: error.message },
+    ]);
   }
 };
 
-/**
- * Update anesthesia record
- *
- * @param {string} id - Anesthesia record ID
- * @param {Object} data - Update data
- * @param {string} userId - User ID for audit
- * @param {string} ipAddress - User IP for audit
- * @returns {Promise<Object>} Updated anesthesia record
- */
 const updateAnesthesiaRecord = async (id, data, userId, ipAddress) => {
   try {
-    // Verify anesthesia record exists
-    const existingAnesthesiaRecord = await anesthesiaRecordRepository.findById(id);
+    const existingAnesthesiaRecord = await resolveAnesthesiaRecordByIdentifier(id);
     if (!existingAnesthesiaRecord) {
       throw new HttpError('errors.anesthesia_record.not_found', 404);
     }
 
-    const updatedAnesthesiaRecord = await anesthesiaRecordRepository.update(id, data);
+    const payload = await resolveAnesthesiaPayloadIdentifiers(data);
+    const updatedAnesthesiaRecord = await anesthesiaRecordRepository.update(
+      existingAnesthesiaRecord.id,
+      payload
+    );
+    const updatedRecord =
+      (await anesthesiaRecordRepository.findById(updatedAnesthesiaRecord.id)) ||
+      updatedAnesthesiaRecord;
 
-    // Audit log
     await createAuditLog({
       action: 'UPDATE',
       resource: 'anesthesia_record',
-      resource_id: id,
+      resource_id: existingAnesthesiaRecord.id,
       user_id: userId,
       ip_address: ipAddress,
       details: {
         old: existingAnesthesiaRecord,
-        new: updatedAnesthesiaRecord
-      }
+        new: updatedRecord,
+      },
     });
 
-    return updatedAnesthesiaRecord;
+    return mapAnesthesiaRecordForDisplay(updatedRecord);
   } catch (error) {
     if (error instanceof HttpError) throw error;
-    throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
+    throw new HttpError('errors.server.unexpected', 500, [
+      { originalError: error.message },
+    ]);
   }
 };
 
-/**
- * Delete anesthesia record (soft delete)
- *
- * @param {string} id - Anesthesia record ID
- * @param {string} userId - User ID for audit
- * @param {string} ipAddress - User IP for audit
- * @returns {Promise<void>}
- */
 const deleteAnesthesiaRecord = async (id, userId, ipAddress) => {
   try {
-    // Verify anesthesia record exists
-    const existingAnesthesiaRecord = await anesthesiaRecordRepository.findById(id);
+    const existingAnesthesiaRecord = await resolveAnesthesiaRecordByIdentifier(id);
     if (!existingAnesthesiaRecord) {
       throw new HttpError('errors.anesthesia_record.not_found', 404);
     }
 
-    await anesthesiaRecordRepository.softDelete(id);
+    await anesthesiaRecordRepository.softDelete(existingAnesthesiaRecord.id);
 
-    // Audit log
     await createAuditLog({
       action: 'DELETE',
       resource: 'anesthesia_record',
-      resource_id: id,
+      resource_id: existingAnesthesiaRecord.id,
       user_id: userId,
       ip_address: ipAddress,
-      details: { anesthesia_record: existingAnesthesiaRecord }
+      details: { anesthesia_record: existingAnesthesiaRecord },
     });
   } catch (error) {
     if (error instanceof HttpError) throw error;
-    throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
+    throw new HttpError('errors.server.unexpected', 500, [
+      { originalError: error.message },
+    ]);
   }
 };
 
@@ -196,5 +405,6 @@ module.exports = {
   getAnesthesiaRecordById,
   createAnesthesiaRecord,
   updateAnesthesiaRecord,
-  deleteAnesthesiaRecord
+  deleteAnesthesiaRecord,
 };
+

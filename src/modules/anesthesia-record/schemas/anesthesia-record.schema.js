@@ -9,7 +9,7 @@
 
 const { z } = require('zod');
 const { 
-  uuidSchema, 
+  uuidOrFriendlyIdentifierSchema,
   listQuerySchema
 } = require('@lib/validation/zod');
 
@@ -20,9 +20,15 @@ const {
  * Used for POST /anesthesia-records endpoint
  */
 const createAnesthesiaRecordSchema = z.object({
-  theatre_case_id: uuidSchema,
-  anesthetist_user_id: uuidSchema.optional().nullable(),
-  notes: z.string().trim().optional().nullable()
+  theatre_case_id: uuidOrFriendlyIdentifierSchema,
+  anesthetist_user_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
+  notes: z.string().trim().optional().nullable(),
+  record_status: z.enum(['DRAFT', 'FINAL']).optional(),
+  finalized_at: z.string().datetime().optional().nullable(),
+  finalized_by_user_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
+  reopened_at: z.string().datetime().optional().nullable(),
+  reopened_by_user_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
+  reopen_reason: z.string().trim().optional().nullable(),
 });
 
 /**
@@ -31,9 +37,15 @@ const createAnesthesiaRecordSchema = z.object({
  * All fields optional for partial updates
  */
 const updateAnesthesiaRecordSchema = z.object({
-  theatre_case_id: uuidSchema.optional(),
-  anesthetist_user_id: uuidSchema.optional().nullable(),
-  notes: z.string().trim().optional().nullable()
+  theatre_case_id: uuidOrFriendlyIdentifierSchema.optional(),
+  anesthetist_user_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
+  notes: z.string().trim().optional().nullable(),
+  record_status: z.enum(['DRAFT', 'FINAL']).optional(),
+  finalized_at: z.string().datetime().optional().nullable(),
+  finalized_by_user_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
+  reopened_at: z.string().datetime().optional().nullable(),
+  reopened_by_user_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
+  reopen_reason: z.string().trim().optional().nullable(),
 });
 
 // ==================== URL Params ====================
@@ -43,7 +55,7 @@ const updateAnesthesiaRecordSchema = z.object({
  * Used for GET /:id, PUT /:id, and DELETE /:id endpoints
  */
 const anesthesiaRecordIdParamsSchema = z.object({
-  id: uuidSchema
+  id: uuidOrFriendlyIdentifierSchema
 });
 
 // ==================== Query Params ====================
@@ -54,8 +66,12 @@ const anesthesiaRecordIdParamsSchema = z.object({
  * Extends base listQuerySchema with anesthesia record-specific filters
  */
 const listAnesthesiaRecordsQuerySchema = listQuerySchema.extend({
-  theatre_case_id: uuidSchema.optional(),
-  anesthetist_user_id: uuidSchema.optional()
+  theatre_case_id: uuidOrFriendlyIdentifierSchema.optional(),
+  anesthetist_user_id: uuidOrFriendlyIdentifierSchema.optional(),
+  encounter_id: uuidOrFriendlyIdentifierSchema.optional(),
+  patient_id: uuidOrFriendlyIdentifierSchema.optional(),
+  record_status: z.enum(['DRAFT', 'FINAL']).optional(),
+  search: z.string().trim().optional(),
 });
 
 module.exports = {

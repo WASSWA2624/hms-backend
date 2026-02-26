@@ -24,9 +24,9 @@ const listAnesthesiaRecords = asyncHandler(async (req, res) => {
     theatre_case_id,
     anesthetist_user_id,
     encounter_id,
-    status,
-    scheduled_from,
-    scheduled_to,
+    patient_id,
+    record_status,
+    search,
     page = DEFAULT_PAGE,
     limit = DEFAULT_PAGE_LIMIT,
     sort_by,
@@ -37,22 +37,17 @@ const listAnesthesiaRecords = asyncHandler(async (req, res) => {
     theatre_case_id,
     anesthetist_user_id,
     encounter_id,
-    status,
-    scheduled_from,
-    scheduled_to
+    patient_id,
+    record_status,
+    search
   };
-
-  const userId = req.user?.id;
-  const ipAddress = req.ip;
 
   const result = await anesthesiaRecordService.listAnesthesiaRecords(
     filters,
     parseInt(page),
     parseInt(limit),
     sort_by,
-    order,
-    userId,
-    ipAddress
+    order
   );
 
   sendPaginated(res, 'messages.anesthesia_record.list.success', result.anesthesia_records, result.pagination);
@@ -67,10 +62,8 @@ const listAnesthesiaRecords = asyncHandler(async (req, res) => {
  */
 const getAnesthesiaRecordById = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const userId = req.user?.id;
-  const ipAddress = req.ip;
 
-  const anesthesiaRecord = await anesthesiaRecordService.getAnesthesiaRecordById(id, userId, ipAddress);
+  const anesthesiaRecord = await anesthesiaRecordService.getAnesthesiaRecordById(id);
 
   sendSuccess(res, 200, 'messages.anesthesia_record.get.success', anesthesiaRecord);
 });

@@ -9,7 +9,7 @@
 
 const { z } = require('zod');
 const { 
-  uuidSchema, 
+  uuidOrFriendlyIdentifierSchema,
   listQuerySchema
 } = require('@lib/validation/zod');
 
@@ -20,8 +20,14 @@ const {
  * Used for POST /post-op-notes endpoint
  */
 const createPostOpNoteSchema = z.object({
-  theatre_case_id: uuidSchema,
-  note: z.string().trim().min(1)
+  theatre_case_id: uuidOrFriendlyIdentifierSchema,
+  note: z.string().trim().min(1),
+  record_status: z.enum(['DRAFT', 'FINAL']).optional(),
+  finalized_at: z.string().datetime().optional().nullable(),
+  finalized_by_user_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
+  reopened_at: z.string().datetime().optional().nullable(),
+  reopened_by_user_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
+  reopen_reason: z.string().trim().optional().nullable(),
 });
 
 /**
@@ -30,8 +36,14 @@ const createPostOpNoteSchema = z.object({
  * All fields optional for partial updates
  */
 const updatePostOpNoteSchema = z.object({
-  theatre_case_id: uuidSchema.optional(),
-  note: z.string().trim().min(1).optional()
+  theatre_case_id: uuidOrFriendlyIdentifierSchema.optional(),
+  note: z.string().trim().min(1).optional(),
+  record_status: z.enum(['DRAFT', 'FINAL']).optional(),
+  finalized_at: z.string().datetime().optional().nullable(),
+  finalized_by_user_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
+  reopened_at: z.string().datetime().optional().nullable(),
+  reopened_by_user_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
+  reopen_reason: z.string().trim().optional().nullable(),
 });
 
 // ==================== URL Params ====================
@@ -41,7 +53,7 @@ const updatePostOpNoteSchema = z.object({
  * Used for GET /:id, PUT /:id, and DELETE /:id endpoints
  */
 const postOpNoteIdParamsSchema = z.object({
-  id: uuidSchema
+  id: uuidOrFriendlyIdentifierSchema
 });
 
 // ==================== Query Params ====================
@@ -52,7 +64,11 @@ const postOpNoteIdParamsSchema = z.object({
  * Extends base listQuerySchema with post-op note-specific filters
  */
 const listPostOpNotesQuerySchema = listQuerySchema.extend({
-  theatre_case_id: uuidSchema.optional()
+  theatre_case_id: uuidOrFriendlyIdentifierSchema.optional(),
+  encounter_id: uuidOrFriendlyIdentifierSchema.optional(),
+  patient_id: uuidOrFriendlyIdentifierSchema.optional(),
+  record_status: z.enum(['DRAFT', 'FINAL']).optional(),
+  search: z.string().trim().optional(),
 });
 
 module.exports = {

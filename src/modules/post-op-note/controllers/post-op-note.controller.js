@@ -23,11 +23,9 @@ const listpostOpNotes = asyncHandler(async (req, res) => {
   const {
     theatre_case_id,
     encounter_id,
-    note,
-    notes,
-    status,
-    scheduled_from,
-    scheduled_to,
+    patient_id,
+    record_status,
+    search,
     page = DEFAULT_PAGE,
     limit = DEFAULT_PAGE_LIMIT,
     sort_by,
@@ -37,24 +35,17 @@ const listpostOpNotes = asyncHandler(async (req, res) => {
   const filters = {
     theatre_case_id,
     encounter_id,
-    note,
-    notes,
-    status,
-    scheduled_from,
-    scheduled_to
+    patient_id,
+    record_status,
+    search
   };
-
-  const userId = req.user?.id;
-  const ipAddress = req.ip;
 
   const result = await postOpNoteService.listpostOpNotes(
     filters,
     parseInt(page),
     parseInt(limit),
     sort_by,
-    order,
-    userId,
-    ipAddress
+    order
   );
 
   sendPaginated(res, 'messages.post_op_note.list.success', result.post_op_notes, result.pagination);
@@ -69,10 +60,8 @@ const listpostOpNotes = asyncHandler(async (req, res) => {
  */
 const getpostOpNoteById = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const userId = req.user?.id;
-  const ipAddress = req.ip;
 
-  const postOpNote = await postOpNoteService.getpostOpNoteById(id, userId, ipAddress);
+  const postOpNote = await postOpNoteService.getpostOpNoteById(id);
 
   sendSuccess(res, 200, 'messages.post_op_note.get.success', postOpNote);
 });

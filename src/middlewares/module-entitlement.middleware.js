@@ -55,6 +55,7 @@ const FREE_CORE_MODULES = new Set([
   'visit-queue',
   'opd-flow',
   'ipd-flow',
+  'theatre-flow',
   'encounter',
   'clinical-note',
   'vital-sign',
