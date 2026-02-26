@@ -39,6 +39,22 @@ const QUEUE_SCOPES = Object.freeze({
   ACTIVE: 'ACTIVE',
   ALL: 'ALL',
 });
+const ICU_QUEUE_SCOPES = Object.freeze({
+  ALL: 'ALL',
+  WITH_ICU: 'WITH_ICU',
+  ACTIVE: 'ACTIVE',
+});
+const ICU_STATUSES = Object.freeze({
+  ACTIVE: 'ACTIVE',
+  ENDED: 'ENDED',
+  NONE: 'NONE',
+});
+const CRITICAL_SEVERITY_ORDER = Object.freeze({
+  LOW: 1,
+  MEDIUM: 2,
+  HIGH: 3,
+  CRITICAL: 4,
+});
 const TERMINAL_STAGES = new Set([STAGES.DISCHARGED, STAGES.CANCELLED]);
 const LEGACY_ROUTE_CONFIG = Object.freeze({
   admissions: { delegate: 'admission', admissionField: 'id', panel: 'snapshot', action: 'open_admission' },
@@ -48,6 +64,9 @@ const LEGACY_ROUTE_CONFIG = Object.freeze({
   'medication-administrations': { delegate: 'medication_administration', admissionField: 'admission_id', panel: 'medication', action: 'add_medication' },
   'discharge-summaries': { delegate: 'discharge_summary', admissionField: 'admission_id', panel: 'discharge', action: 'plan_discharge' },
   'transfer-requests': { delegate: 'transfer_request', admissionField: 'admission_id', panel: 'transfer', action: 'manage_transfer' },
+  'icu-stays': { delegate: 'icu_stay', admissionField: 'admission_id', panel: 'stays', action: 'manage_icu_stay' },
+  'icu-observations': { delegate: 'icu_observation', admissionField: 'icu_stay.admission_id', panel: 'observations', action: 'add_icu_observation' },
+  'critical-alerts': { delegate: 'critical_alert', admissionField: 'icu_stay.admission_id', panel: 'alerts', action: 'add_critical_alert' },
 });
 
 const TERMINAL_ADMISSION_STATUSES = new Set(['DISCHARGED', 'CANCELLED']);
@@ -72,6 +91,18 @@ const normalizeQueueScope = (value) =>
   String(value || QUEUE_SCOPES.ACTIVE).trim().toUpperCase() === QUEUE_SCOPES.ALL
     ? QUEUE_SCOPES.ALL
     : QUEUE_SCOPES.ACTIVE;
+const normalizeIcuQueueScope = (value) => {
+  const normalized = String(value || ICU_QUEUE_SCOPES.ALL).trim().toUpperCase();
+  if (normalized === ICU_QUEUE_SCOPES.WITH_ICU) return ICU_QUEUE_SCOPES.WITH_ICU;
+  if (normalized === ICU_QUEUE_SCOPES.ACTIVE) return ICU_QUEUE_SCOPES.ACTIVE;
+  return ICU_QUEUE_SCOPES.ALL;
+};
+const toBooleanFlag = (value, fallback = false) => {
+  if (typeof value === 'boolean') return value;
+  const parsed = parseBooleanString(value);
+  if (parsed === null) return fallback;
+  return parsed;
+};
 
 const toPublicScalarIdentifier = (value) => {
   const normalized = sanitizeIdentifier(value);
@@ -91,9 +122,29 @@ const resolvePatientDisplayName = (patient) => {
   return [firstName, lastName].filter(Boolean).join(' ').trim();
 };
 
-const resolveByIdentifier = async (delegate, identifier, where = {}, select = { id: true }) => {
+const getNestedValue = (source, path) => {
+  if (!source || !path) return null;
+  return String(path)
+    .split('.')
+    .reduce((cursor, key) => (cursor && cursor[key] !== undefined ? cursor[key] : null), source);
+};
+
+const normalizeQueryOptions = (queryOptions) => {
+  if (!queryOptions) {
+    return { select: { id: true } };
+  }
+
+  if (queryOptions.select || queryOptions.include) {
+    return queryOptions;
+  }
+
+  return { select: queryOptions };
+};
+
+const resolveByIdentifier = async (delegate, identifier, where = {}, queryOptions = { select: { id: true } }) => {
   const normalized = sanitizeIdentifier(identifier);
   if (!normalized || !delegate || typeof delegate.findFirst !== 'function') return null;
+  const queryShape = normalizeQueryOptions(queryOptions);
 
   const baseWhere = {
     deleted_at: null,
@@ -106,7 +157,7 @@ const resolveByIdentifier = async (delegate, identifier, where = {}, select = { 
         ...baseWhere,
         id: normalized.toLowerCase(),
       },
-      select,
+      ...queryShape,
     });
 
     if (byUuid) return byUuid;
@@ -117,7 +168,7 @@ const resolveByIdentifier = async (delegate, identifier, where = {}, select = { 
       ...baseWhere,
       human_friendly_id: normalized.toUpperCase(),
     },
-    select,
+    ...queryShape,
   });
 };
 
@@ -229,6 +280,24 @@ const resolveTransferByIdentifier = (tx, identifier, admissionId = null) =>
     }
   );
 
+const resolveIcuStayByIdentifier = (tx, identifier, admissionId = null) =>
+  resolveByIdentifier(
+    tx.icu_stay,
+    identifier,
+    admissionId ? { admission_id: admissionId } : {},
+    {
+      id: true,
+      admission_id: true,
+      ended_at: true,
+    }
+  );
+
+const resolveCriticalAlertByIdentifier = (tx, identifier) =>
+  resolveByIdentifier(tx.critical_alert, identifier, {}, {
+    id: true,
+    icu_stay_id: true,
+  });
+
 const getActiveBedAssignment = (admission) =>
   (Array.isArray(admission?.bed_assignments) ? admission.bed_assignments : []).find(
     (item) => !item.released_at && !item.deleted_at
@@ -241,6 +310,59 @@ const getOpenTransferRequest = (admission) =>
 
 const getLatestDischargeSummary = (admission) =>
   (Array.isArray(admission?.discharge_summaries) ? admission.discharge_summaries : [])[0] || null;
+
+const getIcuStays = (admission) =>
+  Array.isArray(admission?.icu_stays)
+    ? admission.icu_stays
+        .filter((stay) => stay && !stay.deleted_at)
+        .sort((left, right) => {
+          const leftTs = new Date(left?.started_at || left?.created_at || 0).getTime() || 0;
+          const rightTs = new Date(right?.started_at || right?.created_at || 0).getTime() || 0;
+          return rightTs - leftTs;
+        })
+    : [];
+
+const getIcuStayObservations = (stay) =>
+  Array.isArray(stay?.observations)
+    ? stay.observations
+        .filter((entry) => entry && !entry.deleted_at)
+        .sort((left, right) => {
+          const leftTs = new Date(left?.observed_at || left?.created_at || 0).getTime() || 0;
+          const rightTs = new Date(right?.observed_at || right?.created_at || 0).getTime() || 0;
+          return rightTs - leftTs;
+        })
+    : [];
+
+const getIcuStayAlerts = (stay) =>
+  Array.isArray(stay?.alerts)
+    ? stay.alerts
+        .filter((entry) => entry && !entry.deleted_at)
+        .sort((left, right) => {
+          const leftTs = new Date(left?.created_at || 0).getTime() || 0;
+          const rightTs = new Date(right?.created_at || 0).getTime() || 0;
+          return rightTs - leftTs;
+        })
+    : [];
+
+const getActiveIcuStay = (admission) => getIcuStays(admission).find((stay) => !stay.ended_at) || null;
+
+const getLatestIcuStay = (admission) => getIcuStays(admission)[0] || null;
+
+const deriveIcuStatus = (admission) => {
+  const icuStays = getIcuStays(admission);
+  if (!icuStays.length) return ICU_STATUSES.NONE;
+  if (icuStays.some((stay) => !stay.ended_at)) return ICU_STATUSES.ACTIVE;
+  return ICU_STATUSES.ENDED;
+};
+
+const getSeverityScore = (severity) => CRITICAL_SEVERITY_ORDER[String(severity || '').toUpperCase()] || 0;
+
+const getHighestSeverity = (alerts = []) =>
+  alerts.reduce((highest, entry) => {
+    const severity = String(entry?.severity || '').toUpperCase();
+    if (getSeverityScore(severity) > getSeverityScore(highest)) return severity;
+    return highest;
+  }, null);
 const deriveIpdStage = ({ admission, activeBedAssignment, openTransferRequest, latestDischargeSummary }) => {
   const admissionStatus = String(admission?.status || '').toUpperCase();
   if (admissionStatus === 'CANCELLED') return STAGES.CANCELLED;
@@ -277,7 +399,60 @@ const buildFlowSummary = (snapshot) => ({
   transfer_status: snapshot?.open_transfer_request?.status || null,
 });
 
-const buildIpdSnapshot = (admission) => {
+const buildIcuOverlay = (admission) => {
+  const icuStays = getIcuStays(admission);
+  const activeStay = icuStays.find((stay) => !stay.ended_at) || null;
+  const latestStay = icuStays[0] || null;
+  const recentStays = icuStays.slice(0, 5);
+
+  const allObservations = icuStays
+    .flatMap((stay) => getIcuStayObservations(stay).map((entry) => ({ ...entry, icu_stay_id: stay.id })))
+    .sort((left, right) => {
+      const leftTs = new Date(left?.observed_at || left?.created_at || 0).getTime() || 0;
+      const rightTs = new Date(right?.observed_at || right?.created_at || 0).getTime() || 0;
+      return rightTs - leftTs;
+    });
+
+  const allAlerts = icuStays
+    .flatMap((stay) => getIcuStayAlerts(stay).map((entry) => ({ ...entry, icu_stay_id: stay.id })))
+    .sort((left, right) => {
+      const leftTs = new Date(left?.created_at || 0).getTime() || 0;
+      const rightTs = new Date(right?.created_at || 0).getTime() || 0;
+      return rightTs - leftTs;
+    });
+
+  const activeAlerts = activeStay
+    ? allAlerts.filter((entry) => String(entry?.icu_stay_id || '') === String(activeStay.id || ''))
+    : [];
+
+  const targetAlerts = activeAlerts.length ? activeAlerts : allAlerts;
+  const criticalAlertSummary = {
+    total: targetAlerts.length,
+    highest_severity: getHighestSeverity(targetAlerts),
+    by_severity: {
+      LOW: targetAlerts.filter((entry) => String(entry?.severity || '').toUpperCase() === 'LOW').length,
+      MEDIUM: targetAlerts.filter((entry) => String(entry?.severity || '').toUpperCase() === 'MEDIUM').length,
+      HIGH: targetAlerts.filter((entry) => String(entry?.severity || '').toUpperCase() === 'HIGH').length,
+      CRITICAL: targetAlerts.filter((entry) => String(entry?.severity || '').toUpperCase() === 'CRITICAL').length,
+    },
+    recent: targetAlerts.slice(0, 10),
+  };
+
+  return {
+    status: deriveIcuStatus(admission),
+    has_critical_alert: criticalAlertSummary.total > 0,
+    critical_severity: criticalAlertSummary.highest_severity || null,
+    active_stay: activeStay,
+    latest_stay: latestStay,
+    recent_stays: recentStays,
+    recent_observations: allObservations.slice(0, 12),
+    critical_alert_summary: criticalAlertSummary,
+    recent_alerts: allAlerts.slice(0, 12),
+  };
+};
+
+const buildIpdSnapshot = (admission, options = {}) => {
+  const includeIcu = Boolean(options?.include_icu);
   const activeBedAssignment = getActiveBedAssignment(admission);
   const openTransferRequest = getOpenTransferRequest(admission);
   const latestDischargeSummary = getLatestDischargeSummary(admission);
@@ -326,6 +501,7 @@ const buildIpdSnapshot = (admission) => {
       has_active_bed: Boolean(activeBedAssignment),
       admission_status: admission.status,
     },
+    icu: includeIcu ? buildIcuOverlay(admission) : null,
   };
 
   snapshot.flow_summary = buildFlowSummary(snapshot);
@@ -436,6 +612,81 @@ const mapPublicMedicationAdministration = (entry) => {
   };
 };
 
+const mapPublicIcuStay = (stay) => {
+  if (!stay) return null;
+  return {
+    id: resolvePublicIdentifier(stay),
+    display_id: resolvePublicIdentifier(stay),
+    started_at: stay.started_at || null,
+    ended_at: stay.ended_at || null,
+    created_at: stay.created_at || null,
+  };
+};
+
+const mapPublicIcuObservation = (entry) => {
+  if (!entry) return null;
+  return {
+    id: resolvePublicIdentifier(entry),
+    display_id: resolvePublicIdentifier(entry),
+    icu_stay_id: toPublicScalarIdentifier(entry.icu_stay_id),
+    observed_at: entry.observed_at || null,
+    observation: entry.observation || null,
+    created_at: entry.created_at || null,
+  };
+};
+
+const mapPublicCriticalAlert = (entry) => {
+  if (!entry) return null;
+  return {
+    id: resolvePublicIdentifier(entry),
+    display_id: resolvePublicIdentifier(entry),
+    icu_stay_id: toPublicScalarIdentifier(entry.icu_stay_id),
+    severity: sanitizeIdentifier(entry.severity) || null,
+    message: entry.message || null,
+    created_at: entry.created_at || null,
+  };
+};
+
+const mapPublicIcuOverlay = (overlay) => {
+  if (!overlay) return null;
+
+  const activeStay = mapPublicIcuStay(overlay.active_stay);
+  const latestStay = mapPublicIcuStay(overlay.latest_stay);
+  const recentStays = (Array.isArray(overlay.recent_stays) ? overlay.recent_stays : [])
+    .map(mapPublicIcuStay)
+    .filter(Boolean);
+  const recentObservations = (Array.isArray(overlay.recent_observations) ? overlay.recent_observations : [])
+    .map(mapPublicIcuObservation)
+    .filter(Boolean);
+  const recentAlerts = (Array.isArray(overlay.recent_alerts) ? overlay.recent_alerts : [])
+    .map(mapPublicCriticalAlert)
+    .filter(Boolean);
+
+  return {
+    status: sanitizeIdentifier(overlay.status) || null,
+    has_critical_alert: Boolean(overlay.has_critical_alert),
+    critical_severity: sanitizeIdentifier(overlay.critical_severity) || null,
+    active_stay: activeStay,
+    latest_stay: latestStay,
+    recent_stays: recentStays,
+    recent_observations: recentObservations,
+    recent_alerts: recentAlerts,
+    critical_alert_summary: {
+      total: Number(overlay?.critical_alert_summary?.total || 0),
+      highest_severity: sanitizeIdentifier(overlay?.critical_alert_summary?.highest_severity) || null,
+      by_severity: {
+        LOW: Number(overlay?.critical_alert_summary?.by_severity?.LOW || 0),
+        MEDIUM: Number(overlay?.critical_alert_summary?.by_severity?.MEDIUM || 0),
+        HIGH: Number(overlay?.critical_alert_summary?.by_severity?.HIGH || 0),
+        CRITICAL: Number(overlay?.critical_alert_summary?.by_severity?.CRITICAL || 0),
+      },
+      recent: (Array.isArray(overlay?.critical_alert_summary?.recent) ? overlay.critical_alert_summary.recent : [])
+        .map(mapPublicCriticalAlert)
+        .filter(Boolean),
+    },
+  };
+};
+
 const buildPublicTimeline = (snapshot) => {
   const events = [];
 
@@ -476,6 +727,22 @@ const buildPublicTimeline = (snapshot) => {
     });
   });
 
+  (Array.isArray(snapshot?.icu?.recent_observations) ? snapshot.icu.recent_observations : []).forEach((entry) => {
+    events.push({
+      type: 'ICU_OBSERVATION',
+      at: entry.observed_at || entry.created_at || null,
+      label: sanitizeIdentifier(entry.observation) || 'ICU observation recorded',
+    });
+  });
+
+  (Array.isArray(snapshot?.icu?.recent_alerts) ? snapshot.icu.recent_alerts : []).forEach((entry) => {
+    events.push({
+      type: 'CRITICAL_ALERT',
+      at: entry.created_at || null,
+      label: `${sanitizeIdentifier(entry.severity) || 'ALERT'}: ${sanitizeIdentifier(entry.message) || 'Critical alert raised'}`,
+    });
+  });
+
   return events
     .filter((entry) => sanitizeIdentifier(entry.at))
     .sort((left, right) => {
@@ -493,6 +760,7 @@ const toPublicIpdSnapshot = (snapshot) => {
   const openTransfer = mapPublicTransferRequest(snapshot?.open_transfer_request);
   const latestDischarge = mapPublicDischargeSummary(snapshot?.latest_discharge_summary);
   const patientName = resolvePatientDisplayName(snapshot?.patient);
+  const icuOverlay = mapPublicIcuOverlay(snapshot?.icu);
 
   const publicSnapshot = {
     id: admissionPublicId,
@@ -581,6 +849,12 @@ const toPublicIpdSnapshot = (snapshot) => {
       sanitizeIdentifier(activeBed?.bed?.ward?.name) ||
       sanitizeIdentifier(openTransfer?.to_ward?.name) ||
       null,
+    icu: icuOverlay,
+    icu_status: sanitizeIdentifier(icuOverlay?.status) || null,
+    has_critical_alert: Boolean(icuOverlay?.has_critical_alert),
+    critical_severity: sanitizeIdentifier(icuOverlay?.critical_severity) || null,
+    active_icu_stay_id: icuOverlay?.active_stay?.id || null,
+    latest_icu_stay_id: icuOverlay?.latest_stay?.id || null,
   };
 
   publicSnapshot.timeline = buildPublicTimeline(publicSnapshot);
@@ -608,6 +882,10 @@ const toQueueCardDto = (snapshot) => {
     discharged_at: publicSnapshot?.admission?.discharged_at || null,
     flow_summary: publicSnapshot.flow_summary,
     admission_status: publicSnapshot?.admission?.status || null,
+    icu_status: publicSnapshot?.icu_status || null,
+    has_critical_alert: Boolean(publicSnapshot?.has_critical_alert),
+    critical_severity: publicSnapshot?.critical_severity || null,
+    active_icu_stay_id: publicSnapshot?.active_icu_stay_id || null,
   };
 };
 
@@ -633,6 +911,30 @@ const matchesDerivedFilters = (snapshot, filters = {}) => {
     if (!wardId || wardId !== filters.ward_id) return false;
   }
 
+  if (filters.icu_status) {
+    if (String(snapshot?.icu?.status || '').toUpperCase() !== String(filters.icu_status || '').toUpperCase()) {
+      return false;
+    }
+  }
+
+  if (typeof filters.has_critical_alert === 'boolean') {
+    if (Boolean(snapshot?.icu?.has_critical_alert) !== filters.has_critical_alert) return false;
+  }
+
+  if (filters.critical_severity) {
+    const summarySeverity = String(snapshot?.icu?.critical_alert_summary?.highest_severity || '').toUpperCase();
+    if (summarySeverity !== String(filters.critical_severity).toUpperCase()) return false;
+  }
+
+  const icuQueueScope = String(filters.icu_queue_scope || ICU_QUEUE_SCOPES.ALL).toUpperCase();
+  if (icuQueueScope === ICU_QUEUE_SCOPES.WITH_ICU) {
+    if (String(snapshot?.icu?.status || '').toUpperCase() === ICU_STATUSES.NONE) return false;
+  }
+
+  if (icuQueueScope === ICU_QUEUE_SCOPES.ACTIVE) {
+    if (String(snapshot?.icu?.status || '').toUpperCase() !== ICU_STATUSES.ACTIVE) return false;
+  }
+
   if (filters.queue_scope === QUEUE_SCOPES.ACTIVE && !filters.stage) {
     if (TERMINAL_STAGES.has(snapshot?.flow?.stage)) return false;
   }
@@ -640,7 +942,8 @@ const matchesDerivedFilters = (snapshot, filters = {}) => {
   return true;
 };
 
-const getIpdSnapshotByIdInternal = async (id) => {
+const getIpdSnapshotByIdInternal = async (id, options = {}) => {
+  const includeIcu = Boolean(options?.include_icu);
   const resolved = await resolveAdmissionByIdentifier(prisma, id);
   if (!resolved) {
     throw new HttpError('errors.ipd_flow.not_found', 404);
@@ -651,10 +954,15 @@ const getIpdSnapshotByIdInternal = async (id) => {
     throw new HttpError('errors.ipd_flow.not_found', 404);
   }
 
-  return buildIpdSnapshot(admission);
+  return buildIpdSnapshot(admission, { include_icu: includeIcu });
 };
 
-const getIpdFlowById = async (id) => toPublicIpdSnapshot(await getIpdSnapshotByIdInternal(id));
+const getIpdFlowById = async (id, options = {}) =>
+  toPublicIpdSnapshot(
+    await getIpdSnapshotByIdInternal(id, {
+      include_icu: toBooleanFlag(options?.include_icu, false),
+    })
+  );
 
 const listIpdFlows = async (filters = {}, page = 1, limit = 20, sortBy = 'admitted_at', order = 'desc') => {
   const currentPage = Math.max(1, Number(page) || 1);
@@ -662,6 +970,14 @@ const listIpdFlows = async (filters = {}, page = 1, limit = 20, sortBy = 'admitt
   const skip = (currentPage - 1) * currentLimit;
   const direction = String(order || '').toLowerCase() === 'asc' ? 'asc' : 'desc';
   const queueScope = normalizeQueueScope(filters.queue_scope);
+  const icuQueueScope = normalizeIcuQueueScope(filters.icu_queue_scope);
+  const hasIcuFilters = Boolean(
+    filters.icu_status ||
+      filters.critical_severity ||
+      typeof filters.has_critical_alert === 'boolean' ||
+      icuQueueScope !== ICU_QUEUE_SCOPES.ALL
+  );
+  const includeIcu = toBooleanFlag(filters.include_icu, false) || hasIcuFilters;
 
   const where = {};
 
@@ -694,6 +1010,23 @@ const listIpdFlows = async (filters = {}, page = 1, limit = 20, sortBy = 'admitt
     where.status = { notIn: ['DISCHARGED', 'CANCELLED'] };
   }
 
+  if (includeIcu && icuQueueScope === ICU_QUEUE_SCOPES.WITH_ICU) {
+    where.icu_stays = {
+      some: {
+        deleted_at: null,
+      },
+    };
+  }
+
+  if (includeIcu && icuQueueScope === ICU_QUEUE_SCOPES.ACTIVE) {
+    where.icu_stays = {
+      some: {
+        deleted_at: null,
+        ended_at: null,
+      },
+    };
+  }
+
   const searchText = sanitizeIdentifier(filters.search);
   if (searchText) {
     where.OR = [
@@ -718,7 +1051,15 @@ const listIpdFlows = async (filters = {}, page = 1, limit = 20, sortBy = 'admitt
   }
 
   const hasDerivedFilters = Boolean(
-    filters.stage || filters.transfer_status || wardId || typeof filters.has_active_bed === 'boolean'
+    filters.stage ||
+      filters.transfer_status ||
+      wardId ||
+      typeof filters.has_active_bed === 'boolean' ||
+      (includeIcu &&
+        (filters.icu_status ||
+          filters.critical_severity ||
+          typeof filters.has_critical_alert === 'boolean' ||
+          icuQueueScope !== ICU_QUEUE_SCOPES.ALL))
   );
 
   if (hasDerivedFilters) {
@@ -726,7 +1067,7 @@ const listIpdFlows = async (filters = {}, page = 1, limit = 20, sortBy = 'admitt
       [sortBy || 'admitted_at']: direction,
     });
     const filtered = rows
-      .map((row) => buildIpdSnapshot(row))
+      .map((row) => buildIpdSnapshot(row, { include_icu: includeIcu }))
       .filter((snapshot) =>
         matchesDerivedFilters(snapshot, {
           stage: filters.stage,
@@ -734,6 +1075,10 @@ const listIpdFlows = async (filters = {}, page = 1, limit = 20, sortBy = 'admitt
           has_active_bed: filters.has_active_bed,
           ward_id: wardId,
           queue_scope: queueScope,
+          icu_queue_scope: icuQueueScope,
+          icu_status: includeIcu ? filters.icu_status : undefined,
+          critical_severity: includeIcu ? filters.critical_severity : undefined,
+          has_critical_alert: includeIcu ? filters.has_critical_alert : undefined,
         })
       );
 
@@ -758,7 +1103,7 @@ const listIpdFlows = async (filters = {}, page = 1, limit = 20, sortBy = 'admitt
   ]);
 
   return {
-    items: rows.map((row) => toQueueCardDto(buildIpdSnapshot(row))),
+    items: rows.map((row) => toQueueCardDto(buildIpdSnapshot(row, { include_icu: includeIcu }))),
     pagination: {
       page: currentPage,
       limit: currentLimit,
@@ -780,17 +1125,37 @@ const resolveLegacyRoute = async (resource, id) => {
     throw new HttpError('errors.ipd_flow.not_found', 404);
   }
 
-  const select = {
-    id: true,
-    human_friendly_id: true,
-    [config.admissionField]: true,
+  const isNestedAdmissionField = String(config.admissionField || '').includes('.');
+  let queryOptions = {
+    select: {
+      id: true,
+      human_friendly_id: true,
+      [config.admissionField]: true,
+    },
   };
 
-  const resolvedResource = await resolveByIdentifier(delegate, id, {}, select);
+  if (isNestedAdmissionField) {
+    const [relationName, relationField] = String(config.admissionField).split('.');
+    queryOptions = {
+      include: {
+        [relationName]: {
+          select: {
+            [relationField]: true,
+          },
+        },
+      },
+    };
+  }
+
+  const resolvedResource = await resolveByIdentifier(delegate, id, {}, queryOptions);
   if (!resolvedResource) throw new HttpError('errors.ipd_flow.not_found', 404);
 
   const admissionInternalId =
-    config.admissionField === 'id' ? resolvedResource.id : resolvedResource[config.admissionField];
+    config.admissionField === 'id'
+      ? resolvedResource.id
+      : isNestedAdmissionField
+        ? getNestedValue(resolvedResource, config.admissionField)
+        : resolvedResource[config.admissionField];
 
   if (!admissionInternalId) throw new HttpError('errors.ipd_flow.not_found', 404);
 
@@ -849,6 +1214,20 @@ const fetchAdmissionForMutation = async (tx, admissionId) => {
       discharge_summaries: {
         where: { deleted_at: null },
         orderBy: { updated_at: 'desc' },
+      },
+      icu_stays: {
+        where: { deleted_at: null },
+        orderBy: { started_at: 'desc' },
+        include: {
+          observations: {
+            where: { deleted_at: null },
+            orderBy: { observed_at: 'desc' },
+          },
+          alerts: {
+            where: { deleted_at: null },
+            orderBy: { created_at: 'desc' },
+          },
+        },
       },
     },
   });
@@ -1012,7 +1391,10 @@ const writeAuditLog = ({ context, admissionId, tenantId, action, after, metadata
 };
 
 const finalizeAction = async ({ result, context, metadata = {} }) => {
-  const internalSnapshot = await getIpdSnapshotByIdInternal(result.admission_id);
+  const includeIcu = toBooleanFlag(metadata?.include_icu, false);
+  const internalSnapshot = await getIpdSnapshotByIdInternal(result.admission_id, {
+    include_icu: includeIcu,
+  });
   const snapshot = toPublicIpdSnapshot(internalSnapshot);
   await publishIpdRealtimeUpdates({
     snapshot,
@@ -1032,7 +1414,10 @@ const finalizeAction = async ({ result, context, metadata = {} }) => {
     tenantId: result.tenant_id,
     action: 'UPDATE',
     after: snapshot,
-    metadata,
+    metadata: {
+      ...metadata,
+      include_icu: undefined,
+    },
   });
 
   return snapshot;
@@ -1316,6 +1701,66 @@ const resolveTransferForAction = async (tx, admission, transferRequestId = null)
   }
 
   return getOpenTransferRequest(admission);
+};
+
+const resolveIcuStayForAction = async (
+  tx,
+  admission,
+  icuStayIdentifier = null,
+  { requireActive = false, allowLatestFallback = true } = {}
+) => {
+  if (icuStayIdentifier) {
+    const resolvedStay = await resolveIcuStayByIdentifier(tx, icuStayIdentifier, admission.id);
+    if (!resolvedStay) throw new HttpError('errors.ipd_flow.icu_stay_not_found', 404);
+
+    if (requireActive && resolvedStay.ended_at) {
+      throw new HttpError('errors.ipd_flow.active_icu_stay_required', 400);
+    }
+
+    return resolvedStay;
+  }
+
+  const activeStay = getActiveIcuStay(admission);
+  if (activeStay) return activeStay;
+
+  if (requireActive) {
+    throw new HttpError('errors.ipd_flow.active_icu_stay_required', 400);
+  }
+
+  if (allowLatestFallback) {
+    const latestStay = getLatestIcuStay(admission);
+    if (latestStay) return latestStay;
+  }
+
+  return null;
+};
+
+const resolveCriticalAlertForAction = async (tx, admission, criticalAlertIdentifier = null) => {
+  if (criticalAlertIdentifier) {
+    const resolvedAlert = await resolveCriticalAlertByIdentifier(tx, criticalAlertIdentifier);
+    if (!resolvedAlert) throw new HttpError('errors.ipd_flow.critical_alert_not_found', 404);
+
+    const stay = await tx.icu_stay.findFirst({
+      where: {
+        id: resolvedAlert.icu_stay_id,
+        admission_id: admission.id,
+        deleted_at: null,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!stay) throw new HttpError('errors.ipd_flow.critical_alert_not_found', 404);
+    return resolvedAlert;
+  }
+
+  const activeStay = getActiveIcuStay(admission);
+  const activeAlerts = activeStay ? getIcuStayAlerts(activeStay) : [];
+  if (activeAlerts.length) return activeAlerts[0];
+
+  const fallbackAlerts = getIcuStays(admission).flatMap((stay) => getIcuStayAlerts(stay));
+  return fallbackAlerts[0] || null;
 };
 
 const updateTransfer = async (id, data, context = {}) => {
@@ -1704,6 +2149,244 @@ const finalizeDischarge = async (id, data, context = {}) => {
   return finalizeAction({ result, context, metadata: { operation: 'finalize_discharge' } });
 };
 
+const startIcuStay = async (id, data, context = {}) => {
+  const startedAt = toDate(data?.started_at, new Date());
+
+  const result = await prisma.$transaction(async (tx) => {
+    const resolved = await resolveAdmissionByIdentifier(tx, id);
+    if (!resolved) throw new HttpError('errors.ipd_flow.not_found', 404);
+
+    const admission = await fetchAdmissionForMutation(tx, resolved.id);
+    ensureAdmissionIsMutable(admission);
+
+    if (getActiveIcuStay(admission)) {
+      throw new HttpError('errors.ipd_flow.icu_stay_already_active', 400);
+    }
+
+    await tx.icu_stay.create({
+      data: {
+        admission_id: admission.id,
+        started_at: startedAt,
+      },
+    });
+
+    return {
+      admission_id: admission.id,
+      tenant_id: admission.tenant_id,
+      transition: {
+        action: 'START_ICU_STAY',
+        stage_from: deriveIpdStage({
+          admission,
+          activeBedAssignment: getActiveBedAssignment(admission),
+          openTransferRequest: getOpenTransferRequest(admission),
+          latestDischargeSummary: getLatestDischargeSummary(admission),
+        }),
+        stage_to: null,
+        occurred_at: startedAt.toISOString(),
+      },
+      compatibilitySignals: [],
+    };
+  });
+
+  return finalizeAction({
+    result,
+    context,
+    metadata: { operation: 'start_icu_stay', include_icu: true },
+  });
+};
+
+const endIcuStay = async (id, data, context = {}) => {
+  const endedAt = toDate(data?.ended_at, new Date());
+
+  const result = await prisma.$transaction(async (tx) => {
+    const resolved = await resolveAdmissionByIdentifier(tx, id);
+    if (!resolved) throw new HttpError('errors.ipd_flow.not_found', 404);
+
+    const admission = await fetchAdmissionForMutation(tx, resolved.id);
+    ensureAdmissionIsMutable(admission);
+
+    const stay = await resolveIcuStayForAction(tx, admission, data?.icu_stay_id, {
+      requireActive: true,
+      allowLatestFallback: false,
+    });
+
+    await tx.icu_stay.update({
+      where: { id: stay.id },
+      data: { ended_at: endedAt },
+    });
+
+    return {
+      admission_id: admission.id,
+      tenant_id: admission.tenant_id,
+      transition: {
+        action: 'END_ICU_STAY',
+        stage_from: deriveIpdStage({
+          admission,
+          activeBedAssignment: getActiveBedAssignment(admission),
+          openTransferRequest: getOpenTransferRequest(admission),
+          latestDischargeSummary: getLatestDischargeSummary(admission),
+        }),
+        stage_to: null,
+        occurred_at: endedAt.toISOString(),
+      },
+      compatibilitySignals: [],
+    };
+  });
+
+  return finalizeAction({
+    result,
+    context,
+    metadata: { operation: 'end_icu_stay', include_icu: true },
+  });
+};
+
+const addIcuObservation = async (id, data, context = {}) => {
+  const observedAt = toDate(data?.observed_at, new Date());
+  const observation = String(data?.observation || '').trim();
+  if (!observation) {
+    throw new HttpError('errors.validation.field.required', 400, [{ field: 'observation' }]);
+  }
+
+  const result = await prisma.$transaction(async (tx) => {
+    const resolved = await resolveAdmissionByIdentifier(tx, id);
+    if (!resolved) throw new HttpError('errors.ipd_flow.not_found', 404);
+
+    const admission = await fetchAdmissionForMutation(tx, resolved.id);
+    ensureAdmissionIsMutable(admission);
+
+    const stay = await resolveIcuStayForAction(tx, admission, data?.icu_stay_id, {
+      requireActive: true,
+      allowLatestFallback: false,
+    });
+
+    await tx.icu_observation.create({
+      data: {
+        icu_stay_id: stay.id,
+        observed_at: observedAt,
+        observation,
+      },
+    });
+
+    return {
+      admission_id: admission.id,
+      tenant_id: admission.tenant_id,
+      transition: {
+        action: 'ADD_ICU_OBSERVATION',
+        stage_from: deriveIpdStage({
+          admission,
+          activeBedAssignment: getActiveBedAssignment(admission),
+          openTransferRequest: getOpenTransferRequest(admission),
+          latestDischargeSummary: getLatestDischargeSummary(admission),
+        }),
+        stage_to: null,
+        occurred_at: observedAt.toISOString(),
+      },
+      compatibilitySignals: [],
+    };
+  });
+
+  return finalizeAction({
+    result,
+    context,
+    metadata: { operation: 'add_icu_observation', include_icu: true },
+  });
+};
+
+const addCriticalAlert = async (id, data, context = {}) => {
+  const message = String(data?.message || '').trim();
+  const severity = String(data?.severity || '').trim().toUpperCase();
+  if (!message) {
+    throw new HttpError('errors.validation.field.required', 400, [{ field: 'message' }]);
+  }
+
+  const result = await prisma.$transaction(async (tx) => {
+    const resolved = await resolveAdmissionByIdentifier(tx, id);
+    if (!resolved) throw new HttpError('errors.ipd_flow.not_found', 404);
+
+    const admission = await fetchAdmissionForMutation(tx, resolved.id);
+    ensureAdmissionIsMutable(admission);
+
+    const stay = await resolveIcuStayForAction(tx, admission, data?.icu_stay_id, {
+      requireActive: true,
+      allowLatestFallback: false,
+    });
+
+    await tx.critical_alert.create({
+      data: {
+        icu_stay_id: stay.id,
+        severity,
+        message,
+      },
+    });
+
+    return {
+      admission_id: admission.id,
+      tenant_id: admission.tenant_id,
+      transition: {
+        action: 'ADD_CRITICAL_ALERT',
+        stage_from: deriveIpdStage({
+          admission,
+          activeBedAssignment: getActiveBedAssignment(admission),
+          openTransferRequest: getOpenTransferRequest(admission),
+          latestDischargeSummary: getLatestDischargeSummary(admission),
+        }),
+        stage_to: null,
+        occurred_at: new Date().toISOString(),
+      },
+      compatibilitySignals: [],
+    };
+  });
+
+  return finalizeAction({
+    result,
+    context,
+    metadata: { operation: 'add_critical_alert', include_icu: true },
+  });
+};
+
+const resolveCriticalAlert = async (id, data, context = {}) => {
+  const result = await prisma.$transaction(async (tx) => {
+    const resolved = await resolveAdmissionByIdentifier(tx, id);
+    if (!resolved) throw new HttpError('errors.ipd_flow.not_found', 404);
+
+    const admission = await fetchAdmissionForMutation(tx, resolved.id);
+    ensureAdmissionIsMutable(admission);
+
+    const alert = await resolveCriticalAlertForAction(tx, admission, data?.critical_alert_id);
+    if (!alert) throw new HttpError('errors.ipd_flow.critical_alert_not_found', 404);
+
+    await tx.critical_alert.update({
+      where: { id: alert.id },
+      data: {
+        deleted_at: new Date(),
+      },
+    });
+
+    return {
+      admission_id: admission.id,
+      tenant_id: admission.tenant_id,
+      transition: {
+        action: 'RESOLVE_CRITICAL_ALERT',
+        stage_from: deriveIpdStage({
+          admission,
+          activeBedAssignment: getActiveBedAssignment(admission),
+          openTransferRequest: getOpenTransferRequest(admission),
+          latestDischargeSummary: getLatestDischargeSummary(admission),
+        }),
+        stage_to: null,
+        occurred_at: new Date().toISOString(),
+      },
+      compatibilitySignals: [],
+    };
+  });
+
+  return finalizeAction({
+    result,
+    context,
+    metadata: { operation: 'resolve_critical_alert', include_icu: true },
+  });
+};
+
 const emitAdmissionRefreshEvent = async (admissionIdentifier, context = {}) => {
   const normalized = sanitizeIdentifier(admissionIdentifier);
   if (!normalized) return null;
@@ -1746,5 +2429,10 @@ module.exports = {
   addMedicationAdministration,
   planDischarge,
   finalizeDischarge,
+  startIcuStay,
+  endIcuStay,
+  addIcuObservation,
+  addCriticalAlert,
+  resolveCriticalAlert,
   emitAdmissionRefreshEvent,
 };

@@ -9,7 +9,7 @@
 
 const { z } = require('zod');
 const { 
-  uuidSchema, 
+  uuidOrFriendlyIdentifierSchema,
   listQuerySchema
 } = require('@lib/validation/zod');
 
@@ -20,7 +20,7 @@ const {
  * Used for POST /icu-observations endpoint
  */
 const createIcuObservationSchema = z.object({
-  icu_stay_id: uuidSchema,
+  icu_stay_id: uuidOrFriendlyIdentifierSchema,
   observed_at: z.string().datetime().optional(),
   observation: z.string().trim().min(1).max(5000)
 });
@@ -42,7 +42,7 @@ const updateIcuObservationSchema = z.object({
  * Used for GET /:id, PUT /:id, and DELETE /:id endpoints
  */
 const icuObservationIdParamsSchema = z.object({
-  id: uuidSchema
+  id: uuidOrFriendlyIdentifierSchema
 });
 
 // ==================== Query Params ====================
@@ -53,7 +53,7 @@ const icuObservationIdParamsSchema = z.object({
  * Extends base listQuerySchema with icu-observation-specific filters
  */
 const listIcuObservationsQuerySchema = listQuerySchema.extend({
-  icu_stay_id: uuidSchema.optional(),
+  icu_stay_id: uuidOrFriendlyIdentifierSchema.optional(),
   observed_at_from: z.string().datetime().optional(),
   observed_at_to: z.string().datetime().optional(),
   search: z.string().trim().optional()

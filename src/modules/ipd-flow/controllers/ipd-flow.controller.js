@@ -25,6 +25,11 @@ const listIpdFlows = asyncHandler(async (req, res) => {
     ward_id,
     transfer_status,
     has_active_bed,
+    include_icu,
+    icu_queue_scope,
+    icu_status,
+    critical_severity,
+    has_critical_alert,
     search,
     page = DEFAULT_PAGE,
     limit = DEFAULT_PAGE_LIMIT,
@@ -42,6 +47,11 @@ const listIpdFlows = asyncHandler(async (req, res) => {
       ward_id,
       transfer_status,
       has_active_bed,
+      include_icu,
+      icu_queue_scope,
+      icu_status,
+      critical_severity,
+      has_critical_alert,
       search,
     },
     Number(page),
@@ -54,7 +64,9 @@ const listIpdFlows = asyncHandler(async (req, res) => {
 });
 
 const getIpdFlowById = asyncHandler(async (req, res) => {
-  const flow = await ipdFlowService.getIpdFlowById(req.params.id);
+  const flow = await ipdFlowService.getIpdFlowById(req.params.id, {
+    include_icu: req.query?.include_icu,
+  });
   return sendSuccess(res, 200, 'messages.ipd_flow.get.success', flow);
 });
 
@@ -122,6 +134,31 @@ const finalizeDischarge = asyncHandler(async (req, res) => {
   return sendSuccess(res, 200, 'messages.ipd_flow.finalize_discharge.success', flow);
 });
 
+const startIcuStay = asyncHandler(async (req, res) => {
+  const flow = await ipdFlowService.startIcuStay(req.params.id, req.body, buildAuditContext(req));
+  return sendSuccess(res, 200, 'messages.ipd_flow.start_icu_stay.success', flow);
+});
+
+const endIcuStay = asyncHandler(async (req, res) => {
+  const flow = await ipdFlowService.endIcuStay(req.params.id, req.body, buildAuditContext(req));
+  return sendSuccess(res, 200, 'messages.ipd_flow.end_icu_stay.success', flow);
+});
+
+const addIcuObservation = asyncHandler(async (req, res) => {
+  const flow = await ipdFlowService.addIcuObservation(req.params.id, req.body, buildAuditContext(req));
+  return sendSuccess(res, 200, 'messages.ipd_flow.add_icu_observation.success', flow);
+});
+
+const addCriticalAlert = asyncHandler(async (req, res) => {
+  const flow = await ipdFlowService.addCriticalAlert(req.params.id, req.body, buildAuditContext(req));
+  return sendSuccess(res, 200, 'messages.ipd_flow.add_critical_alert.success', flow);
+});
+
+const resolveCriticalAlert = asyncHandler(async (req, res) => {
+  const flow = await ipdFlowService.resolveCriticalAlert(req.params.id, req.body, buildAuditContext(req));
+  return sendSuccess(res, 200, 'messages.ipd_flow.resolve_critical_alert.success', flow);
+});
+
 module.exports = {
   listIpdFlows,
   resolveLegacyRoute,
@@ -136,4 +173,9 @@ module.exports = {
   addMedicationAdministration,
   planDischarge,
   finalizeDischarge,
+  startIcuStay,
+  endIcuStay,
+  addIcuObservation,
+  addCriticalAlert,
+  resolveCriticalAlert,
 };

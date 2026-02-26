@@ -10,6 +10,7 @@ const { authenticate, authorize } = require('@middlewares/auth.middleware');
 const { ROLES } = require('@config/roles');
 const {
   listIpdFlowsQuerySchema,
+  getIpdFlowQuerySchema,
   resolveLegacyRouteParamsSchema,
   admissionIdParamsSchema,
   startIpdFlowSchema,
@@ -22,6 +23,11 @@ const {
   addMedicationAdministrationSchema,
   planDischargeSchema,
   finalizeDischargeSchema,
+  startIcuStaySchema,
+  endIcuStaySchema,
+  addIcuObservationSchema,
+  addCriticalAlertSchema,
+  resolveCriticalAlertSchema,
 } = require('@validations/ipd-flow/ipd-flow.schema');
 
 const IPD_ALLOWED_ROLES = [
@@ -50,7 +56,7 @@ router.get(
 
 router.get(
   '/:id',
-  validateRequest({ params: admissionIdParamsSchema }),
+  validateRequest({ params: admissionIdParamsSchema, query: getIpdFlowQuerySchema }),
   authenticate(),
   authorize(IPD_ALLOWED_ROLES, 'role'),
   ipdFlowController.getIpdFlowById
@@ -134,6 +140,46 @@ router.post(
   authenticate(),
   authorize(IPD_ALLOWED_ROLES, 'role'),
   ipdFlowController.finalizeDischarge
+);
+
+router.post(
+  '/:id/start-icu-stay',
+  validateRequest({ params: admissionIdParamsSchema, body: startIcuStaySchema }),
+  authenticate(),
+  authorize(IPD_ALLOWED_ROLES, 'role'),
+  ipdFlowController.startIcuStay
+);
+
+router.post(
+  '/:id/end-icu-stay',
+  validateRequest({ params: admissionIdParamsSchema, body: endIcuStaySchema }),
+  authenticate(),
+  authorize(IPD_ALLOWED_ROLES, 'role'),
+  ipdFlowController.endIcuStay
+);
+
+router.post(
+  '/:id/add-icu-observation',
+  validateRequest({ params: admissionIdParamsSchema, body: addIcuObservationSchema }),
+  authenticate(),
+  authorize(IPD_ALLOWED_ROLES, 'role'),
+  ipdFlowController.addIcuObservation
+);
+
+router.post(
+  '/:id/add-critical-alert',
+  validateRequest({ params: admissionIdParamsSchema, body: addCriticalAlertSchema }),
+  authenticate(),
+  authorize(IPD_ALLOWED_ROLES, 'role'),
+  ipdFlowController.addCriticalAlert
+);
+
+router.post(
+  '/:id/resolve-critical-alert',
+  validateRequest({ params: admissionIdParamsSchema, body: resolveCriticalAlertSchema }),
+  authenticate(),
+  authorize(IPD_ALLOWED_ROLES, 'role'),
+  ipdFlowController.resolveCriticalAlert
 );
 
 module.exports = router;

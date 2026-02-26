@@ -46,6 +46,9 @@ const transferStatusSchema = z.enum(['REQUESTED', 'APPROVED', 'IN_PROGRESS', 'CO
 const transferActionSchema = z.enum(['APPROVE', 'START', 'COMPLETE', 'CANCEL']);
 const medicationRouteSchema = z.enum(['ORAL', 'IV', 'IM', 'TOPICAL', 'INHALATION', 'OTHER']);
 const queueScopeSchema = z.enum(['ACTIVE', 'ALL']);
+const icuQueueScopeSchema = z.enum(['ALL', 'WITH_ICU', 'ACTIVE']).optional().default('ALL');
+const icuStatusSchema = z.enum(['ACTIVE', 'ENDED', 'NONE']);
+const criticalSeveritySchema = z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']);
 const legacyResourceSchema = z.enum([
   'admissions',
   'bed-assignments',
@@ -54,7 +57,31 @@ const legacyResourceSchema = z.enum([
   'medication-administrations',
   'discharge-summaries',
   'transfer-requests',
+  'icu-stays',
+  'icu-observations',
+  'critical-alerts',
 ]);
+
+const booleanFlagSchema = z
+  .union([
+    z.boolean(),
+    z
+      .string()
+      .trim()
+      .min(1)
+      .transform((value, ctx) => {
+        const parsed = parseBooleanString(value);
+        if (parsed === null) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Invalid boolean flag',
+          });
+          return z.NEVER;
+        }
+        return parsed;
+      }),
+  ])
+  .optional();
 
 const listIpdFlowsQuerySchema = listQuerySchema.extend({
   tenant_id: identifierSchema.optional(),
@@ -64,26 +91,12 @@ const listIpdFlowsQuerySchema = listQuerySchema.extend({
   stage: workflowStageSchema.optional(),
   ward_id: identifierSchema.optional(),
   transfer_status: transferStatusSchema.optional(),
-  has_active_bed: z
-    .union([
-      z.boolean(),
-      z
-        .string()
-        .trim()
-        .min(1)
-        .transform((value, ctx) => {
-          const parsed = parseBooleanString(value);
-          if (parsed === null) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: 'Invalid boolean flag',
-            });
-            return z.NEVER;
-          }
-          return parsed;
-        }),
-    ])
-    .optional(),
+  has_active_bed: booleanFlagSchema,
+  include_icu: booleanFlagSchema,
+  icu_queue_scope: icuQueueScopeSchema,
+  icu_status: icuStatusSchema.optional(),
+  critical_severity: criticalSeveritySchema.optional(),
+  has_critical_alert: booleanFlagSchema,
   search: z.string().trim().optional(),
 });
 
@@ -94,6 +107,10 @@ const admissionIdParamsSchema = z.object({
 const resolveLegacyRouteParamsSchema = z.object({
   resource: legacyResourceSchema,
   id: identifierSchema,
+});
+
+const getIpdFlowQuerySchema = z.object({
+  include_icu: booleanFlagSchema,
 });
 
 const startIpdFlowSchema = z.object({
@@ -162,8 +179,34 @@ const finalizeDischargeSchema = z.object({
   discharged_at: z.string().datetime().optional(),
 });
 
+const startIcuStaySchema = z.object({
+  started_at: z.string().datetime().optional(),
+});
+
+const endIcuStaySchema = z.object({
+  icu_stay_id: optionalIdentifierSchema,
+  ended_at: z.string().datetime().optional(),
+});
+
+const addIcuObservationSchema = z.object({
+  icu_stay_id: optionalIdentifierSchema,
+  observed_at: z.string().datetime().optional(),
+  observation: z.string().trim().min(1).max(5000),
+});
+
+const addCriticalAlertSchema = z.object({
+  icu_stay_id: optionalIdentifierSchema,
+  severity: criticalSeveritySchema,
+  message: z.string().trim().min(1).max(2000),
+});
+
+const resolveCriticalAlertSchema = z.object({
+  critical_alert_id: optionalIdentifierSchema,
+});
+
 module.exports = {
   listIpdFlowsQuerySchema,
+  getIpdFlowQuerySchema,
   admissionIdParamsSchema,
   startIpdFlowSchema,
   assignBedSchema,
@@ -175,9 +218,17 @@ module.exports = {
   addMedicationAdministrationSchema,
   planDischargeSchema,
   finalizeDischargeSchema,
+  startIcuStaySchema,
+  endIcuStaySchema,
+  addIcuObservationSchema,
+  addCriticalAlertSchema,
+  resolveCriticalAlertSchema,
   workflowStageSchema,
   transferActionSchema,
   queueScopeSchema,
+  icuQueueScopeSchema,
+  icuStatusSchema,
+  criticalSeveritySchema,
   legacyResourceSchema,
   resolveLegacyRouteParamsSchema,
 };

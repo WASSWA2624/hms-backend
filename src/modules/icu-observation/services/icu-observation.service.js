@@ -10,6 +10,59 @@
 const icuObservationRepository = require('@repositories/icu-observation/icu-observation.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
+const { resolveModelIdByIdentifier } = require('@lib/identifiers/resolve-entity-id');
+
+const ICU_OBSERVATION_INCLUDE = {
+  icu_stay: {
+    select: {
+      id: true,
+      human_friendly_id: true,
+      admission: {
+        select: {
+          id: true,
+          human_friendly_id: true,
+          patient: {
+            select: {
+              id: true,
+              human_friendly_id: true,
+              first_name: true,
+              last_name: true,
+            },
+          },
+        },
+      },
+    },
+  },
+};
+
+const mapIcuObservationRecord = (record) => {
+  if (!record) return record;
+  return {
+    ...record,
+    display_id: record.human_friendly_id || null,
+    icu_stay_display_id: record.icu_stay?.human_friendly_id || null,
+    admission_display_id: record.icu_stay?.admission?.human_friendly_id || null,
+    patient_display_id: record.icu_stay?.admission?.patient?.human_friendly_id || null,
+    patient_display_name: [record.icu_stay?.admission?.patient?.first_name, record.icu_stay?.admission?.patient?.last_name]
+      .filter(Boolean)
+      .join(' ')
+      .trim() || null,
+  };
+};
+
+const resolveIcuObservationId = async (identifier) =>
+  resolveModelIdByIdentifier({
+    model: 'icu_observation',
+    identifier,
+    select: { id: true },
+  });
+
+const resolveIcuStayId = async (identifier) =>
+  resolveModelIdByIdentifier({
+    model: 'icu_stay',
+    identifier,
+    select: { id: true },
+  });
 
 /**
  * List ICU observations with pagination and filtering
@@ -31,7 +84,23 @@ const listIcuObservations = async (filters, page, limit, sortBy, order, userId, 
     // Build filter object
     const whereClause = {};
     
-    if (filters.icu_stay_id) whereClause.icu_stay_id = filters.icu_stay_id;
+    if (filters.icu_stay_id) {
+      const resolvedIcuStayId = await resolveIcuStayId(filters.icu_stay_id);
+      if (!resolvedIcuStayId) {
+        return {
+          icu_observations: [],
+          pagination: {
+            page,
+            limit,
+            total: 0,
+            totalPages: 0,
+            hasNextPage: false,
+            hasPreviousPage: page > 1
+          }
+        };
+      }
+      whereClause.icu_stay_id = resolvedIcuStayId;
+    }
     
     // Date range filters for observed_at
     if (filters.observed_at_from || filters.observed_at_to) {
@@ -46,12 +115,12 @@ const listIcuObservations = async (filters, page, limit, sortBy, order, userId, 
     }
 
     const [icuObservations, total] = await Promise.all([
-      icuObservationRepository.findMany(whereClause, skip, limit, orderBy),
+      icuObservationRepository.findMany(whereClause, skip, limit, orderBy, ICU_OBSERVATION_INCLUDE),
       icuObservationRepository.count(whereClause)
     ]);
 
     return {
-      icu_observations: icuObservations,
+      icu_observations: icuObservations.map(mapIcuObservationRecord),
       pagination: {
         page,
         limit,
@@ -77,13 +146,21 @@ const listIcuObservations = async (filters, page, limit, sortBy, order, userId, 
  */
 const getIcuObservationById = async (id, userId, ipAddress) => {
   try {
-    const icuObservation = await icuObservationRepository.findById(id);
+    const resolvedIcuObservationId = await resolveIcuObservationId(id);
+    if (!resolvedIcuObservationId) {
+      throw new HttpError('errors.icu_observation.not_found', 404);
+    }
+
+    const icuObservation = await icuObservationRepository.findById(
+      resolvedIcuObservationId,
+      ICU_OBSERVATION_INCLUDE
+    );
 
     if (!icuObservation) {
       throw new HttpError('errors.icu_observation.not_found', 404);
     }
 
-    return icuObservation;
+    return mapIcuObservationRecord(icuObservation);
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
@@ -101,7 +178,20 @@ const getIcuObservationById = async (id, userId, ipAddress) => {
  */
 const createIcuObservation = async (data, userId, ipAddress) => {
   try {
-    const icuObservation = await icuObservationRepository.create(data);
+    const resolvedIcuStayId = await resolveIcuStayId(data?.icu_stay_id);
+    if (!resolvedIcuStayId) {
+      throw new HttpError('errors.icu_stay.not_found', 404, [{ field: 'icu_stay_id' }]);
+    }
+
+    const payload = {
+      ...data,
+      icu_stay_id: resolvedIcuStayId,
+    };
+
+    const createdIcuObservation = await icuObservationRepository.create(payload);
+    const icuObservation =
+      (await icuObservationRepository.findById(createdIcuObservation.id, ICU_OBSERVATION_INCLUDE)) ||
+      createdIcuObservation;
 
     // Create audit log (non-blocking)
     createAuditLog({
@@ -113,7 +203,7 @@ const createIcuObservation = async (data, userId, ipAddress) => {
       ip_address: ipAddress
     }).catch(() => {});
 
-    return icuObservation;
+    return mapIcuObservationRecord(icuObservation);
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
@@ -132,14 +222,25 @@ const createIcuObservation = async (data, userId, ipAddress) => {
  */
 const updateIcuObservation = async (id, data, userId, ipAddress) => {
   try {
+    const resolvedIcuObservationId = await resolveIcuObservationId(id);
+    if (!resolvedIcuObservationId) {
+      throw new HttpError('errors.icu_observation.not_found', 404);
+    }
+
     // Get current state for audit
-    const before = await icuObservationRepository.findById(id);
+    const before = await icuObservationRepository.findById(
+      resolvedIcuObservationId,
+      ICU_OBSERVATION_INCLUDE
+    );
 
     if (!before) {
       throw new HttpError('errors.icu_observation.not_found', 404);
     }
 
-    const icuObservation = await icuObservationRepository.update(id, data);
+    const updatedIcuObservation = await icuObservationRepository.update(resolvedIcuObservationId, data);
+    const icuObservation =
+      (await icuObservationRepository.findById(updatedIcuObservation.id, ICU_OBSERVATION_INCLUDE)) ||
+      updatedIcuObservation;
 
     // Create audit log (non-blocking)
     createAuditLog({
@@ -151,7 +252,7 @@ const updateIcuObservation = async (id, data, userId, ipAddress) => {
       ip_address: ipAddress
     }).catch(() => {});
 
-    return icuObservation;
+    return mapIcuObservationRecord(icuObservation);
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
@@ -169,21 +270,29 @@ const updateIcuObservation = async (id, data, userId, ipAddress) => {
  */
 const deleteIcuObservation = async (id, userId, ipAddress) => {
   try {
+    const resolvedIcuObservationId = await resolveIcuObservationId(id);
+    if (!resolvedIcuObservationId) {
+      throw new HttpError('errors.icu_observation.not_found', 404);
+    }
+
     // Get current state for audit
-    const before = await icuObservationRepository.findById(id);
+    const before = await icuObservationRepository.findById(
+      resolvedIcuObservationId,
+      ICU_OBSERVATION_INCLUDE
+    );
 
     if (!before) {
       throw new HttpError('errors.icu_observation.not_found', 404);
     }
 
-    await icuObservationRepository.softDelete(id);
+    await icuObservationRepository.softDelete(resolvedIcuObservationId);
 
     // Create audit log (non-blocking)
     createAuditLog({
       user_id: userId,
       action: 'DELETE',
       entity: 'icu_observation',
-      entity_id: id,
+      entity_id: resolvedIcuObservationId,
       diff: { before },
       ip_address: ipAddress
     }).catch(() => {});

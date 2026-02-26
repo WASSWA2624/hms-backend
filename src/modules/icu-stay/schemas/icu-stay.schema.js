@@ -9,7 +9,7 @@
 
 const { z } = require('zod');
 const { 
-  uuidSchema, 
+  uuidOrFriendlyIdentifierSchema,
   listQuerySchema
 } = require('@lib/validation/zod');
 
@@ -20,7 +20,7 @@ const {
  * Used for POST /icu-stays endpoint
  */
 const createIcuStaySchema = z.object({
-  admission_id: uuidSchema,
+  admission_id: uuidOrFriendlyIdentifierSchema,
   started_at: z.string().datetime().optional(),
   ended_at: z.string().datetime().optional().nullable()
 });
@@ -42,7 +42,7 @@ const updateIcuStaySchema = z.object({
  * Used for GET /:id, PUT /:id, and DELETE /:id endpoints
  */
 const icuStayIdParamsSchema = z.object({
-  id: uuidSchema
+  id: uuidOrFriendlyIdentifierSchema
 });
 
 // ==================== Query Params ====================
@@ -53,7 +53,7 @@ const icuStayIdParamsSchema = z.object({
  * Extends base listQuerySchema with icu-stay-specific filters
  */
 const listIcuStaysQuerySchema = listQuerySchema.extend({
-  admission_id: uuidSchema.optional(),
+  admission_id: uuidOrFriendlyIdentifierSchema.optional(),
   started_at_from: z.string().datetime().optional(),
   started_at_to: z.string().datetime().optional(),
   ended_at_from: z.string().datetime().optional(),

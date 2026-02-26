@@ -9,7 +9,7 @@
 
 const { z } = require('zod');
 const { 
-  uuidSchema, 
+  uuidOrFriendlyIdentifierSchema,
   listQuerySchema
 } = require('@lib/validation/zod');
 
@@ -20,7 +20,7 @@ const {
  * Used for POST /critical-alerts endpoint
  */
 const createCriticalAlertSchema = z.object({
-  icu_stay_id: uuidSchema,
+  icu_stay_id: uuidOrFriendlyIdentifierSchema,
   severity: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']),
   message: z.string().trim().min(1).max(2000)
 });
@@ -42,7 +42,7 @@ const updateCriticalAlertSchema = z.object({
  * Used for GET /:id, PUT /:id, and DELETE /:id endpoints
  */
 const criticalAlertIdParamsSchema = z.object({
-  id: uuidSchema
+  id: uuidOrFriendlyIdentifierSchema
 });
 
 // ==================== Query Params ====================
@@ -53,7 +53,7 @@ const criticalAlertIdParamsSchema = z.object({
  * Extends base listQuerySchema with critical-alert-specific filters
  */
 const listCriticalAlertsQuerySchema = listQuerySchema.extend({
-  icu_stay_id: uuidSchema.optional(),
+  icu_stay_id: uuidOrFriendlyIdentifierSchema.optional(),
   severity: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).optional(),
   search: z.string().trim().optional()
 });

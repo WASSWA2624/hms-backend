@@ -2,11 +2,17 @@ const {
   listIpdFlowsQuerySchema,
   admissionIdParamsSchema,
   resolveLegacyRouteParamsSchema,
+  getIpdFlowQuerySchema,
   startIpdFlowSchema,
   assignBedSchema,
   requestTransferSchema,
   updateTransferSchema,
   planDischargeSchema,
+  startIcuStaySchema,
+  endIcuStaySchema,
+  addIcuObservationSchema,
+  addCriticalAlertSchema,
+  resolveCriticalAlertSchema,
 } = require('@validations/ipd-flow/ipd-flow.schema');
 
 describe('ipd-flow.schema', () => {
@@ -27,10 +33,30 @@ describe('ipd-flow.schema', () => {
 
   it('validates resolve-legacy route params', () => {
     const result = resolveLegacyRouteParamsSchema.safeParse({
-      resource: 'transfer-requests',
+      resource: 'critical-alerts',
       id: 'TRN0000001',
     });
     expect(result.success).toBe(true);
+  });
+
+  it('validates ICU-aware list filters', () => {
+    const result = listIpdFlowsQuerySchema.safeParse({
+      include_icu: 'true',
+      icu_queue_scope: 'WITH_ICU',
+      icu_status: 'ACTIVE',
+      critical_severity: 'CRITICAL',
+      has_critical_alert: 'true',
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.data.include_icu).toBe(true);
+    expect(result.data.has_critical_alert).toBe(true);
+  });
+
+  it('validates get query include_icu flag', () => {
+    const result = getIpdFlowQuerySchema.safeParse({ include_icu: 'true' });
+    expect(result.success).toBe(true);
+    expect(result.data.include_icu).toBe(true);
   });
 
   it('accepts UUID and HFID identifiers in admission params', () => {
@@ -73,6 +99,43 @@ describe('ipd-flow.schema', () => {
 
   it('validates discharge planning payload', () => {
     const result = planDischargeSchema.safeParse({ summary: 'Stable, continue oral meds.' });
+    expect(result.success).toBe(true);
+  });
+
+  it('validates start ICU stay payload', () => {
+    const result = startIcuStaySchema.safeParse({ started_at: '2026-01-01T10:00:00.000Z' });
+    expect(result.success).toBe(true);
+  });
+
+  it('validates end ICU stay payload', () => {
+    const result = endIcuStaySchema.safeParse({
+      icu_stay_id: 'ICU0000001',
+      ended_at: '2026-01-01T10:00:00.000Z',
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('validates add ICU observation payload', () => {
+    const result = addIcuObservationSchema.safeParse({
+      icu_stay_id: 'ICU0000001',
+      observation: 'Stable oxygen saturation',
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('validates add critical alert payload', () => {
+    const result = addCriticalAlertSchema.safeParse({
+      icu_stay_id: 'ICU0000001',
+      severity: 'HIGH',
+      message: 'Escalating blood pressure trend',
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('validates resolve critical alert payload', () => {
+    const result = resolveCriticalAlertSchema.safeParse({
+      critical_alert_id: 'CAL0000001',
+    });
     expect(result.success).toBe(true);
   });
 });

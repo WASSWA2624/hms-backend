@@ -166,6 +166,35 @@ const BASE_INCLUDE = {
     },
     take: 20,
   },
+  icu_stays: {
+    where: {
+      deleted_at: null,
+    },
+    orderBy: {
+      started_at: 'desc',
+    },
+    take: 15,
+    include: {
+      observations: {
+        where: {
+          deleted_at: null,
+        },
+        orderBy: {
+          observed_at: 'desc',
+        },
+        take: 40,
+      },
+      alerts: {
+        where: {
+          deleted_at: null,
+        },
+        orderBy: {
+          created_at: 'desc',
+        },
+        take: 40,
+      },
+    },
+  },
 };
 
 const findById = async (id, include = {}) => {
