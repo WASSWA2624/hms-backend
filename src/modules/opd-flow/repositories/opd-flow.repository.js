@@ -10,11 +10,50 @@
 const prisma = require('@prisma/client');
 const { HttpError } = require('@lib/errors');
 
+const PROVIDER_PROFILE_SELECT = {
+  first_name: true,
+  middle_name: true,
+  last_name: true
+};
+
+const PROVIDER_STAFF_PROFILE_SELECT = {
+  id: true,
+  human_friendly_id: true,
+  staff_number: true,
+  position: true,
+  practitioner_type: true,
+  consultation_fee: true,
+  consultation_currency: true,
+  deleted_at: true
+};
+
+const PROVIDER_SELECT = {
+  id: true,
+  human_friendly_id: true,
+  tenant_id: true,
+  facility_id: true,
+  email: true,
+  phone: true,
+  status: true,
+  created_at: true,
+  updated_at: true,
+  deleted_at: true,
+  version: true,
+  profile: {
+    select: PROVIDER_PROFILE_SELECT
+  },
+  staff_profile: {
+    select: PROVIDER_STAFF_PROFILE_SELECT
+  }
+};
+
 const BASE_INCLUDE = {
   tenant: true,
   facility: true,
   patient: true,
-  provider: true
+  provider: {
+    select: PROVIDER_SELECT
+  }
 };
 
 /**

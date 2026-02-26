@@ -114,7 +114,7 @@ describe('opd-flow.service search filters', () => {
     const where = opdFlowRepository.findMany.mock.calls[0][0];
     expect(where.encounter_type).toBe('OPD');
     expect(where.extension_json).toEqual({
-      path: ['opd_flow', 'stage'],
+      path: '$.opd_flow.stage',
       equals: 'WAITING_VITALS',
     });
     expect(Array.isArray(where.AND)).toBe(true);

@@ -41,6 +41,49 @@ const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const BLOOD_PRESSURE_VALUE_REGEX = /^(\d{2,3}(?:\.\d{1,2})?)\s*\/\s*(\d{2,3}(?:\.\d{1,2})?)$/;
 const MAX_OPD_SEARCH_TOKENS = 6;
+const OPD_FLOW_STAGE_JSON_PATH = '$.opd_flow.stage';
+const OPD_FLOW_APPOINTMENT_ID_JSON_PATH = '$.opd_flow.appointment_id';
+
+const PROVIDER_PROFILE_SELECT = {
+  first_name: true,
+  middle_name: true,
+  last_name: true
+};
+
+const PROVIDER_STAFF_PROFILE_SELECT = {
+  id: true,
+  human_friendly_id: true,
+  staff_number: true,
+  position: true,
+  practitioner_type: true,
+  consultation_fee: true,
+  consultation_currency: true,
+  deleted_at: true
+};
+
+const PROVIDER_SELECT = {
+  id: true,
+  human_friendly_id: true,
+  tenant_id: true,
+  facility_id: true,
+  email: true,
+  phone: true,
+  status: true,
+  created_at: true,
+  updated_at: true,
+  deleted_at: true,
+  version: true,
+  profile: {
+    select: PROVIDER_PROFILE_SELECT
+  },
+  staff_profile: {
+    select: PROVIDER_STAFF_PROFILE_SELECT
+  }
+};
+
+const PROVIDER_INCLUDE = {
+  select: PROVIDER_SELECT
+};
 
 const TRIAGE_ALIAS_MAP = {
   IMMEDIATE: 'LEVEL_1',
@@ -55,6 +98,10 @@ const TRIAGE_ALIAS_MAP = {
 };
 
 const normalizeIdentifier = (value) => (typeof value === 'string' ? value.trim() : '');
+const buildOpdFlowJsonFilter = (jsonPath, equalsValue) => ({
+  path: jsonPath,
+  equals: equalsValue
+});
 
 const normalizeSearchTokens = (search) =>
   String(search || '')
@@ -207,9 +254,7 @@ const resolveProviderByIdentifier = async (tx, identifier, tenantId = null, faci
 
   return tx.user.findFirst({
     where,
-    include: {
-      staff_profile: true
-    }
+    select: PROVIDER_SELECT
   });
 };
 
@@ -847,10 +892,7 @@ const buildEncounterWhereClause = (filters = {}) => {
   if (filters.provider_user_id) where.provider_user_id = filters.provider_user_id;
   if (filters.encounter_type) where.encounter_type = filters.encounter_type;
   if (filters.stage) {
-    where.extension_json = {
-      path: ['opd_flow', 'stage'],
-      equals: filters.stage
-    };
+    where.extension_json = buildOpdFlowJsonFilter(OPD_FLOW_STAGE_JSON_PATH, filters.stage);
   }
 
   const queueScope = String(filters.queue_scope || QUEUE_SCOPES.ALL).trim().toUpperCase();
@@ -865,10 +907,7 @@ const buildEncounterWhereClause = (filters = {}) => {
       { provider_user_id: null },
       {
         OR: WAITING_QUEUE_STAGES.map((stage) => ({
-          extension_json: {
-            path: ['opd_flow', 'stage'],
-            equals: stage
-          }
+          extension_json: buildOpdFlowJsonFilter(OPD_FLOW_STAGE_JSON_PATH, stage)
         }))
       }
     );
@@ -893,7 +932,7 @@ const getOpdFlowById = async (id) => {
         tenant: true,
         facility: true,
         patient: true,
-        provider: true,
+        provider: PROVIDER_INCLUDE,
         vital_signs: { where: { deleted_at: null }, orderBy: { recorded_at: 'asc' } },
         clinical_notes: { where: { deleted_at: null }, orderBy: { created_at: 'asc' } },
         diagnoses: { where: { deleted_at: null }, orderBy: { created_at: 'asc' } },
@@ -936,13 +975,13 @@ const getOpdFlowById = async (id) => {
         flow.visit_queue_id
           ? tx.visit_queue.findFirst({
               where: { id: flow.visit_queue_id, deleted_at: null },
-              include: { provider: true, facility: true, appointment: true }
+              include: { provider: PROVIDER_INCLUDE, facility: true, appointment: true }
             })
           : null,
         flow.appointment_id
           ? tx.appointment.findFirst({
               where: { id: flow.appointment_id, deleted_at: null },
-              include: { provider: true, facility: true }
+              include: { provider: PROVIDER_INCLUDE, facility: true }
             })
           : null,
         flow.consultation?.invoice_id
@@ -1279,10 +1318,7 @@ const startOpdFlow = async (data, context = {}) => {
           deleted_at: null,
           status: 'OPEN',
           encounter_type: { in: ['OPD', 'EMERGENCY'] },
-          extension_json: {
-            path: ['opd_flow', 'appointment_id'],
-            equals: appointment.id
-          }
+          extension_json: buildOpdFlowJsonFilter(OPD_FLOW_APPOINTMENT_ID_JSON_PATH, appointment.id)
         },
         select: { id: true }
       });
@@ -1582,7 +1618,7 @@ const startOpdFlow = async (data, context = {}) => {
         tenant: true,
         facility: true,
         patient: true,
-        provider: true
+        provider: PROVIDER_INCLUDE
       }
     });
 
