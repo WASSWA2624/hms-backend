@@ -89,10 +89,8 @@ describe('opd-flow.service', () => {
 
     expect(opdFlowRepository.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        tenant_id: 'tenant-1',
-        patient: {
-          human_friendly_id: 'PAT0000003'
-        }
+        tenant_id: 'TENANT-1',
+        patient_id: 'PAT0000003'
       }),
       0,
       20,
@@ -246,7 +244,7 @@ describe('opd-flow.service', () => {
     expect(tx.patient.findFirst).toHaveBeenCalledWith({
       where: {
         deleted_at: null,
-        tenant_id: 'tenant-1',
+        tenant_id: 'TENANT-1',
         human_friendly_id: 'PAT0000003'
       }
     });

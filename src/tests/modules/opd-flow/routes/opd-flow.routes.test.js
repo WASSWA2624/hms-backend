@@ -21,10 +21,12 @@ describe('opd-flow.routes contract', () => {
       'GET /',
       'GET /:id',
       'POST /:id/assign-doctor',
+      'POST /:id/correct-stage',
       'POST /:id/disposition',
       'POST /:id/doctor-review',
       'POST /:id/pay-consultation',
       'POST /:id/record-vitals',
+      'POST /bootstrap',
       'POST /start'
     ]);
   });

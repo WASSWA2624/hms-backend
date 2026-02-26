@@ -20,7 +20,7 @@ describe('Referral Schemas', () => {
       from_department_id: '550e8400-e29b-41d4-a716-446655440001',
       to_department_id: '550e8400-e29b-41d4-a716-446655440002',
       reason: 'Specialist consultation required',
-      status: 'PENDING'
+      status: 'REQUESTED'
     };
 
     it('should validate correct referral data', () => {
@@ -35,11 +35,12 @@ describe('Referral Schemas', () => {
       expect(result.success).toBe(false);
     });
 
-    it('should require status', () => {
+    it('should apply default status when omitted', () => {
       const data = { ...validData };
       delete data.status;
       const result = createReferralSchema.safeParse(data);
-      expect(result.success).toBe(false);
+      expect(result.success).toBe(true);
+      expect(result.data.status).toBe('REQUESTED');
     });
 
     it('should allow optional from_department_id', () => {
@@ -70,7 +71,7 @@ describe('Referral Schemas', () => {
     });
 
     it('should accept valid status values', () => {
-      const statuses = ['PENDING', 'APPROVED', 'REJECTED', 'COMPLETED', 'CANCELLED'];
+      const statuses = ['REQUESTED', 'APPROVED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'];
       statuses.forEach(status => {
         const data = { 
           encounter_id: '550e8400-e29b-41d4-a716-446655440000',
