@@ -91,6 +91,11 @@ describe('opd-flow.service search filters', () => {
       )
     );
     expect(hasProviderRegressionCoverage).toBe(true);
+
+    const hasProviderPositionTitleClause = where.AND.some((tokenClause) =>
+      (tokenClause?.OR || []).some((clause) => clause?.provider?.position_title)
+    );
+    expect(hasProviderPositionTitleClause).toBe(false);
   });
 
   it('preserves non-search filters while applying tokenized search', async () => {
