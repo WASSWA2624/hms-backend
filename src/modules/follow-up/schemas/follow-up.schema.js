@@ -14,6 +14,8 @@ const {
   isoDateSchema
 } = require('@lib/validation/zod');
 
+const FOLLOW_UP_STATUS_VALUES = ['SCHEDULED', 'COMPLETED', 'CANCELLED'];
+
 // ==================== Body Schemas ====================
 
 /**
@@ -23,6 +25,7 @@ const {
 const createFollowUpSchema = z.object({
   encounter_id: uuidSchema,
   scheduled_at: isoDateSchema,
+  status: z.enum(FOLLOW_UP_STATUS_VALUES).optional().default('SCHEDULED'),
   notes: z.string().max(10000).optional().nullable()
 });
 
@@ -33,7 +36,12 @@ const createFollowUpSchema = z.object({
  */
 const updateFollowUpSchema = z.object({
   scheduled_at: isoDateSchema.optional(),
+  status: z.enum(FOLLOW_UP_STATUS_VALUES).optional(),
   notes: z.string().max(10000).optional().nullable()
+});
+
+const transitionFollowUpSchema = z.object({
+  notes: z.string().trim().max(10000).optional().nullable(),
 });
 
 // ==================== URL Params ====================
@@ -54,12 +62,17 @@ const followUpIdParamsSchema = z.object({
  * Extends base listQuerySchema with follow-up-specific filters
  */
 const listFollowUpsQuerySchema = listQuerySchema.extend({
-  encounter_id: uuidSchema.optional()
+  encounter_id: uuidSchema.optional(),
+  status: z.enum(FOLLOW_UP_STATUS_VALUES).optional(),
+  scheduled_before: isoDateSchema.optional(),
+  scheduled_after: isoDateSchema.optional(),
 });
 
 module.exports = {
   createFollowUpSchema,
   updateFollowUpSchema,
+  transitionFollowUpSchema,
   followUpIdParamsSchema,
-  listFollowUpsQuerySchema
+  listFollowUpsQuerySchema,
+  FOLLOW_UP_STATUS_VALUES
 };

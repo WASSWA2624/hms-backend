@@ -2,40 +2,130 @@
  * Follow-up service
  *
  * @module modules/follow-up/services
- * @description Business logic layer for follow-up operations.
- * Per module-creation.mdc: Services only import/use their own repository.
- * Per prisma.mdc: All mutations call createAuditLog.
+ * @description Business logic layer for follow-up operations and reminders.
  */
 
 const followUpRepository = require('@repositories/follow-up/follow-up.repository');
+const prisma = require('@prisma/client');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
+const { ROLES } = require('@config/roles');
+const { isFeatureEnabled } = require('@config/feature-flags');
+
+const FOLLOW_UP_TRANSITIONS = Object.freeze({
+  SCHEDULED: new Set(['COMPLETED', 'CANCELLED']),
+  COMPLETED: new Set([]),
+  CANCELLED: new Set([]),
+});
+
+const normalizeStatus = (value, fallback = 'SCHEDULED') => {
+  const normalized = String(value || '').trim().toUpperCase();
+  return normalized || fallback;
+};
+
+const canTransitionFollowUp = (fromStatus, toStatus) => {
+  const source = normalizeStatus(fromStatus, '');
+  const target = normalizeStatus(toStatus, '');
+  const allowed = FOLLOW_UP_TRANSITIONS[source];
+  return Boolean(allowed && allowed.has(target));
+};
+
+const assertTransition = (fromStatus, toStatus) => {
+  if (!canTransitionFollowUp(fromStatus, toStatus)) {
+    throw new HttpError('errors.follow_up.invalid_status_transition', 400, [
+      { field: 'status' },
+      { from: fromStatus },
+      { to: toStatus },
+    ]);
+  }
+};
+
+const resolveFrontDeskRecipients = async ({ tenantId, facilityId = null }) => {
+  if (!tenantId) return [];
+
+  const rows = await prisma.user_role.findMany({
+    where: {
+      tenant_id: tenantId,
+      deleted_at: null,
+      role: {
+        deleted_at: null,
+        name: ROLES.RECEPTIONIST,
+      },
+      ...(facilityId ? { OR: [{ facility_id: facilityId }, { facility_id: null }] } : {}),
+    },
+    select: { user_id: true },
+  });
+
+  return rows.map((row) => row.user_id).filter(Boolean);
+};
+
+const createReminderNotifications = async ({
+  tenantId,
+  recipientUserIds,
+  title,
+  message,
+  priority = 'MEDIUM',
+}) => {
+  const uniqueRecipients = Array.from(new Set(recipientUserIds.filter(Boolean)));
+  if (uniqueRecipients.length === 0) return [];
+
+  const notifications = [];
+  for (const userId of uniqueRecipients) {
+    try {
+      const notification = await prisma.notification.create({
+        data: {
+          tenant_id: tenantId,
+          user_id: userId,
+          notification_type: 'SYSTEM',
+          priority,
+          title,
+          message,
+        },
+      });
+      notifications.push(notification);
+    } catch (_error) {
+      // Ignore per-recipient failure to keep dispatcher resilient.
+    }
+  }
+
+  if (notifications.length > 0) {
+    try {
+      await prisma.notification_delivery.createMany({
+        data: notifications.map((notification) => ({
+          notification_id: notification.id,
+          channel: 'IN_APP',
+          status: 'PENDING_ATTENTION',
+          sent_at: new Date(),
+        })),
+      });
+    } catch (_error) {
+      // Delivery metadata is best-effort.
+    }
+  }
+
+  return notifications;
+};
 
 /**
  * List follow-ups with pagination and filtering
- *
- * @param {Object} filters - Query filters
- * @param {number} page - Page number
- * @param {number} limit - Items per page
- * @param {string} sortBy - Sort field
- * @param {string} order - Sort order
- * @param {string} userId - User ID for audit
- * @param {string} ipAddress - User IP for audit
- * @returns {Promise<Object>} Follow-ups and pagination data
  */
-const listFollowUps = async (filters, page, limit, sortBy, order, userId, ipAddress) => {
+const listFollowUps = async (filters, page, limit, sortBy, order) => {
   try {
     const skip = (page - 1) * limit;
-    const orderBy = sortBy ? { [sortBy]: order } : { created_at: 'desc' };
-
-    // Build filter object
+    const orderBy = sortBy ? { [sortBy]: order } : { scheduled_at: 'asc' };
     const whereClause = {};
-    
+
     if (filters.encounter_id) whereClause.encounter_id = filters.encounter_id;
+    if (filters.status) whereClause.status = normalizeStatus(filters.status, 'SCHEDULED');
+    if (filters.scheduled_before || filters.scheduled_after) {
+      whereClause.scheduled_at = {};
+      if (filters.scheduled_before) whereClause.scheduled_at.lte = new Date(filters.scheduled_before);
+      if (filters.scheduled_after) whereClause.scheduled_at.gte = new Date(filters.scheduled_after);
+    }
 
     const [followUps, total] = await Promise.all([
       followUpRepository.findMany(whereClause, skip, limit, orderBy),
-      followUpRepository.count(whereClause)
+      followUpRepository.count(whereClause),
     ]);
 
     return {
@@ -46,8 +136,8 @@ const listFollowUps = async (filters, page, limit, sortBy, order, userId, ipAddr
         total,
         totalPages: Math.ceil(total / limit),
         hasNextPage: page < Math.ceil(total / limit),
-        hasPreviousPage: page > 1
-      }
+        hasPreviousPage: page > 1,
+      },
     };
   } catch (error) {
     if (error instanceof HttpError) throw error;
@@ -57,20 +147,13 @@ const listFollowUps = async (filters, page, limit, sortBy, order, userId, ipAddr
 
 /**
  * Get follow-up by ID
- *
- * @param {string} id - Follow-up ID
- * @param {string} userId - User ID for audit
- * @param {string} ipAddress - User IP for audit
- * @returns {Promise<Object>} Follow-up data
  */
-const getFollowUpById = async (id, userId, ipAddress) => {
+const getFollowUpById = async (id) => {
   try {
     const followUp = await followUpRepository.findById(id);
-
     if (!followUp) {
       throw new HttpError('errors.follow_up.not_found', 404);
     }
-
     return followUp;
   } catch (error) {
     if (error instanceof HttpError) throw error;
@@ -79,26 +162,23 @@ const getFollowUpById = async (id, userId, ipAddress) => {
 };
 
 /**
- * Create new follow-up
- * Per prisma.mdc: Mutations must create audit logs
- *
- * @param {Object} data - Follow-up data
- * @param {string} userId - User ID for audit
- * @param {string} ipAddress - User IP for audit
- * @returns {Promise<Object>} Created follow-up
+ * Create follow-up
  */
 const createFollowUp = async (data, userId, ipAddress) => {
   try {
-    const followUp = await followUpRepository.create(data);
+    const payload = {
+      ...data,
+      status: normalizeStatus(data.status, 'SCHEDULED'),
+    };
+    const followUp = await followUpRepository.create(payload);
 
-    // Create audit log (non-blocking)
     createAuditLog({
       user_id: userId,
       action: 'CREATE',
       entity: 'follow_up',
       entity_id: followUp.id,
       diff: { after: followUp },
-      ip_address: ipAddress
+      ip_address: ipAddress,
     }).catch(() => {});
 
     return followUp;
@@ -110,33 +190,32 @@ const createFollowUp = async (data, userId, ipAddress) => {
 
 /**
  * Update follow-up
- * Per prisma.mdc: Mutations must create audit logs
- *
- * @param {string} id - Follow-up ID
- * @param {Object} data - Update data
- * @param {string} userId - User ID for audit
- * @param {string} ipAddress - User IP for audit
- * @returns {Promise<Object>} Updated follow-up
  */
 const updateFollowUp = async (id, data, userId, ipAddress) => {
   try {
-    // Get current state for audit
     const before = await followUpRepository.findById(id);
-
     if (!before) {
       throw new HttpError('errors.follow_up.not_found', 404);
     }
 
-    const followUp = await followUpRepository.update(id, data);
+    const payload = { ...data };
+    if (payload.status) {
+      const nextStatus = normalizeStatus(payload.status);
+      if (nextStatus !== before.status) {
+        assertTransition(before.status, nextStatus);
+      }
+      payload.status = nextStatus;
+    }
 
-    // Create audit log (non-blocking)
+    const followUp = await followUpRepository.update(id, payload);
+
     createAuditLog({
       user_id: userId,
       action: 'UPDATE',
       entity: 'follow_up',
       entity_id: followUp.id,
       diff: { before, after: followUp },
-      ip_address: ipAddress
+      ip_address: ipAddress,
     }).catch(() => {});
 
     return followUp;
@@ -148,32 +227,23 @@ const updateFollowUp = async (id, data, userId, ipAddress) => {
 
 /**
  * Delete follow-up (soft delete)
- * Per prisma.mdc: Mutations must create audit logs
- *
- * @param {string} id - Follow-up ID
- * @param {string} userId - User ID for audit
- * @param {string} ipAddress - User IP for audit
- * @returns {Promise<void>}
  */
 const deleteFollowUp = async (id, userId, ipAddress) => {
   try {
-    // Get current state for audit
     const before = await followUpRepository.findById(id);
-
     if (!before) {
       throw new HttpError('errors.follow_up.not_found', 404);
     }
 
     await followUpRepository.softDelete(id);
 
-    // Create audit log (non-blocking)
     createAuditLog({
       user_id: userId,
       action: 'DELETE',
       entity: 'follow_up',
       entity_id: id,
       diff: { before },
-      ip_address: ipAddress
+      ip_address: ipAddress,
     }).catch(() => {});
   } catch (error) {
     if (error instanceof HttpError) throw error;
@@ -181,10 +251,214 @@ const deleteFollowUp = async (id, userId, ipAddress) => {
   }
 };
 
+const transitionFollowUp = async (id, targetStatus, metadata = {}, userId, ipAddress, action = 'UPDATE') => {
+  const before = await followUpRepository.findById(id);
+  if (!before) {
+    throw new HttpError('errors.follow_up.not_found', 404);
+  }
+
+  const normalizedTarget = normalizeStatus(targetStatus);
+  if (before.status === normalizedTarget) {
+    return before;
+  }
+
+  assertTransition(before.status, normalizedTarget);
+
+  const updatePayload = {
+    status: normalizedTarget,
+  };
+  if (normalizedTarget === 'COMPLETED') {
+    updatePayload.completed_at = new Date();
+    updatePayload.completed_by_user_id = userId || null;
+  }
+
+  const followUp = await followUpRepository.update(id, updatePayload);
+
+  createAuditLog({
+    user_id: userId,
+    action,
+    entity: 'follow_up',
+    entity_id: followUp.id,
+    diff: {
+      before,
+      after: followUp,
+      metadata: {
+        notes: metadata?.notes || null,
+      },
+    },
+    ip_address: ipAddress,
+  }).catch(() => {});
+
+  return followUp;
+};
+
+const completeFollowUp = async (id, data = {}, userId, ipAddress) =>
+  transitionFollowUp(id, 'COMPLETED', data, userId, ipAddress, 'COMPLETE');
+
+const cancelFollowUp = async (id, data = {}, userId, ipAddress) =>
+  transitionFollowUp(id, 'CANCELLED', data, userId, ipAddress, 'CANCEL');
+
+const getFollowUpReminderDueSummary = async () => {
+  const now = new Date();
+  const in24h = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
+  const [dueNowCount, dueIn24hCount] = await Promise.all([
+    prisma.follow_up.count({
+      where: {
+        deleted_at: null,
+        status: 'SCHEDULED',
+        scheduled_at: { lte: now },
+        reminder_due_sent_at: null,
+      },
+    }),
+    prisma.follow_up.count({
+      where: {
+        deleted_at: null,
+        status: 'SCHEDULED',
+        scheduled_at: { gt: now, lte: in24h },
+        reminder_24h_sent_at: null,
+      },
+    }),
+  ]);
+
+  return {
+    generated_at: now.toISOString(),
+    due_now: dueNowCount,
+    due_in_24h: dueIn24hCount,
+  };
+};
+
+const dispatchFollowUpReminders = async (context = {}) => {
+  if (!isFeatureEnabled('follow_up_reminder_dispatch')) {
+    return {
+      dispatched: false,
+      reason: 'feature_disabled',
+      summary: await getFollowUpReminderDueSummary(),
+      sent_24h: 0,
+      sent_due: 0,
+    };
+  }
+
+  const now = new Date();
+  const in24h = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
+  const candidates = await prisma.follow_up.findMany({
+    where: {
+      deleted_at: null,
+      status: 'SCHEDULED',
+      OR: [
+        {
+          scheduled_at: { gt: now, lte: in24h },
+          reminder_24h_sent_at: null,
+        },
+        {
+          scheduled_at: { lte: now },
+          reminder_due_sent_at: null,
+        },
+      ],
+    },
+    include: {
+      encounter: {
+        include: {
+          patient: true,
+        },
+      },
+    },
+    orderBy: { scheduled_at: 'asc' },
+  });
+
+  let sent24h = 0;
+  let sentDue = 0;
+
+  for (const followUp of candidates) {
+    const encounter = followUp.encounter;
+    if (!encounter?.tenant_id) continue;
+
+    const frontDeskRecipients = await resolveFrontDeskRecipients({
+      tenantId: encounter.tenant_id,
+      facilityId: encounter.facility_id || null,
+    });
+    const recipientUserIds = [
+      ...(encounter.provider_user_id ? [encounter.provider_user_id] : []),
+      ...frontDeskRecipients,
+    ];
+
+    const patientName = [encounter?.patient?.first_name, encounter?.patient?.last_name]
+      .map((value) => String(value || '').trim())
+      .filter(Boolean)
+      .join(' ');
+
+    const shouldSendDue = followUp.reminder_due_sent_at == null && followUp.scheduled_at <= now;
+    const shouldSend24h =
+      !shouldSendDue &&
+      followUp.reminder_24h_sent_at == null &&
+      followUp.scheduled_at > now &&
+      followUp.scheduled_at <= in24h;
+
+    if (!shouldSendDue && !shouldSend24h) {
+      continue;
+    }
+
+    const reminderKind = shouldSendDue ? 'DUE' : 'DUE_IN_24H';
+    const title =
+      reminderKind === 'DUE'
+        ? 'Follow-up due now'
+        : 'Follow-up due in 24 hours';
+    const message = patientName
+      ? `Follow-up for ${patientName} is ${reminderKind === 'DUE' ? 'due now' : 'due within 24 hours'}.`
+      : `A scheduled follow-up is ${reminderKind === 'DUE' ? 'due now' : 'due within 24 hours'}.`;
+
+    await createReminderNotifications({
+      tenantId: encounter.tenant_id,
+      recipientUserIds,
+      title,
+      message,
+      priority: reminderKind === 'DUE' ? 'HIGH' : 'MEDIUM',
+    });
+
+    await prisma.follow_up.update({
+      where: { id: followUp.id },
+      data: shouldSendDue
+        ? { reminder_due_sent_at: new Date() }
+        : { reminder_24h_sent_at: new Date() },
+    });
+
+    if (shouldSendDue) sentDue += 1;
+    if (shouldSend24h) sent24h += 1;
+  }
+
+  createAuditLog({
+    tenant_id: context.tenant_id || null,
+    user_id: context.user_id || null,
+    action: 'DISPATCH',
+    entity: 'follow_up_reminder',
+    entity_id: `dispatcher:${new Date().toISOString()}`,
+    diff: {
+      after: {
+        sent_24h: sent24h,
+        sent_due: sentDue,
+      },
+    },
+    ip_address: context.ip_address,
+  }).catch(() => {});
+
+  return {
+    dispatched: true,
+    sent_24h: sent24h,
+    sent_due: sentDue,
+    summary: await getFollowUpReminderDueSummary(),
+  };
+};
+
 module.exports = {
   listFollowUps,
   getFollowUpById,
   createFollowUp,
   updateFollowUp,
-  deleteFollowUp
+  deleteFollowUp,
+  completeFollowUp,
+  cancelFollowUp,
+  dispatchFollowUpReminders,
+  getFollowUpReminderDueSummary,
 };
+

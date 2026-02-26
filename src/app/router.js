@@ -136,6 +136,9 @@ apiV1Router.use('/follow-ups', require('../modules/follow-up/routes/follow-up.ro
 apiV1Router.use('/vital-signs', require('../modules/vital-sign/routes/vital-sign.routes'));
 apiV1Router.use('/care-plans', require('../modules/care-plan/routes/care-plan.routes'));
 apiV1Router.use('/clinical-alerts', require('../modules/clinical-alert/routes/clinical-alert.routes'));
+apiV1Router.use('/clinical-alert-thresholds', require('../modules/clinical-alert-threshold/routes/clinical-alert-threshold.routes'));
+apiV1Router.use('/clinical-terms', require('../modules/clinical-term/routes/clinical-term.routes'));
+apiV1Router.use('/clinical-term-favorites', require('../modules/clinical-term/routes/clinical-term-favorite.routes'));
 apiV1Router.use('/encounters', require('../modules/encounter/routes/encounter.routes'));
 apiV1Router.use('/clinical-notes', require('../modules/clinical-note/routes/clinical-note.routes'));
 apiV1Router.use('/diagnoses', require('../modules/diagnosis/routes/diagnosis.routes'));

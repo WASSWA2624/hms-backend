@@ -13,6 +13,8 @@ const {
   listQuerySchema
 } = require('@lib/validation/zod');
 
+const REFERRAL_STATUS_VALUES = ['REQUESTED', 'APPROVED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'];
+
 // ==================== Body Schemas ====================
 
 /**
@@ -24,7 +26,7 @@ const createReferralSchema = z.object({
   from_department_id: uuidSchema.optional().nullable(),
   to_department_id: uuidSchema.optional().nullable(),
   reason: z.string().max(10000).optional().nullable(),
-  status: z.enum(['PENDING', 'APPROVED', 'REJECTED', 'COMPLETED', 'CANCELLED'])
+  status: z.enum(REFERRAL_STATUS_VALUES).optional().default('REQUESTED')
 });
 
 /**
@@ -36,7 +38,7 @@ const updateReferralSchema = z.object({
   from_department_id: uuidSchema.optional().nullable(),
   to_department_id: uuidSchema.optional().nullable(),
   reason: z.string().max(10000).optional().nullable(),
-  status: z.enum(['REQUESTED', 'APPROVED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']).optional()
+  status: z.enum(REFERRAL_STATUS_VALUES).optional()
 });
 
 /**
@@ -44,6 +46,14 @@ const updateReferralSchema = z.object({
  * Used for POST /referrals/:id/redeem endpoint
  */
 const redeemReferralSchema = z.object({
+  notes: z.string().trim().max(10000).optional().nullable()
+});
+
+/**
+ * Referral transition action body validation
+ * Used for POST /referrals/:id/approve|start|cancel endpoints
+ */
+const transitionReferralSchema = z.object({
   notes: z.string().trim().max(10000).optional().nullable()
 });
 
@@ -68,13 +78,15 @@ const listReferralsQuerySchema = listQuerySchema.extend({
   encounter_id: uuidSchema.optional(),
   from_department_id: uuidSchema.optional(),
   to_department_id: uuidSchema.optional(),
-  status: z.enum(['REQUESTED', 'APPROVED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']).optional()
+  status: z.enum(REFERRAL_STATUS_VALUES).optional()
 });
 
 module.exports = {
   createReferralSchema,
   updateReferralSchema,
   redeemReferralSchema,
+  transitionReferralSchema,
   referralIdParamsSchema,
-  listReferralsQuerySchema
+  listReferralsQuerySchema,
+  REFERRAL_STATUS_VALUES
 };

@@ -11,6 +11,32 @@ const referralRepository = require('@repositories/referral/referral.repository')
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 
+const REFERRAL_TRANSITIONS = Object.freeze({
+  REQUESTED: new Set(['APPROVED', 'CANCELLED']),
+  APPROVED: new Set(['IN_PROGRESS', 'CANCELLED']),
+  IN_PROGRESS: new Set(['COMPLETED', 'CANCELLED']),
+  COMPLETED: new Set([]),
+  CANCELLED: new Set([]),
+});
+
+const canTransitionReferral = (fromStatus, toStatus) => {
+  const normalizedFrom = String(fromStatus || '').trim().toUpperCase();
+  const normalizedTo = String(toStatus || '').trim().toUpperCase();
+  const allowed = REFERRAL_TRANSITIONS[normalizedFrom];
+  if (!allowed) return false;
+  return allowed.has(normalizedTo);
+};
+
+const assertTransitionOrThrow = (fromStatus, toStatus) => {
+  if (!canTransitionReferral(fromStatus, toStatus)) {
+    throw new HttpError('errors.referral.invalid_status_transition', 400, [
+      { field: 'status' },
+      { from: fromStatus },
+      { to: toStatus },
+    ]);
+  }
+};
+
 /**
  * List referrals with pagination and filtering
  *
@@ -92,7 +118,12 @@ const getReferralById = async (id, userId, ipAddress) => {
  */
 const createReferral = async (data, userId, ipAddress) => {
   try {
-    const referral = await referralRepository.create(data);
+    const payload = {
+      ...data,
+      status: String(data?.status || 'REQUESTED').trim().toUpperCase(),
+    };
+
+    const referral = await referralRepository.create(payload);
 
     // Create audit log (non-blocking)
     createAuditLog({
@@ -130,7 +161,17 @@ const updateReferral = async (id, data, userId, ipAddress) => {
       throw new HttpError('errors.referral.not_found', 404);
     }
 
-    const referral = await referralRepository.update(id, data);
+    const payload = { ...data };
+
+    if (payload.status) {
+      const nextStatus = String(payload.status || '').trim().toUpperCase();
+      if (nextStatus !== before.status) {
+        assertTransitionOrThrow(before.status, nextStatus);
+      }
+      payload.status = nextStatus;
+    }
+
+    const referral = await referralRepository.update(id, payload);
 
     // Create audit log (non-blocking)
     createAuditLog({
@@ -201,17 +242,13 @@ const redeemReferral = async (id, data = {}, userId, ipAddress) => {
       throw new HttpError('errors.referral.not_found', 404);
     }
 
-    if (before.status === 'CANCELLED') {
-      throw new HttpError('errors.referral.cannot_redeem_cancelled', 400);
-    }
-
     if (before.status === 'COMPLETED') {
       throw new HttpError('errors.referral.already_redeemed', 400);
     }
 
-    const referral = await referralRepository.update(id, {
-      status: 'COMPLETED'
-    });
+    assertTransitionOrThrow(before.status, 'COMPLETED');
+
+    const referral = await referralRepository.update(id, { status: 'COMPLETED' });
 
     createAuditLog({
       user_id: userId,
@@ -235,11 +272,58 @@ const redeemReferral = async (id, data = {}, userId, ipAddress) => {
   }
 };
 
+const transitionReferral = async (id, targetStatus, data = {}, userId, ipAddress, action = 'UPDATE') => {
+  try {
+    const before = await referralRepository.findById(id);
+    if (!before) {
+      throw new HttpError('errors.referral.not_found', 404);
+    }
+
+    const normalizedStatus = String(targetStatus || '').trim().toUpperCase();
+    if (before.status === normalizedStatus) {
+      return before;
+    }
+
+    assertTransitionOrThrow(before.status, normalizedStatus);
+    const referral = await referralRepository.update(id, { status: normalizedStatus });
+
+    createAuditLog({
+      user_id: userId,
+      action,
+      entity: 'referral',
+      entity_id: referral.id,
+      diff: {
+        before,
+        after: referral,
+        metadata: { notes: data?.notes || null },
+      },
+      ip_address: ipAddress,
+    }).catch(() => {});
+
+    return referral;
+  } catch (error) {
+    if (error instanceof HttpError) throw error;
+    throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
+  }
+};
+
+const approveReferral = async (id, data = {}, userId, ipAddress) =>
+  transitionReferral(id, 'APPROVED', data, userId, ipAddress, 'APPROVE');
+
+const startReferral = async (id, data = {}, userId, ipAddress) =>
+  transitionReferral(id, 'IN_PROGRESS', data, userId, ipAddress, 'START');
+
+const cancelReferral = async (id, data = {}, userId, ipAddress) =>
+  transitionReferral(id, 'CANCELLED', data, userId, ipAddress, 'CANCEL');
+
 module.exports = {
   listReferrals,
   getReferralById,
   createReferral,
   updateReferral,
   deleteReferral,
-  redeemReferral
+  redeemReferral,
+  approveReferral,
+  startReferral,
+  cancelReferral,
 };

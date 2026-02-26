@@ -8,8 +8,10 @@
  */
 
 const vitalSignRepository = require('@repositories/vital-sign/vital-sign.repository');
+const prisma = require('@prisma/client');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
+const clinicalAlertThresholdService = require('@services/clinical-alert-threshold/clinical-alert-threshold.service');
 
 const BLOOD_PRESSURE_VALUE_REGEX = /^(\d{2,3}(?:\.\d{1,2})?)\s*\/\s*(\d{2,3}(?:\.\d{1,2})?)$/;
 
@@ -201,6 +203,29 @@ const createVitalSign = async (data, userId, ipAddress) => {
       diff: { after: vitalSign },
       ip_address: ipAddress
     }).catch(() => {});
+
+    // Automatic alert evaluation should not block vital capture.
+    try {
+      const encounter = await prisma.encounter.findFirst({
+        where: { id: vitalSign.encounter_id, deleted_at: null },
+        include: { patient: true },
+      });
+      if (encounter) {
+        await clinicalAlertThresholdService.evaluateVitalAndCreateAlerts(
+          {
+            vitalSign,
+            encounter,
+            patient: encounter.patient || null,
+          },
+          {
+            user_id: userId,
+            ip_address: ipAddress,
+          }
+        );
+      }
+    } catch (_error) {
+      // Auto-rule failure should not fail manual clinical documentation.
+    }
 
     return vitalSign;
   } catch (error) {

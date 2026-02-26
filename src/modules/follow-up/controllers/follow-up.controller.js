@@ -22,6 +22,9 @@ const { DEFAULT_PAGE, DEFAULT_PAGE_LIMIT } = require('@config/constants');
 const listFollowUps = asyncHandler(async (req, res) => {
   const {
     encounter_id,
+    status,
+    scheduled_before,
+    scheduled_after,
     page = DEFAULT_PAGE,
     limit = DEFAULT_PAGE_LIMIT,
     sort_by,
@@ -29,7 +32,10 @@ const listFollowUps = asyncHandler(async (req, res) => {
   } = req.query;
 
   const filters = {
-    encounter_id
+    encounter_id,
+    status,
+    scheduled_before,
+    scheduled_after,
   };
 
   const userId = req.user?.id;
@@ -115,10 +121,46 @@ const deleteFollowUp = asyncHandler(async (req, res) => {
   sendNoContent(res);
 });
 
+const completeFollowUp = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user?.id;
+  const ipAddress = req.ip;
+
+  const followUp = await followUpService.completeFollowUp(id, req.body, userId, ipAddress);
+  sendSuccess(res, 200, 'messages.follow_up.update.success', followUp);
+});
+
+const cancelFollowUp = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user?.id;
+  const ipAddress = req.ip;
+
+  const followUp = await followUpService.cancelFollowUp(id, req.body, userId, ipAddress);
+  sendSuccess(res, 200, 'messages.follow_up.update.success', followUp);
+});
+
+const dispatchFollowUpReminders = asyncHandler(async (req, res) => {
+  const result = await followUpService.dispatchFollowUpReminders({
+    user_id: req.user?.id,
+    tenant_id: req.user?.tenant_id,
+    ip_address: req.ip,
+  });
+  sendSuccess(res, 200, 'messages.follow_up.reminders.dispatch.success', result);
+});
+
+const getFollowUpReminderDueSummary = asyncHandler(async (_req, res) => {
+  const result = await followUpService.getFollowUpReminderDueSummary();
+  sendSuccess(res, 200, 'messages.follow_up.reminders.summary.success', result);
+});
+
 module.exports = {
   listFollowUps,
   getFollowUpById,
   createFollowUp,
   updateFollowUp,
-  deleteFollowUp
+  deleteFollowUp,
+  completeFollowUp,
+  cancelFollowUp,
+  dispatchFollowUpReminders,
+  getFollowUpReminderDueSummary,
 };

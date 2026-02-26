@@ -138,11 +138,53 @@ const redeemReferral = asyncHandler(async (req, res) => {
   sendSuccess(res, 200, 'messages.referral.redeem.success', referral);
 });
 
+/**
+ * Approve referral
+ * POST /api/v1/referrals/:id/approve
+ */
+const approveReferral = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user?.id;
+  const ipAddress = req.ip;
+
+  const referral = await referralService.approveReferral(id, req.body, userId, ipAddress);
+  sendSuccess(res, 200, 'messages.referral.update.success', referral);
+});
+
+/**
+ * Start referral transfer
+ * POST /api/v1/referrals/:id/start
+ */
+const startReferral = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user?.id;
+  const ipAddress = req.ip;
+
+  const referral = await referralService.startReferral(id, req.body, userId, ipAddress);
+  sendSuccess(res, 200, 'messages.referral.update.success', referral);
+});
+
+/**
+ * Cancel referral
+ * POST /api/v1/referrals/:id/cancel
+ */
+const cancelReferral = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user?.id;
+  const ipAddress = req.ip;
+
+  const referral = await referralService.cancelReferral(id, req.body, userId, ipAddress);
+  sendSuccess(res, 200, 'messages.referral.update.success', referral);
+});
+
 module.exports = {
   listReferrals,
   getReferralById,
   createReferral,
   updateReferral,
   deleteReferral,
-  redeemReferral
+  redeemReferral,
+  approveReferral,
+  startReferral,
+  cancelReferral,
 };

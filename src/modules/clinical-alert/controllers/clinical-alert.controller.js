@@ -23,6 +23,9 @@ const listClinicalAlerts = asyncHandler(async (req, res) => {
   const {
     encounter_id,
     severity,
+    status,
+    source,
+    vital_sign_id,
     page = DEFAULT_PAGE,
     limit = DEFAULT_PAGE_LIMIT,
     sort_by,
@@ -31,7 +34,10 @@ const listClinicalAlerts = asyncHandler(async (req, res) => {
 
   const filters = {
     encounter_id,
-    severity
+    severity,
+    status,
+    source,
+    vital_sign_id,
   };
 
   const userId = req.user?.id;
@@ -117,10 +123,42 @@ const deleteClinicalAlert = asyncHandler(async (req, res) => {
   sendNoContent(res);
 });
 
+const acknowledgeClinicalAlert = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user?.id;
+  const ipAddress = req.ip;
+
+  const clinicalAlert = await clinicalAlertService.acknowledgeClinicalAlert(
+    id,
+    req.body,
+    userId,
+    ipAddress
+  );
+
+  sendSuccess(res, 200, 'messages.clinical_alert.update.success', clinicalAlert);
+});
+
+const resolveClinicalAlert = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user?.id;
+  const ipAddress = req.ip;
+
+  const clinicalAlert = await clinicalAlertService.resolveClinicalAlert(
+    id,
+    req.body,
+    userId,
+    ipAddress
+  );
+
+  sendSuccess(res, 200, 'messages.clinical_alert.update.success', clinicalAlert);
+});
+
 module.exports = {
   listClinicalAlerts,
   getClinicalAlertById,
   createClinicalAlert,
   updateClinicalAlert,
-  deleteClinicalAlert
+  deleteClinicalAlert,
+  acknowledgeClinicalAlert,
+  resolveClinicalAlert,
 };

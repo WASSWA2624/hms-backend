@@ -66,6 +66,7 @@ const WORKFLOW_STAGE_VALUES = [
   'ADMITTED',
   'DISCHARGED'
 ];
+const QUEUE_SCOPE_VALUES = ['ASSIGNED', 'WAITING', 'ALL'];
 const UUID_LIKE_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const PATIENT_FRIENDLY_ID_REGEX = /^(?=.*\d)[A-Za-z][A-Za-z0-9_-]*$/;
@@ -159,6 +160,14 @@ const createOpdFlowSchema = z
       });
     }
   });
+
+const bootstrapOpdFlowSchema = z.object({
+  patient_id: patientIdentifierSchema,
+  facility_id: facilityIdentifierSchema.optional().nullable(),
+  provider_user_id: providerIdentifierSchema.optional().nullable(),
+  encounter_type: z.enum(['OPD', 'EMERGENCY']).optional().default('OPD'),
+  reuse_open_encounter: z.boolean().optional().default(true)
+});
 
 const encounterIdParamsSchema = z.object({
   id: encounterIdentifierSchema
@@ -299,6 +308,7 @@ const listOpdFlowsQuerySchema = listQuerySchema.extend({
   facility_id: facilityIdentifierSchema.optional(),
   patient_id: patientIdentifierSchema.optional(),
   provider_user_id: providerIdentifierSchema.optional(),
+  queue_scope: z.enum(QUEUE_SCOPE_VALUES).optional().default('ALL'),
   encounter_type: z.enum(['OPD', 'EMERGENCY']).optional(),
   stage: z.enum(WORKFLOW_STAGE_VALUES).optional(),
   search: z.string().trim().optional()
@@ -306,6 +316,7 @@ const listOpdFlowsQuerySchema = listQuerySchema.extend({
 
 module.exports = {
   createOpdFlowSchema,
+  bootstrapOpdFlowSchema,
   encounterIdParamsSchema,
   payConsultationSchema,
   recordVitalsSchema,
@@ -313,5 +324,6 @@ module.exports = {
   doctorReviewSchema,
   dispositionSchema,
   correctStageSchema,
-  listOpdFlowsQuerySchema
+  listOpdFlowsQuerySchema,
+  QUEUE_SCOPE_VALUES
 };

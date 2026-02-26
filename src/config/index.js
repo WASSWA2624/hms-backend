@@ -14,6 +14,7 @@ const cors = require('@config/cors');
 const rateLimit = require('@config/rateLimit');
 const roles = require('@config/roles');
 const permissions = require('@config/permissions');
+const featureFlags = require('@config/feature-flags');
 
 module.exports = {
   env,
@@ -23,6 +24,7 @@ module.exports = {
   cors,
   rateLimit,
   roles,
-  permissions
+  permissions,
+  featureFlags
 };
 

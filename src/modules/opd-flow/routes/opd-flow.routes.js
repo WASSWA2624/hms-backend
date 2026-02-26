@@ -16,6 +16,7 @@ const { PERMISSIONS } = require('@config/permissions');
 const { ROLES } = require('@config/roles');
 const {
   createOpdFlowSchema,
+  bootstrapOpdFlowSchema,
   encounterIdParamsSchema,
   payConsultationSchema,
   recordVitalsSchema,
@@ -137,6 +138,40 @@ router.post(
     'role'
   ),
   opdFlowController.startOpdFlow
+);
+
+/**
+ * @description Bootstrap OPD/Clinical flow context for a patient and optionally reuse existing open encounter
+ * @method POST
+ * @route /api/v1/opd-flows/bootstrap
+ * @authentication Required (JWT)
+ * @permissions Clinical users
+ * @urlParams None
+ * @queryParams None
+ * @bodyParams {string} patient_id - Patient ID (required)
+ * @bodyParams {string} [facility_id] - Facility ID
+ * @bodyParams {string} [provider_user_id] - Provider user ID
+ * @bodyParams {string} [encounter_type=OPD] - OPD or EMERGENCY
+ * @bodyParams {boolean} [reuse_open_encounter=true] - Reuse existing open encounter for patient/type
+ * @returns {Object} OPD flow snapshot
+ */
+router.post(
+  '/bootstrap',
+  validateRequest({ body: bootstrapOpdFlowSchema }),
+  authenticate(),
+  authorize(
+    [
+      ROLES.SUPER_ADMIN,
+      ROLES.TENANT_ADMIN,
+      ROLES.FACILITY_ADMIN,
+      ROLES.RECEPTIONIST,
+      ROLES.NURSE,
+      ROLES.DOCTOR,
+      ROLES.OPERATIONS
+    ],
+    'role'
+  ),
+  opdFlowController.bootstrapOpdFlow
 );
 
 /**

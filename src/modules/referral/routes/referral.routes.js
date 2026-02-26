@@ -11,11 +11,14 @@ const express = require('express');
 const router = express.Router();
 const referralController = require('@controllers/referral/referral.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
-const { authenticate } = require('@middlewares/auth.middleware');
+const { authenticate, authorize } = require('@middlewares/auth.middleware');
+const { requireClinicalDeletePrivilege } = require('@middlewares/clinical-guard.middleware');
+const { PERMISSIONS } = require('@config/permissions');
 const {
   createReferralSchema,
   updateReferralSchema,
   redeemReferralSchema,
+  transitionReferralSchema,
   referralIdParamsSchema,
   listReferralsQuerySchema
 } = require('@validations/referral/referral.schema');
@@ -44,6 +47,7 @@ router.get(
   validateRequest({ query: listReferralsQuerySchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.CLINICAL_READ, 'permission'),
   referralController.listReferrals
 );
 
@@ -65,6 +69,7 @@ router.get(
   validateRequest({ params: referralIdParamsSchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.CLINICAL_READ, 'permission'),
   referralController.getReferralById
 );
 
@@ -91,6 +96,7 @@ router.post(
   validateRequest({ body: createReferralSchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.CLINICAL_WRITE, 'permission'),
   referralController.createReferral
 );
 
@@ -116,6 +122,7 @@ router.put(
   validateRequest({ params: referralIdParamsSchema, body: updateReferralSchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.CLINICAL_WRITE, 'permission'),
   referralController.updateReferral
 );
 
@@ -137,6 +144,8 @@ router.delete(
   validateRequest({ params: referralIdParamsSchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.CLINICAL_WRITE, 'permission'),
+  requireClinicalDeletePrivilege(),
   referralController.deleteReferral
 );
 
@@ -157,7 +166,32 @@ router.post(
   validateRequest({ params: referralIdParamsSchema, body: redeemReferralSchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.CLINICAL_WRITE, 'permission'),
   referralController.redeemReferral
+);
+
+router.post(
+  '/:id/approve',
+  validateRequest({ params: referralIdParamsSchema, body: transitionReferralSchema }),
+  authenticate(),
+  authorize(PERMISSIONS.CLINICAL_WRITE, 'permission'),
+  referralController.approveReferral
+);
+
+router.post(
+  '/:id/start',
+  validateRequest({ params: referralIdParamsSchema, body: transitionReferralSchema }),
+  authenticate(),
+  authorize(PERMISSIONS.CLINICAL_WRITE, 'permission'),
+  referralController.startReferral
+);
+
+router.post(
+  '/:id/cancel',
+  validateRequest({ params: referralIdParamsSchema, body: transitionReferralSchema }),
+  authenticate(),
+  authorize(PERMISSIONS.CLINICAL_WRITE, 'permission'),
+  referralController.cancelReferral
 );
 
 module.exports = router;
