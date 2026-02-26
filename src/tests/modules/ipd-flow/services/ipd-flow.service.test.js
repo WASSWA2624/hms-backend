@@ -373,6 +373,146 @@ describe('ipd-flow.service', () => {
     );
   });
 
+  it('resolves ICU legacy resources to admission public id', async () => {
+    prisma.icu_observation.findFirst.mockResolvedValue({
+      id: 'obs-1',
+      human_friendly_id: 'OBS0000001',
+      icu_stay: {
+        admission_id: 'adm-1',
+      },
+    });
+    prisma.admission.findFirst.mockResolvedValue({
+      id: 'adm-1',
+      human_friendly_id: 'ADM0000001',
+      status: 'ADMITTED',
+    });
+
+    const resolution = await ipdFlowService.resolveLegacyRoute('icu-observations', 'OBS0000001');
+
+    expect(resolution).toEqual(
+      expect.objectContaining({
+        admission_id: 'ADM0000001',
+        resource: 'icu-observations',
+        panel: 'observations',
+        action: 'add_icu_observation',
+      })
+    );
+  });
+
+  it('starts ICU stay and returns ICU-enriched snapshot', async () => {
+    const tx = {
+      admission: {
+        findFirst: jest
+          .fn()
+          .mockResolvedValueOnce({ id: 'adm-1' })
+          .mockResolvedValueOnce(buildAdmission({ icu_stays: [] })),
+      },
+      icu_stay: {
+        create: jest.fn().mockResolvedValue({ id: 'icu-1' }),
+      },
+    };
+
+    prisma.$transaction.mockImplementation(async (callback) => callback(tx));
+    prisma.admission.findFirst.mockResolvedValue({ id: 'adm-1' });
+    ipdFlowRepository.findById.mockResolvedValue(
+      buildAdmission({
+        icu_stays: [
+          {
+            id: 'icu-1',
+            human_friendly_id: 'ICU0000001',
+            started_at: now,
+            ended_at: null,
+            created_at: now,
+            observations: [],
+            alerts: [],
+          },
+        ],
+      })
+    );
+
+    const snapshot = await ipdFlowService.startIcuStay('ADM0000001', {}, { tenant_id: 'tenant-1' });
+
+    expect(tx.icu_stay.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          admission_id: 'adm-1',
+        }),
+      })
+    );
+    expect(snapshot).toEqual(
+      expect.objectContaining({
+        icu_status: 'ACTIVE',
+        active_icu_stay_id: 'ICU0000001',
+      })
+    );
+  });
+
+  it('soft-resolves critical alert through IPD ICU action', async () => {
+    const tx = {
+      admission: {
+        findFirst: jest
+          .fn()
+          .mockResolvedValueOnce({ id: 'adm-1' })
+          .mockResolvedValueOnce(
+            buildAdmission({
+              icu_stays: [
+                {
+                  id: 'icu-1',
+                  human_friendly_id: 'ICU0000001',
+                  started_at: now,
+                  ended_at: null,
+                  observations: [],
+                  alerts: [
+                    {
+                      id: 'alert-1',
+                      human_friendly_id: 'CAL0000001',
+                      severity: 'CRITICAL',
+                      message: 'Escalating trend',
+                      created_at: now,
+                      deleted_at: null,
+                    },
+                  ],
+                },
+              ],
+            })
+          ),
+      },
+      critical_alert: {
+        update: jest.fn().mockResolvedValue({ id: 'alert-1' }),
+      },
+    };
+
+    prisma.$transaction.mockImplementation(async (callback) => callback(tx));
+    prisma.admission.findFirst.mockResolvedValue({ id: 'adm-1' });
+    ipdFlowRepository.findById.mockResolvedValue(
+      buildAdmission({
+        icu_stays: [
+          {
+            id: 'icu-1',
+            human_friendly_id: 'ICU0000001',
+            started_at: now,
+            ended_at: null,
+            observations: [],
+            alerts: [],
+          },
+        ],
+      })
+    );
+
+    const snapshot = await ipdFlowService.resolveCriticalAlert('ADM0000001', {}, { tenant_id: 'tenant-1' });
+
+    expect(tx.critical_alert.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'alert-1' },
+      })
+    );
+    expect(snapshot).toEqual(
+      expect.objectContaining({
+        has_critical_alert: false,
+      })
+    );
+  });
+
   it('emits ipd.flow.updated and compatibility admission events on start', async () => {
     const tx = {
       tenant: {

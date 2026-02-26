@@ -1040,6 +1040,11 @@
   "messages.ipd_flow.add_medication_administration.success": "Medication administration recorded successfully",
   "messages.ipd_flow.plan_discharge.success": "Discharge plan updated successfully",
   "messages.ipd_flow.finalize_discharge.success": "Discharge finalized successfully",
+  "messages.ipd_flow.start_icu_stay.success": "ICU stay started successfully",
+  "messages.ipd_flow.end_icu_stay.success": "ICU stay ended successfully",
+  "messages.ipd_flow.add_icu_observation.success": "ICU observation recorded successfully",
+  "messages.ipd_flow.add_critical_alert.success": "Critical alert recorded successfully",
+  "messages.ipd_flow.resolve_critical_alert.success": "Critical alert resolved successfully",
   "messages.ipd_flow.resolve_legacy.success": "Legacy IPD route resolved successfully",
   "errors.ipd_flow.not_found": "IPD flow not found",
   "errors.ipd_flow.patient_not_found": "Patient not found for IPD flow",
@@ -1053,5 +1058,9 @@
   "errors.ipd_flow.nursing_note_required": "Nursing note is required",
   "errors.ipd_flow.medication_dose_required": "Medication dose is required",
   "errors.ipd_flow.discharge_summary_required": "Discharge summary is required",
-  "errors.ipd_flow.transfer_must_be_resolved_before_discharge": "Resolve active transfer before planning or finalizing discharge"
+  "errors.ipd_flow.transfer_must_be_resolved_before_discharge": "Resolve active transfer before planning or finalizing discharge",
+  "errors.ipd_flow.icu_stay_already_active": "An active ICU stay already exists",
+  "errors.ipd_flow.active_icu_stay_required": "An active ICU stay is required",
+  "errors.ipd_flow.icu_stay_not_found": "ICU stay not found",
+  "errors.ipd_flow.critical_alert_not_found": "Critical alert not found"
 }

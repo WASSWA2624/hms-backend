@@ -97,6 +97,13 @@ const normalizeIcuQueueScope = (value) => {
   if (normalized === ICU_QUEUE_SCOPES.ACTIVE) return ICU_QUEUE_SCOPES.ACTIVE;
   return ICU_QUEUE_SCOPES.ALL;
 };
+const parseBooleanString = (value) => {
+  if (typeof value === 'boolean') return value;
+  const normalized = String(value || '').trim().toLowerCase();
+  if (['1', 'true', 'yes', 'on'].includes(normalized)) return true;
+  if (['0', 'false', 'no', 'off'].includes(normalized)) return false;
+  return null;
+};
 const toBooleanFlag = (value, fallback = false) => {
   if (typeof value === 'boolean') return value;
   const parsed = parseBooleanString(value);
