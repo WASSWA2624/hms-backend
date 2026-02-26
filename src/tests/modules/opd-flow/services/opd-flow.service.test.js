@@ -2,6 +2,9 @@ const { HttpError } = require('@lib/errors');
 
 jest.mock('@repositories/opd-flow/opd-flow.repository');
 jest.mock('@lib/audit');
+jest.mock('@services/ipd-flow/ipd-flow.service', () => ({
+  emitAdmissionRefreshEvent: jest.fn().mockResolvedValue(null)
+}));
 jest.mock('@lib/websocket', () => ({
   emitToUser: jest.fn(),
   emitToUsers: jest.fn(),
@@ -28,6 +31,7 @@ jest.mock('@prisma/client', () => ({
 const opdFlowRepository = require('@repositories/opd-flow/opd-flow.repository');
 const prisma = require('@prisma/client');
 const { createAuditLog } = require('@lib/audit');
+const ipdFlowService = require('@services/ipd-flow/ipd-flow.service');
 const { emitToUser, emitToUsers } = require('@lib/websocket');
 const opdFlowService = require('@services/opd-flow/opd-flow.service');
 
@@ -35,6 +39,7 @@ describe('opd-flow.service', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     createAuditLog.mockResolvedValue({});
+    ipdFlowService.emitAdmissionRefreshEvent.mockResolvedValue(null);
     prisma.user_role.findMany.mockResolvedValue([]);
     prisma.notification.create.mockImplementation(async ({ data }) => ({
       id: `notif-${data.user_id}`,
@@ -654,6 +659,10 @@ describe('opd-flow.service', () => {
       where: { id: 'ec-1' },
       data: { status: 'CLOSED' }
     });
+    expect(ipdFlowService.emitAdmissionRefreshEvent).toHaveBeenCalledWith(
+      'adm-1',
+      expect.objectContaining({ user_id: 'doc-1' })
+    );
     expect(result.flow.stage).toBe('ADMITTED');
   });
 

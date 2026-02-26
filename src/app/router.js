@@ -129,6 +129,7 @@ apiV1Router.use('/bed-assignments', require('../modules/bed-assignment/routes/be
 apiV1Router.use('/ward-rounds', require('../modules/ward-round/routes/ward-round.routes'));
 apiV1Router.use('/visit-queues', require('../modules/visit-queue/routes/visit-queue.routes'));
 apiV1Router.use('/opd-flows', require('../modules/opd-flow/routes/opd-flow.routes'));
+apiV1Router.use('/ipd-flows', require('../modules/ipd-flow/routes/ipd-flow.routes'));
 apiV1Router.use('/referrals', require('../modules/referral/routes/referral.routes'));
 apiV1Router.use('/campaigns', require('../modules/campaign/routes/campaign.routes'));
 apiV1Router.use('/feedback', require('../modules/feedback/routes/feedback.routes'));

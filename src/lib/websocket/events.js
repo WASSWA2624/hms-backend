@@ -51,6 +51,13 @@ const OPD_EVENTS = {
 };
 
 /**
+ * IPD Flow Events
+ */
+const IPD_EVENTS = {
+  IPD_FLOW_UPDATED: 'ipd.flow.updated'
+};
+
+/**
  * Visit Queue Events
  */
 const VISIT_QUEUE_EVENTS = {
@@ -157,6 +164,7 @@ const WS_EVENTS = {
   ...AUTH_EVENTS,
   ...APPOINTMENT_EVENTS,
   ...OPD_EVENTS,
+  ...IPD_EVENTS,
   ...VISIT_QUEUE_EVENTS,
   ...ADMISSION_BED_EVENTS,
   ...CRITICAL_ALERT_EVENTS,
@@ -176,6 +184,7 @@ module.exports = {
   AUTH_EVENTS,
   APPOINTMENT_EVENTS,
   OPD_EVENTS,
+  IPD_EVENTS,
   VISIT_QUEUE_EVENTS,
   ADMISSION_BED_EVENTS,
   CRITICAL_ALERT_EVENTS,

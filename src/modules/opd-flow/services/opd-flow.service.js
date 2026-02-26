@@ -2372,6 +2372,7 @@ const disposition = async (id, data, context = {}) => {
 
     return {
       encounter: finalizedEncounter,
+      admission_id: admission?.id || null,
       transition: {
         action: 'DISPOSITION',
         stage_from: stageBefore,
@@ -2398,6 +2399,16 @@ const disposition = async (id, data, context = {}) => {
     transition: updatedResult.transition,
     context
   });
+
+  if (updatedResult.admission_id) {
+    try {
+      const ipdFlowService = require('@services/ipd-flow/ipd-flow.service');
+      await ipdFlowService.emitAdmissionRefreshEvent(updatedResult.admission_id, context);
+    } catch (_error) {
+      // OPD disposition should not fail when IPD realtime fan-out fails.
+    }
+  }
+
   return snapshot;
 };
 
