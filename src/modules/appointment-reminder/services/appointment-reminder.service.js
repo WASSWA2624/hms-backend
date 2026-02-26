@@ -9,7 +9,10 @@ const appointmentReminderRepository = require('@repositories/appointment-reminde
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 const { isUuidLike } = require('@lib/identifiers/sanitize-friendly-ids');
-const { resolveModelIdByIdentifier } = require('@lib/identifiers/resolve-entity-id');
+const {
+  resolveModelIdByIdentifier,
+  resolveModelRecordByIdentifier,
+} = require('@lib/identifiers/resolve-entity-id');
 
 const DUE_WINDOW_MS = 24 * 60 * 60 * 1000;
 
@@ -78,6 +81,16 @@ const resolveReminderPayloadIdentifiers = async (data = {}) => {
   }
 
   return payload;
+};
+
+const resolveReminderRecordByIdentifier = async (identifier) => {
+  const resolved = await resolveModelRecordByIdentifier({
+    model: 'appointment_reminder',
+    identifier,
+    select: { id: true },
+  });
+  if (!resolved?.id) return null;
+  return appointmentReminderRepository.findById(resolved.id);
 };
 
 const listAppointmentReminders = async (filters, page, limit, sortBy, order, userId, ipAddress) => {
@@ -149,7 +162,7 @@ const listAppointmentReminders = async (filters, page, limit, sortBy, order, use
 
 const getAppointmentReminderById = async (id, userId, ipAddress) => {
   try {
-    const reminder = await appointmentReminderRepository.findById(id);
+    const reminder = await resolveReminderRecordByIdentifier(id);
 
     if (!reminder) {
       throw new HttpError('errors.appointment_reminder.not_found', 404);
@@ -185,7 +198,7 @@ const createAppointmentReminder = async (data, userId, ipAddress) => {
 
 const updateAppointmentReminder = async (id, data, userId, ipAddress) => {
   try {
-    const before = await appointmentReminderRepository.findById(id);
+    const before = await resolveReminderRecordByIdentifier(id);
 
     if (!before) {
       throw new HttpError('errors.appointment_reminder.not_found', 404);
@@ -212,7 +225,7 @@ const updateAppointmentReminder = async (id, data, userId, ipAddress) => {
 
 const deleteAppointmentReminder = async (id, userId, ipAddress) => {
   try {
-    const before = await appointmentReminderRepository.findById(id);
+    const before = await resolveReminderRecordByIdentifier(id);
 
     if (!before) {
       throw new HttpError('errors.appointment_reminder.not_found', 404);
@@ -236,7 +249,7 @@ const deleteAppointmentReminder = async (id, userId, ipAddress) => {
 
 const markAppointmentReminderSent = async (id, payload = {}, userId, ipAddress) => {
   try {
-    const before = await appointmentReminderRepository.findById(id);
+    const before = await resolveReminderRecordByIdentifier(id);
 
     if (!before) {
       throw new HttpError('errors.appointment_reminder.not_found', 404);

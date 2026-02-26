@@ -12,7 +12,10 @@ const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 const opdFlowService = require('@services/opd-flow/opd-flow.service');
 const { isUuidLike } = require('@lib/identifiers/sanitize-friendly-ids');
-const { resolveModelIdByIdentifier } = require('@lib/identifiers/resolve-entity-id');
+const {
+  resolveModelIdByIdentifier,
+  resolveModelRecordByIdentifier,
+} = require('@lib/identifiers/resolve-entity-id');
 
 const USER_IDENTIFIER_MATCHERS = [({ rawValue }) => ({ email: rawValue }), ({ rawValue }) => ({ phone: rawValue })];
 
@@ -142,6 +145,16 @@ const resolveAppointmentPayloadIdentifiers = async (data = {}, existing = null) 
 };
 
 const normalizeStatus = (value) => String(value || '').trim().toUpperCase();
+
+const resolveAppointmentRecordByIdentifier = async (identifier) => {
+  const resolved = await resolveModelRecordByIdentifier({
+    model: 'appointment',
+    identifier,
+    select: { id: true },
+  });
+  if (!resolved?.id) return null;
+  return appointmentRepository.findById(resolved.id);
+};
 
 const shouldAutoStartOpdFlow = (before, appointment, updateData = {}) => {
   const nextStatus = normalizeStatus(appointment?.status || updateData?.status);
@@ -308,7 +321,7 @@ const listAppointments = async (filters, page, limit, sortBy, order, userId, ipA
  */
 const getAppointmentById = async (id, userId, ipAddress) => {
   try {
-    const appointment = await appointmentRepository.findById(id);
+    const appointment = await resolveAppointmentRecordByIdentifier(id);
 
     if (!appointment) {
       throw new HttpError('errors.appointment.not_found', 404);
@@ -365,7 +378,7 @@ const createAppointment = async (data, userId, ipAddress) => {
 const updateAppointment = async (id, data, userId, ipAddress) => {
   try {
     // Get current state for audit
-    const before = await appointmentRepository.findById(id);
+    const before = await resolveAppointmentRecordByIdentifier(id);
 
     if (!before) {
       throw new HttpError('errors.appointment.not_found', 404);
@@ -411,7 +424,7 @@ const updateAppointment = async (id, data, userId, ipAddress) => {
 const deleteAppointment = async (id, userId, ipAddress) => {
   try {
     // Get current state for audit
-    const before = await appointmentRepository.findById(id);
+    const before = await resolveAppointmentRecordByIdentifier(id);
 
     if (!before) {
       throw new HttpError('errors.appointment.not_found', 404);
@@ -447,7 +460,7 @@ const deleteAppointment = async (id, userId, ipAddress) => {
 const cancelAppointment = async (id, reason, userId, ipAddress) => {
   try {
     // Get current state for audit
-    const before = await appointmentRepository.findById(id);
+    const before = await resolveAppointmentRecordByIdentifier(id);
 
     if (!before) {
       throw new HttpError('errors.appointment.not_found', 404);

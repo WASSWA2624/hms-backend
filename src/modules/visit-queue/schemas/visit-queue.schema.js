@@ -35,6 +35,7 @@ const createVisitQueueSchema = z.object({
  * All fields optional for partial updates
  */
 const updateVisitQueueSchema = z.object({
+  patient_id: uuidOrFriendlyIdentifierSchema.optional(),
   facility_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
   appointment_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
   provider_user_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),

@@ -32,6 +32,7 @@ const createAppointmentReminderSchema = z.object({
  * All fields optional for partial updates
  */
 const updateAppointmentReminderSchema = z.object({
+  appointment_id: uuidOrFriendlyIdentifierSchema.optional(),
   channel: z.enum(['EMAIL', 'SMS', 'PUSH', 'WHATSAPP', 'IN_APP']).optional(),
   scheduled_at: z.string().datetime().optional(),
   sent_at: z.string().datetime().optional().nullable()

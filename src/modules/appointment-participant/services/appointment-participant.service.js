@@ -139,6 +139,16 @@ const resolveParticipantPayloadIdentifiers = async (data = {}, existing = null) 
   return payload;
 };
 
+const resolveParticipantRecordByIdentifier = async (identifier) => {
+  const resolved = await resolveModelRecordByIdentifier({
+    model: 'appointment_participant',
+    identifier,
+    select: { id: true },
+  });
+  if (!resolved?.id) return null;
+  return appointmentParticipantRepository.findById(resolved.id);
+};
+
 /**
  * List appointment participants with pagination and filtering
  */
@@ -217,7 +227,7 @@ const listAppointmentParticipants = async (filters, page, limit, sortBy, order, 
  */
 const getAppointmentParticipantById = async (id, userId, ipAddress) => {
   try {
-    const participant = await appointmentParticipantRepository.findById(id);
+    const participant = await resolveParticipantRecordByIdentifier(id);
 
     if (!participant) {
       throw new HttpError('errors.appointment_participant.not_found', 404);
@@ -259,7 +269,7 @@ const createAppointmentParticipant = async (data, userId, ipAddress) => {
  */
 const updateAppointmentParticipant = async (id, data, userId, ipAddress) => {
   try {
-    const before = await appointmentParticipantRepository.findById(id);
+    const before = await resolveParticipantRecordByIdentifier(id);
 
     if (!before) {
       throw new HttpError('errors.appointment_participant.not_found', 404);
@@ -289,7 +299,7 @@ const updateAppointmentParticipant = async (id, data, userId, ipAddress) => {
  */
 const deleteAppointmentParticipant = async (id, userId, ipAddress) => {
   try {
-    const before = await appointmentParticipantRepository.findById(id);
+    const before = await resolveParticipantRecordByIdentifier(id);
 
     if (!before) {
       throw new HttpError('errors.appointment_participant.not_found', 404);

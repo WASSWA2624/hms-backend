@@ -32,6 +32,7 @@ const createAppointmentParticipantSchema = z.object({
  * All fields optional for partial updates
  */
 const updateAppointmentParticipantSchema = z.object({
+  appointment_id: uuidOrFriendlyIdentifierSchema.optional(),
   participant_user_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
   participant_patient_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
   role: z.string().trim().max(80).optional().nullable()

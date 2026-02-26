@@ -11,7 +11,10 @@ const availabilitySlotRepository = require('@repositories/availability-slot/avai
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 const { isUuidLike } = require('@lib/identifiers/sanitize-friendly-ids');
-const { resolveModelIdByIdentifier } = require('@lib/identifiers/resolve-entity-id');
+const {
+  resolveModelIdByIdentifier,
+  resolveModelRecordByIdentifier,
+} = require('@lib/identifiers/resolve-entity-id');
 
 const buildEmptyListResult = (page, limit) => ({
   slots: [],
@@ -129,6 +132,16 @@ const resolveAvailabilityPayload = async (data = {}, existing = null) => {
   return payload;
 };
 
+const resolveAvailabilitySlotRecordByIdentifier = async (identifier) => {
+  const resolved = await resolveModelRecordByIdentifier({
+    model: 'availability_slot',
+    identifier,
+    select: { id: true },
+  });
+  if (!resolved?.id) return null;
+  return availabilitySlotRepository.findById(resolved.id);
+};
+
 /**
  * List availability slots with pagination and filtering
  *
@@ -204,7 +217,7 @@ const listAvailabilitySlots = async (filters, page, limit, sortBy, order, userId
  */
 const getAvailabilitySlotById = async (id, userId, ipAddress) => {
   try {
-    const slot = await availabilitySlotRepository.findById(id);
+    const slot = await resolveAvailabilitySlotRecordByIdentifier(id);
 
     if (!slot) {
       throw new HttpError('errors.availability_slot.not_found', 404);
@@ -261,7 +274,7 @@ const createAvailabilitySlot = async (data, userId, ipAddress) => {
 const updateAvailabilitySlot = async (id, data, userId, ipAddress) => {
   try {
     // Get current state for audit
-    const before = await availabilitySlotRepository.findById(id);
+    const before = await resolveAvailabilitySlotRecordByIdentifier(id);
 
     if (!before) {
       throw new HttpError('errors.availability_slot.not_found', 404);
@@ -299,7 +312,7 @@ const updateAvailabilitySlot = async (id, data, userId, ipAddress) => {
 const deleteAvailabilitySlot = async (id, userId, ipAddress) => {
   try {
     // Get current state for audit
-    const before = await availabilitySlotRepository.findById(id);
+    const before = await resolveAvailabilitySlotRecordByIdentifier(id);
 
     if (!before) {
       throw new HttpError('errors.availability_slot.not_found', 404);

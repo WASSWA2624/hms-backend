@@ -11,7 +11,10 @@ const visitQueueRepository = require('@repositories/visit-queue/visit-queue.repo
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 const { isUuidLike } = require('@lib/identifiers/sanitize-friendly-ids');
-const { resolveModelIdByIdentifier } = require('@lib/identifiers/resolve-entity-id');
+const {
+  resolveModelIdByIdentifier,
+  resolveModelRecordByIdentifier,
+} = require('@lib/identifiers/resolve-entity-id');
 
 const USER_IDENTIFIER_MATCHERS = [({ rawValue }) => ({ email: rawValue }), ({ rawValue }) => ({ phone: rawValue })];
 
@@ -152,6 +155,16 @@ const resolveVisitQueuePayloadIdentifiers = async (data = {}, existing = null) =
   }
 
   return payload;
+};
+
+const resolveVisitQueueRecordByIdentifier = async (identifier) => {
+  const resolved = await resolveModelRecordByIdentifier({
+    model: 'visit_queue',
+    identifier,
+    select: { id: true },
+  });
+  if (!resolved?.id) return null;
+  return visitQueueRepository.findById(resolved.id);
 };
 
 /**
@@ -319,7 +332,7 @@ const listVisitQueues = async (filters = {}, page = 1, limit = 20, sortBy = 'que
  * @throws {HttpError} 404 if not found
  */
 const getVisitQueueById = async (id) => {
-  const entry = await visitQueueRepository.findById(id);
+  const entry = await resolveVisitQueueRecordByIdentifier(id);
   
   if (!entry) {
     throw new HttpError('errors.visit_queue.not_found', 404);
@@ -379,7 +392,7 @@ const createVisitQueue = async (data, context = {}) => {
  */
 const updateVisitQueue = async (id, data, context = {}) => {
   // Check if entry exists and get before state
-  const beforeEntry = await visitQueueRepository.findById(id);
+  const beforeEntry = await resolveVisitQueueRecordByIdentifier(id);
   
   if (!beforeEntry) {
     throw new HttpError('errors.visit_queue.not_found', 404);
@@ -428,7 +441,7 @@ const updateVisitQueue = async (id, data, context = {}) => {
  */
 const deleteVisitQueue = async (id, context = {}) => {
   // Check if entry exists
-  const entry = await visitQueueRepository.findById(id);
+  const entry = await resolveVisitQueueRecordByIdentifier(id);
   
   if (!entry) {
     throw new HttpError('errors.visit_queue.not_found', 404);
@@ -471,7 +484,7 @@ const deleteVisitQueue = async (id, context = {}) => {
  */
 const prioritizeVisitQueue = async (id, data = {}, context = {}) => {
   // Check if entry exists and get before state
-  const beforeEntry = await visitQueueRepository.findById(id);
+  const beforeEntry = await resolveVisitQueueRecordByIdentifier(id);
 
   if (!beforeEntry) {
     throw new HttpError('errors.visit_queue.not_found', 404);
