@@ -35,9 +35,23 @@ const TRANSFER_ACTIONS = Object.freeze({
   CANCEL: 'CANCEL',
 });
 
+const QUEUE_SCOPES = Object.freeze({
+  ACTIVE: 'ACTIVE',
+  ALL: 'ALL',
+});
+const TERMINAL_STAGES = new Set([STAGES.DISCHARGED, STAGES.CANCELLED]);
+const LEGACY_ROUTE_CONFIG = Object.freeze({
+  admissions: { delegate: 'admission', admissionField: 'id', panel: 'snapshot', action: 'open_admission' },
+  'bed-assignments': { delegate: 'bed_assignment', admissionField: 'admission_id', panel: 'beds', action: 'manage_bed' },
+  'ward-rounds': { delegate: 'ward_round', admissionField: 'admission_id', panel: 'rounds', action: 'add_ward_round' },
+  'nursing-notes': { delegate: 'nursing_note', admissionField: 'admission_id', panel: 'nursing', action: 'add_nursing_note' },
+  'medication-administrations': { delegate: 'medication_administration', admissionField: 'admission_id', panel: 'medication', action: 'add_medication' },
+  'discharge-summaries': { delegate: 'discharge_summary', admissionField: 'admission_id', panel: 'discharge', action: 'plan_discharge' },
+  'transfer-requests': { delegate: 'transfer_request', admissionField: 'admission_id', panel: 'transfer', action: 'manage_transfer' },
+});
+
 const TERMINAL_ADMISSION_STATUSES = new Set(['DISCHARGED', 'CANCELLED']);
 const OPEN_TRANSFER_STATUSES = new Set(['REQUESTED', 'APPROVED', 'IN_PROGRESS']);
-const OPEN_TRANSFER_BLOCKING_DISCHARGE = new Set(['REQUESTED', 'APPROVED', 'IN_PROGRESS']);
 const IPD_RECIPIENT_ROLES = [
   ROLES.SUPER_ADMIN,
   ROLES.TENANT_ADMIN,
@@ -54,6 +68,28 @@ const toDate = (value, fallback = new Date()) => {
 
 const sanitizeIdentifier = (value) => String(value || '').trim();
 const isUuidLike = (value) => UUID_LIKE_REGEX.test(sanitizeIdentifier(value));
+const normalizeQueueScope = (value) =>
+  String(value || QUEUE_SCOPES.ACTIVE).trim().toUpperCase() === QUEUE_SCOPES.ALL
+    ? QUEUE_SCOPES.ALL
+    : QUEUE_SCOPES.ACTIVE;
+
+const toPublicScalarIdentifier = (value) => {
+  const normalized = sanitizeIdentifier(value);
+  if (!normalized) return null;
+  return isUuidLike(normalized) ? null : normalized;
+};
+
+const resolvePublicIdentifier = (record) => {
+  if (!record) return null;
+  if (typeof record === 'string') return toPublicScalarIdentifier(record);
+  return toPublicScalarIdentifier(record.human_friendly_id) || null;
+};
+
+const resolvePatientDisplayName = (patient) => {
+  const firstName = sanitizeIdentifier(patient?.first_name);
+  const lastName = sanitizeIdentifier(patient?.last_name);
+  return [firstName, lastName].filter(Boolean).join(' ').trim();
+};
 
 const resolveByIdentifier = async (delegate, identifier, where = {}, select = { id: true }) => {
   const normalized = sanitizeIdentifier(identifier);
@@ -296,11 +332,293 @@ const buildIpdSnapshot = (admission) => {
   return snapshot;
 };
 
+const mapPublicWard = (ward) => {
+  if (!ward) return null;
+  return {
+    id: resolvePublicIdentifier(ward),
+    name: sanitizeIdentifier(ward.name) || null,
+    ward_type: sanitizeIdentifier(ward.ward_type) || null,
+  };
+};
+
+const mapPublicRoom = (room) => {
+  if (!room) return null;
+  return {
+    id: resolvePublicIdentifier(room),
+    name: sanitizeIdentifier(room.name) || null,
+    floor: room.floor ?? null,
+  };
+};
+
+const mapPublicBed = (bed) => {
+  if (!bed) return null;
+  return {
+    id: resolvePublicIdentifier(bed),
+    label: sanitizeIdentifier(bed.label) || null,
+    status: sanitizeIdentifier(bed.status) || null,
+    ward: mapPublicWard(bed.ward),
+    room: mapPublicRoom(bed.room),
+  };
+};
+
+const mapPublicBedAssignment = (assignment) => {
+  if (!assignment) return null;
+  return {
+    id: resolvePublicIdentifier(assignment),
+    assigned_at: assignment.assigned_at || null,
+    released_at: assignment.released_at || null,
+    bed: mapPublicBed(assignment.bed),
+  };
+};
+
+const mapPublicTransferRequest = (request) => {
+  if (!request) return null;
+  return {
+    id: resolvePublicIdentifier(request),
+    status: sanitizeIdentifier(request.status) || null,
+    requested_at: request.requested_at || null,
+    from_ward: mapPublicWard(request.from_ward),
+    to_ward: mapPublicWard(request.to_ward),
+  };
+};
+
+const mapPublicDischargeSummary = (summary) => {
+  if (!summary) return null;
+  return {
+    id: resolvePublicIdentifier(summary),
+    status: sanitizeIdentifier(summary.status) || null,
+    summary: summary.summary || null,
+    discharged_at: summary.discharged_at || null,
+    created_at: summary.created_at || null,
+    updated_at: summary.updated_at || null,
+  };
+};
+
+const mapPublicWardRound = (round) => {
+  if (!round) return null;
+  return {
+    id: resolvePublicIdentifier(round),
+    round_at: round.round_at || null,
+    notes: round.notes || null,
+    created_at: round.created_at || null,
+  };
+};
+
+const resolveUserDisplayName = (user) => {
+  if (!user || !user.profile) return '';
+  const first = sanitizeIdentifier(user.profile.first_name);
+  const middle = sanitizeIdentifier(user.profile.middle_name);
+  const last = sanitizeIdentifier(user.profile.last_name);
+  return [first, middle, last].filter(Boolean).join(' ').trim();
+};
+
+const mapPublicNursingNote = (note) => {
+  if (!note) return null;
+  return {
+    id: resolvePublicIdentifier(note),
+    nurse_user_id: resolvePublicIdentifier(note.nurse),
+    nurse_name: resolveUserDisplayName(note.nurse) || sanitizeIdentifier(note.nurse?.email) || null,
+    note: note.note || null,
+    created_at: note.created_at || null,
+  };
+};
+
+const mapPublicMedicationAdministration = (entry) => {
+  if (!entry) return null;
+  return {
+    id: resolvePublicIdentifier(entry),
+    prescription_id: toPublicScalarIdentifier(entry.prescription_id),
+    administered_at: entry.administered_at || null,
+    dose: entry.dose || null,
+    unit: entry.unit || null,
+    route: sanitizeIdentifier(entry.route) || null,
+    created_at: entry.created_at || null,
+  };
+};
+
+const buildPublicTimeline = (snapshot) => {
+  const events = [];
+
+  (Array.isArray(snapshot?.ward_rounds) ? snapshot.ward_rounds : []).forEach((round) => {
+    events.push({
+      type: 'WARD_ROUND',
+      at: round.round_at || round.created_at || null,
+      label: round.notes || 'Ward round recorded',
+    });
+  });
+
+  (Array.isArray(snapshot?.nursing_notes) ? snapshot.nursing_notes : []).forEach((note) => {
+    events.push({
+      type: 'NURSING_NOTE',
+      at: note.created_at || null,
+      label: note.note || 'Nursing note recorded',
+    });
+  });
+
+  (Array.isArray(snapshot?.medication_administrations) ? snapshot.medication_administrations : []).forEach(
+    (entry) => {
+      events.push({
+        type: 'MEDICATION_ADMINISTRATION',
+        at: entry.administered_at || entry.created_at || null,
+        label:
+          sanitizeIdentifier(entry.dose)
+            ? `Dose ${entry.dose}${entry.unit ? ` ${entry.unit}` : ''}`
+            : 'Medication recorded',
+      });
+    }
+  );
+
+  (Array.isArray(snapshot?.transfer_requests) ? snapshot.transfer_requests : []).forEach((request) => {
+    events.push({
+      type: 'TRANSFER',
+      at: request.requested_at || null,
+      label: `Transfer ${sanitizeIdentifier(request.status) || 'UPDATED'}`,
+    });
+  });
+
+  return events
+    .filter((entry) => sanitizeIdentifier(entry.at))
+    .sort((left, right) => {
+      const leftTs = new Date(left.at).getTime() || 0;
+      const rightTs = new Date(right.at).getTime() || 0;
+      return rightTs - leftTs;
+    });
+};
+
+const toPublicIpdSnapshot = (snapshot) => {
+  const admissionPublicId = resolvePublicIdentifier(snapshot?.admission);
+  const patientPublicId = resolvePublicIdentifier(snapshot?.patient);
+  const encounterPublicId = resolvePublicIdentifier(snapshot?.encounter);
+  const activeBed = mapPublicBedAssignment(snapshot?.active_bed_assignment);
+  const openTransfer = mapPublicTransferRequest(snapshot?.open_transfer_request);
+  const latestDischarge = mapPublicDischargeSummary(snapshot?.latest_discharge_summary);
+  const patientName = resolvePatientDisplayName(snapshot?.patient);
+
+  const publicSnapshot = {
+    id: admissionPublicId,
+    human_friendly_id: admissionPublicId,
+    display_id: admissionPublicId,
+    admission: {
+      id: admissionPublicId,
+      status: sanitizeIdentifier(snapshot?.admission?.status) || null,
+      admitted_at: snapshot?.admission?.admitted_at || null,
+      discharged_at: snapshot?.admission?.discharged_at || null,
+      created_at: snapshot?.admission?.created_at || null,
+      updated_at: snapshot?.admission?.updated_at || null,
+    },
+    tenant: snapshot?.tenant
+      ? {
+          id: resolvePublicIdentifier(snapshot.tenant),
+          name: sanitizeIdentifier(snapshot.tenant.name) || null,
+        }
+      : null,
+    facility: snapshot?.facility
+      ? {
+          id: resolvePublicIdentifier(snapshot.facility),
+          name: sanitizeIdentifier(snapshot.facility.name) || null,
+          facility_type: sanitizeIdentifier(snapshot.facility.facility_type) || null,
+        }
+      : null,
+    patient: snapshot?.patient
+      ? {
+          id: patientPublicId,
+          first_name: snapshot.patient.first_name || null,
+          last_name: snapshot.patient.last_name || null,
+          date_of_birth: snapshot.patient.date_of_birth || null,
+          gender: sanitizeIdentifier(snapshot.patient.gender) || null,
+        }
+      : null,
+    encounter: snapshot?.encounter
+      ? {
+          id: encounterPublicId,
+          encounter_type: sanitizeIdentifier(snapshot.encounter.encounter_type) || null,
+          status: sanitizeIdentifier(snapshot.encounter.status) || null,
+          started_at: snapshot.encounter.started_at || null,
+          ended_at: snapshot.encounter.ended_at || null,
+          provider_user_id: null,
+        }
+      : null,
+    active_bed_assignment: activeBed,
+    open_transfer_request: openTransfer,
+    latest_discharge_summary: latestDischarge,
+    transfer_requests: (Array.isArray(snapshot?.transfer_requests) ? snapshot.transfer_requests : [])
+      .map(mapPublicTransferRequest)
+      .filter(Boolean),
+    discharge_summaries: (Array.isArray(snapshot?.discharge_summaries) ? snapshot.discharge_summaries : [])
+      .map(mapPublicDischargeSummary)
+      .filter(Boolean),
+    ward_rounds: (Array.isArray(snapshot?.ward_rounds) ? snapshot.ward_rounds : [])
+      .map(mapPublicWardRound)
+      .filter(Boolean),
+    nursing_notes: (Array.isArray(snapshot?.nursing_notes) ? snapshot.nursing_notes : [])
+      .map(mapPublicNursingNote)
+      .filter(Boolean),
+    medication_administrations: (
+      Array.isArray(snapshot?.medication_administrations) ? snapshot.medication_administrations : []
+    )
+      .map(mapPublicMedicationAdministration)
+      .filter(Boolean),
+    flow: {
+      stage: sanitizeIdentifier(snapshot?.flow?.stage) || null,
+      next_step: sanitizeIdentifier(snapshot?.flow?.next_step) || null,
+      transfer_status: sanitizeIdentifier(snapshot?.flow?.transfer_status) || null,
+      has_active_bed: Boolean(snapshot?.flow?.has_active_bed),
+      admission_status: sanitizeIdentifier(snapshot?.flow?.admission_status) || null,
+    },
+    flow_summary: {
+      stage: sanitizeIdentifier(snapshot?.flow_summary?.stage) || null,
+      next_step: sanitizeIdentifier(snapshot?.flow_summary?.next_step) || null,
+      admission_status: sanitizeIdentifier(snapshot?.flow_summary?.admission_status) || null,
+      has_active_bed: Boolean(snapshot?.flow_summary?.has_active_bed),
+      transfer_status: sanitizeIdentifier(snapshot?.flow_summary?.transfer_status) || null,
+    },
+    stage: sanitizeIdentifier(snapshot?.flow?.stage) || null,
+    next_step: sanitizeIdentifier(snapshot?.flow?.next_step) || null,
+    transfer_status: sanitizeIdentifier(snapshot?.flow?.transfer_status) || null,
+    patient_display_name: patientName || patientPublicId || null,
+    patient_display_id: patientPublicId,
+    ward_display_name:
+      sanitizeIdentifier(activeBed?.bed?.ward?.name) ||
+      sanitizeIdentifier(openTransfer?.to_ward?.name) ||
+      null,
+  };
+
+  publicSnapshot.timeline = buildPublicTimeline(publicSnapshot);
+  return publicSnapshot;
+};
+
+const toQueueCardDto = (snapshot) => {
+  const publicSnapshot = toPublicIpdSnapshot(snapshot);
+  return {
+    id: publicSnapshot.id,
+    admission_id: publicSnapshot.id,
+    display_id: publicSnapshot.display_id,
+    human_friendly_id: publicSnapshot.human_friendly_id,
+    stage: publicSnapshot.stage,
+    next_step: publicSnapshot.next_step,
+    transfer_status: publicSnapshot.transfer_status,
+    has_active_bed: Boolean(publicSnapshot?.flow_summary?.has_active_bed),
+    patient_id: publicSnapshot.patient_display_id,
+    patient_display_id: publicSnapshot.patient_display_id,
+    patient_display_name: publicSnapshot.patient_display_name,
+    ward_display_name: publicSnapshot.ward_display_name,
+    bed_id: publicSnapshot?.active_bed_assignment?.bed?.id || null,
+    bed_display_label: publicSnapshot?.active_bed_assignment?.bed?.label || null,
+    admitted_at: publicSnapshot?.admission?.admitted_at || null,
+    discharged_at: publicSnapshot?.admission?.discharged_at || null,
+    flow_summary: publicSnapshot.flow_summary,
+    admission_status: publicSnapshot?.admission?.status || null,
+  };
+};
+
 const matchesDerivedFilters = (snapshot, filters = {}) => {
   if (filters.stage && snapshot.flow?.stage !== filters.stage) return false;
 
   if (filters.transfer_status) {
-    if (String(snapshot?.open_transfer_request?.status || '').toUpperCase() !== String(filters.transfer_status).toUpperCase()) {
+    if (
+      String(snapshot?.open_transfer_request?.status || '').toUpperCase() !==
+      String(filters.transfer_status).toUpperCase()
+    ) {
       return false;
     }
   }
@@ -310,14 +628,19 @@ const matchesDerivedFilters = (snapshot, filters = {}) => {
   }
 
   if (filters.ward_id) {
-    const wardId = snapshot?.active_bed_assignment?.bed?.ward_id || snapshot?.active_bed_assignment?.bed?.ward?.id || null;
+    const wardId =
+      snapshot?.active_bed_assignment?.bed?.ward_id || snapshot?.active_bed_assignment?.bed?.ward?.id || null;
     if (!wardId || wardId !== filters.ward_id) return false;
+  }
+
+  if (filters.queue_scope === QUEUE_SCOPES.ACTIVE && !filters.stage) {
+    if (TERMINAL_STAGES.has(snapshot?.flow?.stage)) return false;
   }
 
   return true;
 };
 
-const getIpdFlowById = async (id) => {
+const getIpdSnapshotByIdInternal = async (id) => {
   const resolved = await resolveAdmissionByIdentifier(prisma, id);
   if (!resolved) {
     throw new HttpError('errors.ipd_flow.not_found', 404);
@@ -331,11 +654,14 @@ const getIpdFlowById = async (id) => {
   return buildIpdSnapshot(admission);
 };
 
+const getIpdFlowById = async (id) => toPublicIpdSnapshot(await getIpdSnapshotByIdInternal(id));
+
 const listIpdFlows = async (filters = {}, page = 1, limit = 20, sortBy = 'admitted_at', order = 'desc') => {
   const currentPage = Math.max(1, Number(page) || 1);
   const currentLimit = Math.max(1, Math.min(100, Number(limit) || 20));
   const skip = (currentPage - 1) * currentLimit;
   const direction = String(order || '').toLowerCase() === 'asc' ? 'asc' : 'desc';
+  const queueScope = normalizeQueueScope(filters.queue_scope);
 
   const where = {};
 
@@ -364,6 +690,10 @@ const listIpdFlows = async (filters = {}, page = 1, limit = 20, sortBy = 'admitt
     where.patient_id = patient.id;
   }
 
+  if (queueScope === QUEUE_SCOPES.ACTIVE && !filters.stage) {
+    where.status = { notIn: ['DISCHARGED', 'CANCELLED'] };
+  }
+
   const searchText = sanitizeIdentifier(filters.search);
   if (searchText) {
     where.OR = [
@@ -377,7 +707,12 @@ const listIpdFlows = async (filters = {}, page = 1, limit = 20, sortBy = 'admitt
 
   let wardId = null;
   if (filters.ward_id) {
-    const ward = await resolveWardByIdentifier(prisma, filters.ward_id, where.tenant_id || null, where.facility_id || null);
+    const ward = await resolveWardByIdentifier(
+      prisma,
+      filters.ward_id,
+      where.tenant_id || null,
+      where.facility_id || null
+    );
     if (!ward) throw new HttpError('errors.ward.not_found', 404, [{ field: 'ward_id' }]);
     wardId = ward.id;
   }
@@ -387,7 +722,9 @@ const listIpdFlows = async (filters = {}, page = 1, limit = 20, sortBy = 'admitt
   );
 
   if (hasDerivedFilters) {
-    const rows = await ipdFlowRepository.findMany(where, 0, 300, { [sortBy || 'admitted_at']: direction });
+    const rows = await ipdFlowRepository.findMany(where, 0, 300, {
+      [sortBy || 'admitted_at']: direction,
+    });
     const filtered = rows
       .map((row) => buildIpdSnapshot(row))
       .filter((snapshot) =>
@@ -396,10 +733,11 @@ const listIpdFlows = async (filters = {}, page = 1, limit = 20, sortBy = 'admitt
           transfer_status: filters.transfer_status,
           has_active_bed: filters.has_active_bed,
           ward_id: wardId,
+          queue_scope: queueScope,
         })
       );
 
-    const items = filtered.slice(skip, skip + currentLimit);
+    const items = filtered.slice(skip, skip + currentLimit).map(toQueueCardDto);
 
     return {
       items,
@@ -420,7 +758,7 @@ const listIpdFlows = async (filters = {}, page = 1, limit = 20, sortBy = 'admitt
   ]);
 
   return {
-    items: rows.map((row) => buildIpdSnapshot(row)),
+    items: rows.map((row) => toQueueCardDto(buildIpdSnapshot(row))),
     pagination: {
       page: currentPage,
       limit: currentLimit,
@@ -431,6 +769,60 @@ const listIpdFlows = async (filters = {}, page = 1, limit = 20, sortBy = 'admitt
     },
   };
 };
+
+const resolveLegacyRoute = async (resource, id) => {
+  const normalizedResource = sanitizeIdentifier(resource).toLowerCase();
+  const config = LEGACY_ROUTE_CONFIG[normalizedResource];
+  if (!config) throw new HttpError('errors.ipd_flow.not_found', 404);
+
+  const delegate = prisma[config.delegate];
+  if (!delegate || typeof delegate.findFirst !== 'function') {
+    throw new HttpError('errors.ipd_flow.not_found', 404);
+  }
+
+  const select = {
+    id: true,
+    human_friendly_id: true,
+    [config.admissionField]: true,
+  };
+
+  const resolvedResource = await resolveByIdentifier(delegate, id, {}, select);
+  if (!resolvedResource) throw new HttpError('errors.ipd_flow.not_found', 404);
+
+  const admissionInternalId =
+    config.admissionField === 'id' ? resolvedResource.id : resolvedResource[config.admissionField];
+
+  if (!admissionInternalId) throw new HttpError('errors.ipd_flow.not_found', 404);
+
+  const admission = await prisma.admission.findFirst({
+    where: {
+      id: admissionInternalId,
+      deleted_at: null,
+    },
+    select: {
+      id: true,
+      human_friendly_id: true,
+      status: true,
+    },
+  });
+
+  if (!admission) throw new HttpError('errors.ipd_flow.not_found', 404);
+
+  return {
+    admission_id: resolvePublicIdentifier(admission),
+    resource: normalizedResource,
+    resource_id: resolvePublicIdentifier(resolvedResource),
+    panel: config.panel,
+    action: config.action,
+    stage_hint:
+      String(admission.status || '').toUpperCase() === 'DISCHARGED'
+        ? STAGES.DISCHARGED
+        : String(admission.status || '').toUpperCase() === 'CANCELLED'
+          ? STAGES.CANCELLED
+          : null,
+  };
+};
+
 const ensureAdmissionIsMutable = (admission) => {
   const status = String(admission?.status || '').toUpperCase();
   if (TERMINAL_ADMISSION_STATUSES.has(status)) {
@@ -465,27 +857,22 @@ const fetchAdmissionForMutation = async (tx, admissionId) => {
   return admission;
 };
 
-const buildRealtimePayload = ({ snapshot, transition, context }) => {
-  const admissionPublicId = snapshot?.admission?.human_friendly_id || null;
-  const admissionInternalId = snapshot?.admission?.id || null;
-  const patientPublicId = snapshot?.patient?.human_friendly_id || null;
-  const patientInternalId = snapshot?.patient?.id || null;
+const buildRealtimePayload = ({ snapshot, transition }) => {
+  const admissionPublicId = snapshot?.id || snapshot?.admission?.id || null;
+  const patientPublicId = snapshot?.patient?.id || null;
 
   return {
-    admission_id: admissionInternalId,
+    admission_id: admissionPublicId,
     admission_public_id: admissionPublicId,
-    patient_id: patientInternalId,
+    patient_id: patientPublicId,
     patient_public_id: patientPublicId,
-    tenant_internal_id: snapshot?.admission?.tenant_id || context?.tenant_id || null,
-    facility_internal_id: snapshot?.admission?.facility_id || context?.facility_id || null,
     stage_from: transition?.stage_from || null,
     stage_to: transition?.stage_to || snapshot?.flow?.stage || null,
     next_step: snapshot?.flow?.next_step || null,
     action: transition?.action || 'UPDATED',
-    actor_user_id: context?.user_id || null,
     occurred_at: transition?.occurred_at || new Date().toISOString(),
-    flow_summary: buildFlowSummary(snapshot),
-    target_path: `/ipd?id=${encodeURIComponent(admissionPublicId || admissionInternalId || '')}`,
+    flow_summary: snapshot?.flow_summary || null,
+    target_path: admissionPublicId ? `/ipd?id=${encodeURIComponent(admissionPublicId)}` : '/ipd',
   };
 };
 
@@ -514,7 +901,7 @@ const resolveRoleRecipients = async ({ tenantId, facilityId = null, roles = [] }
   return rows.map((item) => item.user_id).filter(Boolean);
 };
 
-const createAndEmitNotifications = async ({ payload, recipientUserIds }) => {
+const createAndEmitNotifications = async ({ payload, recipientUserIds, tenantId }) => {
   if (!Array.isArray(recipientUserIds) || recipientUserIds.length === 0) return;
   if (!prisma?.notification?.create) return;
 
@@ -525,7 +912,7 @@ const createAndEmitNotifications = async ({ payload, recipientUserIds }) => {
     try {
       const notification = await prisma.notification.create({
         data: {
-          tenant_id: payload.tenant_internal_id,
+          tenant_id: tenantId,
           user_id: userId,
           notification_type: 'SYSTEM',
           priority: payload?.stage_to === STAGES.TRANSFER_IN_PROGRESS ? 'HIGH' : 'MEDIUM',
@@ -565,16 +952,25 @@ const buildCompatibilityEvents = (signals = []) => {
   return [...new Set(events)];
 };
 
-const publishIpdRealtimeUpdates = async ({ snapshot, transition, context, compatibilitySignals = [] }) => {
+const publishIpdRealtimeUpdates = async ({
+  snapshot,
+  transition,
+  context,
+  compatibilitySignals = [],
+  tenantInternalId = null,
+  facilityInternalId = null,
+}) => {
   try {
-    const payload = buildRealtimePayload({ snapshot, transition, context });
+    const payload = buildRealtimePayload({ snapshot, transition });
+    const resolvedTenantId = tenantInternalId || context?.tenant_id || null;
+    const resolvedFacilityId = facilityInternalId || context?.facility_id || null;
     const recipientUserIds = await resolveRoleRecipients({
-      tenantId: payload.tenant_internal_id,
-      facilityId: payload.facility_internal_id,
+      tenantId: resolvedTenantId,
+      facilityId: resolvedFacilityId,
       roles: IPD_RECIPIENT_ROLES,
     });
 
-    const recipients = recipientUserIds.filter((userId) => userId && userId !== payload.actor_user_id);
+    const recipients = recipientUserIds.filter((userId) => userId && userId !== context?.user_id);
     if (!recipients.length) return;
 
     emitToUsers(recipients, IPD_EVENTS.IPD_FLOW_UPDATED, payload);
@@ -594,7 +990,7 @@ const publishIpdRealtimeUpdates = async ({ snapshot, transition, context, compat
       emitToUsers(recipients, eventName, compatibilityPayload);
     });
 
-    await createAndEmitNotifications({ payload, recipientUserIds: recipients });
+    await createAndEmitNotifications({ payload, recipientUserIds: recipients, tenantId: resolvedTenantId });
   } catch (_error) {
     // realtime should not block workflow
   }
@@ -616,7 +1012,8 @@ const writeAuditLog = ({ context, admissionId, tenantId, action, after, metadata
 };
 
 const finalizeAction = async ({ result, context, metadata = {} }) => {
-  const snapshot = await getIpdFlowById(result.admission_id);
+  const internalSnapshot = await getIpdSnapshotByIdInternal(result.admission_id);
+  const snapshot = toPublicIpdSnapshot(internalSnapshot);
   await publishIpdRealtimeUpdates({
     snapshot,
     transition: {
@@ -625,6 +1022,8 @@ const finalizeAction = async ({ result, context, metadata = {} }) => {
     },
     context,
     compatibilitySignals: result.compatibilitySignals,
+    tenantInternalId: result.tenant_id || internalSnapshot?.admission?.tenant_id || context?.tenant_id || null,
+    facilityInternalId: internalSnapshot?.admission?.facility_id || context?.facility_id || null,
   });
 
   writeAuditLog({
@@ -1310,7 +1709,8 @@ const emitAdmissionRefreshEvent = async (admissionIdentifier, context = {}) => {
   if (!normalized) return null;
 
   try {
-    const snapshot = await getIpdFlowById(normalized);
+    const internalSnapshot = await getIpdSnapshotByIdInternal(normalized);
+    const snapshot = toPublicIpdSnapshot(internalSnapshot);
     await publishIpdRealtimeUpdates({
       snapshot,
       transition: {
@@ -1321,6 +1721,8 @@ const emitAdmissionRefreshEvent = async (admissionIdentifier, context = {}) => {
       },
       context,
       compatibilitySignals: ['PATIENT_ADMITTED'],
+      tenantInternalId: internalSnapshot?.admission?.tenant_id || context?.tenant_id || null,
+      facilityInternalId: internalSnapshot?.admission?.facility_id || context?.facility_id || null,
     });
     return snapshot;
   } catch (_error) {
@@ -1332,6 +1734,7 @@ module.exports = {
   STAGES,
   TRANSFER_ACTIONS,
   listIpdFlows,
+  resolveLegacyRoute,
   getIpdFlowById,
   startIpdFlow,
   assignBed,

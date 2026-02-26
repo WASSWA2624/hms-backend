@@ -1040,6 +1040,7 @@
   "messages.ipd_flow.add_medication_administration.success": "Medication administration recorded successfully",
   "messages.ipd_flow.plan_discharge.success": "Discharge plan updated successfully",
   "messages.ipd_flow.finalize_discharge.success": "Discharge finalized successfully",
+  "messages.ipd_flow.resolve_legacy.success": "Legacy IPD route resolved successfully",
   "errors.ipd_flow.not_found": "IPD flow not found",
   "errors.ipd_flow.patient_not_found": "Patient not found for IPD flow",
   "errors.ipd_flow.bed_not_available": "Selected bed is not available",

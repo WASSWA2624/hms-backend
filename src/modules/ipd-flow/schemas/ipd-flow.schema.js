@@ -45,11 +45,22 @@ const workflowStageSchema = z.enum([
 const transferStatusSchema = z.enum(['REQUESTED', 'APPROVED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']);
 const transferActionSchema = z.enum(['APPROVE', 'START', 'COMPLETE', 'CANCEL']);
 const medicationRouteSchema = z.enum(['ORAL', 'IV', 'IM', 'TOPICAL', 'INHALATION', 'OTHER']);
+const queueScopeSchema = z.enum(['ACTIVE', 'ALL']);
+const legacyResourceSchema = z.enum([
+  'admissions',
+  'bed-assignments',
+  'ward-rounds',
+  'nursing-notes',
+  'medication-administrations',
+  'discharge-summaries',
+  'transfer-requests',
+]);
 
 const listIpdFlowsQuerySchema = listQuerySchema.extend({
   tenant_id: identifierSchema.optional(),
   facility_id: identifierSchema.optional(),
   patient_id: identifierSchema.optional(),
+  queue_scope: queueScopeSchema.optional().default('ACTIVE'),
   stage: workflowStageSchema.optional(),
   ward_id: identifierSchema.optional(),
   transfer_status: transferStatusSchema.optional(),
@@ -77,6 +88,11 @@ const listIpdFlowsQuerySchema = listQuerySchema.extend({
 });
 
 const admissionIdParamsSchema = z.object({
+  id: identifierSchema,
+});
+
+const resolveLegacyRouteParamsSchema = z.object({
+  resource: legacyResourceSchema,
   id: identifierSchema,
 });
 
@@ -161,4 +177,7 @@ module.exports = {
   finalizeDischargeSchema,
   workflowStageSchema,
   transferActionSchema,
+  queueScopeSchema,
+  legacyResourceSchema,
+  resolveLegacyRouteParamsSchema,
 };

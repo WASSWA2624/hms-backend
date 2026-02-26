@@ -53,19 +53,24 @@ jest.mock('@prisma/client', () => ({
     update: jest.fn(),
   },
   bed_assignment: {
+    findFirst: jest.fn(),
     create: jest.fn(),
     update: jest.fn(),
   },
   ward_round: {
+    findFirst: jest.fn(),
     create: jest.fn(),
   },
   nursing_note: {
+    findFirst: jest.fn(),
     create: jest.fn(),
   },
   medication_administration: {
+    findFirst: jest.fn(),
     create: jest.fn(),
   },
   discharge_summary: {
+    findFirst: jest.fn(),
     create: jest.fn(),
     update: jest.fn(),
   },
@@ -313,7 +318,44 @@ describe('ipd-flow.service', () => {
         }),
       })
     );
-    expect(result.admission.id).toBe('adm-1');
+    expect(result.admission.id).toBe('ADM0000001');
+    expect(result.admission.tenant_id).toBeUndefined();
+  });
+
+  it('defaults queue_scope to ACTIVE when listing flows', async () => {
+    ipdFlowRepository.findMany.mockResolvedValue([buildAdmission()]);
+    ipdFlowRepository.count.mockResolvedValue(1);
+
+    const result = await ipdFlowService.listIpdFlows({});
+
+    expect(ipdFlowRepository.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: {
+          notIn: ['DISCHARGED', 'CANCELLED'],
+        },
+      }),
+      0,
+      20,
+      expect.any(Object)
+    );
+    expect(result.items[0].id).toBe('ADM0000001');
+  });
+
+  it('resolves legacy resources to admission public id', async () => {
+    prisma.admission.findFirst
+      .mockResolvedValueOnce({ id: 'adm-1', human_friendly_id: 'ADM0000001' })
+      .mockResolvedValueOnce({ id: 'adm-1', human_friendly_id: 'ADM0000001', status: 'ADMITTED' });
+
+    const resolution = await ipdFlowService.resolveLegacyRoute('admissions', 'ADM0000001');
+
+    expect(resolution).toEqual(
+      expect.objectContaining({
+        admission_id: 'ADM0000001',
+        resource: 'admissions',
+        panel: 'snapshot',
+        action: 'open_admission',
+      })
+    );
   });
 
   it('emits ipd.flow.updated and compatibility admission events on start', async () => {
@@ -377,11 +419,15 @@ describe('ipd-flow.service', () => {
       ['nurse-2'],
       'ipd.flow.updated',
       expect.objectContaining({
-        admission_id: 'adm-1',
+        admission_id: 'ADM0000001',
         action: 'START',
         target_path: expect.stringContaining('/ipd?id='),
       })
     );
+
+    const flowEventPayload = emitToUsers.mock.calls.find((call) => call[1] === 'ipd.flow.updated')[2];
+    expect(flowEventPayload.tenant_internal_id).toBeUndefined();
+    expect(flowEventPayload.facility_internal_id).toBeUndefined();
 
     const emittedEvents = emitToUsers.mock.calls.map((call) => call[1]);
     expect(emittedEvents).toContain('admission.patient_admitted');

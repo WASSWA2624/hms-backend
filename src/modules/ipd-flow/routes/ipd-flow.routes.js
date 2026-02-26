@@ -10,6 +10,7 @@ const { authenticate, authorize } = require('@middlewares/auth.middleware');
 const { ROLES } = require('@config/roles');
 const {
   listIpdFlowsQuerySchema,
+  resolveLegacyRouteParamsSchema,
   admissionIdParamsSchema,
   startIpdFlowSchema,
   assignBedSchema,
@@ -37,6 +38,14 @@ router.get(
   authenticate(),
   authorize(IPD_ALLOWED_ROLES, 'role'),
   ipdFlowController.listIpdFlows
+);
+
+router.get(
+  '/resolve-legacy/:resource/:id',
+  validateRequest({ params: resolveLegacyRouteParamsSchema }),
+  authenticate(),
+  authorize(IPD_ALLOWED_ROLES, 'role'),
+  ipdFlowController.resolveLegacyRoute
 );
 
 router.get(

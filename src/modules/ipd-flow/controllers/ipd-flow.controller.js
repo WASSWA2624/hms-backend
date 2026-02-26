@@ -20,6 +20,7 @@ const listIpdFlows = asyncHandler(async (req, res) => {
     tenant_id,
     facility_id,
     patient_id,
+    queue_scope,
     stage,
     ward_id,
     transfer_status,
@@ -36,6 +37,7 @@ const listIpdFlows = asyncHandler(async (req, res) => {
       tenant_id,
       facility_id,
       patient_id,
+      queue_scope,
       stage,
       ward_id,
       transfer_status,
@@ -54,6 +56,11 @@ const listIpdFlows = asyncHandler(async (req, res) => {
 const getIpdFlowById = asyncHandler(async (req, res) => {
   const flow = await ipdFlowService.getIpdFlowById(req.params.id);
   return sendSuccess(res, 200, 'messages.ipd_flow.get.success', flow);
+});
+
+const resolveLegacyRoute = asyncHandler(async (req, res) => {
+  const resolution = await ipdFlowService.resolveLegacyRoute(req.params.resource, req.params.id);
+  return sendSuccess(res, 200, 'messages.ipd_flow.resolve_legacy.success', resolution);
 });
 
 const startIpdFlow = asyncHandler(async (req, res) => {
@@ -117,6 +124,7 @@ const finalizeDischarge = asyncHandler(async (req, res) => {
 
 module.exports = {
   listIpdFlows,
+  resolveLegacyRoute,
   getIpdFlowById,
   startIpdFlow,
   assignBed,

@@ -43,12 +43,12 @@ describe('ipd-flow.controller', () => {
         hasPreviousPage: false,
       },
     });
-    req.query = { page: '1', limit: '20', stage: 'ADMITTED_IN_BED' };
+    req.query = { page: '1', limit: '20', stage: 'ADMITTED_IN_BED', queue_scope: 'ALL' };
 
     await ipdFlowController.listIpdFlows(req, res);
 
     expect(ipdFlowService.listIpdFlows).toHaveBeenCalledWith(
-      expect.objectContaining({ stage: 'ADMITTED_IN_BED' }),
+      expect.objectContaining({ stage: 'ADMITTED_IN_BED', queue_scope: 'ALL' }),
       1,
       20,
       'admitted_at',
@@ -103,6 +103,26 @@ describe('ipd-flow.controller', () => {
       res,
       200,
       'messages.ipd_flow.finalize_discharge.success',
+      expect.any(Object)
+    );
+  });
+
+  it('resolves legacy route and returns success response', async () => {
+    ipdFlowService.resolveLegacyRoute.mockResolvedValue({
+      admission_id: 'ADM0001',
+      resource: 'admissions',
+      panel: 'snapshot',
+      action: 'open_admission',
+    });
+    req.params = { resource: 'admissions', id: 'ADM0001' };
+
+    await ipdFlowController.resolveLegacyRoute(req, res);
+
+    expect(ipdFlowService.resolveLegacyRoute).toHaveBeenCalledWith('admissions', 'ADM0001');
+    expect(sendSuccess).toHaveBeenCalledWith(
+      res,
+      200,
+      'messages.ipd_flow.resolve_legacy.success',
       expect.any(Object)
     );
   });

@@ -1,6 +1,7 @@
 const {
   listIpdFlowsQuerySchema,
   admissionIdParamsSchema,
+  resolveLegacyRouteParamsSchema,
   startIpdFlowSchema,
   assignBedSchema,
   requestTransferSchema,
@@ -21,6 +22,15 @@ describe('ipd-flow.schema', () => {
 
     expect(result.success).toBe(true);
     expect(result.data.has_active_bed).toBe(true);
+    expect(result.data.queue_scope).toBe('ACTIVE');
+  });
+
+  it('validates resolve-legacy route params', () => {
+    const result = resolveLegacyRouteParamsSchema.safeParse({
+      resource: 'transfer-requests',
+      id: 'TRN0000001',
+    });
+    expect(result.success).toBe(true);
   });
 
   it('accepts UUID and HFID identifiers in admission params', () => {
