@@ -20,6 +20,8 @@ const {
   pacsSyncStudySchema,
   draftRadiologyResultSchema,
   finalizeRadiologyResultSchema,
+  requestFinalizationRadiologyResultSchema,
+  attestFinalizationRadiologyResultSchema,
   addendumRadiologyResultSchema,
 } = require('@validations/radiology-workspace/radiology-workspace.schema');
 
@@ -148,6 +150,22 @@ router.post(
   authenticate(),
   authorize(RADIOLOGY_ALLOWED_ROLES, 'role'),
   radiologyWorkspaceController.finalizeRadiologyResult
+);
+
+router.post(
+  '/results/:id/request-finalization',
+  validateRequest({ params: resultWorkflowParamsSchema, body: requestFinalizationRadiologyResultSchema }),
+  authenticate(),
+  authorize(RADIOLOGY_ALLOWED_ROLES, 'role'),
+  radiologyWorkspaceController.requestRadiologyResultFinalization
+);
+
+router.post(
+  '/results/:id/attest-finalization',
+  validateRequest({ params: resultWorkflowParamsSchema, body: attestFinalizationRadiologyResultSchema }),
+  authenticate(),
+  authorize(RADIOLOGY_ALLOWED_ROLES, 'role'),
+  radiologyWorkspaceController.attestRadiologyResultFinalization
 );
 
 router.post(

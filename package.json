@@ -15,6 +15,7 @@
     "db:backfill:ambulance-role": "node scripts/backfill-ambulance-operator-role.js",
     "db:backfill:vital-bp": "node scripts/backfill-vital-bp-components.js",
     "db:backfill:user-position-title": "node scripts/backfill-user-position-title.js",
+    "db:backfill:drug-inventory-map": "node scripts/backfill-drug-inventory-map.js",
     "db:report:user-position-title": "node scripts/report-user-position-title.js",
     "db:clear:demo": "node scripts/clear-demo-data.js",
     "db:seed:demo": "node scripts/seed-demo-data.js",

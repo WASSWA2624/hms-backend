@@ -99,6 +99,8 @@ const DIAGNOSTIC_EVENTS = {
  * Pharmacy Events
  */
 const PHARMACY_EVENTS = {
+  PHARMACY_WORKSPACE_UPDATED: 'pharmacy.workspace_updated',
+  PHARMACY_ORDER_UPDATED: 'pharmacy.order_updated',
   PHARMACY_ORDER_CREATED: 'pharmacy.order_created',
   PHARMACY_ORDER_DISPENSED: 'pharmacy.order_dispensed',
   PHARMACY_ORDER_CANCELED: 'pharmacy.order_canceled'
@@ -108,6 +110,7 @@ const PHARMACY_EVENTS = {
  * Inventory Events
  */
 const INVENTORY_EVENTS = {
+  INVENTORY_STOCK_UPDATED: 'inventory.stock_updated',
   INVENTORY_LOW_STOCK: 'inventory.low_stock',
   INVENTORY_STOCK_ADJUSTED: 'inventory.stock_adjusted'
 };

@@ -155,6 +155,21 @@ const txUpdateResult = async (tx, id, data) =>
     data,
   });
 
+const txCreateResultAttestation = async (tx, data) =>
+  tx.radiology_result_attestation.create({
+    data,
+  });
+
+const txFindResultAttestation = async (tx, radiologyResultId, phase) =>
+  tx.radiology_result_attestation.findFirst({
+    where: {
+      deleted_at: null,
+      radiology_result_id: radiologyResultId,
+      phase,
+    },
+    orderBy: { created_at: 'desc' },
+  });
+
 const txCreatePacsLink = async (tx, data) =>
   tx.pacs_link.create({
     data,
@@ -186,6 +201,8 @@ module.exports = {
   txFindFirstResult,
   txCreateResult,
   txUpdateResult,
+  txCreateResultAttestation,
+  txFindResultAttestation,
   txCreatePacsLink,
   txCountStudies,
 };

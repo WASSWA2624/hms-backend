@@ -319,6 +319,11 @@ enum RadiologyReportStatus {
   AMENDED
 }
 
+enum RadiologyResultAttestationPhase {
+  REQUEST
+  ATTEST
+}
+
 enum ImagingModality {
   XRAY
   CT
@@ -344,6 +349,11 @@ enum DispenseStatus {
   DISPENSED
   RETURNED
   CANCELLED
+}
+
+enum PharmacyDispenseAttestationPhase {
+  PREPARE
+  ATTEST
 }
 
 enum InventoryCategory {
@@ -2793,7 +2803,8 @@ model radiology_result {
   deleted_at         DateTime?
   version            Int                   @default(1)
 
-  radiology_order radiology_order @relation(fields: [radiology_order_id], references: [id])
+  radiology_order radiology_order                @relation(fields: [radiology_order_id], references: [id])
+  attestations    radiology_result_attestation[]
 
   @@index([radiology_order_id])
   @@index([status])
@@ -2880,6 +2891,7 @@ model drug {
   formulary_items      formulary_item[]
   pharmacy_order_items pharmacy_order_item[]
   adverse_events       adverse_event[]
+  inventory_maps       drug_inventory_map[]
 
   @@index([tenant_id])
   @@index([code])
@@ -2944,6 +2956,7 @@ model pharmacy_order {
   encounter encounter?            @relation(fields: [encounter_id], references: [id])
   patient   patient               @relation(fields: [patient_id], references: [id])
   items     pharmacy_order_item[]
+  dispense_attestations pharmacy_dispense_attestation[]
 
   @@index([encounter_id])
   @@index([patient_id])
@@ -2983,6 +2996,7 @@ model dispense_log {
   id                     String         @id @default(uuid()) @db.VarChar(36)
   human_friendly_id      String?        @db.VarChar(32)
   pharmacy_order_item_id String         @db.VarChar(36)
+  dispense_batch_ref     String?        @db.VarChar(64)
   status                 DispenseStatus
   dispensed_at           DateTime?
   quantity_dispensed     Int            @default(0)
@@ -2994,6 +3008,7 @@ model dispense_log {
   pharmacy_order_item pharmacy_order_item @relation(fields: [pharmacy_order_item_id], references: [id])
 
   @@index([pharmacy_order_item_id])
+  @@index([dispense_batch_ref])
   @@index([status])
   @@index([dispensed_at])
   @@index([deleted_at])
@@ -3041,10 +3056,90 @@ model inventory_item {
   stocks            inventory_stock[]
   movements         stock_movement[]
   stock_adjustments stock_adjustment[]
+  drug_maps         drug_inventory_map[]
 
   @@index([tenant_id])
   @@index([category])
   @@index([sku])
+  @@index([deleted_at])
+  @@index([human_friendly_id])
+}
+
+model radiology_result_attestation {
+  id                 String                           @id @default(uuid()) @db.VarChar(36)
+  human_friendly_id  String?                          @db.VarChar(32)
+  radiology_result_id String                          @db.VarChar(36)
+  phase              RadiologyResultAttestationPhase
+  attested_by_user_id String                          @db.VarChar(36)
+  attested_role      String?                          @db.VarChar(80)
+  statement          String?                          @db.Text
+  reason             String?                          @db.VarChar(255)
+  ip_address         String?                          @db.VarChar(64)
+  attested_at        DateTime                         @default(now())
+  created_at         DateTime                         @default(now())
+  updated_at         DateTime                         @updatedAt
+  deleted_at         DateTime?
+  version            Int                              @default(1)
+
+  radiology_result radiology_result @relation(fields: [radiology_result_id], references: [id])
+
+  @@unique([radiology_result_id, phase])
+  @@index([radiology_result_id])
+  @@index([phase])
+  @@index([attested_by_user_id])
+  @@index([deleted_at])
+  @@index([human_friendly_id])
+}
+
+model pharmacy_dispense_attestation {
+  id                String                           @id @default(uuid()) @db.VarChar(36)
+  human_friendly_id String?                          @db.VarChar(32)
+  pharmacy_order_id String                           @db.VarChar(36)
+  dispense_batch_ref String                          @db.VarChar(64)
+  phase             PharmacyDispenseAttestationPhase
+  attested_by_user_id String                         @db.VarChar(36)
+  attested_role     String?                          @db.VarChar(80)
+  statement         String?                          @db.Text
+  reason            String?                          @db.VarChar(255)
+  ip_address        String?                          @db.VarChar(64)
+  attested_at       DateTime                         @default(now())
+  created_at        DateTime                         @default(now())
+  updated_at        DateTime                         @updatedAt
+  deleted_at        DateTime?
+  version           Int                              @default(1)
+
+  pharmacy_order pharmacy_order @relation(fields: [pharmacy_order_id], references: [id])
+
+  @@unique([pharmacy_order_id, dispense_batch_ref, phase])
+  @@index([pharmacy_order_id])
+  @@index([dispense_batch_ref])
+  @@index([phase])
+  @@index([attested_by_user_id])
+  @@index([deleted_at])
+  @@index([human_friendly_id])
+}
+
+model drug_inventory_map {
+  id                String   @id @default(uuid()) @db.VarChar(36)
+  human_friendly_id String?  @db.VarChar(32)
+  tenant_id         String   @db.VarChar(36)
+  drug_id           String   @db.VarChar(36)
+  inventory_item_id String   @db.VarChar(36)
+  is_default        Boolean  @default(false)
+  deduction_factor  Decimal  @default(1.0) @db.Decimal(10, 4)
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+  deleted_at        DateTime?
+  version           Int      @default(1)
+
+  drug           drug           @relation(fields: [drug_id], references: [id])
+  inventory_item inventory_item @relation(fields: [inventory_item_id], references: [id])
+
+  @@unique([drug_id, inventory_item_id])
+  @@index([tenant_id])
+  @@index([drug_id])
+  @@index([inventory_item_id])
+  @@index([is_default])
   @@index([deleted_at])
   @@index([human_friendly_id])
 }

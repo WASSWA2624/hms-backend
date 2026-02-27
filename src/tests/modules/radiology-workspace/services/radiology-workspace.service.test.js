@@ -163,6 +163,97 @@ describe('radiology-workspace.service', () => {
     expect(result.error).toContain('PACS_DICOMWEB_BASE_URL');
   });
 
+  it('requestRadiologyResultFinalization records REQUEST attestation', async () => {
+    resolveModelIdOrThrow.mockResolvedValue('result-internal-1');
+
+    const order = buildOrder({
+      status: 'IN_PROCESS',
+      results: [
+        {
+          id: 'result-internal-1',
+          human_friendly_id: 'RADRES0001',
+          radiology_order_id: 'order-internal-1',
+          status: 'DRAFT',
+          report_text: 'Draft report',
+          reported_at: now,
+          created_at: now,
+          updated_at: now,
+          attestations: [],
+        },
+      ],
+    });
+
+    const resultWithRequest = {
+      ...order.results[0],
+      attestations: [
+        {
+          id: 'att-request-1',
+          human_friendly_id: 'RAT000001',
+          radiology_result_id: 'result-internal-1',
+          phase: 'REQUEST',
+          attested_by_user_id: 'actor-1',
+          attested_role: 'DOCTOR',
+          attested_at: now,
+          created_at: now,
+          updated_at: now,
+        },
+      ],
+    };
+
+    radiologyWorkspaceRepository.withTransaction.mockImplementation(async (callback) => callback({}));
+    radiologyWorkspaceRepository.txFindResultById
+      .mockResolvedValueOnce(order.results[0])
+      .mockResolvedValueOnce(resultWithRequest);
+    radiologyWorkspaceRepository.txFindResultAttestation.mockResolvedValueOnce(null);
+    radiologyWorkspaceRepository.txCreateResultAttestation.mockResolvedValue({
+      id: 'att-request-1',
+    });
+    radiologyWorkspaceRepository.txFindOrderById.mockResolvedValue(order);
+
+    const response = await radiologyWorkspaceService.requestRadiologyResultFinalization(
+      'RADRES0001',
+      { statement: 'Please finalize' },
+      'actor-1',
+      'DOCTOR',
+      '127.0.0.1'
+    );
+
+    expect(response.result.finalization.requested).toBe(true);
+    expect(response.result.finalization.pending_attestation).toBe(true);
+  });
+
+  it('attestRadiologyResultFinalization rejects same-user second signature', async () => {
+    resolveModelIdOrThrow.mockResolvedValue('result-internal-1');
+
+    radiologyWorkspaceRepository.withTransaction.mockImplementation(async (callback) => callback({}));
+    radiologyWorkspaceRepository.txFindResultById.mockResolvedValue({
+      id: 'result-internal-1',
+      human_friendly_id: 'RADRES0001',
+      radiology_order_id: 'order-internal-1',
+      status: 'DRAFT',
+      report_text: 'Draft report',
+      reported_at: now,
+      created_at: now,
+      updated_at: now,
+      attestations: [],
+    });
+    radiologyWorkspaceRepository.txFindResultAttestation.mockResolvedValueOnce({
+      id: 'att-request-1',
+      phase: 'REQUEST',
+      attested_by_user_id: 'actor-1',
+    });
+
+    await expect(
+      radiologyWorkspaceService.attestRadiologyResultFinalization(
+        'RADRES0001',
+        {},
+        'actor-1',
+        'DOCTOR',
+        '127.0.0.1'
+      )
+    ).rejects.toBeInstanceOf(HttpError);
+  });
+
   it('throws not found when legacy resource identifier is missing', async () => {
     await expect(
       radiologyWorkspaceService.resolveLegacyRouteIdentifier('radiology-results', '')

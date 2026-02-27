@@ -106,6 +106,22 @@ const finalizeRadiologyResultSchema = z.object({
   notes: z.string().trim().max(65535).optional().nullable(),
 });
 
+const requestFinalizationRadiologyResultSchema = z.object({
+  statement: z.string().trim().max(65535).optional().nullable(),
+  reason: z.string().trim().max(255).optional().nullable(),
+  requested_at: z.string().datetime().optional(),
+  notes: z.string().trim().max(65535).optional().nullable(),
+});
+
+const attestFinalizationRadiologyResultSchema = z.object({
+  statement: z.string().trim().max(65535).optional().nullable(),
+  reason: z.string().trim().max(255).optional().nullable(),
+  report_text: z.string().trim().max(65535).optional().nullable(),
+  reported_at: z.string().datetime().optional(),
+  attested_at: z.string().datetime().optional(),
+  notes: z.string().trim().max(65535).optional().nullable(),
+});
+
 const addendumRadiologyResultSchema = z.object({
   addendum_text: z.string().trim().min(2).max(65535),
   reported_at: z.string().datetime().optional(),
@@ -127,5 +143,7 @@ module.exports = {
   pacsSyncStudySchema,
   draftRadiologyResultSchema,
   finalizeRadiologyResultSchema,
+  requestFinalizationRadiologyResultSchema,
+  attestFinalizationRadiologyResultSchema,
   addendumRadiologyResultSchema,
 };

@@ -182,6 +182,7 @@ apiV1Router.use('/lab-results', require('../modules/lab-result/routes/lab-result
 apiV1Router.use('/lab-qc-logs', require('../modules/lab-qc-log/routes/lab-qc-log.routes'));
 apiV1Router.use('/lab', require('../modules/lab-workspace/routes/lab-workspace.routes'));
 apiV1Router.use('/radiology', require('../modules/radiology-workspace/routes/radiology-workspace.routes'));
+apiV1Router.use('/pharmacy', require('../modules/pharmacy-workspace/routes/pharmacy-workspace.routes'));
 apiV1Router.use('/imaging-studies', require('../modules/imaging-study/routes/imaging-study.routes'));
 apiV1Router.use('/imaging-assets', require('../modules/imaging-asset/routes/imaging-asset.routes'));
 apiV1Router.use('/pacs-links', require('../modules/pacs-link/routes/pacs-link.routes'));

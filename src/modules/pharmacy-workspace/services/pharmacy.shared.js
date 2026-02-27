@@ -19,86 +19,69 @@ const ENCOUNTER_PUBLIC_SELECT = {
   human_friendly_id: true,
 };
 
-const TENANT_PUBLIC_SELECT = {
+const DRUG_PUBLIC_SELECT = {
   id: true,
   human_friendly_id: true,
+  name: true,
+  code: true,
+  form: true,
+  strength: true,
 };
 
-const RADIOLOGY_TEST_PUBLIC_SELECT = {
+const INVENTORY_ITEM_PUBLIC_SELECT = {
   id: true,
   human_friendly_id: true,
   tenant_id: true,
   name: true,
-  code: true,
-  modality: true,
-  created_at: true,
-  updated_at: true,
+  category: true,
+  sku: true,
+  unit: true,
 };
 
-const RADIOLOGY_ORDER_WITH_RELATIONS_INCLUDE = {
+const PHARMACY_ORDER_WITH_RELATIONS_INCLUDE = {
   patient: { select: PATIENT_PUBLIC_SELECT },
   encounter: { select: ENCOUNTER_PUBLIC_SELECT },
-  radiology_test: { select: RADIOLOGY_TEST_PUBLIC_SELECT },
-  results: {
-    where: { deleted_at: null },
-    orderBy: { created_at: 'desc' },
-    include: {
-      attestations: {
-        where: { deleted_at: null },
-        orderBy: [{ attested_at: 'desc' }, { created_at: 'desc' }],
-      },
-    },
-  },
-  imaging_studies: {
+  items: {
     where: { deleted_at: null },
     orderBy: { created_at: 'asc' },
     include: {
-      assets: {
+      dispense_logs: {
         where: { deleted_at: null },
         orderBy: { created_at: 'asc' },
       },
-      pacs_links: {
-        where: { deleted_at: null },
-        orderBy: { created_at: 'desc' },
+      drug: {
+        select: {
+          ...DRUG_PUBLIC_SELECT,
+          inventory_maps: {
+            where: { deleted_at: null },
+            orderBy: [{ is_default: 'desc' }, { created_at: 'asc' }],
+            include: {
+              inventory_item: {
+                select: INVENTORY_ITEM_PUBLIC_SELECT,
+              },
+            },
+          },
+        },
       },
     },
   },
-};
-
-const RADIOLOGY_STUDY_WITH_RELATIONS_INCLUDE = {
-  radiology_order: {
-    include: {
-      patient: { select: PATIENT_PUBLIC_SELECT },
-      encounter: { select: ENCOUNTER_PUBLIC_SELECT },
-      radiology_test: { select: RADIOLOGY_TEST_PUBLIC_SELECT },
-    },
-  },
-  assets: {
-    where: { deleted_at: null },
-    orderBy: { created_at: 'asc' },
-  },
-  pacs_links: {
-    where: { deleted_at: null },
-    orderBy: { created_at: 'desc' },
-  },
-};
-
-const RADIOLOGY_RESULT_WITH_RELATIONS_INCLUDE = {
-  attestations: {
+  dispense_attestations: {
     where: { deleted_at: null },
     orderBy: [{ attested_at: 'desc' }, { created_at: 'desc' }],
   },
-  radiology_order: {
-    include: {
-      patient: { select: PATIENT_PUBLIC_SELECT },
-      encounter: { select: ENCOUNTER_PUBLIC_SELECT },
-      radiology_test: { select: RADIOLOGY_TEST_PUBLIC_SELECT },
-    },
-  },
 };
 
-const RADIOLOGY_TEST_WITH_RELATIONS_INCLUDE = {
-  tenant: { select: TENANT_PUBLIC_SELECT },
+const INVENTORY_STOCK_WITH_RELATIONS_INCLUDE = {
+  inventory_item: {
+    select: INVENTORY_ITEM_PUBLIC_SELECT,
+  },
+  facility: {
+    select: {
+      id: true,
+      human_friendly_id: true,
+      name: true,
+    },
+  },
 };
 
 const buildPagination = (page, limit, total) => {
@@ -119,6 +102,7 @@ const buildPagination = (page, limit, total) => {
 const normalizeSearchTerm = (value) => {
   const term = typeof value === 'string' ? value.trim() : '';
   if (!term) return null;
+
   return {
     raw: term,
     upper: term.toUpperCase(),
@@ -199,12 +183,10 @@ const applyDateRangeFilter = (where, field, fromValue, toValue) => {
 module.exports = {
   PATIENT_PUBLIC_SELECT,
   ENCOUNTER_PUBLIC_SELECT,
-  TENANT_PUBLIC_SELECT,
-  RADIOLOGY_TEST_PUBLIC_SELECT,
-  RADIOLOGY_ORDER_WITH_RELATIONS_INCLUDE,
-  RADIOLOGY_STUDY_WITH_RELATIONS_INCLUDE,
-  RADIOLOGY_RESULT_WITH_RELATIONS_INCLUDE,
-  RADIOLOGY_TEST_WITH_RELATIONS_INCLUDE,
+  DRUG_PUBLIC_SELECT,
+  INVENTORY_ITEM_PUBLIC_SELECT,
+  PHARMACY_ORDER_WITH_RELATIONS_INCLUDE,
+  INVENTORY_STOCK_WITH_RELATIONS_INCLUDE,
   buildPagination,
   normalizeSearchTerm,
   toDateOrNull,

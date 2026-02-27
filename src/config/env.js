@@ -180,6 +180,14 @@ const buildEnv = () => {
   const PACS_TIMEOUT_MS = process.env.PACS_TIMEOUT_MS
     ? parseInt(process.env.PACS_TIMEOUT_MS, 10)
     : 10000;
+  const PHARMACY_WORKSPACE_V1 = parseOptionalBoolean(
+    process.env.PHARMACY_WORKSPACE_V1,
+    false
+  );
+  const RADIOLOGY_ATTESTATION_V2 = parseOptionalBoolean(
+    process.env.RADIOLOGY_ATTESTATION_V2,
+    false
+  );
 
   if (process.env.STORAGE_PROVIDER) {
     validateStorageProvider(STORAGE_PROVIDER);
@@ -302,6 +310,8 @@ const buildEnv = () => {
     PACS_PASSWORD,
     PACS_BEARER_TOKEN,
     PACS_TIMEOUT_MS,
+    PHARMACY_WORKSPACE_V1,
+    RADIOLOGY_ATTESTATION_V2,
     AWS_ACCESS_KEY_ID,
     AWS_SECRET_ACCESS_KEY,
     AWS_REGION,
@@ -371,6 +381,8 @@ const envKeys = [
   'PACS_PASSWORD',
   'PACS_BEARER_TOKEN',
   'PACS_TIMEOUT_MS',
+  'PHARMACY_WORKSPACE_V1',
+  'RADIOLOGY_ATTESTATION_V2',
   'AWS_ACCESS_KEY_ID',
   'AWS_SECRET_ACCESS_KEY',
   'AWS_REGION',

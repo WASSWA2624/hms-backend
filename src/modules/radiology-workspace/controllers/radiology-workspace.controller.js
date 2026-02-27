@@ -144,6 +144,28 @@ const finalizeRadiologyResult = asyncHandler(async (req, res) => {
   return sendSuccess(res, 200, 'messages.radiology_workspace.result.finalize_success', data);
 });
 
+const requestRadiologyResultFinalization = asyncHandler(async (req, res) => {
+  const data = await radiologyWorkspaceService.requestRadiologyResultFinalization(
+    req.params.id,
+    req.body,
+    req.user?.id,
+    req.user?.role,
+    req.ip
+  );
+  return sendSuccess(res, 200, 'messages.radiology_workspace.result.request_finalization_success', data);
+});
+
+const attestRadiologyResultFinalization = asyncHandler(async (req, res) => {
+  const data = await radiologyWorkspaceService.attestRadiologyResultFinalization(
+    req.params.id,
+    req.body,
+    req.user?.id,
+    req.user?.role,
+    req.ip
+  );
+  return sendSuccess(res, 200, 'messages.radiology_workspace.result.attest_finalization_success', data);
+});
+
 const addendumRadiologyResult = asyncHandler(async (req, res) => {
   const data = await radiologyWorkspaceService.addendumRadiologyResult(
     req.params.id,
@@ -175,6 +197,8 @@ module.exports = {
   syncStudyToPacs,
   draftRadiologyResult,
   finalizeRadiologyResult,
+  requestRadiologyResultFinalization,
+  attestRadiologyResultFinalization,
   addendumRadiologyResult,
   resolveLegacyRoute,
 };

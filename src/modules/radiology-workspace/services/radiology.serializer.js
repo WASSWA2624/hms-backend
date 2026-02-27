@@ -103,12 +103,38 @@ const mapImagingStudyRecord = (record) => {
   };
 };
 
+const mapRadiologyResultAttestationRecord = (record) => {
+  if (!record || typeof record !== 'object') return null;
+  const publicId = toPublicIdentifier(record.human_friendly_id, record.id);
+  return {
+    id: publicId,
+    display_id: publicId,
+    radiology_result_id: toPublicIdentifier(
+      record.radiology_result?.human_friendly_id,
+      record.radiology_result_id
+    ),
+    phase: toText(record.phase).toUpperCase() || null,
+    attested_by_user_id: toPublicIdentifier(record.attested_by_user_id),
+    attested_role: toText(record.attested_role) || null,
+    statement: toText(record.statement) || null,
+    reason: toText(record.reason) || null,
+    attested_at: toIsoDateTime(record.attested_at),
+    created_at: toIsoDateTime(record.created_at),
+    updated_at: toIsoDateTime(record.updated_at),
+  };
+};
+
 const mapRadiologyResultRecord = (record) => {
   if (!record || typeof record !== 'object') return null;
   const order = record.radiology_order;
   const patient = order?.patient;
   const test = order?.radiology_test;
   const publicId = toPublicIdentifier(record.human_friendly_id, record.id);
+  const attestations = Array.isArray(record.attestations)
+    ? record.attestations.map(mapRadiologyResultAttestationRecord).filter(Boolean)
+    : [];
+  const requestAttestation = attestations.find((entry) => entry.phase === 'REQUEST') || null;
+  const attestAttestation = attestations.find((entry) => entry.phase === 'ATTEST') || null;
 
   return {
     id: publicId,
@@ -124,6 +150,16 @@ const mapRadiologyResultRecord = (record) => {
       null,
     status: toText(record.status).toUpperCase() || null,
     report_text: toText(record.report_text) || null,
+    finalization: {
+      requested: Boolean(requestAttestation),
+      requested_at: requestAttestation?.attested_at || null,
+      requested_by_role: requestAttestation?.attested_role || null,
+      attested: Boolean(attestAttestation),
+      attested_at: attestAttestation?.attested_at || null,
+      attested_by_role: attestAttestation?.attested_role || null,
+      pending_attestation: Boolean(requestAttestation) && !Boolean(attestAttestation),
+    },
+    attestations,
     reported_at: toIsoDateTime(record.reported_at),
     created_at: toIsoDateTime(record.created_at),
     updated_at: toIsoDateTime(record.updated_at),
@@ -241,6 +277,9 @@ const mapRadiologyOrderWorkflowRecord = (record) => {
 
   const hasFinalResult = order.results.some((entry) => entry.status === 'FINAL');
   const hasDraftResult = order.results.some((entry) => entry.status === 'DRAFT');
+  const hasPendingResultAttestation = order.results.some(
+    (entry) => entry.finalization?.pending_attestation
+  );
 
   return {
     order,
@@ -255,6 +294,8 @@ const mapRadiologyOrderWorkflowRecord = (record) => {
       can_create_study: order.status !== 'CANCELLED',
       can_create_draft_result: order.status !== 'CANCELLED',
       can_finalize_result: hasDraftResult,
+      can_request_finalization: hasDraftResult,
+      can_attest_finalization: hasPendingResultAttestation,
       can_add_addendum: hasFinalResult,
       can_pacs_sync: order.imaging_studies.some((study) => study.asset_count > 0),
     },
@@ -267,6 +308,7 @@ module.exports = {
   mapRadiologyTestRecord,
   mapRadiologyOrderRecord,
   mapRadiologyResultRecord,
+  mapRadiologyResultAttestationRecord,
   mapImagingStudyRecord,
   mapImagingAssetRecord,
   mapPacsLinkRecord,
