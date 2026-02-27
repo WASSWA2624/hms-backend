@@ -37,7 +37,13 @@ describe('Ambulance Service', () => {
 
       const result = await listAmbulances({}, 1, 20);
 
-      expect(result.ambulances).toEqual(mockAmbulances);
+      expect(result.ambulances).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining(mockAmbulances[0]),
+          expect.objectContaining(mockAmbulances[1]),
+        ])
+      );
+      expect(result.ambulances[0]).toEqual(expect.objectContaining({ display_id: 'ambulance-1' }));
       expect(result.pagination).toEqual({
         page: 1,
         limit: 20,
@@ -62,7 +68,7 @@ describe('Ambulance Service', () => {
 
       const result = await listAmbulances(filters, 1, 20);
 
-      expect(result.ambulances).toEqual(mockAmbulances);
+      expect(result.ambulances).toEqual([expect.objectContaining(mockAmbulances[0])]);
       expect(ambulanceRepository.findMany).toHaveBeenCalledWith(
         { tenant_id: 'tenant-123', status: 'AVAILABLE' },
         0,
@@ -81,7 +87,7 @@ describe('Ambulance Service', () => {
       await listAmbulances(filters, 1, 20);
 
       expect(ambulanceRepository.findMany).toHaveBeenCalledWith(
-        { identifier: { contains: 'AMB', mode: 'insensitive' } },
+        { search: 'AMB' },
         0,
         20,
         { created_at: 'desc' }
@@ -116,7 +122,8 @@ describe('Ambulance Service', () => {
 
       const result = await getAmbulanceById('ambulance-123');
 
-      expect(result).toEqual(mockAmbulance);
+      expect(result).toEqual(expect.objectContaining(mockAmbulance));
+      expect(result).toEqual(expect.objectContaining({ display_id: 'ambulance-123' }));
       expect(ambulanceRepository.findById).toHaveBeenCalledWith('ambulance-123');
     });
 
@@ -156,7 +163,8 @@ describe('Ambulance Service', () => {
 
       const result = await createAmbulance(data, context);
 
-      expect(result).toEqual(mockAmbulance);
+      expect(result).toEqual(expect.objectContaining(mockAmbulance));
+      expect(result).toEqual(expect.objectContaining({ display_id: 'ambulance-123' }));
       expect(ambulanceRepository.create).toHaveBeenCalledWith(data);
       expect(createAuditLog).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -192,7 +200,8 @@ describe('Ambulance Service', () => {
 
       const result = await updateAmbulance('ambulance-123', data, {});
 
-      expect(result).toEqual(updatedAmbulance);
+      expect(result).toEqual(expect.objectContaining(updatedAmbulance));
+      expect(result).toEqual(expect.objectContaining({ display_id: 'ambulance-123' }));
       expect(ambulanceRepository.update).toHaveBeenCalledWith('ambulance-123', data);
       expect(createAuditLog).toHaveBeenCalledWith(
         expect.objectContaining({

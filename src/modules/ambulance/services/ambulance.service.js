@@ -10,6 +10,176 @@
 const ambulanceRepository = require('@repositories/ambulance/ambulance.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
+const { isUuidLike } = require('@lib/identifiers/sanitize-friendly-ids');
+const { resolveModelIdByIdentifier } = require('@lib/identifiers/resolve-entity-id');
+
+const sanitizeIdentifier = (value) => (typeof value === 'string' ? value.trim() : '');
+const toPublicIdentifier = (value) => {
+  const normalized = sanitizeIdentifier(value);
+  if (!normalized || isUuidLike(normalized)) return null;
+  return normalized;
+};
+const resolveDisplayIdentifier = (...values) => {
+  for (const value of values) {
+    const displayValue = toPublicIdentifier(value);
+    if (displayValue) return displayValue;
+  }
+  return null;
+};
+
+const buildEmptyListResult = (page, limit) => ({
+  ambulances: [],
+  pagination: {
+    page,
+    limit,
+    total: 0,
+    totalPages: 0,
+    hasNextPage: false,
+    hasPreviousPage: page > 1,
+  },
+});
+
+const resolveIdentifierForFilter = async ({ value, model, where = {} }) => {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+
+  const normalized = sanitizeIdentifier(value);
+  if (!normalized) return undefined;
+
+  const resolved = await resolveModelIdByIdentifier({
+    model,
+    identifier: normalized,
+    where,
+  });
+  if (resolved) return resolved;
+  if (isUuidLike(normalized)) return normalized;
+  return null;
+};
+
+const resolveIdentifierForPayload = async ({
+  value,
+  field,
+  model,
+  where = {},
+  nullable = false,
+}) => {
+  if (value === undefined) return undefined;
+  if (value === null) {
+    if (nullable) return null;
+    throw new HttpError('errors.validation.field.required', 400, [{ field }]);
+  }
+
+  const normalized = sanitizeIdentifier(value);
+  if (!normalized) {
+    throw new HttpError('errors.validation.invalid', 400, [{ field }]);
+  }
+
+  const resolved = await resolveModelIdByIdentifier({
+    model,
+    identifier: normalized,
+    where,
+  });
+  if (resolved) return resolved;
+  if (isUuidLike(normalized)) return normalized;
+
+  throw new HttpError('errors.validation.invalid', 400, [{ field }]);
+};
+
+const mapAmbulanceForDisplay = (record) => {
+  if (!record || typeof record !== 'object') return record;
+
+  return {
+    ...record,
+    display_id: resolveDisplayIdentifier(record.display_id, record.human_friendly_id, record.id),
+    tenant_display_id: resolveDisplayIdentifier(record.tenant_display_id, record.tenant?.human_friendly_id, record.tenant_id),
+    facility_display_id: resolveDisplayIdentifier(
+      record.facility_display_id,
+      record.facility?.human_friendly_id,
+      record.facility_id
+    ),
+    ambulance_label: sanitizeIdentifier(record.identifier) || null,
+  };
+};
+
+const resolveAmbulanceId = async (id) => {
+  const normalized = sanitizeIdentifier(id);
+  if (!normalized) return normalized;
+
+  const resolvedId = await resolveModelIdByIdentifier({
+    model: 'ambulance',
+    identifier: normalized,
+  });
+
+  return resolvedId || normalized;
+};
+
+const resolveListFilters = async (filters = {}, page, limit) => {
+  const resolvedFilters = {};
+
+  if (filters.tenant_id !== undefined) {
+    const tenantId = await resolveIdentifierForFilter({
+      value: filters.tenant_id,
+      model: 'tenant',
+    });
+    if (tenantId === null) return buildEmptyListResult(page, limit);
+    if (tenantId !== undefined) resolvedFilters.tenant_id = tenantId;
+  }
+
+  if (filters.facility_id !== undefined) {
+    const facilityId = await resolveIdentifierForFilter({
+      value: filters.facility_id,
+      model: 'facility',
+      where: resolvedFilters.tenant_id ? { tenant_id: resolvedFilters.tenant_id } : {},
+    });
+    if (facilityId === null) return buildEmptyListResult(page, limit);
+    if (facilityId !== undefined) resolvedFilters.facility_id = facilityId;
+  }
+
+  if (filters.status) resolvedFilters.status = filters.status;
+
+  const search = sanitizeIdentifier(filters.search);
+  if (search) resolvedFilters.search = search;
+
+  return resolvedFilters;
+};
+
+const resolveCreatePayload = async (data = {}) => {
+  const payload = { ...data };
+
+  const tenantId = await resolveIdentifierForPayload({
+    value: payload.tenant_id,
+    field: 'tenant_id',
+    model: 'tenant',
+  });
+  const facilityId = await resolveIdentifierForPayload({
+    value: payload.facility_id,
+    field: 'facility_id',
+    model: 'facility',
+    where: tenantId ? { tenant_id: tenantId } : {},
+    nullable: true,
+  });
+
+  payload.tenant_id = tenantId;
+  payload.facility_id = facilityId;
+  return payload;
+};
+
+const resolveUpdatePayload = async (data = {}, existing = null) => {
+  const payload = { ...data };
+  const tenantId = existing?.tenant_id || null;
+
+  if (Object.prototype.hasOwnProperty.call(payload, 'facility_id')) {
+    payload.facility_id = await resolveIdentifierForPayload({
+      value: payload.facility_id,
+      field: 'facility_id',
+      model: 'facility',
+      where: tenantId ? { tenant_id: tenantId } : {},
+      nullable: true,
+    });
+  }
+
+  return payload;
+};
 
 /**
  * List ambulances with pagination and filters
@@ -26,54 +196,33 @@ const { HttpError } = require('@lib/errors');
  * @returns {Promise<Object>} Paginated ambulances
  */
 const listAmbulances = async (filters = {}, page = 1, limit = 20, sort_by = 'created_at', order = 'desc') => {
-  // Build repository filters
-  const repoFilters = {};
-
-  if (filters.tenant_id) {
-    repoFilters.tenant_id = filters.tenant_id;
+  const resolvedFilters = await resolveListFilters(filters, page, limit);
+  if (resolvedFilters && resolvedFilters.ambulances && resolvedFilters.pagination) {
+    return resolvedFilters;
   }
 
-  if (filters.facility_id) {
-    repoFilters.facility_id = filters.facility_id;
-  }
-
-  if (filters.status) {
-    repoFilters.status = filters.status;
-  }
-
-  // Handle search filter
-  if (filters.search) {
-    repoFilters.identifier = { contains: filters.search, mode: 'insensitive' };
-  }
-
-  // Calculate pagination
   const skip = (page - 1) * limit;
+  const orderBy = { [sort_by]: order };
 
-  // Build sort order
-  const orderBy = {};
-  orderBy[sort_by] = order;
-
-  // Fetch ambulances and count
   const [ambulances, total] = await Promise.all([
-    ambulanceRepository.findMany(repoFilters, skip, limit, orderBy),
-    ambulanceRepository.count(repoFilters)
+    ambulanceRepository.findMany(resolvedFilters, skip, limit, orderBy),
+    ambulanceRepository.count(resolvedFilters),
   ]);
 
-  // Calculate pagination metadata
   const totalPages = Math.ceil(total / limit);
   const hasNextPage = page < totalPages;
   const hasPreviousPage = page > 1;
 
   return {
-    ambulances,
+    ambulances: ambulances.map(mapAmbulanceForDisplay),
     pagination: {
       page,
       limit,
       total,
       totalPages,
       hasNextPage,
-      hasPreviousPage
-    }
+      hasPreviousPage,
+    },
   };
 };
 
@@ -84,13 +233,14 @@ const listAmbulances = async (filters = {}, page = 1, limit = 20, sort_by = 'cre
  * @returns {Promise<Object>} Ambulance data
  */
 const getAmbulanceById = async (id) => {
-  const ambulance = await ambulanceRepository.findById(id);
-  
+  const resolvedId = await resolveAmbulanceId(id);
+  const ambulance = await ambulanceRepository.findById(resolvedId);
+
   if (!ambulance) {
     throw new HttpError('errors.ambulance.not_found', 404);
   }
 
-  return ambulance;
+  return mapAmbulanceForDisplay(ambulance);
 };
 
 /**
@@ -110,10 +260,9 @@ const getAmbulanceById = async (id) => {
  * @returns {Promise<Object>} Created ambulance
  */
 const createAmbulance = async (data, context = {}) => {
-  // Create ambulance
-  const ambulance = await ambulanceRepository.create(data);
+  const payload = await resolveCreatePayload(data);
+  const ambulance = await ambulanceRepository.create(payload);
 
-  // Create audit log
   await createAuditLog({
     action: 'AMBULANCE_CREATED',
     entity: 'ambulance',
@@ -127,11 +276,11 @@ const createAmbulance = async (data, context = {}) => {
       tenant_id: ambulance.tenant_id,
       facility_id: ambulance.facility_id,
       identifier: ambulance.identifier,
-      status: ambulance.status
-    }
+      status: ambulance.status,
+    },
   });
 
-  return ambulance;
+  return mapAmbulanceForDisplay(ambulance);
 };
 
 /**
@@ -151,21 +300,20 @@ const createAmbulance = async (data, context = {}) => {
  * @returns {Promise<Object>} Updated ambulance
  */
 const updateAmbulance = async (id, data, context = {}) => {
-  // Check if ambulance exists and get before state
-  const beforeAmbulance = await ambulanceRepository.findById(id);
-  
+  const resolvedId = await resolveAmbulanceId(id);
+  const beforeAmbulance = await ambulanceRepository.findById(resolvedId);
+
   if (!beforeAmbulance) {
     throw new HttpError('errors.ambulance.not_found', 404);
   }
 
-  // Update ambulance
-  const ambulance = await ambulanceRepository.update(id, data);
+  const payload = await resolveUpdatePayload(data, beforeAmbulance);
+  const ambulance = await ambulanceRepository.update(beforeAmbulance.id, payload);
 
-  // Create audit log
   await createAuditLog({
     action: 'AMBULANCE_UPDATED',
     entity: 'ambulance',
-    entity_id: id,
+    entity_id: beforeAmbulance.id,
     user_id: context.user_id,
     tenant_id: context.tenant_id,
     facility_id: context.facility_id,
@@ -175,17 +323,17 @@ const updateAmbulance = async (id, data, context = {}) => {
       before: {
         facility_id: beforeAmbulance.facility_id,
         identifier: beforeAmbulance.identifier,
-        status: beforeAmbulance.status
+        status: beforeAmbulance.status,
       },
       after: {
         facility_id: ambulance.facility_id,
         identifier: ambulance.identifier,
-        status: ambulance.status
-      }
-    }
+        status: ambulance.status,
+      },
+    },
   });
 
-  return ambulance;
+  return mapAmbulanceForDisplay(ambulance);
 };
 
 /**
@@ -201,21 +349,19 @@ const updateAmbulance = async (id, data, context = {}) => {
  * @returns {Promise<void>}
  */
 const deleteAmbulance = async (id, context = {}) => {
-  // Check if ambulance exists
-  const ambulance = await ambulanceRepository.findById(id);
-  
+  const resolvedId = await resolveAmbulanceId(id);
+  const ambulance = await ambulanceRepository.findById(resolvedId);
+
   if (!ambulance) {
     throw new HttpError('errors.ambulance.not_found', 404);
   }
 
-  // Soft delete ambulance
-  await ambulanceRepository.softDelete(id);
+  await ambulanceRepository.softDelete(ambulance.id);
 
-  // Create audit log
   await createAuditLog({
     action: 'AMBULANCE_DELETED',
     entity: 'ambulance',
-    entity_id: id,
+    entity_id: ambulance.id,
     user_id: context.user_id,
     tenant_id: context.tenant_id,
     facility_id: context.facility_id,
@@ -225,8 +371,8 @@ const deleteAmbulance = async (id, context = {}) => {
       tenant_id: ambulance.tenant_id,
       facility_id: ambulance.facility_id,
       identifier: ambulance.identifier,
-      status: ambulance.status
-    }
+      status: ambulance.status,
+    },
   });
 };
 
@@ -235,5 +381,5 @@ module.exports = {
   getAmbulanceById,
   createAmbulance,
   updateAmbulance,
-  deleteAmbulance
+  deleteAmbulance,
 };

@@ -18,6 +18,7 @@ const {
   createOpdFlowSchema,
   bootstrapOpdFlowSchema,
   encounterIdParamsSchema,
+  resolveLegacyRouteParamsSchema,
   payConsultationSchema,
   recordVitalsSchema,
   assignDoctorSchema,
@@ -58,11 +59,29 @@ router.get(
       PERMISSIONS.PATIENT_READ,
       PERMISSIONS.CLINICAL_READ,
       PERMISSIONS.BILLING_READ,
-      PERMISSIONS.OPERATIONS_READ
+      PERMISSIONS.OPERATIONS_READ,
+      PERMISSIONS.EMERGENCY_READ
     ],
     'permission'
   ),
   opdFlowController.listOpdFlows
+);
+
+router.get(
+  '/resolve-legacy/:resource/:id',
+  validateRequest({ params: resolveLegacyRouteParamsSchema }),
+  authenticate(),
+  authorize(
+    [
+      PERMISSIONS.PATIENT_READ,
+      PERMISSIONS.CLINICAL_READ,
+      PERMISSIONS.BILLING_READ,
+      PERMISSIONS.OPERATIONS_READ,
+      PERMISSIONS.EMERGENCY_READ
+    ],
+    'permission'
+  ),
+  opdFlowController.resolveLegacyRoute
 );
 
 /**
@@ -87,7 +106,8 @@ router.get(
       PERMISSIONS.PATIENT_READ,
       PERMISSIONS.CLINICAL_READ,
       PERMISSIONS.BILLING_READ,
-      PERMISSIONS.OPERATIONS_READ
+      PERMISSIONS.OPERATIONS_READ,
+      PERMISSIONS.EMERGENCY_READ
     ],
     'permission'
   ),

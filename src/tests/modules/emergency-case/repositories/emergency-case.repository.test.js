@@ -42,7 +42,7 @@ describe('Emergency Case Repository', () => {
 
       expect(prisma.emergency_case.findFirst).toHaveBeenCalledWith({
         where: { id: 'test-id', deleted_at: null },
-        include: {}
+        include: expect.any(Object)
       });
       expect(result).toEqual(mockEmergencyCase);
     });
@@ -91,7 +91,7 @@ describe('Emergency Case Repository', () => {
         skip: 0,
         take: 10,
         orderBy: { created_at: 'desc' },
-        include: {}
+        include: expect.any(Object)
       });
       expect(result).toEqual(mockCases);
     });
@@ -106,7 +106,7 @@ describe('Emergency Case Repository', () => {
         skip: 0,
         take: 20,
         orderBy: { created_at: 'desc' },
-        include: {}
+        include: expect.any(Object)
       });
     });
 
@@ -120,7 +120,7 @@ describe('Emergency Case Repository', () => {
         skip: 0,
         take: 10,
         orderBy: { severity: 'asc' },
-        include: {}
+        include: expect.any(Object)
       });
     });
 
@@ -176,7 +176,10 @@ describe('Emergency Case Repository', () => {
 
       const result = await emergencyCaseRepository.create(caseData);
 
-      expect(prisma.emergency_case.create).toHaveBeenCalledWith({ data: caseData });
+      expect(prisma.emergency_case.create).toHaveBeenCalledWith({
+        data: caseData,
+        include: expect.any(Object)
+      });
       expect(result).toEqual(mockCreatedCase);
     });
 
@@ -220,7 +223,8 @@ describe('Emergency Case Repository', () => {
 
       expect(prisma.emergency_case.update).toHaveBeenCalledWith({
         where: { id: 'test-id' },
-        data: updateData
+        data: updateData,
+        include: expect.any(Object)
       });
       expect(result).toEqual(mockUpdated);
     });
@@ -267,7 +271,8 @@ describe('Emergency Case Repository', () => {
 
       expect(prisma.emergency_case.update).toHaveBeenCalledWith({
         where: { id: 'test-id' },
-        data: { deleted_at: expect.any(Date) }
+        data: { deleted_at: expect.any(Date) },
+        include: expect.any(Object)
       });
       expect(result).toEqual(mockDeleted);
     });

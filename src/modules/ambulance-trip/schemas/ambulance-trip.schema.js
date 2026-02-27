@@ -9,7 +9,7 @@
 
 const { z } = require('zod');
 const { 
-  uuidSchema, 
+  uuidOrFriendlyIdentifierSchema,
   listQuerySchema,
   isoDateSchema
 } = require('@lib/validation/zod');
@@ -21,8 +21,8 @@ const {
  * Used for POST /ambulance-trips endpoint
  */
 const createAmbulanceTripSchema = z.object({
-  ambulance_id: uuidSchema,
-  emergency_case_id: uuidSchema,
+  ambulance_id: uuidOrFriendlyIdentifierSchema,
+  emergency_case_id: uuidOrFriendlyIdentifierSchema,
   started_at: isoDateSchema.optional().nullable(),
   ended_at: isoDateSchema.optional().nullable()
 });
@@ -33,8 +33,8 @@ const createAmbulanceTripSchema = z.object({
  * All fields optional for partial updates
  */
 const updateAmbulanceTripSchema = z.object({
-  ambulance_id: uuidSchema.optional(),
-  emergency_case_id: uuidSchema.optional(),
+  ambulance_id: uuidOrFriendlyIdentifierSchema.optional(),
+  emergency_case_id: uuidOrFriendlyIdentifierSchema.optional(),
   started_at: isoDateSchema.optional().nullable(),
   ended_at: isoDateSchema.optional().nullable()
 });
@@ -46,7 +46,7 @@ const updateAmbulanceTripSchema = z.object({
  * Used for GET /:id, PUT /:id, and DELETE /:id endpoints
  */
 const ambulanceTripIdParamsSchema = z.object({
-  id: uuidSchema
+  id: uuidOrFriendlyIdentifierSchema
 });
 
 // ==================== Query Params ====================
@@ -57,8 +57,9 @@ const ambulanceTripIdParamsSchema = z.object({
  * Extends base listQuerySchema with ambulance trip-specific filters
  */
 const listAmbulanceTripsQuerySchema = listQuerySchema.extend({
-  ambulance_id: uuidSchema.optional(),
-  emergency_case_id: uuidSchema.optional()
+  ambulance_id: uuidOrFriendlyIdentifierSchema.optional(),
+  emergency_case_id: uuidOrFriendlyIdentifierSchema.optional(),
+  search: z.string().trim().max(255).optional()
 });
 
 module.exports = {

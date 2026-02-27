@@ -35,7 +35,8 @@ describe('Ambulance Trip Service', () => {
 
       const result = await listAmbulanceTrips({}, 1, 20);
 
-      expect(result.trips).toEqual(mockTrips);
+      expect(result.trips).toEqual([expect.objectContaining(mockTrips[0])]);
+      expect(result.trips[0]).toEqual(expect.objectContaining({ display_id: 'trip-1' }));
       expect(result.pagination.total).toBe(1);
     });
   });
@@ -47,7 +48,8 @@ describe('Ambulance Trip Service', () => {
 
       const result = await getAmbulanceTripById('trip-123');
 
-      expect(result).toEqual(mockTrip);
+      expect(result).toEqual(expect.objectContaining(mockTrip));
+      expect(result).toEqual(expect.objectContaining({ display_id: 'trip-123' }));
     });
 
     it('should throw HttpError if trip not found', async () => {
@@ -74,7 +76,8 @@ describe('Ambulance Trip Service', () => {
         emergency_case_id: 'case-123'
       }, {});
 
-      expect(result).toEqual(mockTrip);
+      expect(result).toEqual(expect.objectContaining(mockTrip));
+      expect(result).toEqual(expect.objectContaining({ display_id: 'trip-123' }));
       expect(createAuditLog).toHaveBeenCalled();
     });
   });
@@ -90,7 +93,8 @@ describe('Ambulance Trip Service', () => {
 
       const result = await updateAmbulanceTrip('trip-123', { started_at: '2026-01-19T10:00:00Z' }, {});
 
-      expect(result).toEqual(updatedTrip);
+      expect(result).toEqual(expect.objectContaining(updatedTrip));
+      expect(result).toEqual(expect.objectContaining({ display_id: 'trip-123' }));
       expect(createAuditLog).toHaveBeenCalled();
     });
   });

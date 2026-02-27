@@ -9,7 +9,7 @@
 
 const { z } = require('zod');
 const { 
-  uuidSchema, 
+  uuidOrFriendlyIdentifierSchema,
   listQuerySchema,
   isoDateSchema
 } = require('@lib/validation/zod');
@@ -21,7 +21,7 @@ const {
  * Used for POST /emergency-responses endpoint
  */
 const createEmergencyResponseSchema = z.object({
-  emergency_case_id: uuidSchema,
+  emergency_case_id: uuidOrFriendlyIdentifierSchema,
   response_at: isoDateSchema.optional(),
   notes: z.string().max(5000).optional().nullable()
 });
@@ -32,7 +32,7 @@ const createEmergencyResponseSchema = z.object({
  * All fields optional for partial updates
  */
 const updateEmergencyResponseSchema = z.object({
-  emergency_case_id: uuidSchema.optional(),
+  emergency_case_id: uuidOrFriendlyIdentifierSchema.optional(),
   response_at: isoDateSchema.optional(),
   notes: z.string().max(5000).optional().nullable()
 });
@@ -44,7 +44,7 @@ const updateEmergencyResponseSchema = z.object({
  * Used for GET /:id, PUT /:id, and DELETE /:id endpoints
  */
 const emergencyResponseIdParamsSchema = z.object({
-  id: uuidSchema
+  id: uuidOrFriendlyIdentifierSchema
 });
 
 // ==================== Query Params ====================
@@ -55,7 +55,8 @@ const emergencyResponseIdParamsSchema = z.object({
  * Extends base listQuerySchema with emergency response-specific filters
  */
 const listEmergencyResponsesQuerySchema = listQuerySchema.extend({
-  emergency_case_id: uuidSchema.optional()
+  emergency_case_id: uuidOrFriendlyIdentifierSchema.optional(),
+  search: z.string().trim().max(255).optional()
 });
 
 module.exports = {

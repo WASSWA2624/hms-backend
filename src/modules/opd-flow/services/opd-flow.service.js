@@ -43,6 +43,46 @@ const BLOOD_PRESSURE_VALUE_REGEX = /^(\d{2,3}(?:\.\d{1,2})?)\s*\/\s*(\d{2,3}(?:\
 const MAX_OPD_SEARCH_TOKENS = 6;
 const OPD_FLOW_STAGE_JSON_PATH = '$.opd_flow.stage';
 const OPD_FLOW_APPOINTMENT_ID_JSON_PATH = '$.opd_flow.appointment_id';
+const OPD_FLOW_EMERGENCY_CASE_ID_JSON_PATH = '$.opd_flow.emergency_case_id';
+const LEGACY_ROUTE_CONFIG = Object.freeze({
+  'emergency-cases': {
+    model: 'emergency_case',
+    panel: 'queue',
+    action: 'open_case',
+  },
+  'triage-assessments': {
+    model: 'triage_assessment',
+    emergencyCaseField: 'emergency_case_id',
+    panel: 'intake',
+    action: 'update_triage',
+  },
+  'emergency-responses': {
+    model: 'emergency_response',
+    emergencyCaseField: 'emergency_case_id',
+    panel: 'responses',
+    action: 'add_response',
+  },
+  ambulances: {
+    model: 'ambulance',
+    ambulanceField: 'id',
+    panel: 'ambulance',
+    action: 'view_fleet',
+  },
+  'ambulance-dispatches': {
+    model: 'ambulance_dispatch',
+    emergencyCaseField: 'emergency_case_id',
+    ambulanceField: 'ambulance_id',
+    panel: 'dispatch',
+    action: 'manage_dispatch',
+  },
+  'ambulance-trips': {
+    model: 'ambulance_trip',
+    emergencyCaseField: 'emergency_case_id',
+    ambulanceField: 'ambulance_id',
+    panel: 'trips',
+    action: 'manage_trip',
+  },
+});
 
 const PROVIDER_PROFILE_SELECT = {
   first_name: true,
@@ -112,6 +152,11 @@ const normalizeSearchTokens = (search) =>
     .slice(0, MAX_OPD_SEARCH_TOKENS);
 
 const isUuid = (value) => UUID_REGEX.test(normalizeIdentifier(value));
+const toPublicIdentifier = (value) => {
+  const normalized = normalizeIdentifier(value);
+  if (!normalized || isUuid(normalized)) return null;
+  return normalized;
+};
 
 const resolveTenantByIdentifier = async (tx, identifier) => {
   const normalized = normalizeIdentifier(identifier);
@@ -923,6 +968,128 @@ const buildEncounterWhereClause = (filters = {}) => {
   }
 
   return where;
+};
+
+const resolveLegacyRoute = async (resource, id) => {
+  const normalizedResource = normalizeIdentifier(resource).toLowerCase();
+  const config = LEGACY_ROUTE_CONFIG[normalizedResource];
+  if (!config) {
+    throw new HttpError('errors.opd_flow.not_found', 404);
+  }
+
+  const normalizedIdentifier = normalizeIdentifier(id);
+  if (!normalizedIdentifier) {
+    throw new HttpError('errors.opd_flow.not_found', 404);
+  }
+
+  const delegate = prisma?.[config.model];
+  if (!delegate || typeof delegate.findFirst !== 'function') {
+    throw new HttpError('errors.opd_flow.not_found', 404);
+  }
+
+  const resolvedResource = await delegate.findFirst({
+    where: {
+      deleted_at: null,
+      OR: isUuid(normalizedIdentifier)
+        ? [{ id: normalizedIdentifier }]
+        : [{ human_friendly_id: normalizedIdentifier.toUpperCase() }],
+    },
+    select: {
+      id: true,
+      human_friendly_id: true,
+      ...(config.emergencyCaseField && config.emergencyCaseField !== 'id'
+        ? { [config.emergencyCaseField]: true }
+        : {}),
+      ...(config.ambulanceField && config.ambulanceField !== 'id'
+        ? { [config.ambulanceField]: true }
+        : {}),
+    },
+  });
+
+  if (!resolvedResource) {
+    throw new HttpError('errors.opd_flow.not_found', 404);
+  }
+
+  const emergencyCaseInternalId = config.emergencyCaseField
+    ? config.emergencyCaseField === 'id'
+      ? resolvedResource.id
+      : resolvedResource[config.emergencyCaseField] || null
+    : null;
+  const ambulanceInternalId = config.ambulanceField
+    ? config.ambulanceField === 'id'
+      ? resolvedResource.id
+      : resolvedResource[config.ambulanceField] || null
+    : null;
+
+  const [emergencyCase, ambulance] = await Promise.all([
+    emergencyCaseInternalId
+      ? prisma.emergency_case.findFirst({
+          where: {
+            id: emergencyCaseInternalId,
+            deleted_at: null,
+          },
+          select: {
+            id: true,
+            human_friendly_id: true,
+          },
+        })
+      : null,
+    ambulanceInternalId
+      ? prisma.ambulance.findFirst({
+          where: {
+            id: ambulanceInternalId,
+            deleted_at: null,
+          },
+          select: {
+            id: true,
+            human_friendly_id: true,
+          },
+        })
+      : null,
+  ]);
+
+  const encounter = emergencyCaseInternalId
+    ? await prisma.encounter.findFirst({
+        where: {
+          deleted_at: null,
+          encounter_type: 'EMERGENCY',
+          extension_json: buildOpdFlowJsonFilter(
+            OPD_FLOW_EMERGENCY_CASE_ID_JSON_PATH,
+            emergencyCaseInternalId
+          ),
+        },
+        orderBy: {
+          started_at: 'desc',
+        },
+        select: {
+          id: true,
+          human_friendly_id: true,
+        },
+      })
+    : null;
+
+  return {
+    encounter_id: toPublicIdentifier(encounter?.human_friendly_id || encounter?.id) || null,
+    emergency_case_id:
+      toPublicIdentifier(
+        emergencyCase?.human_friendly_id ||
+          (config.emergencyCaseField === 'id'
+            ? resolvedResource.human_friendly_id
+            : null)
+      ) || null,
+    ambulance_id:
+      toPublicIdentifier(
+        ambulance?.human_friendly_id ||
+          (config.ambulanceField === 'id'
+            ? resolvedResource.human_friendly_id
+            : null)
+      ) || null,
+    resource: normalizedResource,
+    resource_id:
+      toPublicIdentifier(resolvedResource.human_friendly_id || normalizedIdentifier) || null,
+    panel: config.panel,
+    action: config.action,
+  };
 };
 
 const getOpdFlowById = async (id) => {
@@ -2504,6 +2671,7 @@ const correctStage = async (id, data, context = {}) => {
 
 module.exports = {
   listOpdFlows,
+  resolveLegacyRoute,
   getOpdFlowById,
   bootstrapOpdFlow,
   startOpdFlow,

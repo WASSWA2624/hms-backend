@@ -26,12 +26,14 @@ const listTriageAssessments = asyncHandler(async (req, res) => {
     sort_by = 'created_at',
     order = 'desc',
     emergency_case_id,
-    triage_level
+    triage_level,
+    search
   } = req.query;
 
   const filters = {};
   if (emergency_case_id) filters.emergency_case_id = emergency_case_id;
   if (triage_level) filters.triage_level = triage_level;
+  if (search) filters.search = search;
 
   const result = await triageAssessmentService.listTriageAssessments(
     filters,

@@ -62,6 +62,11 @@ const getOpdFlowById = asyncHandler(async (req, res) => {
   return sendSuccess(res, 200, 'messages.opd_flow.get.success', flow);
 });
 
+const resolveLegacyRoute = asyncHandler(async (req, res) => {
+  const resolution = await opdFlowService.resolveLegacyRoute(req.params.resource, req.params.id);
+  return sendSuccess(res, 200, 'messages.opd_flow.resolve_legacy.success', resolution);
+});
+
 const startOpdFlow = asyncHandler(async (req, res) => {
   const payload = {
     ...req.body,
@@ -116,6 +121,7 @@ const correctStage = asyncHandler(async (req, res) => {
 
 module.exports = {
   listOpdFlows,
+  resolveLegacyRoute,
   getOpdFlowById,
   startOpdFlow,
   bootstrapOpdFlow,

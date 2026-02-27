@@ -56,7 +56,8 @@ describe('Ambulance Repository', () => {
         where: {
           id: 'ambulance-123',
           deleted_at: null
-        }
+        },
+        include: expect.any(Object)
       });
     });
 
@@ -104,7 +105,8 @@ describe('Ambulance Repository', () => {
         where: { deleted_at: null },
         skip: 0,
         take: 20,
-        orderBy: { created_at: 'desc' }
+        orderBy: { created_at: 'desc' },
+        include: expect.any(Object)
       });
     });
 
@@ -134,7 +136,8 @@ describe('Ambulance Repository', () => {
         },
         skip: 0,
         take: 10,
-        orderBy: { created_at: 'desc' }
+        orderBy: { created_at: 'desc' },
+        include: expect.any(Object)
       });
     });
 
@@ -211,7 +214,10 @@ describe('Ambulance Repository', () => {
       const result = await create(data);
 
       expect(result).toEqual(mockAmbulance);
-      expect(prisma.ambulance.create).toHaveBeenCalledWith({ data });
+      expect(prisma.ambulance.create).toHaveBeenCalledWith({
+        data,
+        include: expect.any(Object)
+      });
     });
 
     it('should throw HttpError on unique constraint violation', async () => {
@@ -270,7 +276,8 @@ describe('Ambulance Repository', () => {
       expect(result).toEqual(mockAmbulance);
       expect(prisma.ambulance.update).toHaveBeenCalledWith({
         where: { id: 'ambulance-123' },
-        data
+        data,
+        include: expect.any(Object)
       });
     });
 
@@ -329,7 +336,8 @@ describe('Ambulance Repository', () => {
         where: { id: 'ambulance-123' },
         data: {
           deleted_at: expect.any(Date)
-        }
+        },
+        include: expect.any(Object)
       });
     });
 

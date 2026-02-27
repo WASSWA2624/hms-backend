@@ -10,6 +10,189 @@
 const ambulanceDispatchRepository = require('@repositories/ambulance-dispatch/ambulance-dispatch.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
+const { isUuidLike } = require('@lib/identifiers/sanitize-friendly-ids');
+const { resolveModelIdByIdentifier } = require('@lib/identifiers/resolve-entity-id');
+
+const sanitizeIdentifier = (value) => (typeof value === 'string' ? value.trim() : '');
+const toPublicIdentifier = (value) => {
+  const normalized = sanitizeIdentifier(value);
+  if (!normalized || isUuidLike(normalized)) return null;
+  return normalized;
+};
+const resolveDisplayIdentifier = (...values) => {
+  for (const value of values) {
+    const displayValue = toPublicIdentifier(value);
+    if (displayValue) return displayValue;
+  }
+  return null;
+};
+const resolvePatientDisplayName = (patient) => {
+  const firstName = sanitizeIdentifier(patient?.first_name);
+  const lastName = sanitizeIdentifier(patient?.last_name);
+  const fullName = [firstName, lastName].filter(Boolean).join(' ').trim();
+  return fullName || null;
+};
+
+const buildEmptyListResult = (page, limit) => ({
+  dispatches: [],
+  pagination: {
+    page,
+    limit,
+    total: 0,
+    totalPages: 0,
+    hasNextPage: false,
+    hasPreviousPage: page > 1,
+  },
+});
+
+const resolveIdentifierForFilter = async ({ value, model, where = {} }) => {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+
+  const normalized = sanitizeIdentifier(value);
+  if (!normalized) return undefined;
+
+  const resolved = await resolveModelIdByIdentifier({
+    model,
+    identifier: normalized,
+    where,
+  });
+  if (resolved) return resolved;
+  if (isUuidLike(normalized)) return normalized;
+  return null;
+};
+
+const resolveIdentifierForPayload = async ({
+  value,
+  field,
+  model,
+  where = {},
+}) => {
+  if (value === undefined) return undefined;
+  if (value === null) {
+    throw new HttpError('errors.validation.field.required', 400, [{ field }]);
+  }
+
+  const normalized = sanitizeIdentifier(value);
+  if (!normalized) {
+    throw new HttpError('errors.validation.invalid', 400, [{ field }]);
+  }
+
+  const resolved = await resolveModelIdByIdentifier({
+    model,
+    identifier: normalized,
+    where,
+  });
+  if (resolved) return resolved;
+  if (isUuidLike(normalized)) return normalized;
+
+  throw new HttpError('errors.validation.invalid', 400, [{ field }]);
+};
+
+const mapAmbulanceDispatchForDisplay = (record) => {
+  if (!record || typeof record !== 'object') return record;
+
+  return {
+    ...record,
+    display_id: resolveDisplayIdentifier(record.display_id, record.human_friendly_id, record.id),
+    ambulance_display_id: resolveDisplayIdentifier(
+      record.ambulance_display_id,
+      record.ambulance?.human_friendly_id,
+      record.ambulance_id
+    ),
+    ambulance_display_label: sanitizeIdentifier(record.ambulance_display_label || record.ambulance?.identifier) || null,
+    emergency_case_display_id: resolveDisplayIdentifier(
+      record.emergency_case_display_id,
+      record.emergency_case?.human_friendly_id,
+      record.emergency_case_id
+    ),
+    patient_display_id: resolveDisplayIdentifier(
+      record.patient_display_id,
+      record.emergency_case?.patient?.human_friendly_id
+    ),
+    patient_display_name: record.patient_display_name || resolvePatientDisplayName(record.emergency_case?.patient),
+  };
+};
+
+const resolveAmbulanceDispatchId = async (id) => {
+  const normalized = sanitizeIdentifier(id);
+  if (!normalized) return normalized;
+
+  const resolvedId = await resolveModelIdByIdentifier({
+    model: 'ambulance_dispatch',
+    identifier: normalized,
+  });
+
+  return resolvedId || normalized;
+};
+
+const resolveListFilters = async (filters = {}, page, limit) => {
+  const resolvedFilters = {};
+
+  if (filters.ambulance_id !== undefined) {
+    const ambulanceId = await resolveIdentifierForFilter({
+      value: filters.ambulance_id,
+      model: 'ambulance',
+    });
+    if (ambulanceId === null) return buildEmptyListResult(page, limit);
+    if (ambulanceId !== undefined) resolvedFilters.ambulance_id = ambulanceId;
+  }
+
+  if (filters.emergency_case_id !== undefined) {
+    const emergencyCaseId = await resolveIdentifierForFilter({
+      value: filters.emergency_case_id,
+      model: 'emergency_case',
+    });
+    if (emergencyCaseId === null) return buildEmptyListResult(page, limit);
+    if (emergencyCaseId !== undefined) resolvedFilters.emergency_case_id = emergencyCaseId;
+  }
+
+  if (filters.status) resolvedFilters.status = filters.status;
+
+  const search = sanitizeIdentifier(filters.search);
+  if (search) resolvedFilters.search = search;
+
+  return resolvedFilters;
+};
+
+const resolveCreatePayload = async (data = {}) => {
+  const payload = { ...data };
+
+  payload.ambulance_id = await resolveIdentifierForPayload({
+    value: payload.ambulance_id,
+    field: 'ambulance_id',
+    model: 'ambulance',
+  });
+  payload.emergency_case_id = await resolveIdentifierForPayload({
+    value: payload.emergency_case_id,
+    field: 'emergency_case_id',
+    model: 'emergency_case',
+  });
+
+  return payload;
+};
+
+const resolveUpdatePayload = async (data = {}) => {
+  const payload = { ...data };
+
+  if (payload.ambulance_id !== undefined) {
+    payload.ambulance_id = await resolveIdentifierForPayload({
+      value: payload.ambulance_id,
+      field: 'ambulance_id',
+      model: 'ambulance',
+    });
+  }
+
+  if (payload.emergency_case_id !== undefined) {
+    payload.emergency_case_id = await resolveIdentifierForPayload({
+      value: payload.emergency_case_id,
+      field: 'emergency_case_id',
+      model: 'emergency_case',
+    });
+  }
+
+  return payload;
+};
 
 /**
  * List ambulance dispatches with pagination and filters
@@ -25,49 +208,33 @@ const { HttpError } = require('@lib/errors');
  * @returns {Promise<Object>} Paginated ambulance dispatches
  */
 const listAmbulanceDispatches = async (filters = {}, page = 1, limit = 20, sort_by = 'created_at', order = 'desc') => {
-  // Build repository filters
-  const repoFilters = {};
-
-  if (filters.ambulance_id) {
-    repoFilters.ambulance_id = filters.ambulance_id;
+  const resolvedFilters = await resolveListFilters(filters, page, limit);
+  if (resolvedFilters && resolvedFilters.dispatches && resolvedFilters.pagination) {
+    return resolvedFilters;
   }
 
-  if (filters.emergency_case_id) {
-    repoFilters.emergency_case_id = filters.emergency_case_id;
-  }
-
-  if (filters.status) {
-    repoFilters.status = filters.status;
-  }
-
-  // Calculate pagination
   const skip = (page - 1) * limit;
+  const orderBy = { [sort_by]: order };
 
-  // Build sort order
-  const orderBy = {};
-  orderBy[sort_by] = order;
-
-  // Fetch ambulance dispatches and count
   const [dispatches, total] = await Promise.all([
-    ambulanceDispatchRepository.findMany(repoFilters, skip, limit, orderBy),
-    ambulanceDispatchRepository.count(repoFilters)
+    ambulanceDispatchRepository.findMany(resolvedFilters, skip, limit, orderBy),
+    ambulanceDispatchRepository.count(resolvedFilters),
   ]);
 
-  // Calculate pagination metadata
   const totalPages = Math.ceil(total / limit);
   const hasNextPage = page < totalPages;
   const hasPreviousPage = page > 1;
 
   return {
-    dispatches,
+    dispatches: dispatches.map(mapAmbulanceDispatchForDisplay),
     pagination: {
       page,
       limit,
       total,
       totalPages,
       hasNextPage,
-      hasPreviousPage
-    }
+      hasPreviousPage,
+    },
   };
 };
 
@@ -78,13 +245,14 @@ const listAmbulanceDispatches = async (filters = {}, page = 1, limit = 20, sort_
  * @returns {Promise<Object>} Ambulance Dispatch data
  */
 const getAmbulanceDispatchById = async (id) => {
-  const dispatch = await ambulanceDispatchRepository.findById(id);
-  
+  const resolvedId = await resolveAmbulanceDispatchId(id);
+  const dispatch = await ambulanceDispatchRepository.findById(resolvedId);
+
   if (!dispatch) {
     throw new HttpError('errors.ambulance_dispatch.not_found', 404);
   }
 
-  return dispatch;
+  return mapAmbulanceDispatchForDisplay(dispatch);
 };
 
 /**
@@ -104,10 +272,9 @@ const getAmbulanceDispatchById = async (id) => {
  * @returns {Promise<Object>} Created ambulance dispatch
  */
 const createAmbulanceDispatch = async (data, context = {}) => {
-  // Create ambulance dispatch
-  const dispatch = await ambulanceDispatchRepository.create(data);
+  const payload = await resolveCreatePayload(data);
+  const dispatch = await ambulanceDispatchRepository.create(payload);
 
-  // Create audit log
   await createAuditLog({
     action: 'AMBULANCE_DISPATCH_CREATED',
     entity: 'ambulance_dispatch',
@@ -121,11 +288,11 @@ const createAmbulanceDispatch = async (data, context = {}) => {
       ambulance_id: dispatch.ambulance_id,
       emergency_case_id: dispatch.emergency_case_id,
       dispatched_at: dispatch.dispatched_at,
-      status: dispatch.status
-    }
+      status: dispatch.status,
+    },
   });
 
-  return dispatch;
+  return mapAmbulanceDispatchForDisplay(dispatch);
 };
 
 /**
@@ -146,21 +313,20 @@ const createAmbulanceDispatch = async (data, context = {}) => {
  * @returns {Promise<Object>} Updated ambulance dispatch
  */
 const updateAmbulanceDispatch = async (id, data, context = {}) => {
-  // Check if ambulance dispatch exists and get before state
-  const beforeDispatch = await ambulanceDispatchRepository.findById(id);
-  
+  const resolvedId = await resolveAmbulanceDispatchId(id);
+  const beforeDispatch = await ambulanceDispatchRepository.findById(resolvedId);
+
   if (!beforeDispatch) {
     throw new HttpError('errors.ambulance_dispatch.not_found', 404);
   }
 
-  // Update ambulance dispatch
-  const dispatch = await ambulanceDispatchRepository.update(id, data);
+  const payload = await resolveUpdatePayload(data);
+  const dispatch = await ambulanceDispatchRepository.update(beforeDispatch.id, payload);
 
-  // Create audit log
   await createAuditLog({
     action: 'AMBULANCE_DISPATCH_UPDATED',
     entity: 'ambulance_dispatch',
-    entity_id: id,
+    entity_id: beforeDispatch.id,
     user_id: context.user_id,
     tenant_id: context.tenant_id,
     facility_id: context.facility_id,
@@ -171,18 +337,18 @@ const updateAmbulanceDispatch = async (id, data, context = {}) => {
         ambulance_id: beforeDispatch.ambulance_id,
         emergency_case_id: beforeDispatch.emergency_case_id,
         dispatched_at: beforeDispatch.dispatched_at,
-        status: beforeDispatch.status
+        status: beforeDispatch.status,
       },
       after: {
         ambulance_id: dispatch.ambulance_id,
         emergency_case_id: dispatch.emergency_case_id,
         dispatched_at: dispatch.dispatched_at,
-        status: dispatch.status
-      }
-    }
+        status: dispatch.status,
+      },
+    },
   });
 
-  return dispatch;
+  return mapAmbulanceDispatchForDisplay(dispatch);
 };
 
 /**
@@ -198,21 +364,19 @@ const updateAmbulanceDispatch = async (id, data, context = {}) => {
  * @returns {Promise<void>}
  */
 const deleteAmbulanceDispatch = async (id, context = {}) => {
-  // Check if ambulance dispatch exists
-  const dispatch = await ambulanceDispatchRepository.findById(id);
-  
+  const resolvedId = await resolveAmbulanceDispatchId(id);
+  const dispatch = await ambulanceDispatchRepository.findById(resolvedId);
+
   if (!dispatch) {
     throw new HttpError('errors.ambulance_dispatch.not_found', 404);
   }
 
-  // Soft delete ambulance dispatch
-  await ambulanceDispatchRepository.softDelete(id);
+  await ambulanceDispatchRepository.softDelete(dispatch.id);
 
-  // Create audit log
   await createAuditLog({
     action: 'AMBULANCE_DISPATCH_DELETED',
     entity: 'ambulance_dispatch',
-    entity_id: id,
+    entity_id: dispatch.id,
     user_id: context.user_id,
     tenant_id: context.tenant_id,
     facility_id: context.facility_id,
@@ -222,8 +386,8 @@ const deleteAmbulanceDispatch = async (id, context = {}) => {
       ambulance_id: dispatch.ambulance_id,
       emergency_case_id: dispatch.emergency_case_id,
       dispatched_at: dispatch.dispatched_at,
-      status: dispatch.status
-    }
+      status: dispatch.status,
+    },
   });
 };
 
@@ -232,5 +396,5 @@ module.exports = {
   getAmbulanceDispatchById,
   createAmbulanceDispatch,
   updateAmbulanceDispatch,
-  deleteAmbulanceDispatch
+  deleteAmbulanceDispatch,
 };

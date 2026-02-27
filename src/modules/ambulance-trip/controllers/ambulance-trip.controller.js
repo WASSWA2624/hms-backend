@@ -19,11 +19,12 @@ const { sendSuccess, sendPaginated, sendNoContent } = require('@lib/response');
  * @returns {Promise<void>}
  */
 const listAmbulanceTrips = asyncHandler(async (req, res) => {
-  const { page, limit, sort_by, order, ambulance_id, emergency_case_id } = req.query;
+  const { page, limit, sort_by, order, ambulance_id, emergency_case_id, search } = req.query;
 
   const filters = {};
   if (ambulance_id) filters.ambulance_id = ambulance_id;
   if (emergency_case_id) filters.emergency_case_id = emergency_case_id;
+  if (search) filters.search = search;
 
   const result = await ambulanceTripService.listAmbulanceTrips(
     filters,

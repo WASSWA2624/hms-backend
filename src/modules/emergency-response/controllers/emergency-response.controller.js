@@ -25,11 +25,13 @@ const listEmergencyResponses = asyncHandler(async (req, res) => {
     limit = DEFAULT_PAGE_LIMIT,
     sort_by = 'created_at',
     order = 'desc',
-    emergency_case_id
+    emergency_case_id,
+    search
   } = req.query;
 
   const filters = {};
   if (emergency_case_id) filters.emergency_case_id = emergency_case_id;
+  if (search) filters.search = search;
 
   const result = await emergencyResponseService.listEmergencyResponses(
     filters,

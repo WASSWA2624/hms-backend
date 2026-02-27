@@ -10,19 +10,83 @@
 const prisma = require('@prisma/client');
 const { HttpError } = require('@lib/errors');
 
+const DEFAULT_INCLUDE = {
+  tenant: {
+    select: {
+      id: true,
+      human_friendly_id: true,
+      name: true,
+    },
+  },
+  facility: {
+    select: {
+      id: true,
+      human_friendly_id: true,
+      name: true,
+    },
+  },
+};
+
+const SEARCHABLE_STATUSES = new Set([
+  'AVAILABLE',
+  'DISPATCHED',
+  'EN_ROUTE',
+  'ON_SCENE',
+  'TRANSPORTING',
+  'OUT_OF_SERVICE',
+]);
+
+const buildWhere = (filters = {}) => {
+  const where = {
+    deleted_at: null,
+  };
+
+  const {
+    search,
+    ...rest
+  } = filters || {};
+
+  Object.assign(where, rest);
+
+  const normalizedSearch = String(search || '').trim();
+  if (!normalizedSearch) return where;
+
+  const searchUpper = normalizedSearch.toUpperCase();
+  const searchClauses = [
+    { human_friendly_id: { contains: searchUpper } },
+    { identifier: { contains: normalizedSearch } },
+    { tenant: { human_friendly_id: { contains: searchUpper } } },
+    { tenant: { name: { contains: normalizedSearch } } },
+    { facility: { human_friendly_id: { contains: searchUpper } } },
+    { facility: { name: { contains: normalizedSearch } } },
+  ];
+
+  if (SEARCHABLE_STATUSES.has(searchUpper)) {
+    searchClauses.push({ status: searchUpper });
+  }
+
+  where.AND = [
+    ...(Array.isArray(where.AND) ? where.AND : []),
+    { OR: searchClauses },
+  ];
+
+  return where;
+};
+
 /**
  * Find ambulance by ID
  *
  * @param {string} id - Ambulance ID
  * @returns {Promise<Object|null>} Ambulance object or null
  */
-const findById = async (id) => {
+const findById = async (id, include = DEFAULT_INCLUDE) => {
   try {
     return await prisma.ambulance.findFirst({
       where: {
         id,
         deleted_at: null
-      }
+      },
+      include,
     });
   } catch (error) {
     throw new HttpError('errors.database.unexpected', 500, [{ originalError: error.message }]);
@@ -38,19 +102,22 @@ const findById = async (id) => {
  * @param {Object} orderBy - Sort order
  * @returns {Promise<Array>} Array of ambulances
  */
-const findMany = async (filters = {}, skip = 0, take = 20, orderBy = { created_at: 'desc' }) => {
+const findMany = async (
+  filters = {},
+  skip = 0,
+  take = 20,
+  orderBy = { created_at: 'desc' },
+  include = DEFAULT_INCLUDE
+) => {
   try {
-    // Build where clause
-    const where = {
-      deleted_at: null,
-      ...filters
-    };
+    const where = buildWhere(filters);
 
     return await prisma.ambulance.findMany({
       where,
       skip,
       take,
-      orderBy
+      orderBy,
+      include,
     });
   } catch (error) {
     throw new HttpError('errors.database.unexpected', 500, [{ originalError: error.message }]);
@@ -65,10 +132,7 @@ const findMany = async (filters = {}, skip = 0, take = 20, orderBy = { created_a
  */
 const count = async (filters = {}) => {
   try {
-    const where = {
-      deleted_at: null,
-      ...filters
-    };
+    const where = buildWhere(filters);
 
     return await prisma.ambulance.count({ where });
   } catch (error) {
@@ -85,7 +149,8 @@ const count = async (filters = {}) => {
 const create = async (data) => {
   try {
     return await prisma.ambulance.create({
-      data
+      data,
+      include: DEFAULT_INCLUDE,
     });
   } catch (error) {
     if (error.code === 'P2002') {
@@ -113,7 +178,8 @@ const update = async (id, data) => {
   try {
     return await prisma.ambulance.update({
       where: { id },
-      data
+      data,
+      include: DEFAULT_INCLUDE,
     });
   } catch (error) {
     if (error.code === 'P2025') {
@@ -146,7 +212,8 @@ const softDelete = async (id) => {
       where: { id },
       data: {
         deleted_at: new Date()
-      }
+      },
+      include: DEFAULT_INCLUDE,
     });
   } catch (error) {
     if (error.code === 'P2025') {

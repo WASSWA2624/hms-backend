@@ -9,9 +9,8 @@
 
 const { z } = require('zod');
 const { 
-  uuidSchema, 
-  listQuerySchema,
-  isoDateSchema
+  uuidOrFriendlyIdentifierSchema,
+  listQuerySchema
 } = require('@lib/validation/zod');
 
 // ==================== Body Schemas ====================
@@ -21,9 +20,9 @@ const {
  * Used for POST /emergency-cases endpoint
  */
 const createEmergencyCaseSchema = z.object({
-  tenant_id: uuidSchema,
-  facility_id: uuidSchema.optional().nullable(),
-  patient_id: uuidSchema,
+  tenant_id: uuidOrFriendlyIdentifierSchema,
+  facility_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
+  patient_id: uuidOrFriendlyIdentifierSchema,
   severity: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']),
   status: z.enum(['PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'])
 });
@@ -34,8 +33,8 @@ const createEmergencyCaseSchema = z.object({
  * All fields optional for partial updates
  */
 const updateEmergencyCaseSchema = z.object({
-  facility_id: uuidSchema.optional().nullable(),
-  patient_id: uuidSchema.optional(),
+  facility_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
+  patient_id: uuidOrFriendlyIdentifierSchema.optional(),
   severity: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).optional(),
   status: z.enum(['PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']).optional()
 });
@@ -47,7 +46,7 @@ const updateEmergencyCaseSchema = z.object({
  * Used for GET /:id, PUT /:id, and DELETE /:id endpoints
  */
 const emergencyCaseIdParamsSchema = z.object({
-  id: uuidSchema
+  id: uuidOrFriendlyIdentifierSchema
 });
 
 // ==================== Query Params ====================
@@ -58,11 +57,12 @@ const emergencyCaseIdParamsSchema = z.object({
  * Extends base listQuerySchema with emergency case-specific filters
  */
 const listEmergencyCasesQuerySchema = listQuerySchema.extend({
-  tenant_id: uuidSchema.optional(),
-  facility_id: uuidSchema.optional(),
-  patient_id: uuidSchema.optional(),
+  tenant_id: uuidOrFriendlyIdentifierSchema.optional(),
+  facility_id: uuidOrFriendlyIdentifierSchema.optional(),
+  patient_id: uuidOrFriendlyIdentifierSchema.optional(),
   severity: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).optional(),
-  status: z.enum(['PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']).optional()
+  status: z.enum(['PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']).optional(),
+  search: z.string().trim().max(255).optional()
 });
 
 module.exports = {

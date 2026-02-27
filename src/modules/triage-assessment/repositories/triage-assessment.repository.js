@@ -10,6 +10,62 @@
 const prisma = require('@prisma/client');
 const { HttpError } = require('@lib/errors');
 
+const DEFAULT_INCLUDE = {
+  emergency_case: {
+    select: {
+      id: true,
+      human_friendly_id: true,
+      patient: {
+        select: {
+          id: true,
+          human_friendly_id: true,
+          first_name: true,
+          last_name: true,
+        },
+      },
+    },
+  },
+};
+
+const SEARCHABLE_TRIAGE_LEVELS = new Set(['IMMEDIATE', 'URGENT', 'LESS_URGENT', 'NON_URGENT']);
+
+const buildWhere = (filters = {}) => {
+  const where = {
+    deleted_at: null,
+  };
+
+  const {
+    search,
+    ...rest
+  } = filters || {};
+
+  Object.assign(where, rest);
+
+  const normalizedSearch = String(search || '').trim();
+  if (!normalizedSearch) return where;
+
+  const searchUpper = normalizedSearch.toUpperCase();
+  const searchClauses = [
+    { human_friendly_id: { contains: searchUpper } },
+    { emergency_case: { human_friendly_id: { contains: searchUpper } } },
+    { emergency_case: { patient: { human_friendly_id: { contains: searchUpper } } } },
+    { emergency_case: { patient: { first_name: { contains: normalizedSearch } } } },
+    { emergency_case: { patient: { last_name: { contains: normalizedSearch } } } },
+    { notes: { contains: normalizedSearch } },
+  ];
+
+  if (SEARCHABLE_TRIAGE_LEVELS.has(searchUpper)) {
+    searchClauses.push({ triage_level: searchUpper });
+  }
+
+  where.AND = [
+    ...(Array.isArray(where.AND) ? where.AND : []),
+    { OR: searchClauses },
+  ];
+
+  return where;
+};
+
 /**
  * Find triage assessment by ID
  *
@@ -17,7 +73,7 @@ const { HttpError } = require('@lib/errors');
  * @param {Object} include - Relations to include
  * @returns {Promise<Object|null>} Triage assessment object or null
  */
-const findById = async (id, include = {}) => {
+const findById = async (id, include = DEFAULT_INCLUDE) => {
   try {
     return await prisma.triage_assessment.findFirst({
       where: {
@@ -41,13 +97,15 @@ const findById = async (id, include = {}) => {
  * @param {Object} include - Relations to include
  * @returns {Promise<Array>} Array of triage assessments
  */
-const findMany = async (filters = {}, skip = 0, take = 20, orderBy = { created_at: 'desc' }, include = {}) => {
+const findMany = async (
+  filters = {},
+  skip = 0,
+  take = 20,
+  orderBy = { created_at: 'desc' },
+  include = DEFAULT_INCLUDE
+) => {
   try {
-    // Build where clause
-    const where = {
-      deleted_at: null,
-      ...filters
-    };
+    const where = buildWhere(filters);
 
     return await prisma.triage_assessment.findMany({
       where,
@@ -69,10 +127,7 @@ const findMany = async (filters = {}, skip = 0, take = 20, orderBy = { created_a
  */
 const count = async (filters = {}) => {
   try {
-    const where = {
-      deleted_at: null,
-      ...filters
-    };
+    const where = buildWhere(filters);
 
     return await prisma.triage_assessment.count({ where });
   } catch (error) {
@@ -89,7 +144,8 @@ const count = async (filters = {}) => {
 const create = async (data) => {
   try {
     return await prisma.triage_assessment.create({
-      data
+      data,
+      include: DEFAULT_INCLUDE,
     });
   } catch (error) {
     if (error.code === 'P2002') {
@@ -117,7 +173,8 @@ const update = async (id, data) => {
   try {
     return await prisma.triage_assessment.update({
       where: { id },
-      data
+      data,
+      include: DEFAULT_INCLUDE,
     });
   } catch (error) {
     if (error.code === 'P2025') {
@@ -150,7 +207,8 @@ const softDelete = async (id) => {
       where: { id },
       data: {
         deleted_at: new Date()
-      }
+      },
+      include: DEFAULT_INCLUDE,
     });
   } catch (error) {
     if (error.code === 'P2025') {

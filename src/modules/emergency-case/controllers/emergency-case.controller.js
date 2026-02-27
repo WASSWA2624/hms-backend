@@ -29,7 +29,8 @@ const listEmergencyCases = asyncHandler(async (req, res) => {
     facility_id,
     patient_id,
     severity,
-    status
+    status,
+    search
   } = req.query;
 
   const filters = {};
@@ -38,6 +39,7 @@ const listEmergencyCases = asyncHandler(async (req, res) => {
   if (patient_id) filters.patient_id = patient_id;
   if (severity) filters.severity = severity;
   if (status) filters.status = status;
+  if (search) filters.search = search;
 
   const result = await emergencyCaseService.listEmergencyCases(
     filters,

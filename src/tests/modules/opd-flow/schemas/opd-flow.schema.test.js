@@ -1,6 +1,7 @@
 const {
   createOpdFlowSchema,
   encounterIdParamsSchema,
+  resolveLegacyRouteParamsSchema,
   payConsultationSchema,
   recordVitalsSchema,
   assignDoctorSchema,
@@ -75,6 +76,37 @@ describe('opd-flow.schema', () => {
       const result = encounterIdParamsSchema.safeParse({
         id: '550e8400-e29b-41d4-a716-446655440010'
       });
+      expect(result.success).toBe(false);
+    });
+  });
+
+  describe('resolveLegacyRouteParamsSchema', () => {
+    it('accepts emergency legacy resource with friendly id', () => {
+      const result = resolveLegacyRouteParamsSchema.safeParse({
+        resource: 'emergency-cases',
+        id: 'emc0000001'
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.data.id).toBe('EMC0000001');
+    });
+
+    it('accepts UUID id for legacy lookup', () => {
+      const result = resolveLegacyRouteParamsSchema.safeParse({
+        resource: 'ambulance-dispatches',
+        id: '550e8400-e29b-41d4-a716-446655440001'
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.data.id).toBe('550e8400-e29b-41d4-a716-446655440001');
+    });
+
+    it('rejects unsupported legacy resource', () => {
+      const result = resolveLegacyRouteParamsSchema.safeParse({
+        resource: 'unknown-resource',
+        id: 'EMC0000001'
+      });
+
       expect(result.success).toBe(false);
     });
   });

@@ -35,7 +35,8 @@ describe('Ambulance Dispatch Service', () => {
 
       const result = await listAmbulanceDispatches({}, 1, 20);
 
-      expect(result.dispatches).toEqual(mockDispatches);
+      expect(result.dispatches).toEqual([expect.objectContaining(mockDispatches[0])]);
+      expect(result.dispatches[0]).toEqual(expect.objectContaining({ display_id: 'dispatch-1' }));
       expect(result.pagination.total).toBe(1);
     });
   });
@@ -47,7 +48,8 @@ describe('Ambulance Dispatch Service', () => {
 
       const result = await getAmbulanceDispatchById('dispatch-123');
 
-      expect(result).toEqual(mockDispatch);
+      expect(result).toEqual(expect.objectContaining(mockDispatch));
+      expect(result).toEqual(expect.objectContaining({ display_id: 'dispatch-123' }));
     });
 
     it('should throw HttpError if dispatch not found', async () => {
@@ -76,7 +78,8 @@ describe('Ambulance Dispatch Service', () => {
         status: 'DISPATCHED'
       }, {});
 
-      expect(result).toEqual(mockDispatch);
+      expect(result).toEqual(expect.objectContaining(mockDispatch));
+      expect(result).toEqual(expect.objectContaining({ display_id: 'dispatch-123' }));
       expect(createAuditLog).toHaveBeenCalled();
     });
   });
@@ -92,7 +95,8 @@ describe('Ambulance Dispatch Service', () => {
 
       const result = await updateAmbulanceDispatch('dispatch-123', { status: 'ON_SCENE' }, {});
 
-      expect(result).toEqual(updatedDispatch);
+      expect(result).toEqual(expect.objectContaining(updatedDispatch));
+      expect(result).toEqual(expect.objectContaining({ display_id: 'dispatch-123' }));
       expect(createAuditLog).toHaveBeenCalled();
     });
   });

@@ -20,6 +20,7 @@ describe('opd-flow.routes contract', () => {
     expect(getRouteSignatures(subject)).toEqual([
       'GET /',
       'GET /:id',
+      'GET /resolve-legacy/:resource/:id',
       'POST /:id/assign-doctor',
       'POST /:id/correct-stage',
       'POST /:id/disposition',

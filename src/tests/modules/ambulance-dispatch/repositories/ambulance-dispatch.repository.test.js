@@ -54,7 +54,8 @@ describe('Ambulance Dispatch Repository', () => {
         where: {
           id: 'dispatch-123',
           deleted_at: null
-        }
+        },
+        include: expect.any(Object)
       });
     });
 

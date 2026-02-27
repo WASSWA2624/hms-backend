@@ -72,6 +72,28 @@ describe('opd-flow.controller', () => {
     expect(sendSuccess).toHaveBeenCalledWith(res, 200, 'messages.opd_flow.get.success', expect.any(Object));
   });
 
+  it('resolves emergency legacy route and sends success response', async () => {
+    opdFlowService.resolveLegacyRoute.mockResolvedValue({
+      encounter_id: 'ENC00001',
+      emergency_case_id: 'EMC00001',
+      resource: 'emergency-cases',
+      resource_id: 'EMC00001',
+      panel: 'queue',
+      action: 'open_case',
+    });
+    req.params = { resource: 'emergency-cases', id: 'EMC00001' };
+
+    await opdFlowController.resolveLegacyRoute(req, res);
+
+    expect(opdFlowService.resolveLegacyRoute).toHaveBeenCalledWith('emergency-cases', 'EMC00001');
+    expect(sendSuccess).toHaveBeenCalledWith(
+      res,
+      200,
+      'messages.opd_flow.resolve_legacy.success',
+      expect.objectContaining({ resource: 'emergency-cases' })
+    );
+  });
+
   it('starts OPD flow, injects tenant_id fallback, and propagates context', async () => {
     opdFlowService.startOpdFlow.mockResolvedValue({ encounter: { id: 'enc-1' }, flow: { stage: 'WAITING_VITALS' } });
     req.body = {
@@ -163,4 +185,3 @@ describe('opd-flow.controller', () => {
     expect(sendSuccess).toHaveBeenCalledWith(res, 200, 'messages.opd_flow.disposition.success', expect.any(Object));
   });
 });
-

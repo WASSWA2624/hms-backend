@@ -41,7 +41,7 @@ describe('Triage Assessment Repository', () => {
 
       expect(prisma.triage_assessment.findFirst).toHaveBeenCalledWith({
         where: { id: 'test-id', deleted_at: null },
-        include: {}
+        include: expect.any(Object)
       });
       expect(result).toEqual(mockAssessment);
     });
@@ -78,7 +78,7 @@ describe('Triage Assessment Repository', () => {
         skip: 0,
         take: 10,
         orderBy: { created_at: 'desc' },
-        include: {}
+        include: expect.any(Object)
       });
       expect(result).toEqual(mockAssessments);
     });
@@ -123,7 +123,10 @@ describe('Triage Assessment Repository', () => {
 
       const result = await triageAssessmentRepository.create(assessmentData);
 
-      expect(prisma.triage_assessment.create).toHaveBeenCalledWith({ data: assessmentData });
+      expect(prisma.triage_assessment.create).toHaveBeenCalledWith({
+        data: assessmentData,
+        include: expect.any(Object)
+      });
       expect(result).toEqual(mockCreated);
     });
 
@@ -153,7 +156,8 @@ describe('Triage Assessment Repository', () => {
 
       expect(prisma.triage_assessment.update).toHaveBeenCalledWith({
         where: { id: 'test-id' },
-        data: updateData
+        data: updateData,
+        include: expect.any(Object)
       });
       expect(result).toEqual(mockUpdated);
     });
@@ -176,7 +180,8 @@ describe('Triage Assessment Repository', () => {
 
       expect(prisma.triage_assessment.update).toHaveBeenCalledWith({
         where: { id: 'test-id' },
-        data: { deleted_at: expect.any(Date) }
+        data: { deleted_at: expect.any(Date) },
+        include: expect.any(Object)
       });
       expect(result).toEqual(mockDeleted);
     });

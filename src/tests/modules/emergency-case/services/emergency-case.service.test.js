@@ -34,7 +34,11 @@ describe('Emergency Case Service', () => {
 
       const result = await emergencyCaseService.listEmergencyCases({}, 1, 10, 'created_at', 'desc');
 
-      expect(result.items).toEqual(mockCases);
+      expect(result.items).toEqual([
+        expect.objectContaining(mockCases[0]),
+        expect.objectContaining(mockCases[1]),
+      ]);
+      expect(result.items[0]).toEqual(expect.objectContaining({ display_id: '1' }));
       expect(result.total).toBe(2);
       expect(result.page).toBe(1);
       expect(result.limit).toBe(10);
@@ -79,7 +83,8 @@ describe('Emergency Case Service', () => {
 
       const result = await emergencyCaseService.getEmergencyCaseById('test-id');
 
-      expect(result).toEqual(mockCase);
+      expect(result).toEqual(expect.objectContaining(mockCase));
+      expect(result).toEqual(expect.objectContaining({ display_id: 'test-id' }));
       expect(emergencyCaseRepository.findById).toHaveBeenCalledWith('test-id');
     });
 
@@ -113,7 +118,8 @@ describe('Emergency Case Service', () => {
 
       const result = await emergencyCaseService.createEmergencyCase(caseData, mockUser);
 
-      expect(result).toEqual(mockCreatedCase);
+      expect(result).toEqual(expect.objectContaining(mockCreatedCase));
+      expect(result).toEqual(expect.objectContaining({ display_id: 'new-id' }));
       expect(emergencyCaseRepository.create).toHaveBeenCalledWith(caseData);
       expect(createAuditLog).toHaveBeenCalledWith({
         action: 'CREATE',
@@ -150,7 +156,8 @@ describe('Emergency Case Service', () => {
 
       const result = await emergencyCaseService.updateEmergencyCase('test-id', updateData, mockUser);
 
-      expect(result).toEqual(updatedCase);
+      expect(result).toEqual(expect.objectContaining(updatedCase));
+      expect(result).toEqual(expect.objectContaining({ display_id: 'test-id' }));
       expect(emergencyCaseRepository.findById).toHaveBeenCalledWith('test-id');
       expect(emergencyCaseRepository.update).toHaveBeenCalledWith('test-id', updateData);
       expect(createAuditLog).toHaveBeenCalledWith({
@@ -195,7 +202,8 @@ describe('Emergency Case Service', () => {
 
       const result = await emergencyCaseService.deleteEmergencyCase('test-id', mockUser);
 
-      expect(result).toEqual(deletedCase);
+      expect(result).toEqual(expect.objectContaining(deletedCase));
+      expect(result).toEqual(expect.objectContaining({ display_id: 'test-id' }));
       expect(emergencyCaseRepository.findById).toHaveBeenCalledWith('test-id');
       expect(emergencyCaseRepository.softDelete).toHaveBeenCalledWith('test-id');
       expect(createAuditLog).toHaveBeenCalledWith({

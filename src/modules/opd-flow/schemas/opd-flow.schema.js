@@ -67,6 +67,14 @@ const WORKFLOW_STAGE_VALUES = [
   'DISCHARGED'
 ];
 const QUEUE_SCOPE_VALUES = ['ASSIGNED', 'WAITING', 'ALL'];
+const LEGACY_RESOURCE_VALUES = [
+  'emergency-cases',
+  'triage-assessments',
+  'emergency-responses',
+  'ambulances',
+  'ambulance-dispatches',
+  'ambulance-trips',
+];
 const UUID_LIKE_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const PATIENT_FRIENDLY_ID_REGEX = /^(?=.*\d)[A-Za-z][A-Za-z0-9_-]*$/;
@@ -171,6 +179,11 @@ const bootstrapOpdFlowSchema = z.object({
 
 const encounterIdParamsSchema = z.object({
   id: encounterIdentifierSchema
+});
+
+const resolveLegacyRouteParamsSchema = z.object({
+  resource: z.enum(LEGACY_RESOURCE_VALUES),
+  id: scopeIdentifierSchema,
 });
 
 const payConsultationSchema = z.object({
@@ -318,6 +331,7 @@ module.exports = {
   createOpdFlowSchema,
   bootstrapOpdFlowSchema,
   encounterIdParamsSchema,
+  resolveLegacyRouteParamsSchema,
   payConsultationSchema,
   recordVitalsSchema,
   assignDoctorSchema,

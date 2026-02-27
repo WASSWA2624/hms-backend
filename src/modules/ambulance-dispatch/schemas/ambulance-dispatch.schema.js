@@ -9,7 +9,7 @@
 
 const { z } = require('zod');
 const { 
-  uuidSchema, 
+  uuidOrFriendlyIdentifierSchema,
   listQuerySchema,
   isoDateSchema
 } = require('@lib/validation/zod');
@@ -21,8 +21,8 @@ const {
  * Used for POST /ambulance-dispatches endpoint
  */
 const createAmbulanceDispatchSchema = z.object({
-  ambulance_id: uuidSchema,
-  emergency_case_id: uuidSchema,
+  ambulance_id: uuidOrFriendlyIdentifierSchema,
+  emergency_case_id: uuidOrFriendlyIdentifierSchema,
   dispatched_at: isoDateSchema.optional(),
   status: z.enum(['AVAILABLE', 'DISPATCHED', 'EN_ROUTE', 'ON_SCENE', 'TRANSPORTING', 'OUT_OF_SERVICE'])
 });
@@ -33,8 +33,8 @@ const createAmbulanceDispatchSchema = z.object({
  * All fields optional for partial updates
  */
 const updateAmbulanceDispatchSchema = z.object({
-  ambulance_id: uuidSchema.optional(),
-  emergency_case_id: uuidSchema.optional(),
+  ambulance_id: uuidOrFriendlyIdentifierSchema.optional(),
+  emergency_case_id: uuidOrFriendlyIdentifierSchema.optional(),
   dispatched_at: isoDateSchema.optional(),
   status: z.enum(['AVAILABLE', 'DISPATCHED', 'EN_ROUTE', 'ON_SCENE', 'TRANSPORTING', 'OUT_OF_SERVICE']).optional()
 });
@@ -46,7 +46,7 @@ const updateAmbulanceDispatchSchema = z.object({
  * Used for GET /:id, PUT /:id, and DELETE /:id endpoints
  */
 const ambulanceDispatchIdParamsSchema = z.object({
-  id: uuidSchema
+  id: uuidOrFriendlyIdentifierSchema
 });
 
 // ==================== Query Params ====================
@@ -57,9 +57,10 @@ const ambulanceDispatchIdParamsSchema = z.object({
  * Extends base listQuerySchema with ambulance dispatch-specific filters
  */
 const listAmbulanceDispatchesQuerySchema = listQuerySchema.extend({
-  ambulance_id: uuidSchema.optional(),
-  emergency_case_id: uuidSchema.optional(),
-  status: z.enum(['AVAILABLE', 'DISPATCHED', 'EN_ROUTE', 'ON_SCENE', 'TRANSPORTING', 'OUT_OF_SERVICE']).optional()
+  ambulance_id: uuidOrFriendlyIdentifierSchema.optional(),
+  emergency_case_id: uuidOrFriendlyIdentifierSchema.optional(),
+  status: z.enum(['AVAILABLE', 'DISPATCHED', 'EN_ROUTE', 'ON_SCENE', 'TRANSPORTING', 'OUT_OF_SERVICE']).optional(),
+  search: z.string().trim().max(255).optional()
 });
 
 module.exports = {

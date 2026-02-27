@@ -41,7 +41,7 @@ describe('Emergency Response Repository', () => {
 
       expect(prisma.emergency_response.findFirst).toHaveBeenCalledWith({
         where: { id: 'test-id', deleted_at: null },
-        include: {}
+        include: expect.any(Object)
       });
       expect(result).toEqual(mockResponse);
     });
@@ -78,7 +78,7 @@ describe('Emergency Response Repository', () => {
         skip: 0,
         take: 10,
         orderBy: { created_at: 'desc' },
-        include: {}
+        include: expect.any(Object)
       });
       expect(result).toEqual(mockResponses);
     });
@@ -123,7 +123,10 @@ describe('Emergency Response Repository', () => {
 
       const result = await emergencyResponseRepository.create(responseData);
 
-      expect(prisma.emergency_response.create).toHaveBeenCalledWith({ data: responseData });
+      expect(prisma.emergency_response.create).toHaveBeenCalledWith({
+        data: responseData,
+        include: expect.any(Object)
+      });
       expect(result).toEqual(mockCreated);
     });
 
@@ -146,7 +149,8 @@ describe('Emergency Response Repository', () => {
 
       expect(prisma.emergency_response.update).toHaveBeenCalledWith({
         where: { id: 'test-id' },
-        data: updateData
+        data: updateData,
+        include: expect.any(Object)
       });
       expect(result).toEqual(mockUpdated);
     });
@@ -169,7 +173,8 @@ describe('Emergency Response Repository', () => {
 
       expect(prisma.emergency_response.update).toHaveBeenCalledWith({
         where: { id: 'test-id' },
-        data: { deleted_at: expect.any(Date) }
+        data: { deleted_at: expect.any(Date) },
+        include: expect.any(Object)
       });
       expect(result).toEqual(mockDeleted);
     });

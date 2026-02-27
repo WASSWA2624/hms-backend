@@ -39,7 +39,11 @@ describe('Triage Assessment Service', () => {
 
       const result = await triageAssessmentService.listTriageAssessments({}, 1, 10);
 
-      expect(result.items).toEqual(mockAssessments);
+      expect(result.items).toEqual([
+        expect.objectContaining(mockAssessments[0]),
+        expect.objectContaining(mockAssessments[1]),
+      ]);
+      expect(result.items[0]).toEqual(expect.objectContaining({ display_id: '1' }));
       expect(result.total).toBe(2);
       expect(result.totalPages).toBe(1);
     });
@@ -53,7 +57,8 @@ describe('Triage Assessment Service', () => {
 
       const result = await triageAssessmentService.getTriageAssessmentById('test-id');
 
-      expect(result).toEqual(mockAssessment);
+      expect(result).toEqual(expect.objectContaining(mockAssessment));
+      expect(result).toEqual(expect.objectContaining({ display_id: 'test-id' }));
     });
 
     it('should throw HttpError if not found', async () => {
@@ -78,7 +83,8 @@ describe('Triage Assessment Service', () => {
 
       const result = await triageAssessmentService.createTriageAssessment(assessmentData, mockUser);
 
-      expect(result).toEqual(mockCreated);
+      expect(result).toEqual(expect.objectContaining(mockCreated));
+      expect(result).toEqual(expect.objectContaining({ display_id: 'new-id' }));
       expect(createAuditLog).toHaveBeenCalled();
     });
   });
@@ -94,7 +100,8 @@ describe('Triage Assessment Service', () => {
 
       const result = await triageAssessmentService.updateTriageAssessment('test-id', updateData, mockUser);
 
-      expect(result).toEqual(updated);
+      expect(result).toEqual(expect.objectContaining(updated));
+      expect(result).toEqual(expect.objectContaining({ display_id: 'test-id' }));
       expect(createAuditLog).toHaveBeenCalled();
     });
 
@@ -117,7 +124,8 @@ describe('Triage Assessment Service', () => {
 
       const result = await triageAssessmentService.deleteTriageAssessment('test-id', mockUser);
 
-      expect(result).toEqual(deleted);
+      expect(result).toEqual(expect.objectContaining(deleted));
+      expect(result).toEqual(expect.objectContaining({ display_id: 'test-id' }));
       expect(createAuditLog).toHaveBeenCalled();
     });
 

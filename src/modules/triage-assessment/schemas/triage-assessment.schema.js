@@ -9,7 +9,7 @@
 
 const { z } = require('zod');
 const { 
-  uuidSchema, 
+  uuidOrFriendlyIdentifierSchema,
   listQuerySchema
 } = require('@lib/validation/zod');
 
@@ -20,7 +20,7 @@ const {
  * Used for POST /triage-assessments endpoint
  */
 const createTriageAssessmentSchema = z.object({
-  emergency_case_id: uuidSchema,
+  emergency_case_id: uuidOrFriendlyIdentifierSchema,
   triage_level: z.enum(['IMMEDIATE', 'URGENT', 'LESS_URGENT', 'NON_URGENT']),
   notes: z.string().max(5000).optional().nullable()
 });
@@ -31,7 +31,7 @@ const createTriageAssessmentSchema = z.object({
  * All fields optional for partial updates
  */
 const updateTriageAssessmentSchema = z.object({
-  emergency_case_id: uuidSchema.optional(),
+  emergency_case_id: uuidOrFriendlyIdentifierSchema.optional(),
   triage_level: z.enum(['IMMEDIATE', 'URGENT', 'LESS_URGENT', 'NON_URGENT']).optional(),
   notes: z.string().max(5000).optional().nullable()
 });
@@ -43,7 +43,7 @@ const updateTriageAssessmentSchema = z.object({
  * Used for GET /:id, PUT /:id, and DELETE /:id endpoints
  */
 const triageAssessmentIdParamsSchema = z.object({
-  id: uuidSchema
+  id: uuidOrFriendlyIdentifierSchema
 });
 
 // ==================== Query Params ====================
@@ -54,8 +54,9 @@ const triageAssessmentIdParamsSchema = z.object({
  * Extends base listQuerySchema with triage assessment-specific filters
  */
 const listTriageAssessmentsQuerySchema = listQuerySchema.extend({
-  emergency_case_id: uuidSchema.optional(),
-  triage_level: z.enum(['IMMEDIATE', 'URGENT', 'LESS_URGENT', 'NON_URGENT']).optional()
+  emergency_case_id: uuidOrFriendlyIdentifierSchema.optional(),
+  triage_level: z.enum(['IMMEDIATE', 'URGENT', 'LESS_URGENT', 'NON_URGENT']).optional(),
+  search: z.string().trim().max(255).optional()
 });
 
 module.exports = {

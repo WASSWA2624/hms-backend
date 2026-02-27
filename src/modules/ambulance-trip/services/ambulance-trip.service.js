@@ -10,6 +10,187 @@
 const ambulanceTripRepository = require('@repositories/ambulance-trip/ambulance-trip.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
+const { isUuidLike } = require('@lib/identifiers/sanitize-friendly-ids');
+const { resolveModelIdByIdentifier } = require('@lib/identifiers/resolve-entity-id');
+
+const sanitizeIdentifier = (value) => (typeof value === 'string' ? value.trim() : '');
+const toPublicIdentifier = (value) => {
+  const normalized = sanitizeIdentifier(value);
+  if (!normalized || isUuidLike(normalized)) return null;
+  return normalized;
+};
+const resolveDisplayIdentifier = (...values) => {
+  for (const value of values) {
+    const displayValue = toPublicIdentifier(value);
+    if (displayValue) return displayValue;
+  }
+  return null;
+};
+const resolvePatientDisplayName = (patient) => {
+  const firstName = sanitizeIdentifier(patient?.first_name);
+  const lastName = sanitizeIdentifier(patient?.last_name);
+  const fullName = [firstName, lastName].filter(Boolean).join(' ').trim();
+  return fullName || null;
+};
+
+const buildEmptyListResult = (page, limit) => ({
+  trips: [],
+  pagination: {
+    page,
+    limit,
+    total: 0,
+    totalPages: 0,
+    hasNextPage: false,
+    hasPreviousPage: page > 1,
+  },
+});
+
+const resolveIdentifierForFilter = async ({ value, model, where = {} }) => {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+
+  const normalized = sanitizeIdentifier(value);
+  if (!normalized) return undefined;
+
+  const resolved = await resolveModelIdByIdentifier({
+    model,
+    identifier: normalized,
+    where,
+  });
+  if (resolved) return resolved;
+  if (isUuidLike(normalized)) return normalized;
+  return null;
+};
+
+const resolveIdentifierForPayload = async ({
+  value,
+  field,
+  model,
+  where = {},
+}) => {
+  if (value === undefined) return undefined;
+  if (value === null) {
+    throw new HttpError('errors.validation.field.required', 400, [{ field }]);
+  }
+
+  const normalized = sanitizeIdentifier(value);
+  if (!normalized) {
+    throw new HttpError('errors.validation.invalid', 400, [{ field }]);
+  }
+
+  const resolved = await resolveModelIdByIdentifier({
+    model,
+    identifier: normalized,
+    where,
+  });
+  if (resolved) return resolved;
+  if (isUuidLike(normalized)) return normalized;
+
+  throw new HttpError('errors.validation.invalid', 400, [{ field }]);
+};
+
+const mapAmbulanceTripForDisplay = (record) => {
+  if (!record || typeof record !== 'object') return record;
+
+  return {
+    ...record,
+    display_id: resolveDisplayIdentifier(record.display_id, record.human_friendly_id, record.id),
+    ambulance_display_id: resolveDisplayIdentifier(
+      record.ambulance_display_id,
+      record.ambulance?.human_friendly_id,
+      record.ambulance_id
+    ),
+    ambulance_display_label: sanitizeIdentifier(record.ambulance_display_label || record.ambulance?.identifier) || null,
+    emergency_case_display_id: resolveDisplayIdentifier(
+      record.emergency_case_display_id,
+      record.emergency_case?.human_friendly_id,
+      record.emergency_case_id
+    ),
+    patient_display_id: resolveDisplayIdentifier(
+      record.patient_display_id,
+      record.emergency_case?.patient?.human_friendly_id
+    ),
+    patient_display_name: record.patient_display_name || resolvePatientDisplayName(record.emergency_case?.patient),
+  };
+};
+
+const resolveAmbulanceTripId = async (id) => {
+  const normalized = sanitizeIdentifier(id);
+  if (!normalized) return normalized;
+
+  const resolvedId = await resolveModelIdByIdentifier({
+    model: 'ambulance_trip',
+    identifier: normalized,
+  });
+
+  return resolvedId || normalized;
+};
+
+const resolveListFilters = async (filters = {}, page, limit) => {
+  const resolvedFilters = {};
+
+  if (filters.ambulance_id !== undefined) {
+    const ambulanceId = await resolveIdentifierForFilter({
+      value: filters.ambulance_id,
+      model: 'ambulance',
+    });
+    if (ambulanceId === null) return buildEmptyListResult(page, limit);
+    if (ambulanceId !== undefined) resolvedFilters.ambulance_id = ambulanceId;
+  }
+
+  if (filters.emergency_case_id !== undefined) {
+    const emergencyCaseId = await resolveIdentifierForFilter({
+      value: filters.emergency_case_id,
+      model: 'emergency_case',
+    });
+    if (emergencyCaseId === null) return buildEmptyListResult(page, limit);
+    if (emergencyCaseId !== undefined) resolvedFilters.emergency_case_id = emergencyCaseId;
+  }
+
+  const search = sanitizeIdentifier(filters.search);
+  if (search) resolvedFilters.search = search;
+
+  return resolvedFilters;
+};
+
+const resolveCreatePayload = async (data = {}) => {
+  const payload = { ...data };
+
+  payload.ambulance_id = await resolveIdentifierForPayload({
+    value: payload.ambulance_id,
+    field: 'ambulance_id',
+    model: 'ambulance',
+  });
+  payload.emergency_case_id = await resolveIdentifierForPayload({
+    value: payload.emergency_case_id,
+    field: 'emergency_case_id',
+    model: 'emergency_case',
+  });
+
+  return payload;
+};
+
+const resolveUpdatePayload = async (data = {}) => {
+  const payload = { ...data };
+
+  if (payload.ambulance_id !== undefined) {
+    payload.ambulance_id = await resolveIdentifierForPayload({
+      value: payload.ambulance_id,
+      field: 'ambulance_id',
+      model: 'ambulance',
+    });
+  }
+
+  if (payload.emergency_case_id !== undefined) {
+    payload.emergency_case_id = await resolveIdentifierForPayload({
+      value: payload.emergency_case_id,
+      field: 'emergency_case_id',
+      model: 'emergency_case',
+    });
+  }
+
+  return payload;
+};
 
 /**
  * List ambulance trips with pagination and filters
@@ -24,45 +205,33 @@ const { HttpError } = require('@lib/errors');
  * @returns {Promise<Object>} Paginated ambulance trips
  */
 const listAmbulanceTrips = async (filters = {}, page = 1, limit = 20, sort_by = 'created_at', order = 'desc') => {
-  // Build repository filters
-  const repoFilters = {};
-
-  if (filters.ambulance_id) {
-    repoFilters.ambulance_id = filters.ambulance_id;
+  const resolvedFilters = await resolveListFilters(filters, page, limit);
+  if (resolvedFilters && resolvedFilters.trips && resolvedFilters.pagination) {
+    return resolvedFilters;
   }
 
-  if (filters.emergency_case_id) {
-    repoFilters.emergency_case_id = filters.emergency_case_id;
-  }
-
-  // Calculate pagination
   const skip = (page - 1) * limit;
+  const orderBy = { [sort_by]: order };
 
-  // Build sort order
-  const orderBy = {};
-  orderBy[sort_by] = order;
-
-  // Fetch ambulance trips and count
   const [trips, total] = await Promise.all([
-    ambulanceTripRepository.findMany(repoFilters, skip, limit, orderBy),
-    ambulanceTripRepository.count(repoFilters)
+    ambulanceTripRepository.findMany(resolvedFilters, skip, limit, orderBy),
+    ambulanceTripRepository.count(resolvedFilters),
   ]);
 
-  // Calculate pagination metadata
   const totalPages = Math.ceil(total / limit);
   const hasNextPage = page < totalPages;
   const hasPreviousPage = page > 1;
 
   return {
-    trips,
+    trips: trips.map(mapAmbulanceTripForDisplay),
     pagination: {
       page,
       limit,
       total,
       totalPages,
       hasNextPage,
-      hasPreviousPage
-    }
+      hasPreviousPage,
+    },
   };
 };
 
@@ -73,13 +242,14 @@ const listAmbulanceTrips = async (filters = {}, page = 1, limit = 20, sort_by = 
  * @returns {Promise<Object>} Ambulance Trip data
  */
 const getAmbulanceTripById = async (id) => {
-  const trip = await ambulanceTripRepository.findById(id);
-  
+  const resolvedId = await resolveAmbulanceTripId(id);
+  const trip = await ambulanceTripRepository.findById(resolvedId);
+
   if (!trip) {
     throw new HttpError('errors.ambulance_trip.not_found', 404);
   }
 
-  return trip;
+  return mapAmbulanceTripForDisplay(trip);
 };
 
 /**
@@ -99,10 +269,9 @@ const getAmbulanceTripById = async (id) => {
  * @returns {Promise<Object>} Created ambulance trip
  */
 const createAmbulanceTrip = async (data, context = {}) => {
-  // Create ambulance trip
-  const trip = await ambulanceTripRepository.create(data);
+  const payload = await resolveCreatePayload(data);
+  const trip = await ambulanceTripRepository.create(payload);
 
-  // Create audit log
   await createAuditLog({
     action: 'AMBULANCE_TRIP_CREATED',
     entity: 'ambulance_trip',
@@ -116,11 +285,11 @@ const createAmbulanceTrip = async (data, context = {}) => {
       ambulance_id: trip.ambulance_id,
       emergency_case_id: trip.emergency_case_id,
       started_at: trip.started_at,
-      ended_at: trip.ended_at
-    }
+      ended_at: trip.ended_at,
+    },
   });
 
-  return trip;
+  return mapAmbulanceTripForDisplay(trip);
 };
 
 /**
@@ -141,21 +310,20 @@ const createAmbulanceTrip = async (data, context = {}) => {
  * @returns {Promise<Object>} Updated ambulance trip
  */
 const updateAmbulanceTrip = async (id, data, context = {}) => {
-  // Check if ambulance trip exists and get before state
-  const beforeTrip = await ambulanceTripRepository.findById(id);
-  
+  const resolvedId = await resolveAmbulanceTripId(id);
+  const beforeTrip = await ambulanceTripRepository.findById(resolvedId);
+
   if (!beforeTrip) {
     throw new HttpError('errors.ambulance_trip.not_found', 404);
   }
 
-  // Update ambulance trip
-  const trip = await ambulanceTripRepository.update(id, data);
+  const payload = await resolveUpdatePayload(data);
+  const trip = await ambulanceTripRepository.update(beforeTrip.id, payload);
 
-  // Create audit log
   await createAuditLog({
     action: 'AMBULANCE_TRIP_UPDATED',
     entity: 'ambulance_trip',
-    entity_id: id,
+    entity_id: beforeTrip.id,
     user_id: context.user_id,
     tenant_id: context.tenant_id,
     facility_id: context.facility_id,
@@ -166,18 +334,18 @@ const updateAmbulanceTrip = async (id, data, context = {}) => {
         ambulance_id: beforeTrip.ambulance_id,
         emergency_case_id: beforeTrip.emergency_case_id,
         started_at: beforeTrip.started_at,
-        ended_at: beforeTrip.ended_at
+        ended_at: beforeTrip.ended_at,
       },
       after: {
         ambulance_id: trip.ambulance_id,
         emergency_case_id: trip.emergency_case_id,
         started_at: trip.started_at,
-        ended_at: trip.ended_at
-      }
-    }
+        ended_at: trip.ended_at,
+      },
+    },
   });
 
-  return trip;
+  return mapAmbulanceTripForDisplay(trip);
 };
 
 /**
@@ -193,21 +361,19 @@ const updateAmbulanceTrip = async (id, data, context = {}) => {
  * @returns {Promise<void>}
  */
 const deleteAmbulanceTrip = async (id, context = {}) => {
-  // Check if ambulance trip exists
-  const trip = await ambulanceTripRepository.findById(id);
-  
+  const resolvedId = await resolveAmbulanceTripId(id);
+  const trip = await ambulanceTripRepository.findById(resolvedId);
+
   if (!trip) {
     throw new HttpError('errors.ambulance_trip.not_found', 404);
   }
 
-  // Soft delete ambulance trip
-  await ambulanceTripRepository.softDelete(id);
+  await ambulanceTripRepository.softDelete(trip.id);
 
-  // Create audit log
   await createAuditLog({
     action: 'AMBULANCE_TRIP_DELETED',
     entity: 'ambulance_trip',
-    entity_id: id,
+    entity_id: trip.id,
     user_id: context.user_id,
     tenant_id: context.tenant_id,
     facility_id: context.facility_id,
@@ -217,8 +383,8 @@ const deleteAmbulanceTrip = async (id, context = {}) => {
       ambulance_id: trip.ambulance_id,
       emergency_case_id: trip.emergency_case_id,
       started_at: trip.started_at,
-      ended_at: trip.ended_at
-    }
+      ended_at: trip.ended_at,
+    },
   });
 };
 
@@ -227,5 +393,5 @@ module.exports = {
   getAmbulanceTripById,
   createAmbulanceTrip,
   updateAmbulanceTrip,
-  deleteAmbulanceTrip
+  deleteAmbulanceTrip,
 };
