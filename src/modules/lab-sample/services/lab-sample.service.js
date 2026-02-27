@@ -1,54 +1,61 @@
-/**
- * Lab sample service
- *
- * @module modules/lab-sample/services
- * @description Business logic layer for lab sample operations.
- * Per module-creation.mdc: Services only import/use their own repository.
- * Per prisma.mdc: All mutations call createAuditLog.
- */
-
 const labSampleRepository = require('@repositories/lab-sample/lab-sample.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
+const {
+  LAB_SAMPLE_WITH_RELATIONS_INCLUDE,
+  applyDateRangeFilter,
+  buildPagination,
+  normalizeSearchTerm,
+  resolveModelIdOrThrow,
+  resolveModelRecordOrThrow,
+  toDateOrNull,
+} = require('@services/lab-workspace/lab.shared');
+const { mapLabSampleRecord } = require('@services/lab-workspace/lab.serializer');
 
-/**
- * List lab samples with pagination and filtering
- *
- * @param {Object} filters - Query filters
- * @param {number} page - Page number
- * @param {number} limit - Items per page
- * @param {string} sortBy - Sort field
- * @param {string} order - Sort order
- * @param {string} userId - User ID for audit
- * @param {string} ipAddress - User IP for audit
- * @returns {Promise<Object>} Lab samples and pagination data
- */
 const listLabSamples = async (filters, page, limit, sortBy, order, userId, ipAddress) => {
   try {
     const skip = (page - 1) * limit;
     const orderBy = sortBy ? { [sortBy]: order } : { created_at: 'desc' };
 
-    // Build filter object
     const whereClause = {};
-    
-    if (filters.lab_order_id) whereClause.lab_order_id = filters.lab_order_id;
+
+    if (filters.lab_order_id) {
+      whereClause.lab_order_id = await resolveModelIdOrThrow({
+        identifier: filters.lab_order_id,
+        model: 'lab_order',
+        where: { deleted_at: null },
+        errorKey: 'errors.lab_order.not_found',
+      });
+    }
+
     if (filters.status) whereClause.status = filters.status;
+    applyDateRangeFilter(whereClause, 'created_at', filters.created_at_from, filters.created_at_to);
+
+    const searchTerm = normalizeSearchTerm(filters.search);
+    if (searchTerm) {
+      whereClause.OR = [
+        { human_friendly_id: { contains: searchTerm.upper } },
+        { lab_order: { human_friendly_id: { contains: searchTerm.upper } } },
+        { lab_order: { patient: { human_friendly_id: { contains: searchTerm.upper } } } },
+        { lab_order: { patient: { first_name: { contains: searchTerm.raw } } } },
+        { lab_order: { patient: { last_name: { contains: searchTerm.raw } } } },
+      ];
+    }
 
     const [labSamples, total] = await Promise.all([
-      labSampleRepository.findMany(whereClause, skip, limit, orderBy),
-      labSampleRepository.count(whereClause)
+      labSampleRepository.findMany(
+        whereClause,
+        skip,
+        limit,
+        orderBy,
+        LAB_SAMPLE_WITH_RELATIONS_INCLUDE
+      ),
+      labSampleRepository.count(whereClause),
     ]);
 
     return {
-      labSamples,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasNextPage: page < Math.ceil(total / limit),
-        hasPreviousPage: page > 1
-      }
+      labSamples: labSamples.map((record) => mapLabSampleRecord(record)).filter(Boolean),
+      pagination: buildPagination(page, limit, total),
     };
   } catch (error) {
     if (error instanceof HttpError) throw error;
@@ -56,125 +63,122 @@ const listLabSamples = async (filters, page, limit, sortBy, order, userId, ipAdd
   }
 };
 
-/**
- * Get lab sample by ID
- *
- * @param {string} id - Lab sample ID
- * @param {string} userId - User ID for audit
- * @param {string} ipAddress - User IP for audit
- * @returns {Promise<Object>} Lab sample data
- */
 const getLabSampleById = async (id, userId, ipAddress) => {
   try {
-    const labSample = await labSampleRepository.findById(id);
+    const labSample = await resolveModelRecordOrThrow({
+      identifier: id,
+      model: 'lab_sample',
+      where: { deleted_at: null },
+      include: LAB_SAMPLE_WITH_RELATIONS_INCLUDE,
+      errorKey: 'errors.lab_sample.not_found',
+    });
 
-    if (!labSample) {
-      throw new HttpError('errors.lab_sample.not_found', 404);
-    }
-
-    return labSample;
+    return mapLabSampleRecord(labSample);
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
   }
 };
 
-/**
- * Create new lab sample
- * Per prisma.mdc: Mutations must create audit logs
- *
- * @param {Object} data - Lab sample data
- * @param {string} userId - User ID for audit
- * @param {string} ipAddress - User IP for audit
- * @returns {Promise<Object>} Created lab sample
- */
 const createLabSample = async (data, userId, ipAddress) => {
   try {
-    const labSample = await labSampleRepository.create(data);
+    const payload = { ...data };
+    payload.lab_order_id = await resolveModelIdOrThrow({
+      identifier: payload.lab_order_id,
+      model: 'lab_order',
+      where: { deleted_at: null },
+      errorKey: 'errors.lab_order.not_found',
+    });
 
-    // Create audit log (non-blocking)
+    if (Object.prototype.hasOwnProperty.call(payload, 'collected_at')) {
+      payload.collected_at = toDateOrNull(payload.collected_at, null);
+    }
+
+    if (Object.prototype.hasOwnProperty.call(payload, 'received_at')) {
+      payload.received_at = toDateOrNull(payload.received_at, null);
+    }
+
+    const labSample = await labSampleRepository.create(payload);
+    const createdSample = await labSampleRepository.findById(
+      labSample.id,
+      LAB_SAMPLE_WITH_RELATIONS_INCLUDE
+    );
+
     createAuditLog({
       user_id: userId,
       action: 'CREATE',
       entity: 'lab_sample',
       entity_id: labSample.id,
-      diff: { after: labSample },
-      ip_address: ipAddress
+      diff: { after: createdSample || labSample },
+      ip_address: ipAddress,
     }).catch(() => {});
 
-    return labSample;
+    return mapLabSampleRecord(createdSample || labSample);
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
   }
 };
 
-/**
- * Update lab sample
- * Per prisma.mdc: Mutations must create audit logs
- *
- * @param {string} id - Lab sample ID
- * @param {Object} data - Update data
- * @param {string} userId - User ID for audit
- * @param {string} ipAddress - User IP for audit
- * @returns {Promise<Object>} Updated lab sample
- */
 const updateLabSample = async (id, data, userId, ipAddress) => {
   try {
-    // Get current state for audit
-    const before = await labSampleRepository.findById(id);
+    const before = await resolveModelRecordOrThrow({
+      identifier: id,
+      model: 'lab_sample',
+      where: { deleted_at: null },
+      include: LAB_SAMPLE_WITH_RELATIONS_INCLUDE,
+      errorKey: 'errors.lab_sample.not_found',
+    });
 
-    if (!before) {
-      throw new HttpError('errors.lab_sample.not_found', 404);
+    const payload = { ...data };
+    if (Object.prototype.hasOwnProperty.call(payload, 'collected_at')) {
+      payload.collected_at = toDateOrNull(payload.collected_at, null);
+    }
+    if (Object.prototype.hasOwnProperty.call(payload, 'received_at')) {
+      payload.received_at = toDateOrNull(payload.received_at, null);
     }
 
-    const labSample = await labSampleRepository.update(id, data);
+    const updated = await labSampleRepository.update(before.id, payload);
+    const labSample = await labSampleRepository.findById(
+      updated.id,
+      LAB_SAMPLE_WITH_RELATIONS_INCLUDE
+    );
 
-    // Create audit log (non-blocking)
     createAuditLog({
       user_id: userId,
       action: 'UPDATE',
       entity: 'lab_sample',
-      entity_id: labSample.id,
+      entity_id: updated.id,
       diff: { before, after: labSample },
-      ip_address: ipAddress
+      ip_address: ipAddress,
     }).catch(() => {});
 
-    return labSample;
+    return mapLabSampleRecord(labSample || updated);
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
   }
 };
 
-/**
- * Delete lab sample (soft delete)
- * Per prisma.mdc: Mutations must create audit logs
- *
- * @param {string} id - Lab sample ID
- * @param {string} userId - User ID for audit
- * @param {string} ipAddress - User IP for audit
- * @returns {Promise<void>}
- */
 const deleteLabSample = async (id, userId, ipAddress) => {
   try {
-    // Get current state for audit
-    const before = await labSampleRepository.findById(id);
+    const before = await resolveModelRecordOrThrow({
+      identifier: id,
+      model: 'lab_sample',
+      where: { deleted_at: null },
+      include: LAB_SAMPLE_WITH_RELATIONS_INCLUDE,
+      errorKey: 'errors.lab_sample.not_found',
+    });
 
-    if (!before) {
-      throw new HttpError('errors.lab_sample.not_found', 404);
-    }
+    await labSampleRepository.softDelete(before.id);
 
-    await labSampleRepository.softDelete(id);
-
-    // Create audit log (non-blocking)
     createAuditLog({
       user_id: userId,
       action: 'DELETE',
       entity: 'lab_sample',
-      entity_id: id,
+      entity_id: before.id,
       diff: { before },
-      ip_address: ipAddress
+      ip_address: ipAddress,
     }).catch(() => {});
   } catch (error) {
     if (error instanceof HttpError) throw error;

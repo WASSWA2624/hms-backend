@@ -9,7 +9,7 @@
 
 const { z } = require('zod');
 const { 
-  uuidSchema, 
+  uuidOrFriendlyIdentifierSchema, 
   listQuerySchema
 } = require('@lib/validation/zod');
 
@@ -20,7 +20,7 @@ const {
  * Used for POST /lab-results endpoint
  */
 const createLabResultSchema = z.object({
-  lab_order_item_id: uuidSchema,
+  lab_order_item_id: uuidOrFriendlyIdentifierSchema,
   status: z.enum(['NORMAL', 'ABNORMAL', 'CRITICAL', 'PENDING']),
   result_value: z.string().trim().max(120).optional().nullable(),
   result_unit: z.string().trim().max(40).optional().nullable(),
@@ -58,7 +58,7 @@ const releaseLabResultSchema = z.object({
  * Used for GET /:id, PUT /:id, and DELETE /:id endpoints
  */
 const labResultIdParamsSchema = z.object({
-  id: uuidSchema
+  id: uuidOrFriendlyIdentifierSchema
 });
 
 // ==================== Query Params ====================
@@ -69,8 +69,9 @@ const labResultIdParamsSchema = z.object({
  * Extends base listQuerySchema with lab-result-specific filters
  */
 const listLabResultsQuerySchema = listQuerySchema.extend({
-  lab_order_item_id: uuidSchema.optional(),
-  status: z.enum(['NORMAL', 'ABNORMAL', 'CRITICAL', 'PENDING']).optional()
+  lab_order_item_id: uuidOrFriendlyIdentifierSchema.optional(),
+  status: z.enum(['NORMAL', 'ABNORMAL', 'CRITICAL', 'PENDING']).optional(),
+  search: z.string().trim().optional()
 });
 
 module.exports = {

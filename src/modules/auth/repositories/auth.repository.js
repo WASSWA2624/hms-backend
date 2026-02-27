@@ -74,10 +74,10 @@ const sortUsersByCreatedAtDesc = (users = []) => {
   });
 };
 
-const RETRYABLE_CONNECTION_ERROR_CODES = new Set(['P1001', 'P1002', 'P2010']);
+const RETRYABLE_CONNECTION_ERROR_CODES = new Set(['P1001', 'P1002', 'P2010', 'P2024']);
 const RETRYABLE_CONNECTION_ERROR_PATTERN =
   /pool timeout|failed to retrieve a connection from pool|can'?t reach database server|econnrefused|timed out|protocol_connection_lost/i;
-const CONNECTION_RETRY_ATTEMPTS = 2;
+const CONNECTION_RETRY_ATTEMPTS = 3;
 
 const getErrorFingerprint = (error) => {
   return [
@@ -91,13 +91,17 @@ const getErrorFingerprint = (error) => {
 };
 
 const isRetryableConnectionError = (error) => {
-  const code = error?.code ? String(error.code).toUpperCase() : null;
-  if (!code || !RETRYABLE_CONNECTION_ERROR_CODES.has(code)) {
+  const fingerprint = getErrorFingerprint(error);
+  if (!RETRYABLE_CONNECTION_ERROR_PATTERN.test(fingerprint)) {
     return false;
   }
 
-  const fingerprint = getErrorFingerprint(error);
-  return RETRYABLE_CONNECTION_ERROR_PATTERN.test(fingerprint);
+  const code = error?.code ? String(error.code).toUpperCase() : null;
+  if (!code) {
+    return true;
+  }
+
+  return RETRYABLE_CONNECTION_ERROR_CODES.has(code);
 };
 
 const waitFor = (ms) =>

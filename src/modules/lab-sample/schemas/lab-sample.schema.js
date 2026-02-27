@@ -9,7 +9,7 @@
 
 const { z } = require('zod');
 const { 
-  uuidSchema, 
+  uuidOrFriendlyIdentifierSchema, 
   listQuerySchema
 } = require('@lib/validation/zod');
 
@@ -20,7 +20,7 @@ const {
  * Used for POST /lab-samples endpoint
  */
 const createLabSampleSchema = z.object({
-  lab_order_id: uuidSchema,
+  lab_order_id: uuidOrFriendlyIdentifierSchema,
   status: z.enum(['PENDING', 'COLLECTED', 'REJECTED', 'RECEIVED']),
   collected_at: z.string().datetime().optional().nullable(),
   received_at: z.string().datetime().optional().nullable()
@@ -44,7 +44,7 @@ const updateLabSampleSchema = z.object({
  * Used for GET /:id, PUT /:id, and DELETE /:id endpoints
  */
 const labSampleIdParamsSchema = z.object({
-  id: uuidSchema
+  id: uuidOrFriendlyIdentifierSchema
 });
 
 // ==================== Query Params ====================
@@ -55,8 +55,11 @@ const labSampleIdParamsSchema = z.object({
  * Extends base listQuerySchema with lab-sample-specific filters
  */
 const listLabSamplesQuerySchema = listQuerySchema.extend({
-  lab_order_id: uuidSchema.optional(),
-  status: z.enum(['PENDING', 'COLLECTED', 'REJECTED', 'RECEIVED']).optional()
+  lab_order_id: uuidOrFriendlyIdentifierSchema.optional(),
+  status: z.enum(['PENDING', 'COLLECTED', 'REJECTED', 'RECEIVED']).optional(),
+  created_at_from: z.string().datetime().optional(),
+  created_at_to: z.string().datetime().optional(),
+  search: z.string().trim().optional()
 });
 
 module.exports = {

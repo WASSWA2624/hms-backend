@@ -1,54 +1,70 @@
-/**
- * Lab order item service
- *
- * @module modules/lab-order-item/services
- * @description Business logic layer for lab order item operations.
- * Per module-creation.mdc: Services only import/use their own repository.
- * Per prisma.mdc: All mutations call createAuditLog.
- */
-
 const labOrderItemRepository = require('@repositories/lab-order-item/lab-order-item.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
+const {
+  LAB_ORDER_ITEM_WITH_RELATIONS_INCLUDE,
+  buildPagination,
+  normalizeSearchTerm,
+  resolveModelIdOrThrow,
+  resolveModelRecordOrThrow,
+} = require('@services/lab-workspace/lab.shared');
+const { mapLabOrderItemRecord } = require('@services/lab-workspace/lab.serializer');
 
-/**
- * List lab order items with pagination and filtering
- *
- * @param {Object} filters - Query filters
- * @param {number} page - Page number
- * @param {number} limit - Items per page
- * @param {string} sortBy - Sort field
- * @param {string} order - Sort order
- * @param {string} userId - User ID for audit
- * @param {string} ipAddress - User IP for audit
- * @returns {Promise<Object>} Lab order items and pagination data
- */
 const listLabOrderItems = async (filters, page, limit, sortBy, order, userId, ipAddress) => {
   try {
     const skip = (page - 1) * limit;
     const orderBy = sortBy ? { [sortBy]: order } : { created_at: 'desc' };
 
     const whereClause = {};
-    
-    if (filters.lab_order_id) whereClause.lab_order_id = filters.lab_order_id;
-    if (filters.lab_test_id) whereClause.lab_test_id = filters.lab_test_id;
+
+    if (filters.lab_order_id) {
+      whereClause.lab_order_id = await resolveModelIdOrThrow({
+        identifier: filters.lab_order_id,
+        model: 'lab_order',
+        where: { deleted_at: null },
+        errorKey: 'errors.lab_order.not_found',
+      });
+    }
+
+    if (filters.lab_test_id) {
+      whereClause.lab_test_id = await resolveModelIdOrThrow({
+        identifier: filters.lab_test_id,
+        model: 'lab_test',
+        where: { deleted_at: null },
+        errorKey: 'errors.lab_test.not_found',
+      });
+    }
+
     if (filters.status) whereClause.status = filters.status;
 
+    const searchTerm = normalizeSearchTerm(filters.search);
+    if (searchTerm) {
+      whereClause.OR = [
+        { human_friendly_id: { contains: searchTerm.upper } },
+        { lab_order: { human_friendly_id: { contains: searchTerm.upper } } },
+        { lab_order: { patient: { human_friendly_id: { contains: searchTerm.upper } } } },
+        { lab_order: { patient: { first_name: { contains: searchTerm.raw } } } },
+        { lab_order: { patient: { last_name: { contains: searchTerm.raw } } } },
+        { lab_test: { human_friendly_id: { contains: searchTerm.upper } } },
+        { lab_test: { name: { contains: searchTerm.raw } } },
+        { lab_test: { code: { contains: searchTerm.raw } } },
+      ];
+    }
+
     const [labOrderItems, total] = await Promise.all([
-      labOrderItemRepository.findMany(whereClause, skip, limit, orderBy),
-      labOrderItemRepository.count(whereClause)
+      labOrderItemRepository.findMany(
+        whereClause,
+        skip,
+        limit,
+        orderBy,
+        LAB_ORDER_ITEM_WITH_RELATIONS_INCLUDE
+      ),
+      labOrderItemRepository.count(whereClause),
     ]);
 
     return {
-      labOrderItems,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasNextPage: page < Math.ceil(total / limit),
-        hasPreviousPage: page > 1
-      }
+      labOrderItems: labOrderItems.map((record) => mapLabOrderItemRecord(record)).filter(Boolean),
+      pagination: buildPagination(page, limit, total),
     };
   } catch (error) {
     if (error instanceof HttpError) throw error;
@@ -56,112 +72,123 @@ const listLabOrderItems = async (filters, page, limit, sortBy, order, userId, ip
   }
 };
 
-/**
- * Get lab order item by ID
- *
- * @param {string} id - Lab order item ID
- * @param {string} userId - User ID for audit
- * @param {string} ipAddress - User IP for audit
- * @returns {Promise<Object>} Lab order item data
- */
 const getLabOrderItemById = async (id, userId, ipAddress) => {
   try {
-    const labOrderItem = await labOrderItemRepository.findById(id);
+    const labOrderItem = await resolveModelRecordOrThrow({
+      identifier: id,
+      model: 'lab_order_item',
+      where: { deleted_at: null },
+      include: LAB_ORDER_ITEM_WITH_RELATIONS_INCLUDE,
+      errorKey: 'errors.lab_order_item.not_found',
+    });
 
-    if (!labOrderItem) {
-      throw new HttpError('errors.lab_order_item.not_found', 404);
-    }
-
-    return labOrderItem;
+    return mapLabOrderItemRecord(labOrderItem);
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
   }
 };
 
-/**
- * Create new lab order item
- * Per prisma.mdc: Mutations must create audit logs
- *
- * @param {Object} data - Lab order item data
- * @param {string} userId - User ID for audit
- * @param {string} ipAddress - User IP for audit
- * @returns {Promise<Object>} Created lab order item
- */
 const createLabOrderItem = async (data, userId, ipAddress) => {
   try {
-    const labOrderItem = await labOrderItemRepository.create(data);
+    const payload = { ...data };
+    payload.lab_order_id = await resolveModelIdOrThrow({
+      identifier: payload.lab_order_id,
+      model: 'lab_order',
+      where: { deleted_at: null },
+      errorKey: 'errors.lab_order.not_found',
+    });
+    payload.lab_test_id = await resolveModelIdOrThrow({
+      identifier: payload.lab_test_id,
+      model: 'lab_test',
+      where: { deleted_at: null },
+      errorKey: 'errors.lab_test.not_found',
+    });
+
+    const labOrderItem = await labOrderItemRepository.create(payload);
+    const createdItem = await labOrderItemRepository.findById(
+      labOrderItem.id,
+      LAB_ORDER_ITEM_WITH_RELATIONS_INCLUDE
+    );
 
     createAuditLog({
       user_id: userId,
       action: 'CREATE',
       entity: 'lab_order_item',
       entity_id: labOrderItem.id,
-      diff: { after: labOrderItem },
-      ip_address: ipAddress
+      diff: { after: createdItem || labOrderItem },
+      ip_address: ipAddress,
     }).catch(() => {});
 
-    return labOrderItem;
+    return mapLabOrderItemRecord(createdItem || labOrderItem);
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
   }
 };
 
-/**
- * Update lab order item
- * Per prisma.mdc: Mutations must create audit logs
- *
- * @param {string} id - Lab order item ID
- * @param {Object} data - Update data
- * @param {string} userId - User ID for audit
- * @param {string} ipAddress - User IP for audit
- * @returns {Promise<Object>} Updated lab order item
- */
 const updateLabOrderItem = async (id, data, userId, ipAddress) => {
   try {
-    const before = await labOrderItemRepository.findById(id);
+    const before = await resolveModelRecordOrThrow({
+      identifier: id,
+      model: 'lab_order_item',
+      where: { deleted_at: null },
+      include: LAB_ORDER_ITEM_WITH_RELATIONS_INCLUDE,
+      errorKey: 'errors.lab_order_item.not_found',
+    });
 
-    if (!before) {
-      throw new HttpError('errors.lab_order_item.not_found', 404);
+    const payload = { ...data };
+    if (Object.prototype.hasOwnProperty.call(payload, 'lab_order_id') && payload.lab_order_id) {
+      payload.lab_order_id = await resolveModelIdOrThrow({
+        identifier: payload.lab_order_id,
+        model: 'lab_order',
+        where: { deleted_at: null },
+        errorKey: 'errors.lab_order.not_found',
+      });
     }
 
-    const labOrderItem = await labOrderItemRepository.update(id, data);
+    if (Object.prototype.hasOwnProperty.call(payload, 'lab_test_id') && payload.lab_test_id) {
+      payload.lab_test_id = await resolveModelIdOrThrow({
+        identifier: payload.lab_test_id,
+        model: 'lab_test',
+        where: { deleted_at: null },
+        errorKey: 'errors.lab_test.not_found',
+      });
+    }
+
+    const updated = await labOrderItemRepository.update(before.id, payload);
+    const labOrderItem = await labOrderItemRepository.findById(
+      updated.id,
+      LAB_ORDER_ITEM_WITH_RELATIONS_INCLUDE
+    );
 
     createAuditLog({
       user_id: userId,
       action: 'UPDATE',
       entity: 'lab_order_item',
-      entity_id: labOrderItem.id,
+      entity_id: updated.id,
       diff: { before, after: labOrderItem },
-      ip_address: ipAddress
+      ip_address: ipAddress,
     }).catch(() => {});
 
-    return labOrderItem;
+    return mapLabOrderItemRecord(labOrderItem || updated);
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
   }
 };
 
-/**
- * Soft delete lab order item
- * Per prisma.mdc: Mutations must create audit logs
- *
- * @param {string} id - Lab order item ID
- * @param {string} userId - User ID for audit
- * @param {string} ipAddress - User IP for audit
- * @returns {Promise<Object>} Deleted lab order item
- */
 const deleteLabOrderItem = async (id, userId, ipAddress) => {
   try {
-    const before = await labOrderItemRepository.findById(id);
+    const before = await resolveModelRecordOrThrow({
+      identifier: id,
+      model: 'lab_order_item',
+      where: { deleted_at: null },
+      include: LAB_ORDER_ITEM_WITH_RELATIONS_INCLUDE,
+      errorKey: 'errors.lab_order_item.not_found',
+    });
 
-    if (!before) {
-      throw new HttpError('errors.lab_order_item.not_found', 404);
-    }
-
-    const labOrderItem = await labOrderItemRepository.softDelete(id);
+    const labOrderItem = await labOrderItemRepository.softDelete(before.id);
 
     createAuditLog({
       user_id: userId,
@@ -169,10 +196,10 @@ const deleteLabOrderItem = async (id, userId, ipAddress) => {
       entity: 'lab_order_item',
       entity_id: labOrderItem.id,
       diff: { before, after: labOrderItem },
-      ip_address: ipAddress
+      ip_address: ipAddress,
     }).catch(() => {});
 
-    return labOrderItem;
+    return mapLabOrderItemRecord(before);
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);

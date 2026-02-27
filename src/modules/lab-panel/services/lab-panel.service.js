@@ -1,63 +1,57 @@
-/**
- * Lab panel service
- *
- * @module modules/lab-panel/services
- * @description Business logic layer for lab panel operations.
- * Per module-creation.mdc: Services only import/use their own repository.
- * Per prisma.mdc: All mutations call createAuditLog.
- */
-
 const labPanelRepository = require('@repositories/lab-panel/lab-panel.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
+const {
+  LAB_PANEL_WITH_RELATIONS_INCLUDE,
+  buildPagination,
+  normalizeSearchTerm,
+  resolveModelIdOrThrow,
+  resolveModelRecordOrThrow,
+} = require('@services/lab-workspace/lab.shared');
+const { mapLabPanelRecord } = require('@services/lab-workspace/lab.serializer');
 
-/**
- * List lab panels with pagination and filtering
- *
- * @param {Object} filters - Query filters
- * @param {number} page - Page number
- * @param {number} limit - Items per page
- * @param {string} sortBy - Sort field
- * @param {string} order - Sort order
- * @param {string} userId - User ID for audit
- * @param {string} ipAddress - User IP for audit
- * @returns {Promise<Object>} Lab panels and pagination data
- */
 const listLabPanels = async (filters, page, limit, sortBy, order, userId, ipAddress) => {
   try {
     const skip = (page - 1) * limit;
     const orderBy = sortBy ? { [sortBy]: order } : { created_at: 'desc' };
 
-    // Build filter object
     const whereClause = {};
-    
-    if (filters.tenant_id) whereClause.tenant_id = filters.tenant_id;
+    if (filters.tenant_id) {
+      whereClause.tenant_id = await resolveModelIdOrThrow({
+        identifier: filters.tenant_id,
+        model: 'tenant',
+        where: { deleted_at: null },
+        errorKey: 'errors.tenant.not_found',
+      });
+    }
+
     if (filters.code) whereClause.code = { contains: filters.code };
     if (filters.name) whereClause.name = { contains: filters.name };
-    
-    // Search filter (searches in name, code)
-    if (filters.search) {
+
+    const searchTerm = normalizeSearchTerm(filters.search);
+    if (searchTerm) {
       whereClause.OR = [
-        { name: { contains: filters.search } },
-        { code: { contains: filters.search } }
+        { human_friendly_id: { contains: searchTerm.upper } },
+        { name: { contains: searchTerm.raw } },
+        { code: { contains: searchTerm.raw } },
+        { tenant: { human_friendly_id: { contains: searchTerm.upper } } },
       ];
     }
 
     const [labPanels, total] = await Promise.all([
-      labPanelRepository.findMany(whereClause, skip, limit, orderBy),
-      labPanelRepository.count(whereClause)
+      labPanelRepository.findMany(
+        whereClause,
+        skip,
+        limit,
+        orderBy,
+        LAB_PANEL_WITH_RELATIONS_INCLUDE
+      ),
+      labPanelRepository.count(whereClause),
     ]);
 
     return {
-      labPanels,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasNextPage: page < Math.ceil(total / limit),
-        hasPreviousPage: page > 1
-      }
+      labPanels: labPanels.map((record) => mapLabPanelRecord(record)).filter(Boolean),
+      pagination: buildPagination(page, limit, total),
     };
   } catch (error) {
     if (error instanceof HttpError) throw error;
@@ -65,128 +59,113 @@ const listLabPanels = async (filters, page, limit, sortBy, order, userId, ipAddr
   }
 };
 
-/**
- * Get lab panel by ID
- *
- * @param {string} id - Lab panel ID
- * @param {string} userId - User ID for audit
- * @param {string} ipAddress - User IP for audit
- * @returns {Promise<Object>} Lab panel data
- */
 const getLabPanelById = async (id, userId, ipAddress) => {
   try {
-    const labPanel = await labPanelRepository.findById(id);
+    const labPanel = await resolveModelRecordOrThrow({
+      identifier: id,
+      model: 'lab_panel',
+      where: { deleted_at: null },
+      include: LAB_PANEL_WITH_RELATIONS_INCLUDE,
+      errorKey: 'errors.lab_panel.not_found',
+    });
 
-    if (!labPanel) {
-      throw new HttpError('errors.lab_panel.not_found', 404);
-    }
-
-    return labPanel;
+    return mapLabPanelRecord(labPanel);
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
   }
 };
 
-/**
- * Create new lab panel
- * Per prisma.mdc: Mutations must create audit logs
- *
- * @param {Object} data - Lab panel data
- * @param {string} userId - User ID for audit
- * @param {string} ipAddress - User IP for audit
- * @returns {Promise<Object>} Created lab panel
- */
 const createLabPanel = async (data, userId, ipAddress) => {
   try {
-    const labPanel = await labPanelRepository.create(data);
-
-    // Create audit log (non-blocking)
-    await createAuditLog({
-      user_id: userId,
-      action: 'create',
-      entity: 'lab_panel',
-      entity_id: labPanel.id,
-      diff: { after: labPanel },
-      ip: ipAddress
+    const payload = { ...data };
+    payload.tenant_id = await resolveModelIdOrThrow({
+      identifier: payload.tenant_id,
+      model: 'tenant',
+      where: { deleted_at: null },
+      errorKey: 'errors.tenant.not_found',
     });
 
-    return labPanel;
+    const labPanel = await labPanelRepository.create(payload);
+    const created = await labPanelRepository.findById(labPanel.id, LAB_PANEL_WITH_RELATIONS_INCLUDE);
+
+    createAuditLog({
+      user_id: userId,
+      action: 'CREATE',
+      entity: 'lab_panel',
+      entity_id: labPanel.id,
+      diff: { after: created || labPanel },
+      ip_address: ipAddress,
+    }).catch(() => {});
+
+    return mapLabPanelRecord(created || labPanel);
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
   }
 };
 
-/**
- * Update lab panel
- * Per prisma.mdc: Mutations must create audit logs
- *
- * @param {string} id - Lab panel ID
- * @param {Object} data - Update data
- * @param {string} userId - User ID for audit
- * @param {string} ipAddress - User IP for audit
- * @returns {Promise<Object>} Updated lab panel
- */
 const updateLabPanel = async (id, data, userId, ipAddress) => {
   try {
-    // Get current data for audit log
-    const before = await labPanelRepository.findById(id);
-    
-    if (!before) {
-      throw new HttpError('errors.lab_panel.not_found', 404);
-    }
-
-    const labPanel = await labPanelRepository.update(id, data);
-
-    // Create audit log (non-blocking)
-    await createAuditLog({
-      user_id: userId,
-      action: 'update',
-      entity: 'lab_panel',
-      entity_id: labPanel.id,
-      diff: { before, after: labPanel },
-      ip: ipAddress
+    const before = await resolveModelRecordOrThrow({
+      identifier: id,
+      model: 'lab_panel',
+      where: { deleted_at: null },
+      include: LAB_PANEL_WITH_RELATIONS_INCLUDE,
+      errorKey: 'errors.lab_panel.not_found',
     });
 
-    return labPanel;
+    const payload = { ...data };
+    if (Object.prototype.hasOwnProperty.call(payload, 'tenant_id') && payload.tenant_id) {
+      payload.tenant_id = await resolveModelIdOrThrow({
+        identifier: payload.tenant_id,
+        model: 'tenant',
+        where: { deleted_at: null },
+        errorKey: 'errors.tenant.not_found',
+      });
+    }
+
+    const updated = await labPanelRepository.update(before.id, payload);
+    const labPanel = await labPanelRepository.findById(updated.id, LAB_PANEL_WITH_RELATIONS_INCLUDE);
+
+    createAuditLog({
+      user_id: userId,
+      action: 'UPDATE',
+      entity: 'lab_panel',
+      entity_id: updated.id,
+      diff: { before, after: labPanel },
+      ip_address: ipAddress,
+    }).catch(() => {});
+
+    return mapLabPanelRecord(labPanel || updated);
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
   }
 };
 
-/**
- * Delete lab panel (soft delete)
- * Per prisma.mdc: Mutations must create audit logs
- *
- * @param {string} id - Lab panel ID
- * @param {string} userId - User ID for audit
- * @param {string} ipAddress - User IP for audit
- * @returns {Promise<Object>} Deleted lab panel
- */
 const deleteLabPanel = async (id, userId, ipAddress) => {
   try {
-    // Get current data for audit log
-    const before = await labPanelRepository.findById(id);
-    
-    if (!before) {
-      throw new HttpError('errors.lab_panel.not_found', 404);
-    }
+    const before = await resolveModelRecordOrThrow({
+      identifier: id,
+      model: 'lab_panel',
+      where: { deleted_at: null },
+      include: LAB_PANEL_WITH_RELATIONS_INCLUDE,
+      errorKey: 'errors.lab_panel.not_found',
+    });
 
-    const labPanel = await labPanelRepository.softDelete(id);
+    const labPanel = await labPanelRepository.softDelete(before.id);
 
-    // Create audit log (non-blocking)
-    await createAuditLog({
+    createAuditLog({
       user_id: userId,
-      action: 'delete',
+      action: 'DELETE',
       entity: 'lab_panel',
       entity_id: labPanel.id,
       diff: { before },
-      ip: ipAddress
-    });
+      ip_address: ipAddress,
+    }).catch(() => {});
 
-    return labPanel;
+    return mapLabPanelRecord(before);
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);

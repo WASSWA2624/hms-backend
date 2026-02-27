@@ -9,7 +9,7 @@
 
 const { z } = require('zod');
 const { 
-  uuidSchema, 
+  uuidOrFriendlyIdentifierSchema, 
   listQuerySchema
 } = require('@lib/validation/zod');
 
@@ -20,7 +20,7 @@ const {
  * Used for POST /lab-tests endpoint
  */
 const createLabTestSchema = z.object({
-  tenant_id: uuidSchema,
+  tenant_id: uuidOrFriendlyIdentifierSchema,
   name: z.string().trim().min(1).max(255),
   code: z.string().trim().min(1).max(80).optional().nullable(),
   unit: z.string().trim().min(1).max(40).optional().nullable(),
@@ -46,7 +46,7 @@ const updateLabTestSchema = z.object({
  * Used for GET /:id, PUT /:id, and DELETE /:id endpoints
  */
 const labTestIdParamsSchema = z.object({
-  id: uuidSchema
+  id: uuidOrFriendlyIdentifierSchema
 });
 
 // ==================== Query Params ====================
@@ -57,7 +57,7 @@ const labTestIdParamsSchema = z.object({
  * Extends base listQuerySchema with lab test-specific filters
  */
 const listLabTestsQuerySchema = listQuerySchema.extend({
-  tenant_id: uuidSchema.optional(),
+  tenant_id: uuidOrFriendlyIdentifierSchema.optional(),
   name: z.string().trim().optional(),
   code: z.string().trim().optional(),
   search: z.string().trim().optional()

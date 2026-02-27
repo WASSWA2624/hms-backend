@@ -11,6 +11,7 @@ const listLabResults = asyncHandler(async (req, res) => {
   const {
     lab_order_item_id,
     status,
+    search,
     page = DEFAULT_PAGE,
     limit = DEFAULT_PAGE_LIMIT,
     sort_by,
@@ -19,7 +20,8 @@ const listLabResults = asyncHandler(async (req, res) => {
 
   const filters = {
     lab_order_item_id,
-    status
+    status,
+    search,
   };
 
   const userId = req.user?.id;

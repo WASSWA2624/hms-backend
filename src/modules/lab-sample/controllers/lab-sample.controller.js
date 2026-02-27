@@ -23,6 +23,9 @@ const listLabSamples = asyncHandler(async (req, res) => {
   const {
     lab_order_id,
     status,
+    created_at_from,
+    created_at_to,
+    search,
     page = DEFAULT_PAGE,
     limit = DEFAULT_PAGE_LIMIT,
     sort_by,
@@ -31,7 +34,10 @@ const listLabSamples = asyncHandler(async (req, res) => {
 
   const filters = {
     lab_order_id,
-    status
+    status,
+    created_at_from,
+    created_at_to,
+    search,
   };
 
   const userId = req.user?.id;

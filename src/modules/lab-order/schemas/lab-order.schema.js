@@ -9,7 +9,7 @@
 
 const { z } = require('zod');
 const { 
-  uuidSchema, 
+  uuidOrFriendlyIdentifierSchema, 
   listQuerySchema
 } = require('@lib/validation/zod');
 
@@ -20,8 +20,8 @@ const {
  * Used for POST /lab-orders endpoint
  */
 const createLabOrderSchema = z.object({
-  encounter_id: uuidSchema.optional().nullable(),
-  patient_id: uuidSchema,
+  encounter_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
+  patient_id: uuidOrFriendlyIdentifierSchema,
   status: z.enum(['ORDERED', 'COLLECTED', 'IN_PROCESS', 'COMPLETED', 'CANCELLED']),
   ordered_at: z.string().datetime().optional()
 });
@@ -32,8 +32,8 @@ const createLabOrderSchema = z.object({
  * All fields optional for partial updates
  */
 const updateLabOrderSchema = z.object({
-  encounter_id: uuidSchema.optional().nullable(),
-  patient_id: uuidSchema.optional(),
+  encounter_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
+  patient_id: uuidOrFriendlyIdentifierSchema.optional(),
   status: z.enum(['ORDERED', 'COLLECTED', 'IN_PROCESS', 'COMPLETED', 'CANCELLED']).optional(),
   ordered_at: z.string().datetime().optional()
 });
@@ -45,7 +45,7 @@ const updateLabOrderSchema = z.object({
  * Used for GET /:id, PUT /:id, and DELETE /:id endpoints
  */
 const labOrderIdParamsSchema = z.object({
-  id: uuidSchema
+  id: uuidOrFriendlyIdentifierSchema
 });
 
 // ==================== Query Params ====================
@@ -56,8 +56,8 @@ const labOrderIdParamsSchema = z.object({
  * Extends base listQuerySchema with lab-order-specific filters
  */
 const listLabOrdersQuerySchema = listQuerySchema.extend({
-  encounter_id: uuidSchema.optional(),
-  patient_id: uuidSchema.optional(),
+  encounter_id: uuidOrFriendlyIdentifierSchema.optional(),
+  patient_id: uuidOrFriendlyIdentifierSchema.optional(),
   status: z.enum(['ORDERED', 'COLLECTED', 'IN_PROCESS', 'COMPLETED', 'CANCELLED']).optional(),
   ordered_at_from: z.string().datetime().optional(),
   ordered_at_to: z.string().datetime().optional(),
