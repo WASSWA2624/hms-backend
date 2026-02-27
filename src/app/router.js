@@ -180,6 +180,7 @@ apiV1Router.use('/lab-order-items', require('../modules/lab-order-item/routes/la
 apiV1Router.use('/lab-samples', require('../modules/lab-sample/routes/lab-sample.routes'));
 apiV1Router.use('/lab-results', require('../modules/lab-result/routes/lab-result.routes'));
 apiV1Router.use('/lab-qc-logs', require('../modules/lab-qc-log/routes/lab-qc-log.routes'));
+apiV1Router.use('/lab', require('../modules/lab-workspace/routes/lab-workspace.routes'));
 apiV1Router.use('/imaging-studies', require('../modules/imaging-study/routes/imaging-study.routes'));
 apiV1Router.use('/imaging-assets', require('../modules/imaging-asset/routes/imaging-asset.routes'));
 apiV1Router.use('/pacs-links', require('../modules/pacs-link/routes/pacs-link.routes'));
