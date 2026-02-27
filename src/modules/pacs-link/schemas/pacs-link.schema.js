@@ -9,7 +9,7 @@
 
 const { z } = require('zod');
 const { 
-  uuidSchema, 
+  uuidOrFriendlyIdentifierSchema, 
   listQuerySchema,
   urlSchema,
   isoDateSchema
@@ -22,7 +22,7 @@ const {
  * Used for POST /pacs-links endpoint
  */
 const createPacsLinkSchema = z.object({
-  imaging_study_id: uuidSchema,
+  imaging_study_id: uuidOrFriendlyIdentifierSchema,
   url: urlSchema,
   expires_at: isoDateSchema.optional().nullable()
 });
@@ -44,7 +44,7 @@ const updatePacsLinkSchema = z.object({
  * Used for GET /:id, PUT /:id, and DELETE /:id endpoints
  */
 const pacsLinkIdParamsSchema = z.object({
-  id: uuidSchema
+  id: uuidOrFriendlyIdentifierSchema
 });
 
 // ==================== Query Params ====================
@@ -55,7 +55,7 @@ const pacsLinkIdParamsSchema = z.object({
  * Extends base listQuerySchema with PACS link-specific filters
  */
 const listPacsLinksQuerySchema = listQuerySchema.extend({
-  imaging_study_id: uuidSchema.optional(),
+  imaging_study_id: uuidOrFriendlyIdentifierSchema.optional(),
   expires_at: isoDateSchema.optional()
 });
 

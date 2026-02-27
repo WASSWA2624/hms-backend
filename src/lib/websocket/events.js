@@ -90,6 +90,7 @@ const DIAGNOSTIC_EVENTS = {
   LAB_WORKFLOW_UPDATED: 'diagnostic.lab_workflow_updated',
   LAB_RESULT_READY: 'diagnostic.lab_result_ready',
   LAB_RESULT_UPDATED: 'diagnostic.lab_result_updated',
+  RADIOLOGY_WORKFLOW_UPDATED: 'diagnostic.radiology_workflow_updated',
   RADIOLOGY_RESULT_READY: 'diagnostic.radiology_result_ready',
   RADIOLOGY_RESULT_UPDATED: 'diagnostic.radiology_result_updated'
 };

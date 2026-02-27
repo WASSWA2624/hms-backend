@@ -10,6 +10,20 @@
 const imagingStudyRepository = require('@repositories/imaging-study/imaging-study.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
+const { resolveModelIdByIdentifier } = require('@lib/identifiers/resolve-entity-id');
+
+const resolveForeignId = async (model, identifier) => {
+  if (identifier == null || identifier === '') return null;
+  const resolved = await resolveModelIdByIdentifier({
+    model,
+    identifier,
+    where: { deleted_at: null },
+  });
+  if (!resolved) {
+    throw new HttpError('errors.resource.not_found', 404);
+  }
+  return resolved;
+};
 
 /**
  * List imaging studies with pagination and filtering
@@ -31,7 +45,12 @@ const listImagingStudies = async (filters, page, limit, sortBy, order, userId, i
     // Build filter object
     const whereClause = {};
     
-    if (filters.radiology_order_id) whereClause.radiology_order_id = filters.radiology_order_id;
+    if (filters.radiology_order_id) {
+      whereClause.radiology_order_id = await resolveForeignId(
+        'radiology_order',
+        filters.radiology_order_id
+      );
+    }
     if (filters.modality) whereClause.modality = filters.modality;
     if (filters.performed_at) whereClause.performed_at = filters.performed_at;
 
@@ -91,7 +110,11 @@ const getImagingStudyById = async (id, userId, ipAddress) => {
  */
 const createImagingStudy = async (data, userId, ipAddress) => {
   try {
-    const imagingStudy = await imagingStudyRepository.create(data);
+    const normalizedData = {
+      ...data,
+      radiology_order_id: await resolveForeignId('radiology_order', data.radiology_order_id),
+    };
+    const imagingStudy = await imagingStudyRepository.create(normalizedData);
 
     // Create audit log (non-blocking)
     createAuditLog({

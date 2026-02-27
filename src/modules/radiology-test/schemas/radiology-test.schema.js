@@ -9,9 +9,22 @@
 
 const { z } = require('zod');
 const { 
-  uuidSchema, 
+  uuidOrFriendlyIdentifierSchema, 
   listQuerySchema
 } = require('@lib/validation/zod');
+
+const imagingModalitySchema = z.enum([
+  'XRAY',
+  'CT',
+  'MRI',
+  'ULTRASOUND',
+  'PET',
+  'ECG',
+  'ECHO',
+  'ENDO',
+  'GASTRO',
+  'OTHER'
+]);
 
 // ==================== Body Schemas ====================
 
@@ -20,10 +33,10 @@ const {
  * Used for POST /radiology-tests endpoint
  */
 const createRadiologyTestSchema = z.object({
-  tenant_id: uuidSchema,
+  tenant_id: uuidOrFriendlyIdentifierSchema,
   name: z.string().trim().min(1).max(255),
   code: z.string().trim().max(80).optional().nullable(),
-  modality: z.enum(['XRAY', 'CT', 'MRI', 'ULTRASOUND', 'PET', 'OTHER'])
+  modality: imagingModalitySchema
 });
 
 /**
@@ -34,7 +47,7 @@ const createRadiologyTestSchema = z.object({
 const updateRadiologyTestSchema = z.object({
   name: z.string().trim().min(1).max(255).optional(),
   code: z.string().trim().max(80).optional().nullable(),
-  modality: z.enum(['XRAY', 'CT', 'MRI', 'ULTRASOUND', 'PET', 'OTHER']).optional()
+  modality: imagingModalitySchema.optional()
 });
 
 // ==================== URL Params ====================
@@ -44,7 +57,7 @@ const updateRadiologyTestSchema = z.object({
  * Used for GET /:id, PUT /:id, and DELETE /:id endpoints
  */
 const radiologyTestIdParamsSchema = z.object({
-  id: uuidSchema
+  id: uuidOrFriendlyIdentifierSchema
 });
 
 // ==================== Query Params ====================
@@ -55,10 +68,10 @@ const radiologyTestIdParamsSchema = z.object({
  * Extends base listQuerySchema with radiology-test-specific filters
  */
 const listRadiologyTestsQuerySchema = listQuerySchema.extend({
-  tenant_id: uuidSchema.optional(),
+  tenant_id: uuidOrFriendlyIdentifierSchema.optional(),
   name: z.string().trim().optional(),
   code: z.string().trim().optional(),
-  modality: z.enum(['XRAY', 'CT', 'MRI', 'ULTRASOUND', 'PET', 'OTHER']).optional(),
+  modality: imagingModalitySchema.optional(),
   search: z.string().trim().optional()
 });
 

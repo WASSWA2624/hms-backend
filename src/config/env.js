@@ -77,6 +77,15 @@ const validateStorageProvider = (provider) => {
   }
 };
 
+const validatePacsAuthMode = (mode) => {
+  if (!mode) return;
+  if (!['none', 'basic', 'bearer'].includes(mode)) {
+    throw new Error(
+      `Invalid PACS_AUTH_MODE: ${mode}. Must be "none", "basic", or "bearer".`
+    );
+  }
+};
+
 /**
  * Parse comma-separated CORS_ORIGINS into array
  */
@@ -163,10 +172,19 @@ const buildEnv = () => {
   const SEED_RANDOM_SEED = process.env.SEED_RANDOM_SEED
     ? parseInt(process.env.SEED_RANDOM_SEED, 10)
     : 20260217;
+  const PACS_DICOMWEB_BASE_URL = process.env.PACS_DICOMWEB_BASE_URL || null;
+  const PACS_AUTH_MODE = String(process.env.PACS_AUTH_MODE || 'none').trim().toLowerCase();
+  const PACS_USERNAME = process.env.PACS_USERNAME || null;
+  const PACS_PASSWORD = process.env.PACS_PASSWORD || null;
+  const PACS_BEARER_TOKEN = process.env.PACS_BEARER_TOKEN || null;
+  const PACS_TIMEOUT_MS = process.env.PACS_TIMEOUT_MS
+    ? parseInt(process.env.PACS_TIMEOUT_MS, 10)
+    : 10000;
 
   if (process.env.STORAGE_PROVIDER) {
     validateStorageProvider(STORAGE_PROVIDER);
   }
+  validatePacsAuthMode(PACS_AUTH_MODE);
 
   if (ENCRYPTION_KEY) {
     const hex = String(ENCRYPTION_KEY).trim();
@@ -228,6 +246,10 @@ const buildEnv = () => {
     throw new Error('SEED_RANDOM_SEED must be an integer.');
   }
 
+  if (isNaN(PACS_TIMEOUT_MS) || PACS_TIMEOUT_MS < 1000) {
+    throw new Error('PACS_TIMEOUT_MS must be at least 1000ms.');
+  }
+
   const AWS_ACCESS_KEY_ID = process.env.AWS_ACCESS_KEY_ID || null;
   const AWS_SECRET_ACCESS_KEY = process.env.AWS_SECRET_ACCESS_KEY || null;
   const AWS_REGION = process.env.AWS_REGION || null;
@@ -274,6 +296,12 @@ const buildEnv = () => {
     PRISMA_POOL_ACQUIRE_TIMEOUT_MS,
     SEED_RECORD_COUNT,
     SEED_RANDOM_SEED,
+    PACS_DICOMWEB_BASE_URL,
+    PACS_AUTH_MODE,
+    PACS_USERNAME,
+    PACS_PASSWORD,
+    PACS_BEARER_TOKEN,
+    PACS_TIMEOUT_MS,
     AWS_ACCESS_KEY_ID,
     AWS_SECRET_ACCESS_KEY,
     AWS_REGION,
@@ -337,6 +365,12 @@ const envKeys = [
   'PRISMA_POOL_ACQUIRE_TIMEOUT_MS',
   'SEED_RECORD_COUNT',
   'SEED_RANDOM_SEED',
+  'PACS_DICOMWEB_BASE_URL',
+  'PACS_AUTH_MODE',
+  'PACS_USERNAME',
+  'PACS_PASSWORD',
+  'PACS_BEARER_TOKEN',
+  'PACS_TIMEOUT_MS',
   'AWS_ACCESS_KEY_ID',
   'AWS_SECRET_ACCESS_KEY',
   'AWS_REGION',

@@ -10,6 +10,20 @@
 const pacsLinkRepository = require('@repositories/pacs-link/pacs-link.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
+const { resolveModelIdByIdentifier } = require('@lib/identifiers/resolve-entity-id');
+
+const resolveForeignId = async (model, identifier) => {
+  if (identifier == null || identifier === '') return null;
+  const resolved = await resolveModelIdByIdentifier({
+    model,
+    identifier,
+    where: { deleted_at: null },
+  });
+  if (!resolved) {
+    throw new HttpError('errors.resource.not_found', 404);
+  }
+  return resolved;
+};
 
 /**
  * List PACS links with pagination and filtering
@@ -31,7 +45,12 @@ const listPacsLinks = async (filters, page, limit, sortBy, order, userId, ipAddr
     // Build filter object
     const whereClause = {};
     
-    if (filters.imaging_study_id) whereClause.imaging_study_id = filters.imaging_study_id;
+    if (filters.imaging_study_id) {
+      whereClause.imaging_study_id = await resolveForeignId(
+        'imaging_study',
+        filters.imaging_study_id
+      );
+    }
     if (filters.expires_at) whereClause.expires_at = filters.expires_at;
 
     const [pacsLinks, total] = await Promise.all([
@@ -90,7 +109,11 @@ const getPacsLinkById = async (id, userId, ipAddress) => {
  */
 const createPacsLink = async (data, userId, ipAddress) => {
   try {
-    const pacsLink = await pacsLinkRepository.create(data);
+    const normalizedData = {
+      ...data,
+      imaging_study_id: await resolveForeignId('imaging_study', data.imaging_study_id),
+    };
+    const pacsLink = await pacsLinkRepository.create(normalizedData);
 
     // Create audit log (non-blocking)
     createAuditLog({

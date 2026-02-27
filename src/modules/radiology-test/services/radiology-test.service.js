@@ -10,6 +10,20 @@
 const radiologyTestRepository = require('@repositories/radiology-test/radiology-test.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
+const { resolveModelIdByIdentifier } = require('@lib/identifiers/resolve-entity-id');
+
+const resolveForeignId = async (model, identifier) => {
+  if (identifier == null || identifier === '') return null;
+  const resolved = await resolveModelIdByIdentifier({
+    model,
+    identifier,
+    where: { deleted_at: null },
+  });
+  if (!resolved) {
+    throw new HttpError('errors.resource.not_found', 404);
+  }
+  return resolved;
+};
 
 /**
  * List radiology tests with pagination and filtering
@@ -31,7 +45,9 @@ const listRadiologyTests = async (filters, page, limit, sortBy, order, userId, i
     // Build filter object
     const whereClause = {};
     
-    if (filters.tenant_id) whereClause.tenant_id = filters.tenant_id;
+    if (filters.tenant_id) {
+      whereClause.tenant_id = await resolveForeignId('tenant', filters.tenant_id);
+    }
     if (filters.modality) whereClause.modality = filters.modality;
     if (filters.code) whereClause.code = { contains: filters.code };
     if (filters.name) whereClause.name = { contains: filters.name };
@@ -100,7 +116,11 @@ const getRadiologyTestById = async (id, userId, ipAddress) => {
  */
 const createRadiologyTest = async (data, userId, ipAddress) => {
   try {
-    const radiologyTest = await radiologyTestRepository.create(data);
+    const normalizedData = {
+      ...data,
+      tenant_id: await resolveForeignId('tenant', data.tenant_id),
+    };
+    const radiologyTest = await radiologyTestRepository.create(normalizedData);
 
     // Create audit log (non-blocking)
     createAuditLog({

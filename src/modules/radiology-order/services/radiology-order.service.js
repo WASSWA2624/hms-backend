@@ -10,6 +10,20 @@
 const radiologyOrderRepository = require('@repositories/radiology-order/radiology-order.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
+const { resolveModelIdByIdentifier } = require('@lib/identifiers/resolve-entity-id');
+
+const resolveForeignId = async (model, identifier, allowNull = false) => {
+  if (identifier == null || identifier === '') return allowNull ? null : identifier;
+  const resolved = await resolveModelIdByIdentifier({
+    model,
+    identifier,
+    where: { deleted_at: null },
+  });
+  if (!resolved) {
+    throw new HttpError('errors.resource.not_found', 404);
+  }
+  return resolved;
+};
 
 /**
  * List radiology orders with pagination and filtering
@@ -31,9 +45,19 @@ const listRadiologyOrders = async (filters, page, limit, sortBy, order, userId, 
     // Build filter object
     const whereClause = {};
     
-    if (filters.encounter_id) whereClause.encounter_id = filters.encounter_id;
-    if (filters.patient_id) whereClause.patient_id = filters.patient_id;
-    if (filters.radiology_test_id) whereClause.radiology_test_id = filters.radiology_test_id;
+    if (filters.encounter_id) {
+      whereClause.encounter_id = await resolveForeignId('encounter', filters.encounter_id, true);
+    }
+    if (filters.patient_id) {
+      whereClause.patient_id = await resolveForeignId('patient', filters.patient_id);
+    }
+    if (filters.radiology_test_id) {
+      whereClause.radiology_test_id = await resolveForeignId(
+        'radiology_test',
+        filters.radiology_test_id,
+        true
+      );
+    }
     if (filters.status) whereClause.status = filters.status;
 
     const [radiologyOrders, total] = await Promise.all([
@@ -92,7 +116,18 @@ const getRadiologyOrderById = async (id, userId, ipAddress) => {
  */
 const createRadiologyOrder = async (data, userId, ipAddress) => {
   try {
-    const radiologyOrder = await radiologyOrderRepository.create(data);
+    const normalizedData = {
+      ...data,
+      encounter_id: data.encounter_id
+        ? await resolveForeignId('encounter', data.encounter_id, true)
+        : null,
+      patient_id: await resolveForeignId('patient', data.patient_id),
+      radiology_test_id: data.radiology_test_id
+        ? await resolveForeignId('radiology_test', data.radiology_test_id, true)
+        : null,
+    };
+
+    const radiologyOrder = await radiologyOrderRepository.create(normalizedData);
 
     // Create audit log (non-blocking)
     createAuditLog({
@@ -130,7 +165,24 @@ const updateRadiologyOrder = async (id, data, userId, ipAddress) => {
       throw new HttpError('errors.radiology_order.not_found', 404);
     }
 
-    const radiologyOrder = await radiologyOrderRepository.update(id, data);
+    const normalizedData = {
+      ...data,
+    };
+    if (Object.prototype.hasOwnProperty.call(data, 'encounter_id')) {
+      normalizedData.encounter_id = data.encounter_id
+        ? await resolveForeignId('encounter', data.encounter_id, true)
+        : null;
+    }
+    if (Object.prototype.hasOwnProperty.call(data, 'patient_id')) {
+      normalizedData.patient_id = await resolveForeignId('patient', data.patient_id);
+    }
+    if (Object.prototype.hasOwnProperty.call(data, 'radiology_test_id')) {
+      normalizedData.radiology_test_id = data.radiology_test_id
+        ? await resolveForeignId('radiology_test', data.radiology_test_id, true)
+        : null;
+    }
+
+    const radiologyOrder = await radiologyOrderRepository.update(id, normalizedData);
 
     // Create audit log (non-blocking)
     createAuditLog({

@@ -10,6 +10,20 @@
 const radiologyResultRepository = require('@repositories/radiology-result/radiology-result.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
+const { resolveModelIdByIdentifier } = require('@lib/identifiers/resolve-entity-id');
+
+const resolveForeignId = async (model, identifier) => {
+  if (identifier == null || identifier === '') return null;
+  const resolved = await resolveModelIdByIdentifier({
+    model,
+    identifier,
+    where: { deleted_at: null },
+  });
+  if (!resolved) {
+    throw new HttpError('errors.resource.not_found', 404);
+  }
+  return resolved;
+};
 
 /**
  * List radiology results with pagination and filtering
@@ -31,7 +45,12 @@ const listRadiologyResults = async (filters, page, limit, sortBy, order, userId,
     // Build filter object
     const whereClause = {};
     
-    if (filters.radiology_order_id) whereClause.radiology_order_id = filters.radiology_order_id;
+    if (filters.radiology_order_id) {
+      whereClause.radiology_order_id = await resolveForeignId(
+        'radiology_order',
+        filters.radiology_order_id
+      );
+    }
     if (filters.status) whereClause.status = filters.status;
     
     // Search filter (searches in report_text)
@@ -95,7 +114,12 @@ const getRadiologyResultById = async (id, userId, ipAddress) => {
  */
 const createRadiologyResult = async (data, userId, ipAddress) => {
   try {
-    const radiologyResult = await radiologyResultRepository.create(data);
+    const normalizedData = {
+      ...data,
+      radiology_order_id: await resolveForeignId('radiology_order', data.radiology_order_id),
+    };
+
+    const radiologyResult = await radiologyResultRepository.create(normalizedData);
 
     // Create audit log (non-blocking)
     createAuditLog({
@@ -133,7 +157,17 @@ const updateRadiologyResult = async (id, data, userId, ipAddress) => {
       throw new HttpError('errors.radiology_result.not_found', 404);
     }
 
-    const radiologyResult = await radiologyResultRepository.update(id, data);
+    const normalizedData = {
+      ...data,
+    };
+    if (Object.prototype.hasOwnProperty.call(data, 'radiology_order_id')) {
+      normalizedData.radiology_order_id = await resolveForeignId(
+        'radiology_order',
+        data.radiology_order_id
+      );
+    }
+
+    const radiologyResult = await radiologyResultRepository.update(id, normalizedData);
 
     // Create audit log (non-blocking)
     createAuditLog({

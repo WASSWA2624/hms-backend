@@ -4,6 +4,7 @@
 
 const interopRepository = require('@repositories/interop/interop.repository');
 const { createAuditLog } = require('@lib/audit');
+const dicomWebClient = require('@lib/dicomweb/client');
 
 const exportFhirResource = async (resource) => {
   return interopRepository.buildFhirExportPayload(resource);
@@ -53,7 +54,35 @@ const submitHl7Message = async (data = {}, context = {}) => {
 };
 
 const linkDicomStudy = async (id, data = {}, context = {}) => {
-  const result = interopRepository.buildDicomLinkResult(id, data);
+  let dicomResult = null;
+  let status = 'PENDING';
+  let errorMessage = null;
+  const targetStudyUid = data.study_uid || null;
+
+  try {
+    if (!dicomWebClient.isConfigured()) {
+      throw new Error('PACS_DICOMWEB_BASE_URL is not configured');
+    }
+
+    dicomResult = await dicomWebClient.searchStudies(
+      targetStudyUid ? { StudyInstanceUID: targetStudyUid } : {}
+    );
+    status = 'LINKED';
+  } catch (error) {
+    status = 'FAILED';
+    errorMessage = error.message;
+  }
+
+  const result = {
+    study_id: id,
+    linked: status === 'LINKED',
+    linked_at: new Date().toISOString(),
+    study_uid: targetStudyUid,
+    pacs_url: data.pacs_url || null,
+    status,
+    error: errorMessage,
+    dicom_response: dicomResult?.data || null,
+  };
 
   await createAuditLog({
     user_id: context.user_id,
@@ -65,6 +94,8 @@ const linkDicomStudy = async (id, data = {}, context = {}) => {
       metadata: {
         study_uid: data.study_uid,
         pacs_url: data.pacs_url || null,
+        status,
+        error: errorMessage,
         notes: data.notes || null
       }
     },

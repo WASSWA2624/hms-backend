@@ -9,7 +9,7 @@
 
 const { z } = require('zod');
 const { 
-  uuidSchema, 
+  uuidOrFriendlyIdentifierSchema, 
   listQuerySchema
 } = require('@lib/validation/zod');
 
@@ -20,7 +20,7 @@ const {
  * Used for POST /radiology-results endpoint
  */
 const createRadiologyResultSchema = z.object({
-  radiology_order_id: uuidSchema,
+  radiology_order_id: uuidOrFriendlyIdentifierSchema,
   status: z.enum(['DRAFT', 'FINAL', 'AMENDED']),
   report_text: z.string().trim().max(65535).optional().nullable(),
   reported_at: z.string().datetime().optional().nullable()
@@ -32,7 +32,7 @@ const createRadiologyResultSchema = z.object({
  * All fields optional for partial updates
  */
 const updateRadiologyResultSchema = z.object({
-  radiology_order_id: uuidSchema.optional(),
+  radiology_order_id: uuidOrFriendlyIdentifierSchema.optional(),
   status: z.enum(['DRAFT', 'FINAL', 'AMENDED']).optional(),
   report_text: z.string().trim().max(65535).optional().nullable(),
   reported_at: z.string().datetime().optional().nullable()
@@ -54,7 +54,7 @@ const signOffRadiologyResultSchema = z.object({
  * Used for GET /:id, PUT /:id, DELETE /:id endpoints
  */
 const radiologyResultIdParamsSchema = z.object({
-  id: uuidSchema
+  id: uuidOrFriendlyIdentifierSchema
 });
 
 // ==================== Query Params ====================
@@ -65,7 +65,7 @@ const radiologyResultIdParamsSchema = z.object({
  * Extends base listQuerySchema with radiology-result-specific filters
  */
 const listRadiologyResultsQuerySchema = listQuerySchema.extend({
-  radiology_order_id: uuidSchema.optional(),
+  radiology_order_id: uuidOrFriendlyIdentifierSchema.optional(),
   status: z.enum(['DRAFT', 'FINAL', 'AMENDED']).optional(),
   search: z.string().trim().optional()
 });

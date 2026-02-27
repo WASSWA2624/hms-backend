@@ -10,6 +10,20 @@
 const imagingAssetRepository = require('@repositories/imaging-asset/imaging-asset.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
+const { resolveModelIdByIdentifier } = require('@lib/identifiers/resolve-entity-id');
+
+const resolveForeignId = async (model, identifier) => {
+  if (identifier == null || identifier === '') return null;
+  const resolved = await resolveModelIdByIdentifier({
+    model,
+    identifier,
+    where: { deleted_at: null },
+  });
+  if (!resolved) {
+    throw new HttpError('errors.resource.not_found', 404);
+  }
+  return resolved;
+};
 
 /**
  * List imaging assets with pagination and filtering
@@ -31,7 +45,12 @@ const listImagingAssets = async (filters, page, limit, sortBy, order, userId, ip
     // Build filter object
     const whereClause = {};
     
-    if (filters.imaging_study_id) whereClause.imaging_study_id = filters.imaging_study_id;
+    if (filters.imaging_study_id) {
+      whereClause.imaging_study_id = await resolveForeignId(
+        'imaging_study',
+        filters.imaging_study_id
+      );
+    }
     if (filters.content_type) whereClause.content_type = { contains: filters.content_type };
 
     const [imagingAssets, total] = await Promise.all([
@@ -90,7 +109,11 @@ const getImagingAssetById = async (id, userId, ipAddress) => {
  */
 const createImagingAsset = async (data, userId, ipAddress) => {
   try {
-    const imagingAsset = await imagingAssetRepository.create(data);
+    const normalizedData = {
+      ...data,
+      imaging_study_id: await resolveForeignId('imaging_study', data.imaging_study_id),
+    };
+    const imagingAsset = await imagingAssetRepository.create(normalizedData);
 
     // Create audit log (non-blocking)
     createAuditLog({

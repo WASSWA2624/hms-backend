@@ -9,7 +9,7 @@
 
 const { z } = require('zod');
 const { 
-  uuidSchema, 
+  uuidOrFriendlyIdentifierSchema, 
   listQuerySchema
 } = require('@lib/validation/zod');
 
@@ -20,7 +20,7 @@ const {
  * Used for POST /imaging-assets endpoint
  */
 const createImagingAssetSchema = z.object({
-  imaging_study_id: uuidSchema,
+  imaging_study_id: uuidOrFriendlyIdentifierSchema,
   storage_key: z.string().trim().min(1).max(255),
   file_name: z.string().trim().max(255).optional().nullable(),
   content_type: z.string().trim().max(120).optional().nullable()
@@ -43,7 +43,7 @@ const updateImagingAssetSchema = z.object({
  * Used for GET /:id, PUT /:id, and DELETE /:id endpoints
  */
 const imagingAssetIdParamsSchema = z.object({
-  id: uuidSchema
+  id: uuidOrFriendlyIdentifierSchema
 });
 
 // ==================== Query Params ====================
@@ -54,7 +54,7 @@ const imagingAssetIdParamsSchema = z.object({
  * Extends base listQuerySchema with imaging asset-specific filters
  */
 const listImagingAssetsQuerySchema = listQuerySchema.extend({
-  imaging_study_id: uuidSchema.optional(),
+  imaging_study_id: uuidOrFriendlyIdentifierSchema.optional(),
   content_type: z.string().trim().optional()
 });
 

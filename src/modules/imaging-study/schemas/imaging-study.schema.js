@@ -9,10 +9,23 @@
 
 const { z } = require('zod');
 const { 
-  uuidSchema, 
+  uuidOrFriendlyIdentifierSchema, 
   listQuerySchema,
   isoDateSchema
 } = require('@lib/validation/zod');
+
+const imagingModalitySchema = z.enum([
+  'XRAY',
+  'CT',
+  'MRI',
+  'ULTRASOUND',
+  'PET',
+  'ECG',
+  'ECHO',
+  'ENDO',
+  'GASTRO',
+  'OTHER'
+]);
 
 // ==================== Body Schemas ====================
 
@@ -21,8 +34,8 @@ const {
  * Used for POST /imaging-studies endpoint
  */
 const createImagingStudySchema = z.object({
-  radiology_order_id: uuidSchema,
-  modality: z.enum(['XRAY', 'CT', 'MRI', 'ULTRASOUND', 'PET', 'OTHER']),
+  radiology_order_id: uuidOrFriendlyIdentifierSchema,
+  modality: imagingModalitySchema,
   performed_at: isoDateSchema.optional().nullable()
 });
 
@@ -32,7 +45,7 @@ const createImagingStudySchema = z.object({
  * All fields optional for partial updates
  */
 const updateImagingStudySchema = z.object({
-  modality: z.enum(['XRAY', 'CT', 'MRI', 'ULTRASOUND', 'PET', 'OTHER']).optional(),
+  modality: imagingModalitySchema.optional(),
   performed_at: isoDateSchema.optional().nullable()
 });
 
@@ -43,7 +56,7 @@ const updateImagingStudySchema = z.object({
  * Used for GET /:id, PUT /:id, and DELETE /:id endpoints
  */
 const imagingStudyIdParamsSchema = z.object({
-  id: uuidSchema
+  id: uuidOrFriendlyIdentifierSchema
 });
 
 // ==================== Query Params ====================
@@ -54,8 +67,8 @@ const imagingStudyIdParamsSchema = z.object({
  * Extends base listQuerySchema with imaging study-specific filters
  */
 const listImagingStudiesQuerySchema = listQuerySchema.extend({
-  radiology_order_id: uuidSchema.optional(),
-  modality: z.enum(['XRAY', 'CT', 'MRI', 'ULTRASOUND', 'PET', 'OTHER']).optional(),
+  radiology_order_id: uuidOrFriendlyIdentifierSchema.optional(),
+  modality: imagingModalitySchema.optional(),
   performed_at: isoDateSchema.optional()
 });
 

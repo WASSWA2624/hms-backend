@@ -9,7 +9,7 @@
 
 const { z } = require('zod');
 const { 
-  uuidSchema, 
+  uuidOrFriendlyIdentifierSchema, 
   listQuerySchema
 } = require('@lib/validation/zod');
 
@@ -20,9 +20,9 @@ const {
  * Used for POST /radiology-orders endpoint
  */
 const createRadiologyOrderSchema = z.object({
-  encounter_id: uuidSchema.optional().nullable(),
-  patient_id: uuidSchema,
-  radiology_test_id: uuidSchema.optional().nullable(),
+  encounter_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
+  patient_id: uuidOrFriendlyIdentifierSchema,
+  radiology_test_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
   status: z.enum(['ORDERED', 'IN_PROCESS', 'COMPLETED', 'CANCELLED']),
   ordered_at: z.string().datetime().optional()
 });
@@ -33,9 +33,9 @@ const createRadiologyOrderSchema = z.object({
  * All fields optional for partial updates
  */
 const updateRadiologyOrderSchema = z.object({
-  encounter_id: uuidSchema.optional().nullable(),
-  patient_id: uuidSchema.optional(),
-  radiology_test_id: uuidSchema.optional().nullable(),
+  encounter_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
+  patient_id: uuidOrFriendlyIdentifierSchema.optional(),
+  radiology_test_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
   status: z.enum(['ORDERED', 'IN_PROCESS', 'COMPLETED', 'CANCELLED']).optional(),
   ordered_at: z.string().datetime().optional()
 });
@@ -47,7 +47,7 @@ const updateRadiologyOrderSchema = z.object({
  * Used for GET /:id, PUT /:id, DELETE /:id endpoints
  */
 const radiologyOrderIdParamsSchema = z.object({
-  id: uuidSchema
+  id: uuidOrFriendlyIdentifierSchema
 });
 
 // ==================== Query Params ====================
@@ -58,9 +58,9 @@ const radiologyOrderIdParamsSchema = z.object({
  * Extends base listQuerySchema with radiology-order-specific filters
  */
 const listRadiologyOrdersQuerySchema = listQuerySchema.extend({
-  encounter_id: uuidSchema.optional(),
-  patient_id: uuidSchema.optional(),
-  radiology_test_id: uuidSchema.optional(),
+  encounter_id: uuidOrFriendlyIdentifierSchema.optional(),
+  patient_id: uuidOrFriendlyIdentifierSchema.optional(),
+  radiology_test_id: uuidOrFriendlyIdentifierSchema.optional(),
   status: z.enum(['ORDERED', 'IN_PROCESS', 'COMPLETED', 'CANCELLED']).optional(),
   search: z.string().trim().optional()
 });

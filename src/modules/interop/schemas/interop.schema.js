@@ -3,14 +3,14 @@
  */
 
 const { z } = require('zod');
-const { uuidSchema, urlSchema } = require('@lib/validation/zod');
+const { uuidOrFriendlyIdentifierSchema, urlSchema } = require('@lib/validation/zod');
 
 const interopResourceParamsSchema = z.object({
   resource: z.string().trim().min(1).max(80)
 });
 
 const interopStudyIdParamsSchema = z.object({
-  id: uuidSchema
+  id: uuidOrFriendlyIdentifierSchema
 });
 
 const fhirImportSchema = z.object({
