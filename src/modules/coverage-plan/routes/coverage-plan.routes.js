@@ -11,7 +11,8 @@ const express = require('express');
 const router = express.Router();
 const coveragePlanController = require('@controllers/coverage-plan/coverage-plan.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
-const { authenticate } = require('@middlewares/auth.middleware');
+const { authenticate, authorize } = require('@middlewares/auth.middleware');
+const { PERMISSIONS } = require('@config/permissions');
 const {
   createCoveragePlanSchema,
   updateCoveragePlanSchema,
@@ -42,6 +43,7 @@ router.get(
   '/',  validateRequest({ query: listCoveragePlansQuerySchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.BILLING_READ, 'permission'),
   coveragePlanController.listCoveragePlans
 );
 
@@ -62,6 +64,7 @@ router.get(
   '/:id',  validateRequest({ params: coveragePlanIdParamsSchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.BILLING_READ, 'permission'),
   coveragePlanController.getCoveragePlanById
 );
 
@@ -87,6 +90,7 @@ router.post(
   '/',  validateRequest({ body: createCoveragePlanSchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.BILLING_WRITE, 'permission'),
   coveragePlanController.createCoveragePlan
 );
 
@@ -112,6 +116,7 @@ router.put(
   '/:id',  validateRequest({ params: coveragePlanIdParamsSchema, body: updateCoveragePlanSchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.BILLING_WRITE, 'permission'),
   coveragePlanController.updateCoveragePlan
 );
 
@@ -132,6 +137,7 @@ router.delete(
   '/:id',  validateRequest({ params: coveragePlanIdParamsSchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.BILLING_WRITE, 'permission'),
   coveragePlanController.deleteCoveragePlan
 );
 

@@ -9,7 +9,8 @@ const express = require('express');
 const router = express.Router();
 const paymentController = require('@controllers/payment/payment.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
-const { authenticate } = require('@middlewares/auth.middleware');
+const { authenticate, authorize } = require('@middlewares/auth.middleware');
+const { PERMISSIONS } = require('@config/permissions');
 const {
   createPaymentSchema,
   updatePaymentSchema,
@@ -28,6 +29,7 @@ router.get(
   '/',  validateRequest({ query: listPaymentsQuerySchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.BILLING_READ, 'permission'),
   paymentController.listPayments
 );
 
@@ -41,6 +43,7 @@ router.get(
   '/:id',  validateRequest({ params: paymentIdParamsSchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.BILLING_READ, 'permission'),
   paymentController.getPaymentById
 );
 
@@ -54,6 +57,7 @@ router.post(
   '/',  validateRequest({ body: createPaymentSchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.BILLING_WRITE, 'permission'),
   paymentController.createPayment
 );
 
@@ -67,6 +71,7 @@ router.put(
   '/:id',  validateRequest({ params: paymentIdParamsSchema, body: updatePaymentSchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.BILLING_WRITE, 'permission'),
   paymentController.updatePayment
 );
 
@@ -80,6 +85,7 @@ router.delete(
   '/:id',  validateRequest({ params: paymentIdParamsSchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.BILLING_WRITE, 'permission'),
   paymentController.deletePayment
 );
 
@@ -87,6 +93,7 @@ router.post(
   '/:id/reconcile',
   validateRequest({ params: paymentIdParamsSchema, body: reconcilePaymentSchema }),
   authenticate(),
+  authorize(PERMISSIONS.BILLING_WRITE, 'permission'),
   paymentController.reconcilePayment
 );
 
@@ -94,6 +101,7 @@ router.get(
   '/:id/channel-breakdown',
   validateRequest({ params: paymentIdParamsSchema }),
   authenticate(),
+  authorize(PERMISSIONS.BILLING_READ, 'permission'),
   paymentController.getPaymentChannelBreakdown
 );
 

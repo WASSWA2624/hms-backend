@@ -196,6 +196,7 @@ apiV1Router.use('/invoices', require('../modules/invoice/routes/invoice.routes')
 apiV1Router.use('/invoice-items', require('../modules/invoice-item/routes/invoice-item.routes'));
 apiV1Router.use('/payments', require('../modules/payment/routes/payment.routes'));
 apiV1Router.use('/refunds', require('../modules/refund/routes/refund.routes'));
+apiV1Router.use('/billing', require('../modules/billing/routes/billing.routes'));
 apiV1Router.use('/pricing-rules', require('../modules/pricing-rule/routes/pricing-rule.routes'));
 apiV1Router.use('/coverage-plans', require('../modules/coverage-plan/routes/coverage-plan.routes'));
 apiV1Router.use('/insurance-claims', require('../modules/insurance-claim/routes/insurance-claim.routes'));

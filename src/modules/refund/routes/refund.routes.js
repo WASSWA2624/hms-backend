@@ -9,7 +9,8 @@ const express = require('express');
 const router = express.Router();
 const refundController = require('@controllers/refund/refund.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
-const { authenticate } = require('@middlewares/auth.middleware');
+const { authenticate, authorize } = require('@middlewares/auth.middleware');
+const { PERMISSIONS } = require('@config/permissions');
 const {
   createRefundSchema,
   updateRefundSchema,
@@ -27,6 +28,7 @@ router.get(
   '/',  validateRequest({ query: listRefundsQuerySchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.BILLING_READ, 'permission'),
   refundController.listRefunds
 );
 
@@ -40,6 +42,7 @@ router.get(
   '/:id',  validateRequest({ params: refundIdParamsSchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.BILLING_READ, 'permission'),
   refundController.getRefundById
 );
 
@@ -53,6 +56,7 @@ router.post(
   '/',  validateRequest({ body: createRefundSchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.BILLING_WRITE, 'permission'),
   refundController.createRefund
 );
 
@@ -66,6 +70,7 @@ router.put(
   '/:id',  validateRequest({ params: refundIdParamsSchema, body: updateRefundSchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.BILLING_WRITE, 'permission'),
   refundController.updateRefund
 );
 
@@ -79,8 +84,8 @@ router.delete(
   '/:id',  validateRequest({ params: refundIdParamsSchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.BILLING_WRITE, 'permission'),
   refundController.deleteRefund
 );
 
 module.exports = router;
-

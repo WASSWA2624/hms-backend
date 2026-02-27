@@ -9,7 +9,7 @@
 
 const { z } = require('zod');
 const { 
-  uuidSchema, 
+  uuidOrFriendlyIdentifierSchema, 
   listQuerySchema
 } = require('@lib/validation/zod');
 
@@ -20,7 +20,7 @@ const {
  * Used for POST /pricing-rules endpoint
  */
 const createPricingRuleSchema = z.object({
-  tenant_id: uuidSchema,
+  tenant_id: uuidOrFriendlyIdentifierSchema,
   name: z.string().trim().min(1).max(255),
   description: z.string().trim().optional().nullable(),
   amount: z.number().min(0).finite(),
@@ -50,7 +50,7 @@ const updatePricingRuleSchema = z.object({
  * Used for GET /:id, PUT /:id, and DELETE /:id endpoints
  */
 const pricingRuleIdParamsSchema = z.object({
-  id: uuidSchema
+  id: uuidOrFriendlyIdentifierSchema
 });
 
 // ==================== Query Params ====================
@@ -61,7 +61,7 @@ const pricingRuleIdParamsSchema = z.object({
  * Extends base listQuerySchema with pricing rule-specific filters
  */
 const listPricingRulesQuerySchema = listQuerySchema.extend({
-  tenant_id: uuidSchema.optional(),
+  tenant_id: uuidOrFriendlyIdentifierSchema.optional(),
   name: z.string().trim().optional(),
   currency: z.string().trim().length(3).toUpperCase().optional(),
   search: z.string().trim().optional()

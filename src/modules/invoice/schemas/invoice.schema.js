@@ -9,7 +9,7 @@
 
 const { z } = require('zod');
 const { 
-  uuidSchema, 
+  uuidOrFriendlyIdentifierSchema, 
   listQuerySchema,
   decimalStringSchema
 } = require('@lib/validation/zod');
@@ -21,9 +21,9 @@ const {
  * Used for POST /invoices endpoint
  */
 const createInvoiceSchema = z.object({
-  tenant_id: uuidSchema,
-  facility_id: uuidSchema.optional().nullable(),
-  patient_id: uuidSchema.optional().nullable(),
+  tenant_id: uuidOrFriendlyIdentifierSchema,
+  facility_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
+  patient_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
   status: z.enum(['DRAFT', 'SENT', 'PAID', 'OVERDUE', 'CANCELLED']),
   billing_status: z.enum(['DRAFT', 'ISSUED', 'PAID', 'PARTIAL', 'CANCELLED']).default('DRAFT'),
   total_amount: decimalStringSchema,
@@ -37,8 +37,8 @@ const createInvoiceSchema = z.object({
  * All fields optional for partial updates
  */
 const updateInvoiceSchema = z.object({
-  facility_id: uuidSchema.optional().nullable(),
-  patient_id: uuidSchema.optional().nullable(),
+  facility_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
+  patient_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
   status: z.enum(['DRAFT', 'SENT', 'PAID', 'OVERDUE', 'CANCELLED']).optional(),
   billing_status: z.enum(['DRAFT', 'ISSUED', 'PAID', 'PARTIAL', 'CANCELLED']).optional(),
   total_amount: decimalStringSchema.optional(),
@@ -53,7 +53,7 @@ const updateInvoiceSchema = z.object({
  * Used for GET /:id, PUT /:id, and DELETE /:id endpoints
  */
 const invoiceIdParamsSchema = z.object({
-  id: uuidSchema
+  id: uuidOrFriendlyIdentifierSchema
 });
 
 // ==================== Query Params ====================
@@ -64,9 +64,9 @@ const invoiceIdParamsSchema = z.object({
  * Extends base listQuerySchema with invoice-specific filters
  */
 const listInvoicesQuerySchema = listQuerySchema.extend({
-  tenant_id: uuidSchema.optional(),
-  facility_id: uuidSchema.optional(),
-  patient_id: uuidSchema.optional(),
+  tenant_id: uuidOrFriendlyIdentifierSchema.optional(),
+  facility_id: uuidOrFriendlyIdentifierSchema.optional(),
+  patient_id: uuidOrFriendlyIdentifierSchema.optional(),
   status: z.enum(['DRAFT', 'SENT', 'PAID', 'OVERDUE', 'CANCELLED']).optional(),
   billing_status: z.enum(['DRAFT', 'ISSUED', 'PAID', 'PARTIAL', 'CANCELLED']).optional(),
   search: z.string().trim().optional()

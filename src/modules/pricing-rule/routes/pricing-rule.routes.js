@@ -11,7 +11,8 @@ const express = require('express');
 const router = express.Router();
 const pricingRuleController = require('@controllers/pricing-rule/pricing-rule.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
-const { authenticate } = require('@middlewares/auth.middleware');
+const { authenticate, authorize } = require('@middlewares/auth.middleware');
+const { PERMISSIONS } = require('@config/permissions');
 const {
   createPricingRuleSchema,
   updatePricingRuleSchema,
@@ -42,6 +43,7 @@ router.get(
   '/',  validateRequest({ query: listPricingRulesQuerySchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.BILLING_READ, 'permission'),
   pricingRuleController.listPricingRules
 );
 
@@ -62,6 +64,7 @@ router.get(
   '/:id',  validateRequest({ params: pricingRuleIdParamsSchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.BILLING_READ, 'permission'),
   pricingRuleController.getPricingRuleById
 );
 
@@ -90,6 +93,7 @@ router.post(
   '/',  validateRequest({ body: createPricingRuleSchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.BILLING_WRITE, 'permission'),
   pricingRuleController.createPricingRule
 );
 
@@ -118,6 +122,7 @@ router.put(
   '/:id',  validateRequest({ params: pricingRuleIdParamsSchema, body: updatePricingRuleSchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.BILLING_WRITE, 'permission'),
   pricingRuleController.updatePricingRule
 );
 
@@ -138,6 +143,7 @@ router.delete(
   '/:id',  validateRequest({ params: pricingRuleIdParamsSchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.BILLING_WRITE, 'permission'),
   pricingRuleController.deletePricingRule
 );
 

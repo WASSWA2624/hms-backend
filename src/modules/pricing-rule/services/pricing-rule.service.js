@@ -3,61 +3,96 @@
  *
  * @module modules/pricing-rule/services
  * @description Business logic layer for pricing rule operations.
- * Per module-creation.mdc: Services only import/use their own repository.
- * Per prisma.mdc: All mutations call createAuditLog.
  */
 
 const pricingRuleRepository = require('@repositories/pricing-rule/pricing-rule.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
+const {
+  sanitizeIdentifier,
+  resolvePublicIdentifier,
+  resolveIdentifierForFilter,
+  resolveIdentifierForPayload,
+  resolveEntityId,
+} = require('@lib/billing/identifiers');
+
+const PRICING_RULE_INCLUDE = {
+  tenant: { select: { id: true, human_friendly_id: true } },
+};
+
+const buildEmptyListResult = (page, limit) => ({
+  pricingRules: [],
+  pagination: {
+    page,
+    limit,
+    total: 0,
+    totalPages: 0,
+    hasNextPage: false,
+    hasPreviousPage: page > 1,
+  },
+});
+
+const mapPricingRuleForDisplay = (record) => {
+  if (!record || typeof record !== 'object') return record;
+
+  return {
+    ...record,
+    display_id: resolvePublicIdentifier(record?.display_id, record?.human_friendly_id, record?.id),
+    tenant_display_id: resolvePublicIdentifier(
+      record?.tenant_display_id,
+      record?.tenant?.human_friendly_id,
+      record?.tenant_id
+    ),
+    timeline_at: record?.timeline_at || record?.effective_from || record?.created_at || null,
+  };
+};
 
 /**
  * List pricing rules with pagination and filtering
- *
- * @param {Object} filters - Query filters
- * @param {number} page - Page number
- * @param {number} limit - Items per page
- * @param {string} sortBy - Sort field
- * @param {string} order - Sort order
- * @param {string} userId - User ID for audit
- * @param {string} ipAddress - User IP for audit
- * @returns {Promise<Object>} Pricing rules and pagination data
  */
-const listPricingRules = async (filters, page, limit, sortBy, order, userId, ipAddress) => {
+const listPricingRules = async (filters, page, limit, sortBy, order) => {
   try {
     const skip = (page - 1) * limit;
     const orderBy = sortBy ? { [sortBy]: order } : { created_at: 'desc' };
 
-    // Build filter object
     const whereClause = {};
-    
-    if (filters.tenant_id) whereClause.tenant_id = filters.tenant_id;
+
+    if (filters.tenant_id !== undefined) {
+      const tenantId = await resolveIdentifierForFilter({
+        value: filters.tenant_id,
+        model: 'tenant',
+      });
+      if (tenantId === null) return buildEmptyListResult(page, limit);
+      if (tenantId !== undefined) whereClause.tenant_id = tenantId;
+    }
+
     if (filters.currency) whereClause.currency = filters.currency;
     if (filters.name) whereClause.name = { contains: filters.name };
-    
-    // Search filter (searches in name, description)
-    if (filters.search) {
+
+    const search = sanitizeIdentifier(filters.search);
+    if (search) {
       whereClause.OR = [
-        { name: { contains: filters.search } },
-        { description: { contains: filters.search } }
+        { name: { contains: search } },
+        { description: { contains: search } },
+        { human_friendly_id: { contains: search.toUpperCase() } },
       ];
     }
 
     const [pricingRules, total] = await Promise.all([
-      pricingRuleRepository.findMany(whereClause, skip, limit, orderBy),
-      pricingRuleRepository.count(whereClause)
+      pricingRuleRepository.findMany(whereClause, skip, limit, orderBy, PRICING_RULE_INCLUDE),
+      pricingRuleRepository.count(whereClause),
     ]);
 
     return {
-      pricingRules,
+      pricingRules: pricingRules.map(mapPricingRuleForDisplay),
       pagination: {
         page,
         limit,
         total,
         totalPages: Math.ceil(total / limit),
         hasNextPage: page < Math.ceil(total / limit),
-        hasPreviousPage: page > 1
-      }
+        hasPreviousPage: page > 1,
+      },
     };
   } catch (error) {
     if (error instanceof HttpError) throw error;
@@ -67,21 +102,21 @@ const listPricingRules = async (filters, page, limit, sortBy, order, userId, ipA
 
 /**
  * Get pricing rule by ID
- *
- * @param {string} id - Pricing Rule ID
- * @param {string} userId - User ID for audit
- * @param {string} ipAddress - User IP for audit
- * @returns {Promise<Object>} Pricing rule data
  */
-const getPricingRuleById = async (id, userId, ipAddress) => {
+const getPricingRuleById = async (id) => {
   try {
-    const pricingRule = await pricingRuleRepository.findById(id);
+    const resolvedId = await resolveEntityId({
+      model: 'pricing_rule',
+      identifier: id,
+    });
+
+    const pricingRule = await pricingRuleRepository.findById(resolvedId, PRICING_RULE_INCLUDE);
 
     if (!pricingRule) {
       throw new HttpError('errors.pricing_rule.not_found', 404);
     }
 
-    return pricingRule;
+    return mapPricingRuleForDisplay(pricingRule);
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
@@ -90,28 +125,33 @@ const getPricingRuleById = async (id, userId, ipAddress) => {
 
 /**
  * Create new pricing rule
- * Per prisma.mdc: Mutations must create audit logs
- *
- * @param {Object} data - Pricing Rule data
- * @param {string} userId - User ID for audit
- * @param {string} ipAddress - User IP for audit
- * @returns {Promise<Object>} Created pricing rule
  */
 const createPricingRule = async (data, userId, ipAddress) => {
   try {
-    const pricingRule = await pricingRuleRepository.create(data);
+    const tenantId = await resolveIdentifierForPayload({
+      value: data?.tenant_id,
+      field: 'tenant_id',
+      model: 'tenant',
+    });
 
-    // Create audit log (non-blocking)
+    const pricingRule = await pricingRuleRepository.create({
+      ...data,
+      tenant_id: tenantId,
+    });
+
+    const createdRecord = await pricingRuleRepository.findById(pricingRule.id, PRICING_RULE_INCLUDE);
+
     createAuditLog({
+      tenant_id: pricingRule.tenant_id,
       user_id: userId,
       action: 'CREATE',
       entity: 'pricing_rule',
       entity_id: pricingRule.id,
       diff: { after: pricingRule },
-      ip_address: ipAddress
+      ip_address: ipAddress,
     }).catch(() => {});
 
-    return pricingRule;
+    return mapPricingRuleForDisplay(createdRecord || pricingRule);
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
@@ -120,36 +160,34 @@ const createPricingRule = async (data, userId, ipAddress) => {
 
 /**
  * Update pricing rule
- * Per prisma.mdc: Mutations must create audit logs
- *
- * @param {string} id - Pricing Rule ID
- * @param {Object} data - Update data
- * @param {string} userId - User ID for audit
- * @param {string} ipAddress - User IP for audit
- * @returns {Promise<Object>} Updated pricing rule
  */
 const updatePricingRule = async (id, data, userId, ipAddress) => {
   try {
-    // Get current state for audit
-    const before = await pricingRuleRepository.findById(id);
+    const resolvedId = await resolveEntityId({
+      model: 'pricing_rule',
+      identifier: id,
+    });
+
+    const before = await pricingRuleRepository.findById(resolvedId, PRICING_RULE_INCLUDE);
 
     if (!before) {
       throw new HttpError('errors.pricing_rule.not_found', 404);
     }
 
-    const pricingRule = await pricingRuleRepository.update(id, data);
+    const pricingRule = await pricingRuleRepository.update(before.id, data);
+    const updatedRecord = await pricingRuleRepository.findById(pricingRule.id, PRICING_RULE_INCLUDE);
 
-    // Create audit log (non-blocking)
     createAuditLog({
+      tenant_id: pricingRule.tenant_id || before.tenant_id,
       user_id: userId,
       action: 'UPDATE',
       entity: 'pricing_rule',
       entity_id: pricingRule.id,
       diff: { before, after: pricingRule },
-      ip_address: ipAddress
+      ip_address: ipAddress,
     }).catch(() => {});
 
-    return pricingRule;
+    return mapPricingRuleForDisplay(updatedRecord || pricingRule);
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
@@ -158,32 +196,30 @@ const updatePricingRule = async (id, data, userId, ipAddress) => {
 
 /**
  * Delete pricing rule (soft delete)
- * Per prisma.mdc: Mutations must create audit logs
- *
- * @param {string} id - Pricing Rule ID
- * @param {string} userId - User ID for audit
- * @param {string} ipAddress - User IP for audit
- * @returns {Promise<void>}
  */
 const deletePricingRule = async (id, userId, ipAddress) => {
   try {
-    // Get current state for audit
-    const before = await pricingRuleRepository.findById(id);
+    const resolvedId = await resolveEntityId({
+      model: 'pricing_rule',
+      identifier: id,
+    });
+
+    const before = await pricingRuleRepository.findById(resolvedId, PRICING_RULE_INCLUDE);
 
     if (!before) {
       throw new HttpError('errors.pricing_rule.not_found', 404);
     }
 
-    await pricingRuleRepository.softDelete(id);
+    await pricingRuleRepository.softDelete(before.id);
 
-    // Create audit log (non-blocking)
     createAuditLog({
+      tenant_id: before.tenant_id,
       user_id: userId,
       action: 'DELETE',
       entity: 'pricing_rule',
-      entity_id: id,
+      entity_id: before.id,
       diff: { before },
-      ip_address: ipAddress
+      ip_address: ipAddress,
     }).catch(() => {});
   } catch (error) {
     if (error instanceof HttpError) throw error;
@@ -196,5 +232,5 @@ module.exports = {
   getPricingRuleById,
   createPricingRule,
   updatePricingRule,
-  deletePricingRule
+  deletePricingRule,
 };

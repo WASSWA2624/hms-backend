@@ -9,7 +9,7 @@
 
 const { z } = require('zod');
 const { 
-  uuidSchema, 
+  uuidOrFriendlyIdentifierSchema, 
   listQuerySchema
 } = require('@lib/validation/zod');
 
@@ -20,8 +20,8 @@ const {
  * Used for POST /insurance-claims endpoint
  */
 const createInsuranceClaimSchema = z.object({
-  coverage_plan_id: uuidSchema,
-  invoice_id: uuidSchema,
+  coverage_plan_id: uuidOrFriendlyIdentifierSchema,
+  invoice_id: uuidOrFriendlyIdentifierSchema,
   status: z.enum(['SUBMITTED', 'APPROVED', 'REJECTED', 'PAID', 'CANCELLED']).optional(),
   submitted_at: z.string().datetime().optional()
 });
@@ -32,8 +32,8 @@ const createInsuranceClaimSchema = z.object({
  * All fields optional for partial updates
  */
 const updateInsuranceClaimSchema = z.object({
-  coverage_plan_id: uuidSchema.optional(),
-  invoice_id: uuidSchema.optional(),
+  coverage_plan_id: uuidOrFriendlyIdentifierSchema.optional(),
+  invoice_id: uuidOrFriendlyIdentifierSchema.optional(),
   status: z.enum(['SUBMITTED', 'APPROVED', 'REJECTED', 'PAID', 'CANCELLED']).optional(),
   submitted_at: z.string().datetime().optional()
 });
@@ -63,7 +63,7 @@ const reconcileInsuranceClaimSchema = z.object({
  * Used for GET /:id, PUT /:id, and DELETE /:id endpoints
  */
 const insuranceClaimIdParamsSchema = z.object({
-  id: uuidSchema
+  id: uuidOrFriendlyIdentifierSchema
 });
 
 // ==================== Query Params ====================
@@ -74,8 +74,8 @@ const insuranceClaimIdParamsSchema = z.object({
  * Extends base listQuerySchema with insurance-claim-specific filters
  */
 const listInsuranceClaimsQuerySchema = listQuerySchema.extend({
-  coverage_plan_id: uuidSchema.optional(),
-  invoice_id: uuidSchema.optional(),
+  coverage_plan_id: uuidOrFriendlyIdentifierSchema.optional(),
+  invoice_id: uuidOrFriendlyIdentifierSchema.optional(),
   status: z.enum(['SUBMITTED', 'APPROVED', 'REJECTED', 'PAID', 'CANCELLED']).optional(),
   submitted_at_from: z.string().datetime().optional(),
   submitted_at_to: z.string().datetime().optional()

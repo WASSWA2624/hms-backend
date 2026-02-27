@@ -11,7 +11,8 @@ const express = require('express');
 const router = express.Router();
 const preAuthorizationController = require('@controllers/pre-authorization/pre-authorization.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
-const { authenticate } = require('@middlewares/auth.middleware');
+const { authenticate, authorize } = require('@middlewares/auth.middleware');
+const { PERMISSIONS } = require('@config/permissions');
 const {
   createPreAuthorizationSchema,
   updatePreAuthorizationSchema,
@@ -44,6 +45,7 @@ router.get(
   '/',  validateRequest({ query: listPreAuthorizationsQuerySchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.BILLING_READ, 'permission'),
   preAuthorizationController.listPreAuthorizations
 );
 
@@ -64,6 +66,7 @@ router.get(
   '/:id',  validateRequest({ params: preAuthorizationIdParamsSchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.BILLING_READ, 'permission'),
   preAuthorizationController.getPreAuthorizationById
 );
 
@@ -89,6 +92,7 @@ router.post(
   '/',  validateRequest({ body: createPreAuthorizationSchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.BILLING_WRITE, 'permission'),
   preAuthorizationController.createPreAuthorization
 );
 
@@ -115,6 +119,7 @@ router.put(
   '/:id',  validateRequest({ params: preAuthorizationIdParamsSchema, body: updatePreAuthorizationSchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.BILLING_WRITE, 'permission'),
   preAuthorizationController.updatePreAuthorization
 );
 
@@ -135,6 +140,7 @@ router.delete(
   '/:id',  validateRequest({ params: preAuthorizationIdParamsSchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.BILLING_WRITE, 'permission'),
   preAuthorizationController.deletePreAuthorization
 );
 

@@ -6,7 +6,11 @@
  */
 
 const { z } = require('zod');
-const { uuidSchema, listQuerySchema, decimalStringSchema } = require('@lib/validation/zod');
+const {
+  uuidOrFriendlyIdentifierSchema,
+  listQuerySchema,
+  decimalStringSchema,
+} = require('@lib/validation/zod');
 
 const PAYMENT_STATUS_VALUES = ['PENDING', 'COMPLETED', 'FAILED', 'REFUNDED'];
 const PAYMENT_METHOD_VALUES = [
@@ -27,10 +31,10 @@ const PAYMENT_METHOD_VALUES = [
  * Create payment body validation
  */
 const createPaymentSchema = z.object({
-  tenant_id: uuidSchema,
-  facility_id: uuidSchema.optional().nullable(),
-  patient_id: uuidSchema.optional().nullable(),
-  invoice_id: uuidSchema,
+  tenant_id: uuidOrFriendlyIdentifierSchema,
+  facility_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
+  patient_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
+  invoice_id: uuidOrFriendlyIdentifierSchema,
   status: z.enum(PAYMENT_STATUS_VALUES),
   method: z.enum(PAYMENT_METHOD_VALUES),
   amount: decimalStringSchema,
@@ -42,10 +46,10 @@ const createPaymentSchema = z.object({
  * Update payment body validation
  */
 const updatePaymentSchema = z.object({
-  tenant_id: uuidSchema.optional(),
-  facility_id: uuidSchema.optional().nullable(),
-  patient_id: uuidSchema.optional().nullable(),
-  invoice_id: uuidSchema.optional(),
+  tenant_id: uuidOrFriendlyIdentifierSchema.optional(),
+  facility_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
+  patient_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
+  invoice_id: uuidOrFriendlyIdentifierSchema.optional(),
   status: z.enum(PAYMENT_STATUS_VALUES).optional(),
   method: z.enum(PAYMENT_METHOD_VALUES).optional(),
   amount: decimalStringSchema.optional(),
@@ -62,17 +66,17 @@ const reconcilePaymentSchema = z.object({
  * Payment ID URL parameter validation
  */
 const paymentIdParamsSchema = z.object({
-  id: uuidSchema
+  id: uuidOrFriendlyIdentifierSchema
 });
 
 /**
  * List payments query validation
  */
 const listPaymentsQuerySchema = listQuerySchema.extend({
-  tenant_id: uuidSchema.optional(),
-  facility_id: uuidSchema.optional(),
-  patient_id: uuidSchema.optional(),
-  invoice_id: uuidSchema.optional(),
+  tenant_id: uuidOrFriendlyIdentifierSchema.optional(),
+  facility_id: uuidOrFriendlyIdentifierSchema.optional(),
+  patient_id: uuidOrFriendlyIdentifierSchema.optional(),
+  invoice_id: uuidOrFriendlyIdentifierSchema.optional(),
   status: z.enum(PAYMENT_STATUS_VALUES).optional(),
   method: z.enum(PAYMENT_METHOD_VALUES).optional(),
   paid_at_from: z.string().datetime().optional(),

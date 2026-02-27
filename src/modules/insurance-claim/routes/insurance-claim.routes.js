@@ -11,7 +11,8 @@ const express = require('express');
 const router = express.Router();
 const insuranceClaimController = require('@controllers/insurance-claim/insurance-claim.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
-const { authenticate } = require('@middlewares/auth.middleware');
+const { authenticate, authorize } = require('@middlewares/auth.middleware');
+const { PERMISSIONS } = require('@config/permissions');
 const {
   createInsuranceClaimSchema,
   updateInsuranceClaimSchema,
@@ -46,6 +47,7 @@ router.get(
   validateRequest({ query: listInsuranceClaimsQuerySchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.BILLING_READ, 'permission'),
   insuranceClaimController.listInsuranceClaims
 );
 
@@ -67,6 +69,7 @@ router.get(
   validateRequest({ params: insuranceClaimIdParamsSchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.BILLING_READ, 'permission'),
   insuranceClaimController.getInsuranceClaimById
 );
 
@@ -93,6 +96,7 @@ router.post(
   validateRequest({ body: createInsuranceClaimSchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.BILLING_WRITE, 'permission'),
   insuranceClaimController.createInsuranceClaim
 );
 
@@ -120,6 +124,7 @@ router.put(
   validateRequest({ params: insuranceClaimIdParamsSchema, body: updateInsuranceClaimSchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.BILLING_WRITE, 'permission'),
   insuranceClaimController.updateInsuranceClaim
 );
 
@@ -141,6 +146,7 @@ router.delete(
   validateRequest({ params: insuranceClaimIdParamsSchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.BILLING_WRITE, 'permission'),
   insuranceClaimController.deleteInsuranceClaim
 );
 
@@ -162,6 +168,7 @@ router.post(
   validateRequest({ params: insuranceClaimIdParamsSchema, body: submitInsuranceClaimSchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.BILLING_WRITE, 'permission'),
   insuranceClaimController.submitInsuranceClaim
 );
 
@@ -183,6 +190,7 @@ router.post(
   validateRequest({ params: insuranceClaimIdParamsSchema, body: reconcileInsuranceClaimSchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.BILLING_WRITE, 'permission'),
   insuranceClaimController.reconcileInsuranceClaim
 );
 

@@ -62,6 +62,7 @@ const FREE_CORE_MODULES = new Set([
   'invoice',
   'invoice-item',
   'payment',
+  'billing',
   'notification',
   'notification-delivery',
   'template',

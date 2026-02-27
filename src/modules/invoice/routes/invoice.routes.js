@@ -11,7 +11,8 @@ const express = require('express');
 const router = express.Router();
 const invoiceController = require('@controllers/invoice/invoice.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
-const { authenticate } = require('@middlewares/auth.middleware');
+const { authenticate, authorize } = require('@middlewares/auth.middleware');
+const { PERMISSIONS } = require('@config/permissions');
 const {
   createInvoiceSchema,
   updateInvoiceSchema,
@@ -44,6 +45,7 @@ router.get(
   '/',  validateRequest({ query: listInvoicesQuerySchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.BILLING_READ, 'permission'),
   invoiceController.listInvoices
 );
 
@@ -64,6 +66,7 @@ router.get(
   '/:id',  validateRequest({ params: invoiceIdParamsSchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.BILLING_READ, 'permission'),
   invoiceController.getInvoiceById
 );
 
@@ -93,6 +96,7 @@ router.post(
   '/',  validateRequest({ body: createInvoiceSchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.BILLING_WRITE, 'permission'),
   invoiceController.createInvoice
 );
 
@@ -122,6 +126,7 @@ router.put(
   '/:id',  validateRequest({ params: invoiceIdParamsSchema, body: updateInvoiceSchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.BILLING_WRITE, 'permission'),
   invoiceController.updateInvoice
 );
 
@@ -142,6 +147,7 @@ router.delete(
   '/:id',  validateRequest({ params: invoiceIdParamsSchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.BILLING_WRITE, 'permission'),
   invoiceController.deleteInvoice
 );
 

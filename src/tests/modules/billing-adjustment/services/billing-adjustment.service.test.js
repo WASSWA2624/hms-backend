@@ -32,7 +32,13 @@ describe('Billing Adjustment Service', () => {
 
       const result = await billingAdjustmentService.listBillingAdjustments({}, 1, 20, null, 'asc', 'user-id', '127.0.0.1');
 
-      expect(result).toHaveProperty('billingAdjustments', mockBillingAdjustments);
+      expect(result).toHaveProperty('billingAdjustments');
+      expect(result.billingAdjustments).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ id: '1', invoice_id: 'invoice-1' }),
+          expect.objectContaining({ id: '2', invoice_id: 'invoice-2' }),
+        ])
+      );
       expect(result).toHaveProperty('pagination');
       expect(result.pagination).toMatchObject({
         page: 1,
@@ -55,6 +61,7 @@ describe('Billing Adjustment Service', () => {
         expect.objectContaining({ invoice_id: 'invoice-1' }),
         expect.any(Number),
         expect.any(Number),
+        expect.any(Object),
         expect.any(Object)
       );
     });
@@ -70,6 +77,7 @@ describe('Billing Adjustment Service', () => {
         expect.objectContaining({ status: 'PAID' }),
         expect.any(Number),
         expect.any(Number),
+        expect.any(Object),
         expect.any(Object)
       );
     });
@@ -82,9 +90,14 @@ describe('Billing Adjustment Service', () => {
       await billingAdjustmentService.listBillingAdjustments(filters, 1, 20, null, 'asc', 'user-id', '127.0.0.1');
 
       expect(billingAdjustmentRepository.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({ reason: { contains: 'discount' } }),
+        expect.objectContaining({
+          OR: expect.arrayContaining([
+            expect.objectContaining({ reason: { contains: 'discount' } }),
+          ]),
+        }),
         expect.any(Number),
         expect.any(Number),
+        expect.any(Object),
         expect.any(Object)
       );
     });
@@ -107,7 +120,7 @@ describe('Billing Adjustment Service', () => {
 
       const result = await billingAdjustmentService.getBillingAdjustmentById(billingAdjustmentId, 'requester-id', '127.0.0.1');
 
-      expect(result).toEqual(mockBillingAdjustment);
+      expect(result).toEqual(expect.objectContaining(mockBillingAdjustment));
     });
 
     it('should throw HttpError if billing adjustment not found', async () => {
@@ -139,7 +152,7 @@ describe('Billing Adjustment Service', () => {
 
       const result = await billingAdjustmentService.createBillingAdjustment(billingAdjustmentData, 'creator-id', '127.0.0.1');
 
-      expect(result).toEqual(createdBillingAdjustment);
+      expect(result).toEqual(expect.objectContaining(createdBillingAdjustment));
     });
 
     it('should create audit log for billing adjustment creation', async () => {
@@ -150,6 +163,7 @@ describe('Billing Adjustment Service', () => {
       await new Promise(resolve => setImmediate(resolve));
 
       expect(createAuditLog).toHaveBeenCalledWith({
+        tenant_id: null,
         user_id: 'creator-id',
         action: 'CREATE',
         entity: 'billing_adjustment',
@@ -167,13 +181,15 @@ describe('Billing Adjustment Service', () => {
     const afterBillingAdjustment = { id: billingAdjustmentId, status: 'PAID', amount: 200.75 };
 
     it('should update billing adjustment', async () => {
-      billingAdjustmentRepository.findById.mockResolvedValue(beforeBillingAdjustment);
+      billingAdjustmentRepository.findById
+        .mockResolvedValueOnce(beforeBillingAdjustment)
+        .mockResolvedValueOnce(afterBillingAdjustment);
       billingAdjustmentRepository.update.mockResolvedValue(afterBillingAdjustment);
       createAuditLog.mockResolvedValue(true);
 
       const result = await billingAdjustmentService.updateBillingAdjustment(billingAdjustmentId, updateData, 'updater-id', '127.0.0.1');
 
-      expect(result).toEqual(afterBillingAdjustment);
+      expect(result).toEqual(expect.objectContaining(afterBillingAdjustment));
     });
 
     it('should throw HttpError if billing adjustment not found', async () => {
@@ -188,7 +204,9 @@ describe('Billing Adjustment Service', () => {
     });
 
     it('should create audit log for billing adjustment update', async () => {
-      billingAdjustmentRepository.findById.mockResolvedValue(beforeBillingAdjustment);
+      billingAdjustmentRepository.findById
+        .mockResolvedValueOnce(beforeBillingAdjustment)
+        .mockResolvedValueOnce(afterBillingAdjustment);
       billingAdjustmentRepository.update.mockResolvedValue(afterBillingAdjustment);
       createAuditLog.mockResolvedValue(true);
 
@@ -196,6 +214,7 @@ describe('Billing Adjustment Service', () => {
       await new Promise(resolve => setImmediate(resolve));
 
       expect(createAuditLog).toHaveBeenCalledWith({
+        tenant_id: null,
         user_id: 'updater-id',
         action: 'UPDATE',
         entity: 'billing_adjustment',
@@ -240,6 +259,7 @@ describe('Billing Adjustment Service', () => {
       await new Promise(resolve => setImmediate(resolve));
 
       expect(createAuditLog).toHaveBeenCalledWith({
+        tenant_id: null,
         user_id: 'deleter-id',
         action: 'DELETE',
         entity: 'billing_adjustment',

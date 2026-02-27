@@ -9,7 +9,7 @@
 
 const { z } = require('zod');
 const { 
-  uuidSchema, 
+  uuidOrFriendlyIdentifierSchema, 
   listQuerySchema
 } = require('@lib/validation/zod');
 
@@ -20,7 +20,7 @@ const {
  * Used for POST /coverage-plans endpoint
  */
 const createCoveragePlanSchema = z.object({
-  tenant_id: uuidSchema,
+  tenant_id: uuidOrFriendlyIdentifierSchema,
   name: z.string().trim().min(1).max(255),
   provider_name: z.string().trim().min(1).max(255).optional().nullable(),
   coverage_percentage: z.number().int().min(0).max(100).optional().nullable()
@@ -44,7 +44,7 @@ const updateCoveragePlanSchema = z.object({
  * Used for GET /:id, PUT /:id, and DELETE /:id endpoints
  */
 const coveragePlanIdParamsSchema = z.object({
-  id: uuidSchema
+  id: uuidOrFriendlyIdentifierSchema
 });
 
 // ==================== Query Params ====================
@@ -55,7 +55,7 @@ const coveragePlanIdParamsSchema = z.object({
  * Extends base listQuerySchema with coverage plan-specific filters
  */
 const listCoveragePlansQuerySchema = listQuerySchema.extend({
-  tenant_id: uuidSchema.optional(),
+  tenant_id: uuidOrFriendlyIdentifierSchema.optional(),
   name: z.string().trim().optional(),
   provider_name: z.string().trim().optional(),
   search: z.string().trim().optional()

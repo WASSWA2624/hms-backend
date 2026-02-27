@@ -9,7 +9,7 @@
 
 const { z } = require('zod');
 const { 
-  uuidSchema, 
+  uuidOrFriendlyIdentifierSchema, 
   listQuerySchema
 } = require('@lib/validation/zod');
 
@@ -20,7 +20,7 @@ const {
  * Used for POST /pre-authorizations endpoint
  */
 const createPreAuthorizationSchema = z.object({
-  coverage_plan_id: uuidSchema,
+  coverage_plan_id: uuidOrFriendlyIdentifierSchema,
   status: z.enum(['PENDING', 'APPROVED', 'DENIED', 'EXPIRED']).optional(),
   requested_at: z.string().datetime().optional(),
   approved_at: z.string().datetime().optional().nullable()
@@ -32,7 +32,7 @@ const createPreAuthorizationSchema = z.object({
  * All fields optional for partial updates
  */
 const updatePreAuthorizationSchema = z.object({
-  coverage_plan_id: uuidSchema.optional(),
+  coverage_plan_id: uuidOrFriendlyIdentifierSchema.optional(),
   status: z.enum(['PENDING', 'APPROVED', 'DENIED', 'EXPIRED']).optional(),
   requested_at: z.string().datetime().optional(),
   approved_at: z.string().datetime().optional().nullable()
@@ -45,7 +45,7 @@ const updatePreAuthorizationSchema = z.object({
  * Used for GET /:id, PUT /:id, and DELETE /:id endpoints
  */
 const preAuthorizationIdParamsSchema = z.object({
-  id: uuidSchema
+  id: uuidOrFriendlyIdentifierSchema
 });
 
 // ==================== Query Params ====================
@@ -56,7 +56,7 @@ const preAuthorizationIdParamsSchema = z.object({
  * Extends base listQuerySchema with pre-authorization-specific filters
  */
 const listPreAuthorizationsQuerySchema = listQuerySchema.extend({
-  coverage_plan_id: uuidSchema.optional(),
+  coverage_plan_id: uuidOrFriendlyIdentifierSchema.optional(),
   status: z.enum(['PENDING', 'APPROVED', 'DENIED', 'EXPIRED']).optional(),
   requested_at_from: z.string().datetime().optional(),
   requested_at_to: z.string().datetime().optional(),

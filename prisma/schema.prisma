@@ -455,6 +455,19 @@ enum AuthorizationStatus {
   EXPIRED
 }
 
+enum BillingApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum BillingApprovalType {
+  REFUND
+  VOID
+  ADJUSTMENT
+}
+
 enum SubscriptionStatus {
   ACTIVE
   PAST_DUE
@@ -781,6 +794,7 @@ model tenant {
   contacts                        contact[]
   invoices                        invoice[]
   payments                        payment[]
+  billing_approvals               billing_approval[]
   pricing_rules                   pricing_rule[]
   coverage_plans                  coverage_plan[]
   consents                        consent[]
@@ -839,6 +853,7 @@ model facility {
   ambulances                      ambulance[]
   invoices                        invoice[]
   payments                        payment[]
+  billing_approvals               billing_approval[]
   inventory_stocks                inventory_stock[]
   stock_movements                 stock_movement[]
   stock_adjustments               stock_adjustment[]
@@ -1161,6 +1176,8 @@ model user {
   purchase_requests             purchase_request[]
   registration_follow_ups       registration_follow_up[]
   configuration_snapshots       configuration_snapshot[]  @relation("configuration_snapshot_created_by")
+  billing_approval_requests     billing_approval[]        @relation("billing_approval_requested_by")
+  billing_approval_decisions    billing_approval[]        @relation("billing_approval_approved_by")
 
   @@unique([tenant_id, email])
   @@unique([tenant_id, human_friendly_id])
@@ -2412,30 +2429,30 @@ model critical_alert {
 }
 
 model theatre_case {
-  id                String          @id @default(uuid()) @db.VarChar(36)
-  human_friendly_id String?         @db.VarChar(32)
-  encounter_id      String          @db.VarChar(36)
-  scheduled_at      DateTime
-  status            TheatreCaseStatus
-  room_id           String?         @db.VarChar(36)
-  surgeon_user_id   String?         @db.VarChar(36)
-  anesthetist_user_id String?       @db.VarChar(36)
-  started_at        DateTime?
-  completed_at      DateTime?
-  cancelled_at      DateTime?
-  workflow_stage    String?         @db.VarChar(80)
-  stage_notes       String?         @db.Text
-  created_at        DateTime        @default(now())
-  updated_at        DateTime        @updatedAt
-  deleted_at        DateTime?
-  version           Int             @default(1)
+  id                  String            @id @default(uuid()) @db.VarChar(36)
+  human_friendly_id   String?           @db.VarChar(32)
+  encounter_id        String            @db.VarChar(36)
+  scheduled_at        DateTime
+  status              TheatreCaseStatus
+  room_id             String?           @db.VarChar(36)
+  surgeon_user_id     String?           @db.VarChar(36)
+  anesthetist_user_id String?           @db.VarChar(36)
+  started_at          DateTime?
+  completed_at        DateTime?
+  cancelled_at        DateTime?
+  workflow_stage      String?           @db.VarChar(80)
+  stage_notes         String?           @db.Text
+  created_at          DateTime          @default(now())
+  updated_at          DateTime          @updatedAt
+  deleted_at          DateTime?
+  version             Int               @default(1)
 
-  encounter                encounter                         @relation(fields: [encounter_id], references: [id])
-  anesthesia_records       anesthesia_record[]
-  post_op_notes            post_op_note[]
-  resource_allocations     theatre_case_resource_allocation[]
-  checklist_items          theatre_case_checklist_item[]
-  anesthesia_observations  anesthesia_observation[]
+  encounter               encounter                          @relation(fields: [encounter_id], references: [id])
+  anesthesia_records      anesthesia_record[]
+  post_op_notes           post_op_note[]
+  resource_allocations    theatre_case_resource_allocation[]
+  checklist_items         theatre_case_checklist_item[]
+  anesthesia_observations anesthesia_observation[]
 
   @@index([encounter_id])
   @@index([scheduled_at])
@@ -2450,21 +2467,21 @@ model theatre_case {
 }
 
 model anesthesia_record {
-  id                  String    @id @default(uuid()) @db.VarChar(36)
-  human_friendly_id   String?   @db.VarChar(32)
-  theatre_case_id     String    @db.VarChar(36)
-  anesthetist_user_id String?   @db.VarChar(36)
-  notes               String?   @db.Text
-  record_status       ClinicalRecordStatus @default(DRAFT)
-  finalized_at        DateTime?
-  finalized_by_user_id String?  @db.VarChar(36)
-  reopened_at         DateTime?
-  reopened_by_user_id String?   @db.VarChar(36)
-  reopen_reason       String?   @db.Text
-  created_at          DateTime  @default(now())
-  updated_at          DateTime  @updatedAt
-  deleted_at          DateTime?
-  version             Int       @default(1)
+  id                   String               @id @default(uuid()) @db.VarChar(36)
+  human_friendly_id    String?              @db.VarChar(32)
+  theatre_case_id      String               @db.VarChar(36)
+  anesthetist_user_id  String?              @db.VarChar(36)
+  notes                String?              @db.Text
+  record_status        ClinicalRecordStatus @default(DRAFT)
+  finalized_at         DateTime?
+  finalized_by_user_id String?              @db.VarChar(36)
+  reopened_at          DateTime?
+  reopened_by_user_id  String?              @db.VarChar(36)
+  reopen_reason        String?              @db.Text
+  created_at           DateTime             @default(now())
+  updated_at           DateTime             @updatedAt
+  deleted_at           DateTime?
+  version              Int                  @default(1)
 
   theatre_case theatre_case @relation(fields: [theatre_case_id], references: [id])
   anesthetist  user?        @relation(fields: [anesthetist_user_id], references: [id])
@@ -2478,20 +2495,20 @@ model anesthesia_record {
 }
 
 model post_op_note {
-  id                String    @id @default(uuid()) @db.VarChar(36)
-  human_friendly_id String?   @db.VarChar(32)
-  theatre_case_id   String    @db.VarChar(36)
-  note              String    @db.Text
-  record_status       ClinicalRecordStatus @default(DRAFT)
-  finalized_at        DateTime?
-  finalized_by_user_id String?  @db.VarChar(36)
-  reopened_at         DateTime?
-  reopened_by_user_id String?   @db.VarChar(36)
-  reopen_reason       String?   @db.Text
-  created_at        DateTime  @default(now())
-  updated_at        DateTime  @updatedAt
-  deleted_at        DateTime?
-  version           Int       @default(1)
+  id                   String               @id @default(uuid()) @db.VarChar(36)
+  human_friendly_id    String?              @db.VarChar(32)
+  theatre_case_id      String               @db.VarChar(36)
+  note                 String               @db.Text
+  record_status        ClinicalRecordStatus @default(DRAFT)
+  finalized_at         DateTime?
+  finalized_by_user_id String?              @db.VarChar(36)
+  reopened_at          DateTime?
+  reopened_by_user_id  String?              @db.VarChar(36)
+  reopen_reason        String?              @db.Text
+  created_at           DateTime             @default(now())
+  updated_at           DateTime             @updatedAt
+  deleted_at           DateTime?
+  version              Int                  @default(1)
 
   theatre_case theatre_case @relation(fields: [theatre_case_id], references: [id])
 
@@ -2530,20 +2547,20 @@ model theatre_case_resource_allocation {
 }
 
 model theatre_case_checklist_item {
-  id                String                @id @default(uuid()) @db.VarChar(36)
-  human_friendly_id String?               @db.VarChar(32)
-  theatre_case_id   String                @db.VarChar(36)
-  phase             TheatreChecklistPhase
-  item_code         String                @db.VarChar(120)
-  item_label        String                @db.VarChar(255)
-  is_checked        Boolean               @default(false)
-  checked_at        DateTime?
-  checked_by_user_id String?              @db.VarChar(36)
-  notes             String?               @db.Text
-  created_at        DateTime              @default(now())
-  updated_at        DateTime              @updatedAt
-  deleted_at        DateTime?
-  version           Int                   @default(1)
+  id                 String                @id @default(uuid()) @db.VarChar(36)
+  human_friendly_id  String?               @db.VarChar(32)
+  theatre_case_id    String                @db.VarChar(36)
+  phase              TheatreChecklistPhase
+  item_code          String                @db.VarChar(120)
+  item_label         String                @db.VarChar(255)
+  is_checked         Boolean               @default(false)
+  checked_at         DateTime?
+  checked_by_user_id String?               @db.VarChar(36)
+  notes              String?               @db.Text
+  created_at         DateTime              @default(now())
+  updated_at         DateTime              @updatedAt
+  deleted_at         DateTime?
+  version            Int                   @default(1)
 
   theatre_case theatre_case @relation(fields: [theatre_case_id], references: [id])
 
@@ -2557,20 +2574,20 @@ model theatre_case_checklist_item {
 }
 
 model anesthesia_observation {
-  id                 String    @id @default(uuid()) @db.VarChar(36)
-  human_friendly_id  String?   @db.VarChar(32)
-  theatre_case_id    String    @db.VarChar(36)
-  observed_at        DateTime  @default(now())
-  observation_type   String?   @db.VarChar(80)
-  metric_key         String?   @db.VarChar(80)
-  metric_value       String?   @db.VarChar(120)
-  unit               String?   @db.VarChar(40)
-  notes              String?   @db.Text
-  observed_by_user_id String?  @db.VarChar(36)
-  created_at         DateTime  @default(now())
-  updated_at         DateTime  @updatedAt
-  deleted_at         DateTime?
-  version            Int       @default(1)
+  id                  String    @id @default(uuid()) @db.VarChar(36)
+  human_friendly_id   String?   @db.VarChar(32)
+  theatre_case_id     String    @db.VarChar(36)
+  observed_at         DateTime  @default(now())
+  observation_type    String?   @db.VarChar(80)
+  metric_key          String?   @db.VarChar(80)
+  metric_value        String?   @db.VarChar(120)
+  unit                String?   @db.VarChar(40)
+  notes               String?   @db.Text
+  observed_by_user_id String?   @db.VarChar(36)
+  created_at          DateTime  @default(now())
+  updated_at          DateTime  @updatedAt
+  deleted_at          DateTime?
+  version             Int       @default(1)
 
   theatre_case theatre_case @relation(fields: [theatre_case_id], references: [id])
 
@@ -2599,11 +2616,11 @@ model lab_test {
   order_items lab_order_item[]
   qc_logs     lab_qc_log[]
 
+  @@unique([tenant_id, human_friendly_id])
   @@index([tenant_id])
   @@index([code])
   @@index([deleted_at])
   @@index([human_friendly_id])
-  @@unique([tenant_id, human_friendly_id])
 }
 
 model lab_panel {
@@ -2619,11 +2636,11 @@ model lab_panel {
 
   tenant tenant @relation(fields: [tenant_id], references: [id])
 
+  @@unique([tenant_id, human_friendly_id])
   @@index([tenant_id])
   @@index([code])
   @@index([deleted_at])
   @@index([human_friendly_id])
-  @@unique([tenant_id, human_friendly_id])
 }
 
 model lab_order {
@@ -2643,13 +2660,13 @@ model lab_order {
   items     lab_order_item[]
   samples   lab_sample[]
 
+  @@unique([human_friendly_id])
   @@index([encounter_id])
   @@index([patient_id])
   @@index([status])
   @@index([ordered_at])
   @@index([deleted_at])
   @@index([human_friendly_id])
-  @@unique([human_friendly_id])
 }
 
 model lab_order_item {
@@ -2667,12 +2684,12 @@ model lab_order_item {
   lab_test  lab_test     @relation(fields: [lab_test_id], references: [id])
   results   lab_result[]
 
+  @@unique([human_friendly_id])
   @@index([lab_order_id])
   @@index([lab_test_id])
   @@index([status])
   @@index([deleted_at])
   @@index([human_friendly_id])
-  @@unique([human_friendly_id])
 }
 
 model lab_sample {
@@ -2689,11 +2706,11 @@ model lab_sample {
 
   lab_order lab_order @relation(fields: [lab_order_id], references: [id])
 
+  @@unique([human_friendly_id])
   @@index([lab_order_id])
   @@index([status])
   @@index([deleted_at])
   @@index([human_friendly_id])
-  @@unique([human_friendly_id])
 }
 
 model lab_result {
@@ -2712,12 +2729,12 @@ model lab_result {
 
   lab_order_item lab_order_item @relation(fields: [lab_order_item_id], references: [id])
 
+  @@unique([human_friendly_id])
   @@index([lab_order_item_id])
   @@index([status])
   @@index([reported_at])
   @@index([deleted_at])
   @@index([human_friendly_id])
-  @@unique([human_friendly_id])
 }
 
 model lab_qc_log {
@@ -2734,11 +2751,11 @@ model lab_qc_log {
 
   lab_test lab_test @relation(fields: [lab_test_id], references: [id])
 
+  @@unique([human_friendly_id])
   @@index([lab_test_id])
   @@index([logged_at])
   @@index([deleted_at])
   @@index([human_friendly_id])
-  @@unique([human_friendly_id])
 }
 
 model radiology_test {
@@ -2953,9 +2970,9 @@ model pharmacy_order {
   deleted_at        DateTime?
   version           Int                 @default(1)
 
-  encounter encounter?            @relation(fields: [encounter_id], references: [id])
-  patient   patient               @relation(fields: [patient_id], references: [id])
-  items     pharmacy_order_item[]
+  encounter             encounter?                      @relation(fields: [encounter_id], references: [id])
+  patient               patient                         @relation(fields: [patient_id], references: [id])
+  items                 pharmacy_order_item[]
   dispense_attestations pharmacy_dispense_attestation[]
 
   @@index([encounter_id])
@@ -3052,7 +3069,7 @@ model inventory_item {
   deleted_at        DateTime?
   version           Int               @default(1)
 
-  tenant            tenant             @relation(fields: [tenant_id], references: [id])
+  tenant            tenant               @relation(fields: [tenant_id], references: [id])
   stocks            inventory_stock[]
   movements         stock_movement[]
   stock_adjustments stock_adjustment[]
@@ -3066,20 +3083,20 @@ model inventory_item {
 }
 
 model radiology_result_attestation {
-  id                 String                           @id @default(uuid()) @db.VarChar(36)
-  human_friendly_id  String?                          @db.VarChar(32)
+  id                  String                          @id @default(uuid()) @db.VarChar(36)
+  human_friendly_id   String?                         @db.VarChar(32)
   radiology_result_id String                          @db.VarChar(36)
-  phase              RadiologyResultAttestationPhase
+  phase               RadiologyResultAttestationPhase
   attested_by_user_id String                          @db.VarChar(36)
-  attested_role      String?                          @db.VarChar(80)
-  statement          String?                          @db.Text
-  reason             String?                          @db.VarChar(255)
-  ip_address         String?                          @db.VarChar(64)
-  attested_at        DateTime                         @default(now())
-  created_at         DateTime                         @default(now())
-  updated_at         DateTime                         @updatedAt
-  deleted_at         DateTime?
-  version            Int                              @default(1)
+  attested_role       String?                         @db.VarChar(80)
+  statement           String?                         @db.Text
+  reason              String?                         @db.VarChar(255)
+  ip_address          String?                         @db.VarChar(64)
+  attested_at         DateTime                        @default(now())
+  created_at          DateTime                        @default(now())
+  updated_at          DateTime                        @updatedAt
+  deleted_at          DateTime?
+  version             Int                             @default(1)
 
   radiology_result radiology_result @relation(fields: [radiology_result_id], references: [id])
 
@@ -3092,21 +3109,21 @@ model radiology_result_attestation {
 }
 
 model pharmacy_dispense_attestation {
-  id                String                           @id @default(uuid()) @db.VarChar(36)
-  human_friendly_id String?                          @db.VarChar(32)
-  pharmacy_order_id String                           @db.VarChar(36)
-  dispense_batch_ref String                          @db.VarChar(64)
-  phase             PharmacyDispenseAttestationPhase
-  attested_by_user_id String                         @db.VarChar(36)
-  attested_role     String?                          @db.VarChar(80)
-  statement         String?                          @db.Text
-  reason            String?                          @db.VarChar(255)
-  ip_address        String?                          @db.VarChar(64)
-  attested_at       DateTime                         @default(now())
-  created_at        DateTime                         @default(now())
-  updated_at        DateTime                         @updatedAt
-  deleted_at        DateTime?
-  version           Int                              @default(1)
+  id                  String                           @id @default(uuid()) @db.VarChar(36)
+  human_friendly_id   String?                          @db.VarChar(32)
+  pharmacy_order_id   String                           @db.VarChar(36)
+  dispense_batch_ref  String                           @db.VarChar(64)
+  phase               PharmacyDispenseAttestationPhase
+  attested_by_user_id String                           @db.VarChar(36)
+  attested_role       String?                          @db.VarChar(80)
+  statement           String?                          @db.Text
+  reason              String?                          @db.VarChar(255)
+  ip_address          String?                          @db.VarChar(64)
+  attested_at         DateTime                         @default(now())
+  created_at          DateTime                         @default(now())
+  updated_at          DateTime                         @updatedAt
+  deleted_at          DateTime?
+  version             Int                              @default(1)
 
   pharmacy_order pharmacy_order @relation(fields: [pharmacy_order_id], references: [id])
 
@@ -3120,17 +3137,17 @@ model pharmacy_dispense_attestation {
 }
 
 model drug_inventory_map {
-  id                String   @id @default(uuid()) @db.VarChar(36)
-  human_friendly_id String?  @db.VarChar(32)
-  tenant_id         String   @db.VarChar(36)
-  drug_id           String   @db.VarChar(36)
-  inventory_item_id String   @db.VarChar(36)
-  is_default        Boolean  @default(false)
-  deduction_factor  Decimal  @default(1.0) @db.Decimal(10, 4)
-  created_at        DateTime @default(now())
-  updated_at        DateTime @updatedAt
+  id                String    @id @default(uuid()) @db.VarChar(36)
+  human_friendly_id String?   @db.VarChar(32)
+  tenant_id         String    @db.VarChar(36)
+  drug_id           String    @db.VarChar(36)
+  inventory_item_id String    @db.VarChar(36)
+  is_default        Boolean   @default(false)
+  deduction_factor  Decimal   @default(1.0) @db.Decimal(10, 4)
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
   deleted_at        DateTime?
-  version           Int      @default(1)
+  version           Int       @default(1)
 
   drug           drug           @relation(fields: [drug_id], references: [id])
   inventory_item inventory_item @relation(fields: [inventory_item_id], references: [id])
@@ -3665,6 +3682,45 @@ model billing_adjustment {
   @@index([invoice_id])
   @@index([status])
   @@index([adjusted_at])
+  @@index([deleted_at])
+  @@index([human_friendly_id])
+}
+
+model billing_approval {
+  id                   String                @id @default(uuid()) @db.VarChar(36)
+  human_friendly_id    String?               @db.VarChar(32)
+  tenant_id            String                @db.VarChar(36)
+  facility_id          String?               @db.VarChar(36)
+  approval_type        BillingApprovalType
+  target_entity        String                @db.VarChar(80)
+  target_entity_id     String                @db.VarChar(36)
+  requested_by_user_id String                @db.VarChar(36)
+  approved_by_user_id  String?               @db.VarChar(36)
+  status               BillingApprovalStatus @default(PENDING)
+  reason               String?               @db.VarChar(255)
+  payload_json         Json?
+  decision_notes       String?               @db.Text
+  requested_at         DateTime              @default(now())
+  decided_at           DateTime?
+  created_at           DateTime              @default(now())
+  updated_at           DateTime              @updatedAt
+  deleted_at           DateTime?
+  version              Int                   @default(1)
+
+  tenant            tenant    @relation(fields: [tenant_id], references: [id])
+  facility          facility? @relation(fields: [facility_id], references: [id])
+  requested_by_user user      @relation("billing_approval_requested_by", fields: [requested_by_user_id], references: [id])
+  approved_by_user  user?     @relation("billing_approval_approved_by", fields: [approved_by_user_id], references: [id])
+
+  @@index([tenant_id])
+  @@index([facility_id])
+  @@index([approval_type])
+  @@index([target_entity, target_entity_id])
+  @@index([requested_by_user_id])
+  @@index([approved_by_user_id])
+  @@index([status])
+  @@index([requested_at])
+  @@index([decided_at])
   @@index([deleted_at])
   @@index([human_friendly_id])
 }

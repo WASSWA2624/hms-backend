@@ -6,13 +6,17 @@
  */
 
 const { z } = require('zod');
-const { uuidSchema, listQuerySchema, decimalStringSchema } = require('@lib/validation/zod');
+const {
+  uuidOrFriendlyIdentifierSchema,
+  listQuerySchema,
+  decimalStringSchema,
+} = require('@lib/validation/zod');
 
 /**
  * Create refund body validation
  */
 const createRefundSchema = z.object({
-  payment_id: uuidSchema,
+  payment_id: uuidOrFriendlyIdentifierSchema,
   amount: decimalStringSchema,
   refunded_at: z.string().datetime().optional(),
   reason: z.string().trim().max(255).optional().nullable()
@@ -22,7 +26,7 @@ const createRefundSchema = z.object({
  * Update refund body validation
  */
 const updateRefundSchema = z.object({
-  payment_id: uuidSchema.optional(),
+  payment_id: uuidOrFriendlyIdentifierSchema.optional(),
   amount: decimalStringSchema.optional(),
   refunded_at: z.string().datetime().optional(),
   reason: z.string().trim().max(255).optional().nullable()
@@ -32,14 +36,14 @@ const updateRefundSchema = z.object({
  * Refund ID URL parameter validation
  */
 const refundIdParamsSchema = z.object({
-  id: uuidSchema
+  id: uuidOrFriendlyIdentifierSchema
 });
 
 /**
  * List refunds query validation
  */
 const listRefundsQuerySchema = listQuerySchema.extend({
-  payment_id: uuidSchema.optional(),
+  payment_id: uuidOrFriendlyIdentifierSchema.optional(),
   refunded_at_from: z.string().datetime().optional(),
   refunded_at_to: z.string().datetime().optional(),
   search: z.string().trim().optional()
@@ -51,4 +55,3 @@ module.exports = {
   refundIdParamsSchema,
   listRefundsQuerySchema
 };
-

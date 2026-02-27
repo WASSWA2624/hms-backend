@@ -11,7 +11,8 @@ const express = require('express');
 const router = express.Router();
 const billingAdjustmentController = require('@controllers/billing-adjustment/billing-adjustment.controller');
 const { validateRequest } = require('@middlewares/validate.middleware');
-const { authenticate } = require('@middlewares/auth.middleware');
+const { authenticate, authorize } = require('@middlewares/auth.middleware');
+const { PERMISSIONS } = require('@config/permissions');
 const {
   createBillingAdjustmentSchema,
   updateBillingAdjustmentSchema,
@@ -41,6 +42,7 @@ router.get(
   '/',  validateRequest({ query: listBillingAdjustmentsQuerySchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.BILLING_READ, 'permission'),
   billingAdjustmentController.listBillingAdjustments
 );
 
@@ -61,6 +63,7 @@ router.get(
   '/:id',  validateRequest({ params: billingAdjustmentIdParamsSchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.BILLING_READ, 'permission'),
   billingAdjustmentController.getBillingAdjustmentById
 );
 
@@ -87,6 +90,7 @@ router.post(
   '/',  validateRequest({ body: createBillingAdjustmentSchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.BILLING_WRITE, 'permission'),
   billingAdjustmentController.createBillingAdjustment
 );
 
@@ -113,6 +117,7 @@ router.put(
   '/:id',  validateRequest({ params: billingAdjustmentIdParamsSchema, body: updateBillingAdjustmentSchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.BILLING_WRITE, 'permission'),
   billingAdjustmentController.updateBillingAdjustment
 );
 
@@ -133,6 +138,7 @@ router.delete(
   '/:id',  validateRequest({ params: billingAdjustmentIdParamsSchema }),
 
   authenticate(),
+  authorize(PERMISSIONS.BILLING_WRITE, 'permission'),
   billingAdjustmentController.deleteBillingAdjustment
 );
 
