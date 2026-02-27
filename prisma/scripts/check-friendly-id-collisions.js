@@ -3,7 +3,7 @@
 
 const prisma = require('../../src/prisma/client');
 
-const CORE_TABLES = [
+const TARGET_TABLES = [
   { model: 'user', scope: ['tenant_id'] },
   { model: 'staff_profile', scope: ['tenant_id'] },
   { model: 'staff_position', scope: ['tenant_id'] },
@@ -13,6 +13,13 @@ const CORE_TABLES = [
   { model: 'encounter', scope: ['tenant_id'] },
   { model: 'provider_schedule', scope: ['tenant_id'] },
   { model: 'availability_slot', scope: ['schedule_id'] },
+  { model: 'lab_test', scope: ['tenant_id'] },
+  { model: 'lab_panel', scope: ['tenant_id'] },
+  { model: 'lab_order', scope: [] },
+  { model: 'lab_order_item', scope: [] },
+  { model: 'lab_sample', scope: [] },
+  { model: 'lab_result', scope: [] },
+  { model: 'lab_qc_log', scope: [] },
 ];
 
 const normalizeFriendlyId = (value) => String(value || '').trim().toUpperCase();
@@ -39,18 +46,19 @@ const checkTable = async ({ model, scope }) => {
   const rows = await delegate.findMany({
     where: {
       deleted_at: null,
-      human_friendly_id: {
-        not: null,
-      },
     },
     select,
     orderBy: [{ created_at: 'asc' }, { id: 'asc' }],
   });
 
   const keyToRows = new Map();
+  let missingFriendlyIds = 0;
   for (const row of rows) {
     const normalizedFriendlyId = normalizeFriendlyId(row.human_friendly_id);
-    if (!normalizedFriendlyId) continue;
+    if (!normalizedFriendlyId) {
+      missingFriendlyIds += 1;
+      continue;
+    }
     const scopeKey = buildScopeKey(row, scope);
     const key = `${scopeKey}|${normalizedFriendlyId}`;
     const existing = keyToRows.get(key) || [];
@@ -68,6 +76,7 @@ const checkTable = async ({ model, scope }) => {
     model,
     scope,
     totalRows: rows.length,
+    missingFriendlyIds,
     collisionGroups: collisions.length,
     collisions,
   };
@@ -76,7 +85,7 @@ const checkTable = async ({ model, scope }) => {
 const main = async () => {
   try {
     const results = [];
-    for (const table of CORE_TABLES) {
+    for (const table of TARGET_TABLES) {
       const result = await checkTable(table);
       results.push(result);
     }
@@ -87,9 +96,15 @@ const main = async () => {
       0
     );
 
-    console.log('Friendly ID collision report (core tables)');
+    const missingRows = results.reduce(
+      (sum, item) => sum + Number(item.missingFriendlyIds || 0),
+      0
+    );
+
+    console.log('Friendly ID collision report (core + lab tables)');
     console.log(`Collision groups: ${totalGroups}`);
     console.log(`Colliding rows: ${totalRows}`);
+    console.log(`Missing/blank human_friendly_id rows: ${missingRows}`);
     console.log('');
 
     for (const result of results) {
@@ -109,8 +124,8 @@ const main = async () => {
       console.log('');
     }
 
-    if (totalGroups === 0) {
-      console.log('No collisions found.');
+    if (totalGroups === 0 && missingRows === 0) {
+      console.log('No collisions or missing friendly IDs found.');
     } else {
       process.exitCode = 2;
     }

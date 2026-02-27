@@ -87,6 +87,7 @@ const CRITICAL_ALERT_EVENTS = {
  * Diagnostics Events (Lab/Radiology)
  */
 const DIAGNOSTIC_EVENTS = {
+  LAB_WORKFLOW_UPDATED: 'diagnostic.lab_workflow_updated',
   LAB_RESULT_READY: 'diagnostic.lab_result_ready',
   LAB_RESULT_UPDATED: 'diagnostic.lab_result_updated',
   RADIOLOGY_RESULT_READY: 'diagnostic.radiology_result_ready',

@@ -8,6 +8,8 @@ const {
 const PATIENT_PUBLIC_SELECT = {
   id: true,
   human_friendly_id: true,
+  tenant_id: true,
+  facility_id: true,
   first_name: true,
   last_name: true,
 };

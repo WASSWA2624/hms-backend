@@ -2593,6 +2593,7 @@ model lab_test {
   @@index([code])
   @@index([deleted_at])
   @@index([human_friendly_id])
+  @@unique([tenant_id, human_friendly_id])
 }
 
 model lab_panel {
@@ -2612,6 +2613,7 @@ model lab_panel {
   @@index([code])
   @@index([deleted_at])
   @@index([human_friendly_id])
+  @@unique([tenant_id, human_friendly_id])
 }
 
 model lab_order {
@@ -2637,6 +2639,7 @@ model lab_order {
   @@index([ordered_at])
   @@index([deleted_at])
   @@index([human_friendly_id])
+  @@unique([human_friendly_id])
 }
 
 model lab_order_item {
@@ -2659,6 +2662,7 @@ model lab_order_item {
   @@index([status])
   @@index([deleted_at])
   @@index([human_friendly_id])
+  @@unique([human_friendly_id])
 }
 
 model lab_sample {
@@ -2679,6 +2683,7 @@ model lab_sample {
   @@index([status])
   @@index([deleted_at])
   @@index([human_friendly_id])
+  @@unique([human_friendly_id])
 }
 
 model lab_result {
@@ -2702,6 +2707,7 @@ model lab_result {
   @@index([reported_at])
   @@index([deleted_at])
   @@index([human_friendly_id])
+  @@unique([human_friendly_id])
 }
 
 model lab_qc_log {
@@ -2722,6 +2728,7 @@ model lab_qc_log {
   @@index([logged_at])
   @@index([deleted_at])
   @@index([human_friendly_id])
+  @@unique([human_friendly_id])
 }
 
 model radiology_test {

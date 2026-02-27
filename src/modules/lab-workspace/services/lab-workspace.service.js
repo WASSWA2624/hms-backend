@@ -1,16 +1,22 @@
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
 const { normalizeIdentifier } = require('@lib/identifiers/resolve-entity-id');
+const { isUuidLike } = require('@lib/identifiers/sanitize-friendly-ids');
+const prisma = require('@prisma/client');
 const labWorkspaceRepository = require('@repositories/lab-workspace/lab-workspace.repository');
+const { emitToUsers, DIAGNOSTIC_EVENTS } = require('@lib/websocket');
+const { ROLES } = require('@config/roles');
 const {
   LAB_ORDER_WITH_RELATIONS_INCLUDE,
   buildPagination,
   normalizeSearchTerm,
   resolveModelIdOrThrow,
+  resolveModelRecordOrThrow,
   toDateOrNull,
   applyDateRangeFilter,
 } = require('@services/lab-workspace/lab.shared');
 const {
+  toPublicIdentifier,
   mapLabOrderRecord,
   mapLabOrderWorkflowRecord,
   mapLabResultRecord,
@@ -19,6 +25,51 @@ const {
 const ORDER_COMPLETION_STATES = new Set(['COMPLETED', 'CANCELLED']);
 const SAMPLE_COLLECTABLE_STATES = new Set(['PENDING', 'COLLECTED']);
 const SAMPLE_REJECTABLE_STATES = new Set(['PENDING', 'COLLECTED', 'RECEIVED']);
+const LAB_RECIPIENT_ROLES = [
+  ROLES.SUPER_ADMIN,
+  ROLES.TENANT_ADMIN,
+  ROLES.FACILITY_ADMIN,
+  ROLES.DOCTOR,
+  ROLES.NURSE,
+  ROLES.LAB_TECH,
+];
+const LEGACY_ROUTE_CONFIG = Object.freeze({
+  'lab-orders': {
+    model: 'lab_order',
+    resource: 'orders',
+    route: '/lab/orders',
+  },
+  'lab-order-items': {
+    model: 'lab_order_item',
+    resource: 'order-items',
+    route: '/lab/order-items',
+  },
+  'lab-samples': {
+    model: 'lab_sample',
+    resource: 'samples',
+    route: '/lab/samples',
+  },
+  'lab-results': {
+    model: 'lab_result',
+    resource: 'results',
+    route: '/lab/results',
+  },
+  'lab-tests': {
+    model: 'lab_test',
+    resource: 'tests',
+    route: '/lab/tests',
+  },
+  'lab-panels': {
+    model: 'lab_panel',
+    resource: 'panels',
+    route: '/lab/panels',
+  },
+  'lab-qc-logs': {
+    model: 'lab_qc_log',
+    resource: 'qc-logs',
+    route: '/lab/qc-logs',
+  },
+});
 
 const appendAnd = (where, clause) => {
   if (!clause || typeof clause !== 'object') return;
@@ -154,6 +205,131 @@ const mapReleasedResultFromOrder = (orderRecord, releasedResultId) => {
     }
   }
   return null;
+};
+
+const resolveRoleRecipients = async ({ tenantId, facilityId = null }) => {
+  if (!tenantId || !prisma?.user_role?.findMany) return [];
+
+  const rows = await prisma.user_role.findMany({
+    where: {
+      deleted_at: null,
+      tenant_id: tenantId,
+      role: {
+        name: {
+          in: LAB_RECIPIENT_ROLES,
+        },
+        deleted_at: null,
+      },
+      ...(facilityId ? { OR: [{ facility_id: null }, { facility_id: facilityId }] } : {}),
+    },
+    select: {
+      user_id: true,
+    },
+  });
+
+  return rows.map((item) => item.user_id).filter(Boolean);
+};
+
+const buildLabRealtimePayload = ({
+  workflow,
+  action,
+  resourceType = null,
+  resourceId = null,
+}) => {
+  const order = workflow?.order || null;
+  const orderId = String(order?.id || '').trim() || null;
+  const patientId = String(order?.patient_id || '').trim() || null;
+  const nowIso = new Date().toISOString();
+
+  return {
+    order_id: orderId,
+    order_public_id: orderId,
+    patient_id: patientId,
+    patient_public_id: patientId,
+    patient_display_name: order?.patient_display_name || null,
+    status: order?.status || null,
+    action: String(action || 'UPDATED').trim().toUpperCase(),
+    resource_type: resourceType,
+    resource_id: resourceId,
+    occurred_at: nowIso,
+    target_path: orderId ? `/lab?id=${encodeURIComponent(orderId)}` : '/lab',
+    workflow,
+  };
+};
+
+const publishLabRealtimeUpdates = async ({
+  workflow,
+  orderRecord,
+  actorUserId = null,
+  action,
+  resourceType = null,
+  resourceId = null,
+  releasedResult = null,
+}) => {
+  try {
+    const tenantId = orderRecord?.patient?.tenant_id || null;
+    if (!tenantId) return;
+
+    const facilityId = orderRecord?.patient?.facility_id || null;
+    const recipientUserIds = await resolveRoleRecipients({
+      tenantId,
+      facilityId,
+    });
+
+    const recipients = recipientUserIds.filter(
+      (userId) => userId && userId !== actorUserId
+    );
+    if (!recipients.length) return;
+
+    const workflowPayload = buildLabRealtimePayload({
+      workflow,
+      action,
+      resourceType,
+      resourceId,
+    });
+
+    emitToUsers(
+      recipients,
+      DIAGNOSTIC_EVENTS.LAB_WORKFLOW_UPDATED,
+      workflowPayload
+    );
+
+    if (!releasedResult) return;
+
+    const resultStatus = String(releasedResult.status || '')
+      .trim()
+      .toUpperCase();
+    const compatibilityPayload = {
+      order_id: workflowPayload.order_id,
+      order_public_id: workflowPayload.order_public_id,
+      patient_id: workflowPayload.patient_id,
+      patient_public_id: workflowPayload.patient_public_id,
+      result_id: releasedResult.id || null,
+      result_public_id: releasedResult.id || null,
+      result_status: resultStatus || null,
+      action: workflowPayload.action,
+      occurred_at: workflowPayload.occurred_at,
+      target_path: releasedResult.id
+        ? `/lab/results/${encodeURIComponent(releasedResult.id)}`
+        : workflowPayload.target_path,
+    };
+
+    emitToUsers(
+      recipients,
+      DIAGNOSTIC_EVENTS.LAB_RESULT_UPDATED,
+      compatibilityPayload
+    );
+
+    if (resultStatus && resultStatus !== 'PENDING') {
+      emitToUsers(
+        recipients,
+        DIAGNOSTIC_EVENTS.LAB_RESULT_READY,
+        compatibilityPayload
+      );
+    }
+  } catch (_error) {
+    // realtime should never block lab workflow updates
+  }
 };
 
 const getLabWorkbench = async (filters, page, limit, sortBy, order) => {
@@ -376,9 +552,17 @@ const collectLabOrder = async (identifier, payload = {}, userId, ipAddress) => {
       ip_address: ipAddress,
     }).catch(() => {});
 
-    return {
-      workflow: mapLabOrderWorkflowRecord(mutation.order),
-    };
+    const workflow = mapLabOrderWorkflowRecord(mutation.order);
+    publishLabRealtimeUpdates({
+      workflow,
+      orderRecord: mutation.order,
+      actorUserId: userId || null,
+      action: 'COLLECT',
+      resourceType: 'order',
+      resourceId: workflow?.order?.id || null,
+    }).catch(() => {});
+
+    return { workflow };
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
@@ -460,9 +644,17 @@ const receiveLabSample = async (identifier, payload = {}, userId, ipAddress) => 
       ip_address: ipAddress,
     }).catch(() => {});
 
-    return {
-      workflow: mapLabOrderWorkflowRecord(mutation.order),
-    };
+    const workflow = mapLabOrderWorkflowRecord(mutation.order);
+    publishLabRealtimeUpdates({
+      workflow,
+      orderRecord: mutation.order,
+      actorUserId: userId || null,
+      action: 'RECEIVE',
+      resourceType: 'sample',
+      resourceId: identifier,
+    }).catch(() => {});
+
+    return { workflow };
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
@@ -547,9 +739,17 @@ const rejectLabSample = async (identifier, payload = {}, userId, ipAddress) => {
       ip_address: ipAddress,
     }).catch(() => {});
 
-    return {
-      workflow: mapLabOrderWorkflowRecord(mutation.order),
-    };
+    const workflow = mapLabOrderWorkflowRecord(mutation.order);
+    publishLabRealtimeUpdates({
+      workflow,
+      orderRecord: mutation.order,
+      actorUserId: userId || null,
+      action: 'REJECT',
+      resourceType: 'sample',
+      resourceId: identifier,
+    }).catch(() => {});
+
+    return { workflow };
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
@@ -688,9 +888,24 @@ const releaseLabOrderItem = async (identifier, payload = {}, userId, ipAddress) 
       ip_address: ipAddress,
     }).catch(() => {});
 
+    const workflow = mapLabOrderWorkflowRecord(mutation.order);
+    const releasedResult = mapReleasedResultFromOrder(
+      mutation.order,
+      mutation.releasedResultId
+    );
+    publishLabRealtimeUpdates({
+      workflow,
+      orderRecord: mutation.order,
+      actorUserId: userId || null,
+      action: 'RELEASE',
+      resourceType: 'order-item',
+      resourceId: identifier,
+      releasedResult,
+    }).catch(() => {});
+
     return {
-      workflow: mapLabOrderWorkflowRecord(mutation.order),
-      released_result: mapReleasedResultFromOrder(mutation.order, mutation.releasedResultId),
+      workflow,
+      released_result: releasedResult,
     };
   } catch (error) {
     if (error instanceof HttpError) throw error;
@@ -706,29 +921,45 @@ const resolveLegacyRouteIdentifier = async (resource, identifier) => {
       throw new HttpError('errors.resource.not_found', 404);
     }
 
-    const mapping = {
-      'lab-orders': 'lab_order',
-      'lab-order-items': 'lab_order_item',
-      'lab-samples': 'lab_sample',
-      'lab-results': 'lab_result',
-      'lab-tests': 'lab_test',
-      'lab-panels': 'lab_panel',
-      'lab-qc-logs': 'lab_qc_log',
-    };
-
-    const model = mapping[normalizedResource];
-    if (!model) {
+    const config = LEGACY_ROUTE_CONFIG[normalizedResource];
+    if (!config) {
       throw new HttpError('errors.resource.not_found', 404);
     }
 
-    const resolvedId = await resolveModelIdOrThrow({
+    const record = await resolveModelRecordOrThrow({
       identifier: normalizedIdentifier,
-      model,
+      model: config.model,
       where: { deleted_at: null },
+      select: {
+        id: true,
+        human_friendly_id: true,
+      },
       errorKey: 'errors.resource.not_found',
     });
 
-    return { id: resolvedId };
+    const publicIdentifier = toPublicIdentifier(
+      record?.human_friendly_id,
+      normalizedIdentifier
+    );
+    const safeIdentifier =
+      publicIdentifier ||
+      (isUuidLike(normalizedIdentifier)
+        ? null
+        : String(normalizedIdentifier).trim().toUpperCase());
+
+    if (!safeIdentifier) {
+      throw new HttpError('errors.resource.not_found', 404);
+    }
+
+    return {
+      id: safeIdentifier,
+      resource: config.resource,
+      identifier: safeIdentifier,
+      route: `${config.route}/${encodeURIComponent(safeIdentifier)}`,
+      matched_by: isUuidLike(normalizedIdentifier)
+        ? 'uuid'
+        : 'human_friendly_id',
+    };
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError('errors.server.unexpected', 500, [{ originalError: error.message }]);
