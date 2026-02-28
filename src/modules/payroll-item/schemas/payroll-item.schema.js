@@ -9,7 +9,7 @@
 
 const { z } = require('zod');
 const { 
-  uuidSchema, 
+  uuidOrFriendlyIdentifierSchema,
   listQuerySchema
 } = require('@lib/validation/zod');
 
@@ -20,8 +20,8 @@ const {
  * Used for POST /payroll-items endpoint
  */
 const createPayrollItemSchema = z.object({
-  payroll_run_id: uuidSchema,
-  staff_profile_id: uuidSchema,
+  payroll_run_id: uuidOrFriendlyIdentifierSchema,
+  staff_profile_id: uuidOrFriendlyIdentifierSchema,
   amount: z.number().min(0),
   currency: z.string().trim().min(1).max(10)
 });
@@ -32,8 +32,8 @@ const createPayrollItemSchema = z.object({
  * All fields optional for partial updates
  */
 const updatePayrollItemSchema = z.object({
-  payroll_run_id: uuidSchema.optional(),
-  staff_profile_id: uuidSchema.optional(),
+  payroll_run_id: uuidOrFriendlyIdentifierSchema.optional(),
+  staff_profile_id: uuidOrFriendlyIdentifierSchema.optional(),
   amount: z.number().min(0).optional(),
   currency: z.string().trim().min(1).max(10).optional()
 });
@@ -45,7 +45,7 @@ const updatePayrollItemSchema = z.object({
  * Used for GET /:id, PUT /:id, and DELETE /:id endpoints
  */
 const payrollItemIdParamsSchema = z.object({
-  id: uuidSchema
+  id: uuidOrFriendlyIdentifierSchema
 });
 
 // ==================== Query Params ====================
@@ -56,8 +56,8 @@ const payrollItemIdParamsSchema = z.object({
  * Extends base listQuerySchema with payroll-item-specific filters
  */
 const listPayrollItemsQuerySchema = listQuerySchema.extend({
-  payroll_run_id: uuidSchema.optional(),
-  staff_profile_id: uuidSchema.optional(),
+  payroll_run_id: uuidOrFriendlyIdentifierSchema.optional(),
+  staff_profile_id: uuidOrFriendlyIdentifierSchema.optional(),
   currency: z.string().trim().optional(),
   amount_min: z.coerce.number().min(0).optional(),
   amount_max: z.coerce.number().min(0).optional()

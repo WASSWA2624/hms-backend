@@ -9,7 +9,7 @@
 
 const { z } = require('zod');
 const { 
-  uuidSchema, 
+  uuidOrFriendlyIdentifierSchema,
   listQuerySchema
 } = require('@lib/validation/zod');
 
@@ -28,7 +28,7 @@ const leaveStatusEnum = z.enum(['REQUESTED', 'APPROVED', 'REJECTED', 'CANCELLED'
  * Used for POST /staff-leaves endpoint
  */
 const createStaffLeaveSchema = z.object({
-  staff_profile_id: uuidSchema,
+  staff_profile_id: uuidOrFriendlyIdentifierSchema,
   status: leaveStatusEnum,
   start_date: z.coerce.date(),
   end_date: z.coerce.date(),
@@ -54,7 +54,7 @@ const updateStaffLeaveSchema = z.object({
  * Used for GET /:id, PUT /:id, and DELETE /:id endpoints
  */
 const staffLeaveIdParamsSchema = z.object({
-  id: uuidSchema
+  id: uuidOrFriendlyIdentifierSchema
 });
 
 // ==================== Query Params ====================
@@ -65,7 +65,7 @@ const staffLeaveIdParamsSchema = z.object({
  * Extends base listQuerySchema with staff-leave-specific filters
  */
 const listStaffLeavesQuerySchema = listQuerySchema.extend({
-  staff_profile_id: uuidSchema.optional(),
+  staff_profile_id: uuidOrFriendlyIdentifierSchema.optional(),
   status: leaveStatusEnum.optional()
 });
 

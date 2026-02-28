@@ -11,6 +11,10 @@ const staffProfileRepository = require('@repositories/staff-profile/staff-profil
 const prisma = require('@prisma/client');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
+const {
+  resolveIdentifierForFilter,
+  resolveIdentifierForPayload,
+} = require('@lib/billing/identifiers');
 
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -131,6 +135,23 @@ const resolveStaffProfileByIdentifier = async (identifier) => {
   });
 };
 
+const buildPagination = (page, limit, total) => {
+  const totalPages = Math.ceil(total / limit);
+  return {
+    page,
+    limit,
+    total,
+    totalPages,
+    hasNextPage: page < totalPages,
+    hasPreviousPage: page > 1,
+  };
+};
+
+const emptyResult = (page, limit) => ({
+  staffProfiles: [],
+  pagination: buildPagination(page, limit, 0),
+});
+
 /**
  * List staff profiles with pagination and filtering
  *
@@ -150,8 +171,22 @@ const listStaffProfiles = async (filters, page, limit, sortBy, order, userId, ip
 
     const whereClause = {};
 
-    if (filters.tenant_id) whereClause.tenant_id = filters.tenant_id;
-    if (filters.department_id) whereClause.department_id = filters.department_id;
+    const tenantId = await resolveIdentifierForFilter({
+      value: filters.tenant_id,
+      model: 'tenant',
+      where: { deleted_at: null },
+    });
+    if (filters.tenant_id && tenantId === null) return emptyResult(page, limit);
+    if (tenantId) whereClause.tenant_id = tenantId;
+
+    const departmentId = await resolveIdentifierForFilter({
+      value: filters.department_id,
+      model: 'department',
+      where: { deleted_at: null },
+    });
+    if (filters.department_id && departmentId === null) return emptyResult(page, limit);
+    if (departmentId) whereClause.department_id = departmentId;
+
     if (filters.staff_number) whereClause.staff_number = { contains: filters.staff_number };
     if (filters.position) whereClause.position = { contains: filters.position };
 
@@ -161,19 +196,9 @@ const listStaffProfiles = async (filters, page, limit, sortBy, order, userId, ip
     }
 
     if (filters.user_id) {
-      const resolvedUser = await resolveUserByIdentifier(filters.user_id, filters.tenant_id || null);
+      const resolvedUser = await resolveUserByIdentifier(filters.user_id, tenantId || null);
       if (!resolvedUser) {
-        return {
-          staffProfiles: [],
-          pagination: {
-            page,
-            limit,
-            total: 0,
-            totalPages: 0,
-            hasNextPage: false,
-            hasPreviousPage: page > 1
-          }
-        };
+        return emptyResult(page, limit);
       }
       whereClause.user_id = resolvedUser.id;
     }
@@ -203,14 +228,7 @@ const listStaffProfiles = async (filters, page, limit, sortBy, order, userId, ip
 
     return {
       staffProfiles,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasNextPage: page < Math.ceil(total / limit),
-        hasPreviousPage: page > 1
-      }
+      pagination: buildPagination(page, limit, total),
     };
   } catch (error) {
     if (error instanceof HttpError) throw error;
@@ -250,7 +268,21 @@ const getStaffProfileById = async (id) => {
  */
 const createStaffProfile = async (data, userId, ipAddress) => {
   try {
-    const resolvedUser = await resolveUserByIdentifier(data.user_id, data.tenant_id || null);
+    const tenantId = await resolveIdentifierForPayload({
+      value: data.tenant_id,
+      model: 'tenant',
+      field: 'tenant_id',
+      where: { deleted_at: null },
+    });
+    const departmentId = await resolveIdentifierForPayload({
+      value: data.department_id,
+      model: 'department',
+      field: 'department_id',
+      where: { deleted_at: null },
+      nullable: true,
+    });
+
+    const resolvedUser = await resolveUserByIdentifier(data.user_id, tenantId || null);
     if (!resolvedUser) {
       throw new HttpError('errors.user.not_found', 404, [{ field: 'user_id' }]);
     }
@@ -258,6 +290,8 @@ const createStaffProfile = async (data, userId, ipAddress) => {
     const payload = normalizeConsultationFeePayload(
       {
         ...data,
+        tenant_id: tenantId,
+        department_id: departmentId,
         user_id: resolvedUser.id
       },
       { isEdit: false }
@@ -301,6 +335,15 @@ const updateStaffProfile = async (id, data, userId, ipAddress) => {
     }
 
     const payload = normalizeConsultationFeePayload(data, { isEdit: true });
+    if (Object.prototype.hasOwnProperty.call(data, 'department_id')) {
+      payload.department_id = await resolveIdentifierForPayload({
+        value: data.department_id,
+        model: 'department',
+        field: 'department_id',
+        where: { deleted_at: null },
+        nullable: true,
+      });
+    }
     const updatedProfile = await staffProfileRepository.update(before.id, payload);
 
     // Create audit log (non-blocking)

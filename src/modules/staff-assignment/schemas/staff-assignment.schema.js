@@ -9,7 +9,7 @@
 
 const { z } = require('zod');
 const { 
-  uuidSchema, 
+  uuidOrFriendlyIdentifierSchema,
   listQuerySchema
 } = require('@lib/validation/zod');
 
@@ -20,9 +20,9 @@ const {
  * Used for POST /staff-assignments endpoint
  */
 const createStaffAssignmentSchema = z.object({
-  staff_profile_id: uuidSchema,
-  department_id: uuidSchema.optional().nullable(),
-  unit_id: uuidSchema.optional().nullable(),
+  staff_profile_id: uuidOrFriendlyIdentifierSchema,
+  department_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
+  unit_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
   start_date: z.coerce.date(),
   end_date: z.coerce.date().optional().nullable()
 });
@@ -33,8 +33,8 @@ const createStaffAssignmentSchema = z.object({
  * All fields optional for partial updates
  */
 const updateStaffAssignmentSchema = z.object({
-  department_id: uuidSchema.optional().nullable(),
-  unit_id: uuidSchema.optional().nullable(),
+  department_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
+  unit_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
   start_date: z.coerce.date().optional(),
   end_date: z.coerce.date().optional().nullable()
 });
@@ -46,7 +46,7 @@ const updateStaffAssignmentSchema = z.object({
  * Used for GET /:id, PUT /:id, and DELETE /:id endpoints
  */
 const staffAssignmentIdParamsSchema = z.object({
-  id: uuidSchema
+  id: uuidOrFriendlyIdentifierSchema
 });
 
 // ==================== Query Params ====================
@@ -57,9 +57,9 @@ const staffAssignmentIdParamsSchema = z.object({
  * Extends base listQuerySchema with staff-assignment-specific filters
  */
 const listStaffAssignmentsQuerySchema = listQuerySchema.extend({
-  staff_profile_id: uuidSchema.optional(),
-  department_id: uuidSchema.optional(),
-  unit_id: uuidSchema.optional()
+  staff_profile_id: uuidOrFriendlyIdentifierSchema.optional(),
+  department_id: uuidOrFriendlyIdentifierSchema.optional(),
+  unit_id: uuidOrFriendlyIdentifierSchema.optional()
 });
 
 module.exports = {

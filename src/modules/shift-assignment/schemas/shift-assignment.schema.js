@@ -9,7 +9,7 @@
 
 const { z } = require('zod');
 const { 
-  uuidSchema, 
+  uuidOrFriendlyIdentifierSchema,
   listQuerySchema
 } = require('@lib/validation/zod');
 
@@ -20,8 +20,8 @@ const {
  * Used for POST /shift-assignments endpoint
  */
 const createShiftAssignmentSchema = z.object({
-  shift_id: uuidSchema,
-  staff_profile_id: uuidSchema,
+  shift_id: uuidOrFriendlyIdentifierSchema,
+  staff_profile_id: uuidOrFriendlyIdentifierSchema,
   assigned_at: z.string().datetime().optional()
 });
 
@@ -31,8 +31,8 @@ const createShiftAssignmentSchema = z.object({
  * All fields optional for partial updates
  */
 const updateShiftAssignmentSchema = z.object({
-  shift_id: uuidSchema.optional(),
-  staff_profile_id: uuidSchema.optional(),
+  shift_id: uuidOrFriendlyIdentifierSchema.optional(),
+  staff_profile_id: uuidOrFriendlyIdentifierSchema.optional(),
   assigned_at: z.string().datetime().optional()
 });
 
@@ -43,7 +43,7 @@ const updateShiftAssignmentSchema = z.object({
  * Used for GET /:id, PUT /:id, and DELETE /:id endpoints
  */
 const shiftAssignmentIdParamsSchema = z.object({
-  id: uuidSchema
+  id: uuidOrFriendlyIdentifierSchema
 });
 
 // ==================== Query Params ====================
@@ -54,8 +54,8 @@ const shiftAssignmentIdParamsSchema = z.object({
  * Extends base listQuerySchema with shift assignment-specific filters
  */
 const listShiftAssignmentsQuerySchema = listQuerySchema.extend({
-  shift_id: uuidSchema.optional(),
-  staff_profile_id: uuidSchema.optional(),
+  shift_id: uuidOrFriendlyIdentifierSchema.optional(),
+  staff_profile_id: uuidOrFriendlyIdentifierSchema.optional(),
   assigned_at_from: z.string().datetime().optional(),
   assigned_at_to: z.string().datetime().optional()
 });

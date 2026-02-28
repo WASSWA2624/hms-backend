@@ -9,7 +9,7 @@
 
 const { z } = require('zod');
 const {
-  uuidSchema,
+  uuidOrFriendlyIdentifierSchema,
   listQuerySchema,
   isoDateSchema
 } = require('@lib/validation/zod');
@@ -24,9 +24,9 @@ const constraintsSchema = z.object({
 }).optional();
 
 const createNurseRosterSchema = z.object({
-  tenant_id: uuidSchema,
-  facility_id: uuidSchema.optional().nullable(),
-  department_id: uuidSchema.optional().nullable(),
+  tenant_id: uuidOrFriendlyIdentifierSchema,
+  facility_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
+  department_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
   period_start: isoDateSchema,
   period_end: isoDateSchema,
   status: z.enum(['DRAFT', 'PUBLISHED']).default('DRAFT'),
@@ -41,8 +41,8 @@ const createNurseRosterSchema = z.object({
 });
 
 const updateNurseRosterSchema = z.object({
-  facility_id: uuidSchema.optional().nullable(),
-  department_id: uuidSchema.optional().nullable(),
+  facility_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
+  department_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
   period_start: isoDateSchema.optional(),
   period_end: isoDateSchema.optional(),
   status: z.enum(['DRAFT', 'PUBLISHED']).optional(),
@@ -80,13 +80,13 @@ const generateNurseRosterSchema = z.object({
 });
 
 const nurseRosterIdParamsSchema = z.object({
-  id: uuidSchema
+  id: uuidOrFriendlyIdentifierSchema
 });
 
 const listNurseRostersQuerySchema = listQuerySchema.extend({
-  tenant_id: uuidSchema.optional(),
-  facility_id: uuidSchema.optional(),
-  department_id: uuidSchema.optional(),
+  tenant_id: uuidOrFriendlyIdentifierSchema.optional(),
+  facility_id: uuidOrFriendlyIdentifierSchema.optional(),
+  department_id: uuidOrFriendlyIdentifierSchema.optional(),
   status: z.enum(['DRAFT', 'PUBLISHED']).optional(),
   period_start_from: z.string().datetime().optional(),
   period_start_to: z.string().datetime().optional()

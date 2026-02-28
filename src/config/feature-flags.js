@@ -16,6 +16,7 @@ const FEATURE_FLAGS = Object.freeze({
   ipd_workbench_v1: parseFlag(process.env.FEATURE_IPD_WORKBENCH_V1, false),
   billing_workspace_v1: parseFlag(process.env.FEATURE_BILLING_WORKSPACE_V1, false),
   pharmacy_workspace_v1: parseFlag(process.env.PHARMACY_WORKSPACE_V1, false),
+  hr_workspace_v1: parseFlag(process.env.FEATURE_HR_WORKSPACE_V1, false),
   radiology_attestation_v2: parseFlag(process.env.RADIOLOGY_ATTESTATION_V2, false),
 });
 

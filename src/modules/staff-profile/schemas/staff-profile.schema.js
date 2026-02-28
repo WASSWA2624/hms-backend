@@ -9,7 +9,8 @@
 
 const { z } = require('zod');
 const { 
-  uuidSchema, 
+  uuidSchema,
+  uuidOrFriendlyIdentifierSchema,
   listQuerySchema,
   decimalStringSchema
 } = require('@lib/validation/zod');
@@ -35,9 +36,9 @@ const decimalInputSchema = z.union([z.coerce.number().positive(), decimalStringS
  * Used for POST /staff-profiles endpoint
  */
 const createStaffProfileSchema = z.object({
-  tenant_id: uuidSchema,
+  tenant_id: uuidOrFriendlyIdentifierSchema,
   user_id: resourceIdentifierSchema,
-  department_id: uuidSchema.optional().nullable(),
+  department_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
   staff_number: z.string().trim().max(80).optional().nullable(),
   position: z.string().trim().max(120).optional().nullable(),
   practitioner_type: z.enum(PRACTITIONER_TYPE_VALUES).optional().nullable(),
@@ -54,7 +55,7 @@ const createStaffProfileSchema = z.object({
  * All fields optional for partial updates
  */
 const updateStaffProfileSchema = z.object({
-  department_id: uuidSchema.optional().nullable(),
+  department_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
   staff_number: z.string().trim().max(80).optional().nullable(),
   position: z.string().trim().max(120).optional().nullable(),
   practitioner_type: z.enum(PRACTITIONER_TYPE_VALUES).optional().nullable(),
@@ -83,9 +84,9 @@ const staffProfileIdParamsSchema = z.object({
  * Extends base listQuerySchema with staff-profile-specific filters
  */
 const listStaffProfilesQuerySchema = listQuerySchema.extend({
-  tenant_id: uuidSchema.optional(),
+  tenant_id: uuidOrFriendlyIdentifierSchema.optional(),
   user_id: resourceIdentifierSchema.optional(),
-  department_id: uuidSchema.optional(),
+  department_id: uuidOrFriendlyIdentifierSchema.optional(),
   staff_number: z.string().trim().optional(),
   position: z.string().trim().optional(),
   practitioner_type: z.enum(PRACTITIONER_TYPE_VALUES).optional(),

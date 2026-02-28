@@ -1,54 +1,53 @@
-/**
- * Staff leave service
- *
- * @module modules/staff-leave/services
- * @description Business logic layer for staff leave operations.
- * Per module-creation.mdc: Services only import/use their own repository.
- * Per prisma.mdc: All mutations call createAuditLog.
- */
-
 const staffLeaveRepository = require('@repositories/staff-leave/staff-leave.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
+const {
+  resolveIdentifierForFilter,
+  resolveIdentifierForPayload,
+  resolveEntityId,
+} = require('@lib/billing/identifiers');
 
-/**
- * List staff leaves with pagination and filtering
- *
- * @param {Object} filters - Query filters
- * @param {number} page - Page number
- * @param {number} limit - Items per page
- * @param {string} sortBy - Sort field
- * @param {string} order - Sort order
- * @param {string} userId - User ID for audit
- * @param {string} ipAddress - User IP for audit
- * @returns {Promise<Object>} Staff leaves and pagination data
- */
-const listStaffLeaves = async (filters, page, limit, sortBy, order, userId, ipAddress) => {
+const buildPagination = (page, limit, total) => {
+  const totalPages = Math.ceil(total / limit);
+  return {
+    page,
+    limit,
+    total,
+    totalPages,
+    hasNextPage: page < totalPages,
+    hasPreviousPage: page > 1,
+  };
+};
+
+const emptyResult = (page, limit) => ({
+  staffLeaves: [],
+  pagination: buildPagination(page, limit, 0),
+});
+
+const listStaffLeaves = async (filters, page, limit, sortBy, order) => {
   try {
     const skip = (page - 1) * limit;
     const orderBy = sortBy ? { [sortBy]: order } : { created_at: 'desc' };
-
-    // Build filter object
     const whereClause = {};
-    
-    if (filters.staff_profile_id) whereClause.staff_profile_id = filters.staff_profile_id;
+
+    const staffProfileId = await resolveIdentifierForFilter({
+      value: filters.staff_profile_id,
+      model: 'staff_profile',
+      where: { deleted_at: null },
+    });
+    if (filters.staff_profile_id && staffProfileId === null) return emptyResult(page, limit);
+    if (staffProfileId) whereClause.staff_profile_id = staffProfileId;
+
     if (filters.status) whereClause.status = filters.status;
 
     const [staffLeaves, total] = await Promise.all([
       staffLeaveRepository.findMany(whereClause, skip, limit, orderBy),
-      staffLeaveRepository.count(whereClause)
+      staffLeaveRepository.count(whereClause),
     ]);
 
     return {
       staffLeaves,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasNextPage: page < Math.ceil(total / limit),
-        hasPreviousPage: page > 1
-      }
+      pagination: buildPagination(page, limit, total),
     };
   } catch (error) {
     if (error instanceof HttpError) throw error;
@@ -56,22 +55,15 @@ const listStaffLeaves = async (filters, page, limit, sortBy, order, userId, ipAd
   }
 };
 
-/**
- * Get staff leave by ID
- *
- * @param {string} id - Staff leave ID
- * @param {string} userId - User ID for audit
- * @param {string} ipAddress - User IP for audit
- * @returns {Promise<Object>} Staff leave data
- */
-const getStaffLeaveById = async (id, userId, ipAddress) => {
+const getStaffLeaveById = async (id) => {
   try {
-    const staffLeave = await staffLeaveRepository.findById(id);
-
-    if (!staffLeave) {
-      throw new HttpError('errors.staff_leave.not_found', 404);
-    }
-
+    const resolvedId = await resolveEntityId({
+      model: 'staff_leave',
+      identifier: id,
+      where: { deleted_at: null },
+    });
+    const staffLeave = await staffLeaveRepository.findById(resolvedId);
+    if (!staffLeave) throw new HttpError('errors.staff_leave.not_found', 404);
     return staffLeave;
   } catch (error) {
     if (error instanceof HttpError) throw error;
@@ -79,29 +71,27 @@ const getStaffLeaveById = async (id, userId, ipAddress) => {
   }
 };
 
-/**
- * Create new staff leave
- * Per prisma.mdc: Mutations must create audit logs
- *
- * @param {Object} data - Staff leave data
- * @param {string} userId - User ID for audit
- * @param {string} ipAddress - User IP for audit
- * @returns {Promise<Object>} Created staff leave
- */
 const createStaffLeave = async (data, userId, ipAddress) => {
   try {
-    const staffLeave = await staffLeaveRepository.create(data);
+    const payload = {
+      ...data,
+      staff_profile_id: await resolveIdentifierForPayload({
+        value: data.staff_profile_id,
+        model: 'staff_profile',
+        field: 'staff_profile_id',
+        where: { deleted_at: null },
+      }),
+    };
 
-    // Create audit log (non-blocking)
+    const staffLeave = await staffLeaveRepository.create(payload);
     createAuditLog({
       user_id: userId,
       action: 'CREATE',
       entity: 'staff_leave',
       entity_id: staffLeave.id,
       diff: { after: staffLeave },
-      ip_address: ipAddress
+      ip_address: ipAddress,
     }).catch(() => {});
-
     return staffLeave;
   } catch (error) {
     if (error instanceof HttpError) throw error;
@@ -109,37 +99,25 @@ const createStaffLeave = async (data, userId, ipAddress) => {
   }
 };
 
-/**
- * Update staff leave
- * Per prisma.mdc: Mutations must create audit logs
- *
- * @param {string} id - Staff leave ID
- * @param {Object} data - Update data
- * @param {string} userId - User ID for audit
- * @param {string} ipAddress - User IP for audit
- * @returns {Promise<Object>} Updated staff leave
- */
 const updateStaffLeave = async (id, data, userId, ipAddress) => {
   try {
-    // Get current state for audit
-    const before = await staffLeaveRepository.findById(id);
+    const resolvedId = await resolveEntityId({
+      model: 'staff_leave',
+      identifier: id,
+      where: { deleted_at: null },
+    });
+    const before = await staffLeaveRepository.findById(resolvedId);
+    if (!before) throw new HttpError('errors.staff_leave.not_found', 404);
 
-    if (!before) {
-      throw new HttpError('errors.staff_leave.not_found', 404);
-    }
-
-    const staffLeave = await staffLeaveRepository.update(id, data);
-
-    // Create audit log (non-blocking)
+    const staffLeave = await staffLeaveRepository.update(before.id, data);
     createAuditLog({
       user_id: userId,
       action: 'UPDATE',
       entity: 'staff_leave',
       entity_id: staffLeave.id,
       diff: { before, after: staffLeave },
-      ip_address: ipAddress
+      ip_address: ipAddress,
     }).catch(() => {});
-
     return staffLeave;
   } catch (error) {
     if (error instanceof HttpError) throw error;
@@ -147,34 +125,24 @@ const updateStaffLeave = async (id, data, userId, ipAddress) => {
   }
 };
 
-/**
- * Delete staff leave (soft delete)
- * Per prisma.mdc: Mutations must create audit logs
- *
- * @param {string} id - Staff leave ID
- * @param {string} userId - User ID for audit
- * @param {string} ipAddress - User IP for audit
- * @returns {Promise<void>}
- */
 const deleteStaffLeave = async (id, userId, ipAddress) => {
   try {
-    // Get current state for audit
-    const before = await staffLeaveRepository.findById(id);
+    const resolvedId = await resolveEntityId({
+      model: 'staff_leave',
+      identifier: id,
+      where: { deleted_at: null },
+    });
+    const before = await staffLeaveRepository.findById(resolvedId);
+    if (!before) throw new HttpError('errors.staff_leave.not_found', 404);
 
-    if (!before) {
-      throw new HttpError('errors.staff_leave.not_found', 404);
-    }
-
-    await staffLeaveRepository.softDelete(id);
-
-    // Create audit log (non-blocking)
+    await staffLeaveRepository.softDelete(before.id);
     createAuditLog({
       user_id: userId,
       action: 'DELETE',
       entity: 'staff_leave',
-      entity_id: id,
+      entity_id: before.id,
       diff: { before },
-      ip_address: ipAddress
+      ip_address: ipAddress,
     }).catch(() => {});
   } catch (error) {
     if (error instanceof HttpError) throw error;
@@ -187,5 +155,5 @@ module.exports = {
   getStaffLeaveById,
   createStaffLeave,
   updateStaffLeave,
-  deleteStaffLeave
+  deleteStaffLeave,
 };

@@ -9,7 +9,7 @@
 
 const { z } = require('zod');
 const { 
-  uuidSchema, 
+  uuidOrFriendlyIdentifierSchema,
   listQuerySchema,
   isoDateSchema
 } = require('@lib/validation/zod');
@@ -21,8 +21,8 @@ const {
  * Used for POST /shifts endpoint
  */
 const createShiftSchema = z.object({
-  tenant_id: uuidSchema,
-  facility_id: uuidSchema.optional().nullable(),
+  tenant_id: uuidOrFriendlyIdentifierSchema,
+  facility_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
   shift_type: z.enum(['DAY', 'NIGHT', 'SWING', 'ON_CALL']),
   status: z.enum(['SCHEDULED', 'COMPLETED', 'CANCELLED']).default('SCHEDULED'),
   start_time: isoDateSchema,
@@ -42,7 +42,7 @@ const createShiftSchema = z.object({
  * All fields optional for partial updates
  */
 const updateShiftSchema = z.object({
-  facility_id: uuidSchema.optional().nullable(),
+  facility_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
   shift_type: z.enum(['DAY', 'NIGHT', 'SWING', 'ON_CALL']).optional(),
   status: z.enum(['SCHEDULED', 'COMPLETED', 'CANCELLED']).optional(),
   start_time: isoDateSchema.optional(),
@@ -74,7 +74,7 @@ const publishShiftSchema = z.object({
  * Used for GET /:id, PUT /:id, DELETE /:id, and POST /:id/publish endpoints
  */
 const shiftIdParamsSchema = z.object({
-  id: uuidSchema
+  id: uuidOrFriendlyIdentifierSchema
 });
 
 // ==================== Query Params ====================
@@ -85,8 +85,8 @@ const shiftIdParamsSchema = z.object({
  * Extends base listQuerySchema with shift-specific filters
  */
 const listShiftsQuerySchema = listQuerySchema.extend({
-  tenant_id: uuidSchema.optional(),
-  facility_id: uuidSchema.optional(),
+  tenant_id: uuidOrFriendlyIdentifierSchema.optional(),
+  facility_id: uuidOrFriendlyIdentifierSchema.optional(),
   shift_type: z.enum(['DAY', 'NIGHT', 'SWING', 'ON_CALL']).optional(),
   status: z.enum(['SCHEDULED', 'COMPLETED', 'CANCELLED']).optional(),
   start_time_from: z.string().datetime().optional(),

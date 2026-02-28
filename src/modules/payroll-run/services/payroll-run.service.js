@@ -1,46 +1,51 @@
-/**
- * Payroll run service
- *
- * @module modules/payroll-run/services
- * @description Business logic layer for payroll run operations.
- * Per module-creation.mdc: Services only import/use their own repository.
- * Per prisma.mdc: All mutations call createAuditLog.
- */
-
 const payrollRunRepository = require('@repositories/payroll-run/payroll-run.repository');
 const { createAuditLog } = require('@lib/audit');
 const { HttpError } = require('@lib/errors');
+const {
+  resolveIdentifierForFilter,
+  resolveIdentifierForPayload,
+  resolveEntityId,
+} = require('@lib/billing/identifiers');
 
-/**
- * List payroll runs with pagination and filtering
- *
- * @param {Object} filters - Query filters
- * @param {number} page - Page number
- * @param {number} limit - Items per page
- * @param {string} sortBy - Sort field
- * @param {string} order - Sort order
- * @param {string} userId - User ID for audit
- * @param {string} ipAddress - User IP for audit
- * @returns {Promise<Object>} Payroll runs and pagination data
- */
-const listPayrollRuns = async (filters, page, limit, sortBy, order, userId, ipAddress) => {
+const buildPagination = (page, limit, total) => {
+  const totalPages = Math.ceil(total / limit);
+  return {
+    page,
+    limit,
+    total,
+    totalPages,
+    hasNextPage: page < totalPages,
+    hasPreviousPage: page > 1,
+  };
+};
+
+const emptyResult = (page, limit) => ({
+  payrollRuns: [],
+  pagination: buildPagination(page, limit, 0),
+});
+
+const listPayrollRuns = async (filters, page, limit, sortBy, order) => {
   try {
     const skip = (page - 1) * limit;
     const orderBy = sortBy ? { [sortBy]: order } : { created_at: 'desc' };
-
-    // Build filter object
     const whereClause = {};
-    
-    if (filters.tenant_id) whereClause.tenant_id = filters.tenant_id;
+
+    const tenantId = await resolveIdentifierForFilter({
+      value: filters.tenant_id,
+      model: 'tenant',
+      where: { deleted_at: null },
+    });
+    if (filters.tenant_id && tenantId === null) return emptyResult(page, limit);
+    if (tenantId) whereClause.tenant_id = tenantId;
+
     if (filters.status) whereClause.status = filters.status;
-    
-    // Date range filters
+
     if (filters.period_start_from || filters.period_start_to) {
       whereClause.period_start = {};
       if (filters.period_start_from) whereClause.period_start.gte = filters.period_start_from;
       if (filters.period_start_to) whereClause.period_start.lte = filters.period_start_to;
     }
-    
+
     if (filters.period_end_from || filters.period_end_to) {
       whereClause.period_end = {};
       if (filters.period_end_from) whereClause.period_end.gte = filters.period_end_from;
@@ -49,19 +54,12 @@ const listPayrollRuns = async (filters, page, limit, sortBy, order, userId, ipAd
 
     const [payrollRuns, total] = await Promise.all([
       payrollRunRepository.findMany(whereClause, skip, limit, orderBy),
-      payrollRunRepository.count(whereClause)
+      payrollRunRepository.count(whereClause),
     ]);
 
     return {
       payrollRuns,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasNextPage: page < Math.ceil(total / limit),
-        hasPreviousPage: page > 1
-      }
+      pagination: buildPagination(page, limit, total),
     };
   } catch (error) {
     if (error instanceof HttpError) throw error;
@@ -69,22 +67,15 @@ const listPayrollRuns = async (filters, page, limit, sortBy, order, userId, ipAd
   }
 };
 
-/**
- * Get payroll run by ID
- *
- * @param {string} id - Payroll run ID
- * @param {string} userId - User ID for audit
- * @param {string} ipAddress - User IP for audit
- * @returns {Promise<Object>} Payroll run data
- */
-const getPayrollRunById = async (id, userId, ipAddress) => {
+const getPayrollRunById = async (id) => {
   try {
-    const payrollRun = await payrollRunRepository.findById(id);
-
-    if (!payrollRun) {
-      throw new HttpError('errors.payroll_run.not_found', 404);
-    }
-
+    const resolvedId = await resolveEntityId({
+      model: 'payroll_run',
+      identifier: id,
+      where: { deleted_at: null },
+    });
+    const payrollRun = await payrollRunRepository.findById(resolvedId);
+    if (!payrollRun) throw new HttpError('errors.payroll_run.not_found', 404);
     return payrollRun;
   } catch (error) {
     if (error instanceof HttpError) throw error;
@@ -92,29 +83,26 @@ const getPayrollRunById = async (id, userId, ipAddress) => {
   }
 };
 
-/**
- * Create new payroll run
- * Per prisma.mdc: Mutations must create audit logs
- *
- * @param {Object} data - Payroll run data
- * @param {string} userId - User ID for audit
- * @param {string} ipAddress - User IP for audit
- * @returns {Promise<Object>} Created payroll run
- */
 const createPayrollRun = async (data, userId, ipAddress) => {
   try {
-    const payrollRun = await payrollRunRepository.create(data);
-
-    // Create audit log (non-blocking)
+    const payload = {
+      ...data,
+      tenant_id: await resolveIdentifierForPayload({
+        value: data.tenant_id,
+        model: 'tenant',
+        field: 'tenant_id',
+        where: { deleted_at: null },
+      }),
+    };
+    const payrollRun = await payrollRunRepository.create(payload);
     createAuditLog({
       user_id: userId,
       action: 'CREATE',
       entity: 'payroll_run',
       entity_id: payrollRun.id,
       diff: { after: payrollRun },
-      ip_address: ipAddress
+      ip_address: ipAddress,
     }).catch(() => {});
-
     return payrollRun;
   } catch (error) {
     if (error instanceof HttpError) throw error;
@@ -122,37 +110,25 @@ const createPayrollRun = async (data, userId, ipAddress) => {
   }
 };
 
-/**
- * Update payroll run
- * Per prisma.mdc: Mutations must create audit logs
- *
- * @param {string} id - Payroll run ID
- * @param {Object} data - Update data
- * @param {string} userId - User ID for audit
- * @param {string} ipAddress - User IP for audit
- * @returns {Promise<Object>} Updated payroll run
- */
 const updatePayrollRun = async (id, data, userId, ipAddress) => {
   try {
-    // Get current state for audit
-    const before = await payrollRunRepository.findById(id);
+    const resolvedId = await resolveEntityId({
+      model: 'payroll_run',
+      identifier: id,
+      where: { deleted_at: null },
+    });
+    const before = await payrollRunRepository.findById(resolvedId);
+    if (!before) throw new HttpError('errors.payroll_run.not_found', 404);
 
-    if (!before) {
-      throw new HttpError('errors.payroll_run.not_found', 404);
-    }
-
-    const payrollRun = await payrollRunRepository.update(id, data);
-
-    // Create audit log (non-blocking)
+    const payrollRun = await payrollRunRepository.update(before.id, data);
     createAuditLog({
       user_id: userId,
       action: 'UPDATE',
       entity: 'payroll_run',
       entity_id: payrollRun.id,
       diff: { before, after: payrollRun },
-      ip_address: ipAddress
+      ip_address: ipAddress,
     }).catch(() => {});
-
     return payrollRun;
   } catch (error) {
     if (error instanceof HttpError) throw error;
@@ -160,34 +136,24 @@ const updatePayrollRun = async (id, data, userId, ipAddress) => {
   }
 };
 
-/**
- * Delete payroll run (soft delete)
- * Per prisma.mdc: Mutations must create audit logs
- *
- * @param {string} id - Payroll run ID
- * @param {string} userId - User ID for audit
- * @param {string} ipAddress - User IP for audit
- * @returns {Promise<void>}
- */
 const deletePayrollRun = async (id, userId, ipAddress) => {
   try {
-    // Get current state for audit
-    const before = await payrollRunRepository.findById(id);
+    const resolvedId = await resolveEntityId({
+      model: 'payroll_run',
+      identifier: id,
+      where: { deleted_at: null },
+    });
+    const before = await payrollRunRepository.findById(resolvedId);
+    if (!before) throw new HttpError('errors.payroll_run.not_found', 404);
 
-    if (!before) {
-      throw new HttpError('errors.payroll_run.not_found', 404);
-    }
-
-    await payrollRunRepository.softDelete(id);
-
-    // Create audit log (non-blocking)
+    await payrollRunRepository.softDelete(before.id);
     createAuditLog({
       user_id: userId,
       action: 'DELETE',
       entity: 'payroll_run',
-      entity_id: id,
+      entity_id: before.id,
       diff: { before },
-      ip_address: ipAddress
+      ip_address: ipAddress,
     }).catch(() => {});
   } catch (error) {
     if (error instanceof HttpError) throw error;
@@ -200,5 +166,5 @@ module.exports = {
   getPayrollRunById,
   createPayrollRun,
   updatePayrollRun,
-  deletePayrollRun
+  deletePayrollRun,
 };

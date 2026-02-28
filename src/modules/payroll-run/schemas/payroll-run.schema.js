@@ -9,7 +9,7 @@
 
 const { z } = require('zod');
 const { 
-  uuidSchema, 
+  uuidOrFriendlyIdentifierSchema,
   listQuerySchema
 } = require('@lib/validation/zod');
 
@@ -28,7 +28,7 @@ const payrollStatusEnum = z.enum(['DRAFT', 'PROCESSED', 'PAID', 'CANCELLED']);
  * Used for POST /payroll-runs endpoint
  */
 const createPayrollRunSchema = z.object({
-  tenant_id: uuidSchema,
+  tenant_id: uuidOrFriendlyIdentifierSchema,
   period_start: z.coerce.date(),
   period_end: z.coerce.date(),
   status: payrollStatusEnum.optional().default('DRAFT')
@@ -63,7 +63,7 @@ const updatePayrollRunSchema = z.object({
  * Used for GET /:id, PUT /:id, and DELETE /:id endpoints
  */
 const payrollRunIdParamsSchema = z.object({
-  id: uuidSchema
+  id: uuidOrFriendlyIdentifierSchema
 });
 
 // ==================== Query Params ====================
@@ -74,7 +74,7 @@ const payrollRunIdParamsSchema = z.object({
  * Extends base listQuerySchema with payroll-run-specific filters
  */
 const listPayrollRunsQuerySchema = listQuerySchema.extend({
-  tenant_id: uuidSchema.optional(),
+  tenant_id: uuidOrFriendlyIdentifierSchema.optional(),
   status: payrollStatusEnum.optional(),
   period_start_from: z.coerce.date().optional(),
   period_start_to: z.coerce.date().optional(),

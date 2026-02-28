@@ -2,13 +2,13 @@
  * Shift template validation schemas
  */
 const { z } = require('zod');
-const { uuidSchema, listQuerySchema } = require('@lib/validation/zod');
+const { uuidOrFriendlyIdentifierSchema, listQuerySchema } = require('@lib/validation/zod');
 
 const timeStringSchema = z.string().regex(/^\d{1,2}:\d{2}(:\d{2})?$/, 'Time must be HH:mm or HH:mm:ss');
 
 const createShiftTemplateSchema = z.object({
-  tenant_id: uuidSchema,
-  facility_id: uuidSchema.optional().nullable(),
+  tenant_id: uuidOrFriendlyIdentifierSchema,
+  facility_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
   name: z.string().min(1).max(120),
   shift_type: z.enum(['DAY', 'NIGHT', 'SWING', 'ON_CALL']),
   default_start_time: timeStringSchema,
@@ -18,7 +18,7 @@ const createShiftTemplateSchema = z.object({
 });
 
 const updateShiftTemplateSchema = z.object({
-  facility_id: uuidSchema.optional().nullable(),
+  facility_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
   name: z.string().min(1).max(120).optional(),
   shift_type: z.enum(['DAY', 'NIGHT', 'SWING', 'ON_CALL']).optional(),
   default_start_time: timeStringSchema.optional(),
@@ -27,11 +27,11 @@ const updateShiftTemplateSchema = z.object({
   is_active: z.boolean().optional()
 });
 
-const shiftTemplateIdParamsSchema = z.object({ id: uuidSchema });
+const shiftTemplateIdParamsSchema = z.object({ id: uuidOrFriendlyIdentifierSchema });
 
 const listShiftTemplatesQuerySchema = listQuerySchema.extend({
-  tenant_id: uuidSchema.optional(),
-  facility_id: uuidSchema.optional(),
+  tenant_id: uuidOrFriendlyIdentifierSchema.optional(),
+  facility_id: uuidOrFriendlyIdentifierSchema.optional(),
   shift_type: z.enum(['DAY', 'NIGHT', 'SWING', 'ON_CALL']).optional(),
   is_active: z.enum(['true', 'false']).optional()
 });

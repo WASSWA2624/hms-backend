@@ -9,7 +9,7 @@
 
 const { z } = require('zod');
 const { 
-  uuidSchema, 
+  uuidOrFriendlyIdentifierSchema,
   listQuerySchema
 } = require('@lib/validation/zod');
 
@@ -20,9 +20,9 @@ const {
  * Used for POST /shift-swap-requests endpoint
  */
 const createShiftSwapRequestSchema = z.object({
-  shift_id: uuidSchema,
-  requester_staff_id: uuidSchema,
-  target_staff_id: uuidSchema.optional().nullable(),
+  shift_id: uuidOrFriendlyIdentifierSchema,
+  requester_staff_id: uuidOrFriendlyIdentifierSchema,
+  target_staff_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
   status: z.enum(['SCHEDULED', 'COMPLETED', 'CANCELLED']).default('SCHEDULED')
 });
 
@@ -32,9 +32,9 @@ const createShiftSwapRequestSchema = z.object({
  * All fields optional for partial updates
  */
 const updateShiftSwapRequestSchema = z.object({
-  shift_id: uuidSchema.optional(),
-  requester_staff_id: uuidSchema.optional(),
-  target_staff_id: uuidSchema.optional().nullable(),
+  shift_id: uuidOrFriendlyIdentifierSchema.optional(),
+  requester_staff_id: uuidOrFriendlyIdentifierSchema.optional(),
+  target_staff_id: uuidOrFriendlyIdentifierSchema.optional().nullable(),
   status: z.enum(['SCHEDULED', 'COMPLETED', 'CANCELLED']).optional()
 });
 
@@ -45,7 +45,7 @@ const updateShiftSwapRequestSchema = z.object({
  * Used for GET /:id, PUT /:id, and DELETE /:id endpoints
  */
 const shiftSwapRequestIdParamsSchema = z.object({
-  id: uuidSchema
+  id: uuidOrFriendlyIdentifierSchema
 });
 
 // ==================== Query Params ====================
@@ -56,9 +56,9 @@ const shiftSwapRequestIdParamsSchema = z.object({
  * Extends base listQuerySchema with shift swap request-specific filters
  */
 const listShiftSwapRequestsQuerySchema = listQuerySchema.extend({
-  shift_id: uuidSchema.optional(),
-  requester_staff_id: uuidSchema.optional(),
-  target_staff_id: uuidSchema.optional(),
+  shift_id: uuidOrFriendlyIdentifierSchema.optional(),
+  requester_staff_id: uuidOrFriendlyIdentifierSchema.optional(),
+  target_staff_id: uuidOrFriendlyIdentifierSchema.optional(),
   status: z.enum(['SCHEDULED', 'COMPLETED', 'CANCELLED']).optional()
 });
 
